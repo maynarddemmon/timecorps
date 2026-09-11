@@ -1,0 +1,221 @@
+{
+	"events":{
+		"lifeboat_capacity":{
+			"name":"Davit Capacity Settled",
+			"start":"1912-03-01T10:00:00",
+			"duration":{"h":3},
+			"location":"southampton.harland_wolff",
+			"actions":{
+				"fullDavits":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"roster_reshuffle"},
+				{"mode":"walk", "to":"titanic_departs"}
+			],
+			"values":{
+				"boatsForAll":{
+					"value":"event.actions.fullDavits.value"
+				}
+			}
+		},
+		"roster_reshuffle":{
+			"name":"Roster Reshuffle",
+			"start":"1912-04-09T11:00:00",
+			"duration":{"h":2},
+			"location":"southampton.quay.berth_44",
+			"actions":{
+				"preventReshuffle":{
+					"value":false
+				},
+				"remindBlair":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"titanic_departs"}
+			],
+			"values":{
+				"keyOnShip":{
+					"value":"event.actions.preventReshuffle.value || event.actions.remindBlair.value"
+				},
+				"blairOnShip":{
+					"value":"event.actions.preventReshuffle.value"
+				}
+			}
+		},
+		"titanic_departs":{
+			"name":"Boarding & Departure",
+			"start":"1912-04-10T09:30:00",
+			"duration":{"h":2,"m":30},
+			"location":"titanic",
+			"exits":[
+				{"mode":"walk", "to":"ice_warnings"},
+				{"mode":"walk", "to":"purser_spare"},
+				{"mode":"walk", "to":"missing_binoculars"},
+				{"mode":"walk", "to":"engine_order"},
+				{"mode":"walk", "to":"collision"},
+				{"mode":"walk", "to":"casualties"}
+			]
+		},
+		"ice_warnings":{
+			"name":"Ice Warnings Received",
+			"start":"1912-04-14T09:00:00",
+			"duration":{"h":12},
+			"location":"titanic.wireless",
+			"actions":{
+				"relayToBridge":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"wireless_priority"},
+				{"mode":"walk", "to":"lookout_sights_berg"},
+				{"mode":"walk", "to":"engine_order"},
+				{"mode":"walk", "to":"collision"},
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"warningsHeeded":{
+					"value":"event.actions.relayToBridge.value"
+				}
+			}
+		},
+		"purser_spare":{
+			"name":"The Purser’s Spare",
+			"start":"1912-04-14T20:00:00",
+			"duration":{"h":1},
+			"location":"titanic.pursers",
+			"actions":{
+				"spareRecovered":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"lookout_sights_berg"},
+				{"mode":"walk", "to":"wireless_priority"},
+				{"mode":"walk", "to":"engine_order"},
+				{"mode":"walk", "to":"collision"},
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"spareRecovered":{
+					"value":"event.actions.spareRecovered.value"
+				}
+			}
+		},
+		"wireless_priority":{
+			"name":"Marconi Traffic Backlog",
+			"start":"1912-04-14T21:40:00",
+			"duration":{"h":1,"m":50},
+			"location":"titanic.wireless",
+			"actions":{
+				"clearBacklogEarlier":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"collision"},
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"californianContact":{
+					"value":"event.actions.clearBacklogEarlier.value"
+				}
+			}
+		},
+		"missing_binoculars":{
+			"name":"Missing Binoculars",
+			"start":"1912-04-14T21:00:00",
+			"duration":{"h":2,"m":39},
+			"location":"titanic.nest",
+			"actions":{
+				"plantKey":{
+					"value":false
+				},
+				"pickTheLocker":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"lookout_sights_berg"},
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"binocularsAccessible":{
+					"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.actions.plantKey.value || event.actions.pickTheLocker.value"
+				}
+			}
+		},
+		"engine_order":{
+			"name":"Full Astern",
+			"start":"1912-04-14T23:30:00",
+			"duration":{"m":10},
+			"location":"titanic.engine",
+			"actions":{
+				"countermandAstern":{
+					"value":false
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"rudderAuthority":{
+					"value":"event.actions.countermandAstern.value"
+				}
+			}
+		},
+		"lookout_sights_berg":{
+			"name":"Berg Sighted",
+			"start":"1912-04-14T23:39:00",
+			"duration":{"m":1},
+			"location":"titanic.nest",
+			"exits":[
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"earlySighting":{
+					"value":"events.missing_binoculars.values.binocularsAccessible.value || events.ice_warnings.values.warningsHeeded.value"
+				}
+			}
+		},
+		"collision":{
+			"name":"The Collision",
+			"start":"1912-04-14T23:40:00",
+			"duration":{"m":1},
+			"location":"titanic.bridge",
+			"exits":[
+				{"mode":"walk", "to":"casualties"}
+			],
+			"values":{
+				"struck":{
+					"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.rudderAuthority.value)"
+				}
+			}
+		},
+		"californian_nearby":{
+			"name":"The Californian Stands By",
+			"start":"1912-04-15T00:10:00",
+			"duration":{"h":1},
+			"location":"atlantic.californian",
+			"values":{
+				"rescueResponds":{
+					"value":"events.wireless_priority.values.californianContact.value"
+				}
+			}
+		},
+		"casualties":{
+			"name":"Loss of Life",
+			"start":"1912-04-15T02:20:00",
+			"duration":{"h":1},
+			"location":"titanic.boatdeck",
+			"values":{
+				"massLossOfLife":{
+					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.boatsForAll.value)"
+				}
+			}
+		}
+	}
+}

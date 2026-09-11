@@ -1,0 +1,28 @@
+{
+	"agents":{
+		"vq":{
+			"name":"Vasquez",
+			"chronal":10
+		},
+		"ok":{
+			"name":"Okonjo",
+			"paradox":2,
+			"chronal":12
+		},
+		"hw":{
+			"name":"Halloway",
+			"paradox":3,
+			"chronal":14
+		},
+		"go":{
+			"name":"Gordon",
+			"paradox":3,
+			"chronal":14
+		},
+		"pi":{
+			"name":"Pierce",
+			"paradox":3,
+			"chronal":14
+		}
+	}
+}

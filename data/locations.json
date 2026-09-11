@@ -1,0 +1,54 @@
+{
+	"locations":{
+		"southampton.harland_wolff":{
+			"name":"Harland & Wolff",
+			"color":"#fcc9",
+			"order":1
+		},
+		"southampton.quay.berth_44":{
+			"name":"Berth 44",
+			"color":"#fcc9",
+			"order":1.1
+		},
+		"titanic":{
+			"name":"Titanic",
+			"color":"#ccf9",
+			"order":1.2
+		},
+		"titanic.pursers":{
+			"name":"Purser’s office",
+			"color":"#ccf9",
+			"order":2.1
+		},
+		"titanic.nest":{
+			"name":"Crow’s nest",
+			"color":"#ccf9",
+			"order":2.2
+		},
+		"titanic.engine":{
+			"name":"Engine room",
+			"color":"#ccf9",
+			"order":2.3
+		},
+		"titanic.bridge":{
+			"name":"Bridge",
+			"color":"#ccf9",
+			"order":2.4
+		},
+		"titanic.wireless":{
+			"name":"Wireless room",
+			"color":"#ccf9",
+			"order":2.5
+		},
+		"titanic.boatdeck":{
+			"name":"Boat deck",
+			"color":"#ccf9",
+			"order":2.6
+		},
+		"atlantic.californian":{
+			"name":"SS Californian",
+			"color":"#fcf9",
+			"order":3
+		}
+	}
+}

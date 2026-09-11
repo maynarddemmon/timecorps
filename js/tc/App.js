@@ -1,0 +1,174 @@
+(pkg => {
+    let appView,
+        model,
+        
+        timelineView,
+        eventDetailsView,
+        
+        dividerV,
+        dividerH,
+        
+        opsView,
+        teamView;
+    
+    const JSClass = JS.Class,
+        M = myt,
+        {
+            View, Text, PlainText,
+            SpacedLayout, ResizeLayout, SizeToParent, 
+            global:G,
+            getRandomInt
+        } = M,
+        
+        {
+            Spacer, WideView, Panel, Btn, SquareBtn, LabeledValue,
+            theme:{
+                layoutSpacing, spacing, padding, cornerRadius, 
+                colorUltraDark, colorDark, colorMedium, colorLight,
+                fontSizeVeryLarge
+            }
+        } = pkg,
+        
+        loadDataIntoModel = (url, resultCallback) => {
+            M.doFetch(url, {}, true,
+                response => {
+                    model.processData(JSON.parse(response));
+                    resultCallback?.(true);
+                }, 
+                err => {
+                    console.error('err', err);
+                    resultCallback?.(false);
+                }
+            );
+        };
+    
+    pkg.App = new JSClass('App', View, {
+        include: [M.RootView, M.SizeToWindow],
+        
+        
+        // Life Cycle //////////////////////////////////////////////////////////
+        initNode: function(parent, attrs) {
+            appView = this;
+            
+            attrs.minWidth = 1200;
+            attrs.minHeight = 600;
+            
+            appView.callSuper(parent, attrs);
+            appView.attachToDom(G.mouse, 'noop', 'contextmenu', true);
+            
+            globalThis.hideSpinner();
+            
+            // Build Model
+            model = pkg.model = new pkg.Model(appView);
+            
+            // Build UI
+            appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:40}));
+            appView.buildMiddleView(new WideView(appView, {layoutHint:1}));
+            appView.buildFooterView(new WideView(appView, {bgColor:colorMedium, height:40}));
+            
+            new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
+            
+            dividerV.setValue(187);
+            dividerH.setValue(338);
+            
+            // Fetch Data
+            loadDataIntoModel('./data/locations.json', success => {
+                loadDataIntoModel('./data/events.json', success => {
+                    loadDataIntoModel('./data/agents.json', success => {
+                        timelineView.setup(model);
+                        timelineView.setTimeWindow("1912-03-01T09:00:00", "1912-04-15T04:00:00", pkg.timeUtil.TO_MINUTE);
+                        
+                        teamView.setup(model);
+                    });
+                });
+            });
+        },
+        
+        
+        // Methods /////////////////////////////////////////////////////////////
+        noop: M.NOOP,
+        
+        buildTopView: topView => {
+            topView.setTextColor(colorUltraDark);
+            
+            new PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            new Spacer(topView);
+            
+            new Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
+                doActivated: () => {
+                    model.reset();
+                }
+            }]);
+            new SquareBtn(topView, {valign:'middle', icon:'⚙', iconSize:fontSizeVeryLarge, iconX:5, iconY:-2, tooltip:'Settings'});
+            
+            new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
+        },
+        
+        buildMiddleView: middleView => {
+            appView.buildOpView(opsView = new Panel(middleView, {title:'Operation'}));
+            teamView = new pkg.Agents(middleView, {title:'Agents'});
+            eventDetailsView = new pkg.EventDetails(middleView);
+            timelineView = new pkg.Timeline(middleView, {title:'Timeline'});
+            appView.attachTo(timelineView,'_onSelectionChanged', 'selectionChanged');
+            
+            dividerV = new M.VerticalDivider(middleView, {
+                height:5, percentOfParentWidth:100, minValue:133, limitToParent:200,
+                activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
+            }, [SizeToParent, {
+                setValue: function(v) {
+                    this.callSuper(v);
+                    this.updateLayout();
+                },
+                updateLayout: function() {
+                    const v = this.value,
+                        upperHeight = v + 2;
+                    opsView.setHeight(upperHeight);
+                    teamView.setHeight(upperHeight);
+                    
+                    eventDetailsView.setY(upperHeight + layoutSpacing);
+                    eventDetailsView.setHeight(middleView.height - eventDetailsView.y);
+                    
+                    timelineView.setY(upperHeight + layoutSpacing);
+                    timelineView.setHeight(middleView.height - timelineView.y);
+                }
+            }]);
+            
+            dividerH = new M.HorizontalDivider(middleView, {
+                width:5, percentOfParentHeight:100, minValue:338, limitToParent:438,
+                activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
+            }, [SizeToParent, {
+                setValue: function(v) {
+                    this.callSuper(v);
+                    if (this.inited) this.updateLayout();
+                },
+                updateLayout: function() {
+                    const v = this.value,
+                        leftWidth = v + 2;
+                    opsView.setWidth(leftWidth);
+                    eventDetailsView.setWidth(leftWidth);
+                    
+                    teamView.setX(leftWidth + layoutSpacing);
+                    teamView.setWidth(middleView.width - teamView.x);
+                    
+                    timelineView.setX(leftWidth + layoutSpacing);
+                    timelineView.setWidth(middleView.width - timelineView.x);
+                }
+            }]);
+            
+            dividerV.syncTo(middleView, 'updateLayout', 'height');
+            dividerH.syncTo(middleView, 'updateLayout', 'width');
+        },
+        
+        buildOpView: () => {
+            
+        },
+        
+        buildFooterView: footerView => {
+            
+        },
+        
+        _onSelectionChanged: event => {
+            eventDetailsView.notifyEventSelectedChanged(event.value);
+        }
+    });
+})(tc);

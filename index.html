@@ -1,0 +1,171 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>Time Corps</title>
+<link rel="preload" href="./fonts/AdventPro.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="./fonts/SpaceMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+<style>
+	@font-face {
+		font-family:'AdventPro';
+		src:url('./fonts/AdventPro.ttf') format('truetype');
+	}
+	
+	@font-face {
+		font-family:'SpaceMono';
+		src:url('./fonts/SpaceMono-Regular.ttf') format('truetype');
+	}
+	
+	:root{
+		--font:AdventPro, sans-serif;
+		--fontSize:12px;
+		--bgMegaDark:#310;
+		--bgUltraDark:#420;
+		--bgDark:#530;
+		--bgUltraLight:#ff9;
+		--fgBtn:#840;
+		--fgBtnBright:#a50;
+	}
+	
+	html,body{height:100%;margin:0px;padding:0px;border:0px none;}
+	input,textarea,select{box-sizing:border-box;}
+	input.mytNativeInput:not([type=button]), textarea.mytNativeInput{margin:0px;padding:1px;border:0px none;}
+	select.mytNativeInput{margin:0px;}
+	.mytButtonText{font-size:12px;font-weight:bold;}
+	.mytUnselectable{user-select:none;}
+
+	body{
+		background:var(--bgMegaDark);
+		color:var(--bgUltraLight);
+		font-size:var(--fontSize);
+		font-weight:500;
+		font-family:var(--font);
+	}
+
+	/* For some reason placeholder text is selectable if you click and drag just right. These rules prevent that. */
+	::placeholder{user-select:none;}
+	:-ms-input-placeholder{user-select:none;}
+
+	.mytCheckerboardPattern{background:repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 4px 4px;}
+	.myt-DatePicker {font:13px/22.5px Arial, Helvetica, sans-serif;user-select:none;}
+
+	/* Spinner */
+	@keyframes centerspin {0% {transform:rotate(0deg);} 100% {transform:rotate(360deg);}}
+	.mytCenterSpin{animation:centerspin 2s linear infinite;}
+
+	@keyframes loaderspin {
+		0% {transform:translate(-50%,-50%) rotate(0deg);} 
+		100% {transform:translate(-50%,-50%) rotate(360deg);}
+	}
+	.fadein {
+		animation:fadein 2s;
+		animation-fill-mode:forwards;
+	}
+	.spin {
+		animation:loaderspin 2s linear infinite;
+	}
+	.nospin {
+		transform:translate(-50%,-50%);
+	}
+	#loader {
+		position:absolute;
+		width:100%;
+		height:100%;
+		min-width:600px;
+		min-height:600px;
+	}
+	#spinner {
+		position:absolute;
+		left:50%;
+		top:50%;
+		border:2px solid #ccc;
+		border-top:2px solid #333;
+		border-radius:50%;
+		width:200px;
+		height:200px;
+	}
+	#appDiv {
+		position:absolute;
+		width:100%;
+		height:100%;
+	}
+	div.roundspinner {
+		border:2px solid #ccc;
+		border-top:2px solid #333;
+		border-radius:50%;
+		animation: centerspin 2s linear infinite;
+	}
+	
+	/* Buttons */
+	.tc-Btn.disabled {opacity:0.35;}
+	
+	.tc-Btn {
+		font-family:var(--font);
+		font-size:var(--fontSize);
+		font-weight:600;
+		color:var(--fgBtn);
+		background-color:#ffffff33;
+		border:1px solid var(--fgBtn);
+		border-radius:3px;
+	}
+	.tc-Btn:hover {
+		background-color:#ffffff66;
+	}
+	.tc-Btn.disabled {
+		background-color:#ffffff33;
+	}
+	
+	.tc-Btn.plain {background-color:transparent; border:none;}
+	.tc-Btn.plain:hover {background-color:#ffffff33;}
+	.tc-Btn.plain.disabled:hover {}
+	
+	.tc-Btn.solid {
+		background-color:var(--fgBtn);
+		color:#fff;
+	}
+	.tc-Btn.solid:hover {
+		background-color:var(--fgBtnBright);
+		border:1px solid var(--fgBtnBright);
+	}
+	.tc-Btn.solid.disabled:hover {}
+	
+	.tc-Btn.underline {
+		background-color:transparent;
+		border-radius:0px;
+		border:none;
+	}
+	.tc-Btn.underline::after {
+		content:"";
+		position:absolute;
+		background-color:var(--fgBtn);
+		left:0;
+		bottom:1px;
+		width:0;
+		height:1px;
+		transition:width .3s ease;
+	}
+	.tc-Btn.underline:hover::after {width:100%;}
+	.tc-Btn.underline.disabled:hover::after {width:0%;}
+</style>
+<script>
+const getElem = id => document.getElementById(id),
+	writeScript = src => document.write('<script src="./'+src+'.js">\x3C/script>');
+globalThis.hideSpinner = () => {
+	getElem('spinner').className = 'nospin';
+	getElem('loader').style.display = 'none';
+}
+globalThis.showSpinner = () => {
+	getElem('loader').style.display = 'block';
+	getElem('loader').className = 'fadein';
+	getElem('spinner').className = 'spin';
+}
+globalThis.TC_ROOT = './js/tc/';
+writeScript('lib/loader-browser.min');
+writeScript('js/tc/manifest');
+</script>
+</head><body></div><div id="appDiv"></div><div id="loader"><div id="spinner"></div></div>
+<script>
+	showSpinner();
+	JS.require('tc.all', () => {
+		tc.IMAGE_ROOT = './img/';
+		new tc.App(getElem('appDiv'));
+	});
+</script>
+</body></html>
