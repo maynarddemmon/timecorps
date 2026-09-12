@@ -2,22 +2,26 @@
 	"agents":{
 		"vq":{
 			"name":"Vasquez",
-			"chronal":10
+			"chronal":10,
+			"event":"casualties"
 		},
 		"ok":{
 			"name":"Okonjo",
 			"paradox":2,
-			"chronal":12
+			"chronal":12,
+			"event":"roster_reshuffle"
 		},
 		"hw":{
 			"name":"Halloway",
 			"paradox":3,
-			"chronal":14
+			"chronal":14,
+			"event":"lifeboat_capacity"
 		},
 		"go":{
 			"name":"Gordon",
 			"paradox":3,
-			"chronal":14
+			"chronal":14,
+			"event":"purser_spare"
 		},
 		"pi":{
 			"name":"Pierce",

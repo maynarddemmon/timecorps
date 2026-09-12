@@ -2,16 +2,62 @@
     const JSClass = JS.Class,
         
         {Grid:{SORT_ORDER_ASC}} = myt,
-        {LabeledValue, InfiniteGridWrapper, GridColHdr} = pkg,
+        {
+            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format}
+        } = pkg,
         
         /*AgentRow = new JSClass('AgentRow', pkg.GridRow, {
             getColIds: () => ['id','name', 'paradox', 'chronal']
         })*/
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
-            getColIds: () => ['id','name', 'paradox', 'chronal'],
+            getColIds: () => ['id','name','event','where','when','paradox','chronal'],
             supportsDoubleClick: () => true,
-            doDoubleClick: () => console.log('double click')
+            doDoubleClick: () => console.log('double click'),
+            notifyCellUpdated: function(colId) {
+                switch (colId) {
+                    case 'event': {
+                        const event = this.model.getEventModel();
+                        this.getRef(colId).setText(event ? event.name : 'unknown');
+                        break;
+                    }
+                    case 'where': {
+                        const event = this.model.getEventModel();
+                        this.getRef(colId).setText(event ? event.getLocationModel()?.name : 'unknown');
+                        break;
+                    }
+                    case 'when': {
+                        const event = this.model.getEventModel();
+                        this.getRef(colId).setText(event ? format(event.getStart()) : 'unknown');
+                        break;
+                    }
+                    default:
+                        this.callSuper(colId);
+                }
+            },
+            getCellClass: function(colId) {
+                switch (colId) {
+                    case 'event':
+                    case 'where':
+                    case 'when':
+                        return GridCellBtn;
+                    default:
+                        return this.callSuper(colId);
+                }
+            },
+            doCellBtnActivated: function(colId) {
+                switch (colId) {
+                    case 'event':
+                        pkg.app.getTimelineView().scrollToEventBox(this.model.getEventModel());
+                        break;
+                    case 'where':
+                        pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel());
+                        break;
+                    case 'when':
+                        pkg.app.getTimelineView().scrollToTime(this.model.getEventModel()?.getStart());
+                        break;
+                }
+            }
         });
     
     pkg.Agents = new JSClass('Agents', pkg.Panel, {
@@ -39,17 +85,96 @@
                 rowClasses:AgentRow,
                 initialSort:['id', SORT_ORDER_ASC]
             }, [{
+                makeGridHeaders: gridHeader => {
+                    new GridColHdr(gridHeader, {columnId:'id',      minValue:40, maxValue:40,  text:'ID'});
+                    new GridColHdr(gridHeader, {columnId:'name',    minValue:70, maxValue:2000, flex:1, text:'Name'});
+                    new GridColHdr(gridHeader, {columnId:'event',   minValue:70, maxValue:2000, flex:1, text:'Event'});
+                    new GridColHdr(gridHeader, {columnId:'where',   minValue:70, maxValue:2000, flex:1, text:'Where'});
+                    new GridColHdr(gridHeader, {columnId:'when',    minValue:70, maxValue:2000, flex:1, text:'When'});
+                    new GridColHdr(gridHeader, {columnId:'paradox', minValue:60, maxValue:60, text:'Paradox'});
+                    new GridColHdr(gridHeader, {columnId:'chronal', minValue:60, maxValue:60, text:'Chronal'});
+                },
+                doRowModelSelected: model => {},
                 getTieBreakerSortFunction: (sortColumnId, ascending) => {
                     const sortAsc = ascending ? 1 : -1;
                     return (a, b) => a.id.localeCompare(b.id) * sortAsc;
                 },
-                makeGridHeaders: gridHeader => {
-                    new GridColHdr(gridHeader, {columnId:'id',      minValue:50,  maxValue:50,  text:'ID'});
-                    new GridColHdr(gridHeader, {columnId:'name',    minValue:100, maxValue:5000, flex:1, text:'Name'});
-                    new GridColHdr(gridHeader, {columnId:'paradox', minValue:100, maxValue:100, text:'Paradox'});
-                    new GridColHdr(gridHeader, {columnId:'chronal', minValue:100, maxValue:100, text:'Chronal'});
-                },
-                doRowModelSelected: model => {}
+                getSortFunction: function(sortColumnId, ascending, tieBreakerSortFunc) {
+                    const sortAsc = ascending ? 1 : -1;
+                    switch (sortColumnId) {
+                        case 'event':
+                            return (a, b) => {
+                                const eventA = a.getEventModel(),
+                                    eventB = b.getEventModel();
+                                if (!eventA) {
+                                    if (!eventB) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return sortAsc;
+                                    }
+                                } else if (!eventB) {
+                                    if (!eventA) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return -sortAsc;
+                                    }
+                                } else {
+                                    const vA = eventA.name;
+                                        vB = eventB.name;
+                                    if (vA === vB) return tieBreakerSortFunc(a, b);
+                                    return vA.localeCompare(vB) * sortAsc;
+                                }
+                            };
+                        case 'where':
+                            return (a, b) => {
+                                const locA = a.getEventModel()?.getLocationModel(),
+                                    locB = b.getEventModel()?.getLocationModel();
+                                if (!locA) {
+                                    if (!locB) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return sortAsc;
+                                    }
+                                } else if (!locB) {
+                                    if (!locA) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return -sortAsc;
+                                    }
+                                } else {
+                                    const vA = locA.name;
+                                        vB = locB.name;
+                                    if (vA === vB) return tieBreakerSortFunc(a, b);
+                                    return vA.localeCompare(vB) * sortAsc;
+                                }
+                            };
+                        case 'when':
+                            return (a, b) => {
+                                const eventA = a.getEventModel(),
+                                    eventB = b.getEventModel();
+                                if (!eventA) {
+                                    if (!eventB) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return sortAsc;
+                                    }
+                                } else if (!eventB) {
+                                    if (!eventA) {
+                                        return tieBreakerSortFunc(a, b);
+                                    } else {
+                                        return -sortAsc;
+                                    }
+                                } else {
+                                    const vA = eventA.getStart();
+                                        vB = eventB.getStart();
+                                    if (vA === vB) return tieBreakerSortFunc(a, b);
+                                    return (vA - vB) * sortAsc;
+                                }
+                            };
+                        default:
+                            return this.callSuper(sortColumnId, ascending, tieBreakerSortFunc);
+                    }
+                }
             }]);
             
             self.ready = true;

@@ -484,6 +484,40 @@
             return this.flowLayer.getConnections(eventBox);
         },
         
+        getEventBox: function(eventModelOrId) {
+            if (eventModelOrId) return this.boxesByEventId[typeof eventModelOrId === 'string' ? eventModelOrId : eventModelOrId.id];
+        },
+        
+        getLocationColumn: function(modelOrId) {
+            if (modelOrId) {
+                let locationId;
+                if (typeof modelOrId === 'string') {
+                    locationId = modelOrId;
+                } else if (modelOrId.isA(pkg.EventModel)) {
+                    locationId = modelOrId.getLocation();
+                } else {
+                    // Assume LocationModel
+                    locationId = modelOrId.id;
+                }
+                
+                if (locationId) return this.colsByLocId[locationId];
+            }
+        },
+        
+        scrollToEventBox: function(modelOrId, smoothly=true) {
+            const eventBox = this.getEventBox(modelOrId);
+            if (eventBox) this.scrollCaptureView.scrollXYTo(eventBox.x, eventBox.y, true, smoothly);
+        },
+        
+        scrollToLocation: function(modelOrId, smoothly=true) {
+            const locationColumn = this.getLocationColumn(modelOrId);
+            if (locationColumn) this.scrollCaptureView.scrollXTo(locationColumn.x, true, smoothly);
+        },
+        
+        scrollToTime: function(millis, smoothly=true) {
+            this.scrollCaptureView.scrollYTo(millisToPx(this, millis), true, smoothly);
+        },
+        
         setup: function(model) {
             this.model = model;
             refreshLocationColumns(this);

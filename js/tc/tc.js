@@ -351,6 +351,9 @@
         GridCell = new JSClass('GridCell', M.GridCell, {
             /** @overrides */
             initNode: function(parent, attrs) {
+                this.colId = attrs.colId;
+                delete attrs.colId;
+                
                 attrs.height ??= rowHeight;
                 attrs.paddingTop ??= 5;
                 attrs.paddingRight ??= 7;
@@ -365,12 +368,41 @@
             include:[M.PlainTextSupport],
         }),
         
+        GridCellBtn = new JSClass('GridCellBtn', Btn, {
+            include: [M.MouseEventsBubbleUp],
+            
+            initNode: function(parent, attrs) {
+                this.colId = attrs.colId;
+                delete attrs.colId;
+                
+                attrs.tagName = 'div'; // button has some different layut quirks so use div.
+                attrs.paddingTop ??= 4;
+                attrs.paddingBottom ??= 4;
+                attrs.y ??= 1;
+                attrs.buttonType ??= 'plain';
+                attrs.textAlign ??= 'left';
+                
+                // If whiteSpace or overflow is being set then don't enable ellipsis since that
+                // messed with the white-space and overflow CSS property.
+                const enableEllipsis = attrs.whiteSpace == null && attrs.overflow == null;
+                
+                this.callSuper(parent, attrs);
+                
+                if (enableEllipsis) this.enableEllipsis();
+            },
+            doActivated: function() {
+                this.parent.doCellBtnActivated(this.colId);
+            }
+            //setWidth:function(v) {this.callSuper(v - 2);}, // Compensate for border
+            //setHeight:function(v) {this.callSuper(v - 2);} // Compensate for border
+        }),
+        
         GridRowMixin = new JSModule('GridRowMixin', {
             initNode: function(parent, attrs) {
                 const self = this;
                 self.callSuper(parent, attrs);
                 for (const colId of self.getColIds()) {
-                    self.addRef(colId, new (self.getCellClass(colId))(self));
+                    self.addRef(colId, new (self.getCellClass(colId))(self, {colId}));
                 }
             },
             
@@ -419,7 +451,11 @@
             
             updateUI: function() {
                 this.callSuper();
-                this.setTextColor(this.selected ? colorUltraLight : null);
+                const textColor = this.selected ? colorUltraLight : null;
+                this.setTextColor(textColor);
+                for (const sv of this.getSubviews()) {
+                    if (sv.isA(GridCellBtn)) sv.setTextColor(textColor);
+                }
             },
             
             notifyModelUpdated: function() {
@@ -736,11 +772,12 @@
         };
     
     pkg.tc = {
+        app:null, // Holds the App instance.
         model:null, // Holds the Model instance.
         
         theme,
         Spacer, WideView, TallView, Panel, Btn, SquareBtn, LabeledValue,
-        InfiniteGridWrapper, GridColHdr, GridCell, PlainGridCell, GridRow, SelectableGridRow,
+        InfiniteGridWrapper, GridColHdr, GridCell, PlainGridCell, GridCellBtn, GridRow, SelectableGridRow,
         
         timeUtil
     };

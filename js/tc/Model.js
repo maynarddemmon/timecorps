@@ -193,7 +193,7 @@
         
         
         // Agents //////////////////////////////////////////////////////////////
-        AgentModel = new JSClass('AgentModel', BaseModel, {
+        AgentModel = pkg.AgentModel = new JSClass('AgentModel', BaseModel, {
             init: function(attrs) {
                 this.paradox = this.chronal = 0;
                 this.callSuper(attrs);
@@ -207,7 +207,18 @@
             
             setName: function(name) {this.setAndNotifyCollection('name', name, true);},
             setParadox: function(paradox) {this.setAndNotifyCollection('paradox', paradox, true);},
-            setChronal: function(chronal) {this.setAndNotifyCollection('chronal', chronal, true);}
+            setChronal: function(chronal) {this.setAndNotifyCollection('chronal', chronal, true);},
+            
+            setEvent: function(event) {
+                if (this.event !== event) {
+                    this._eventModel = null;
+                    this.set('event', event, true);
+                }
+            },
+            getEvent: function() {return this.event;},
+            getEventModel: function() {
+                return this._eventModel ?? (this._eventModel = model.getEventModel(this.event));
+            }
         }),
         
         
@@ -216,7 +227,7 @@
         TRAVEL_MODE_WALK = 'walk',
         DEFAULT_TRAVEL_MODE = TRAVEL_MODE_WALK,
         
-        LocationModel = new JSClass('LocationModel', BaseModel, {
+        LocationModel = pkg.LocationModel = new JSClass('LocationModel', BaseModel, {
             setName: function(name) {this.set('name', name, true);},
             setColor: function(color) {this.set('color', color, true);},
             setOrder: function(order) {this.set('order', order, true);}
@@ -271,7 +282,7 @@
             }
         }),
         
-        EventModel = new JSClass('EventModel', BaseModel, {
+        EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             init: function(attrs) {
                 this.actions = {};
                 this.values = {};
@@ -308,7 +319,7 @@
             },
             getLocation: function() {return this.location;},
             getLocationModel: function() {
-                return this._locModel ?? (this._locModel = getLocationModel(this.location));
+                return this._locModel ?? (this._locModel = model.getLocation(this.location));
             },
             
             // Actions

@@ -48,7 +48,7 @@
         
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
-            appView = this;
+            appView = pkg.app = this;
             
             attrs.minWidth = 1200;
             attrs.minHeight = 600;
@@ -87,6 +87,8 @@
         
         // Methods /////////////////////////////////////////////////////////////
         noop: M.NOOP,
+        
+        getTimelineView: () => timelineView,
         
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);

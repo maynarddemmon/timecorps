@@ -22,6 +22,7 @@
 		--bgUltraLight:#ff9;
 		--fgBtn:#840;
 		--fgBtnBright:#a50;
+		--fgBtnSuperBright:#c60;
 	}
 	
 	html,body{height:100%;margin:0px;padding:0px;border:0px none;}
@@ -105,15 +106,13 @@
 		border:1px solid var(--fgBtn);
 		border-radius:3px;
 	}
-	.tc-Btn:hover {
-		background-color:#ffffff66;
-	}
-	.tc-Btn.disabled {
-		background-color:#ffffff33;
-	}
+	.tc-Btn:hover {background-color:#ffffff66;}
+	.tc-Btn:active {background-color:#ffffff99;}
+	.tc-Btn.disabled {background-color:#ffffff33;}
 	
 	.tc-Btn.plain {background-color:transparent; border:none;}
 	.tc-Btn.plain:hover {background-color:#ffffff33;}
+	.tc-Btn.plain:active {background-color:#ffffff66;}
 	.tc-Btn.plain.disabled:hover {}
 	
 	.tc-Btn.solid {
@@ -123,6 +122,10 @@
 	.tc-Btn.solid:hover {
 		background-color:var(--fgBtnBright);
 		border:1px solid var(--fgBtnBright);
+	}
+	.tc-Btn.solid:active {
+		background-color:var(--fgBtnSuperBright);
+		border:1px solid var(--fgBtnSuperBright);
 	}
 	.tc-Btn.solid.disabled:hover {}
 	
