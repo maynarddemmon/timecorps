@@ -392,9 +392,9 @@
             },
             doActivated: function() {
                 this.parent.doCellBtnActivated(this.colId);
-            }
-            //setWidth:function(v) {this.callSuper(v - 2);}, // Compensate for border
-            //setHeight:function(v) {this.callSuper(v - 2);} // Compensate for border
+            },
+            setWidth:function(v) {this.callSuper(v - 3);}, // Compensate for border and 1px of spacing
+            setHeight:function(v) {this.callSuper(v - 2);} // Compensate for border
         }),
         
         GridRowMixin = new JSModule('GridRowMixin', {
