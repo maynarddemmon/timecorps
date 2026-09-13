@@ -88,8 +88,6 @@
         // Methods /////////////////////////////////////////////////////////////
         noop: M.NOOP,
         
-        getTimelineView: () => timelineView,
-        
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
             
@@ -109,9 +107,10 @@
         buildMiddleView: middleView => {
             appView.buildOpView(opsView = new Panel(middleView, {title:'Operation'}));
             teamView = new pkg.Agents(middleView, {title:'Agents'});
+            appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             eventDetailsView = new pkg.EventDetails(middleView);
             timelineView = new pkg.Timeline(middleView, {title:'Timeline'});
-            appView.attachTo(timelineView,'_onSelectionChanged', 'selectionChanged');
+            appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
                 height:5, percentOfParentWidth:100, minValue:133, limitToParent:200,
@@ -161,16 +160,30 @@
             dividerH.syncTo(middleView, 'updateLayout', 'width');
         },
         
-        buildOpView: () => {
-            
-        },
+        buildOpView: () => {},
+        buildFooterView: footerView => {},
         
-        buildFooterView: footerView => {
-            
-        },
+        getTimelineView: () => timelineView,
         
-        _onSelectionChanged: event => {
+        _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
+        },
+        
+        _onAgentSelectionChanged: event => { // value is an AgentModel
+            eventDetailsView.notifyAgentSelectedChanged(event.value);
+        },
+        
+        notifyEventModelAdded: eventModel => {
+            //console.log('add event', eventModel);
+        },
+        
+        notifyEventModelUpdated: eventModel => {
+            //console.log('update event', eventModel);
+            eventDetailsView.notifyEventModelChanged(eventModel);
+        },
+        
+        notifyEventModelRemoved: eventModel => {
+            //console.log('remove event', eventModel);
         }
     });
 })(tc);

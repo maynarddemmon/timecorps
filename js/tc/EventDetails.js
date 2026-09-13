@@ -6,7 +6,7 @@
         } = myt,
         
         {
-            WideView, timeUtil:{format},
+            Btn, WideView, timeUtil:{format},
             theme:{
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark
@@ -28,6 +28,13 @@
             const detailsContainer = self.detailsContainer = new WideView(self, {visible:false});
             self.actionsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
             self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
+            self.agentsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
+            self.deployAgentBtn = new Btn(detailsContainer, {buttonType:'solid'}, [{
+                doActivated: () => {
+                    self.selectedAgentModel.doDeployToEvent(self.eventModel);
+                }
+            }]);
+            
             new SpacedLayout(detailsContainer, {axis:'y', spacing:0, collapseParent:true});
             
             self.ready = true;
@@ -59,17 +66,32 @@
         
         // Methods /////////////////////////////////////////////////////////////
         notifyEventSelectedChanged: function(eventBox) {
+            const newEventModel = this.eventModel = eventBox?.model ?? null;
+            this.updateForEventModel();
+        },
+        
+        notifyEventModelChanged: function(eventModel) {
+            if (eventModel && this.eventModel === eventModel) {
+                this.updateForEventModel();
+            }
+        },
+        
+        notifyAgentSelectedChanged: function(agentModel) {
+            this.selectedAgentModel = agentModel;
+            this.updateForSelectedAgent();
+        },
+        
+        updateForEventModel: function() {
             const self = this,
-                {noSelectionTxt, detailsContainer} = self,
-                model = self.model = eventBox?.model ?? null,
-                hasModel = model != null;
+                {eventModel, noSelectionTxt, detailsContainer} = self,
+                hasModel = eventModel != null;
             
             noSelectionTxt.setVisible(!hasModel);
             detailsContainer.setVisible(hasModel);
             
             if (hasModel) {
                 let txt = 'Actions';
-                const actionModels = model.getActionModels();
+                const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
                     txt += '<br>- ' + actionId + ': ' + actionModel.value;
@@ -77,19 +99,44 @@
                 self.actionsTxt.setText(txt);
                 
                 txt = 'Values';
-                const valueModels = model.getValueModels();
+                const valueModels = eventModel.getValueModels();
                 for (const valueId in valueModels) {
                     const valueModel = valueModels[valueId];
                     txt += '<br>- ' + valueId + ': ' + valueModel.value;
                 }
                 self.valuesTxt.setText(txt);
+                
+                txt = 'Agents';
+                for (const agentModel of eventModel.getAgentModels()) {
+                    txt += '<br>- ' + agentModel.id + ': ' + agentModel.name;
+                }
+                self.agentsTxt.setText(txt);
             }
             
             self.updateTitle();
+            self.updateForSelectedAgent();
+        },
+        
+        updateForSelectedAgent: function() {
+            const self = this,
+                {selectedAgentModel, eventModel, deployAgentBtn} = self,
+                hasEventModel = eventModel != null,
+                hasModel = selectedAgentModel != null;
+            
+            if (hasEventModel) {
+                deployAgentBtn.setVisible(hasModel);
+                if (hasModel) {
+                    const chronalNeeded = pkg.getChronalToDeploy(selectedAgentModel, eventModel),
+                        chronalAvailable = selectedAgentModel.chronal,
+                        hasEnoughChronal = chronalNeeded <= chronalAvailable;
+                    deployAgentBtn.setDisabled(!hasEnoughChronal || selectedAgentModel.isAtEvent(eventModel));
+                    deployAgentBtn.setText('Deploy ' + selectedAgentModel.name + ' [' + chronalNeeded + '/' + chronalAvailable + ']');
+                }
+            }
         },
         
         updateTitle: function() {
-            this.setTitle('Event : ' + (this.model?.name ?? 'none'));
+            this.setTitle('Event : ' + (this.eventModel?.name ?? 'none'));
         }
     });
 })(tc);

@@ -2,7 +2,6 @@
     let model;
     
     const JSClass = JS.Class,
-        isArray = Array.isArray,
         
         {
             Node, resolveName, ExpressionParser,
@@ -10,9 +9,7 @@
             AccessorSupport:{generateName, generateSetterName}
         } = myt,
         
-        {
-            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}
-        } = pkg,
+        {timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}} = pkg,
         
         STARTING_CHRONAL = 16,
         STARTING_CHRONAL_LIMIT = 24,
@@ -21,6 +18,8 @@
         STARTING_PARADOX_LIMIT = 18,
         
         // Constraints /////////////////////////////////////////////////////////
+        SCOPE_AGENTS = 'agents',
+        SCOPE_LOCATIONS = 'locations',
         SCOPE_EVENTS = 'events',
         SCOPE_EVENT = 'event',
         PROP_PATHS = new Map(),
@@ -201,7 +200,7 @@
             
             getAsObj: function(cfg) {
                 const retval = this.callSuper(cfg);
-                for (const attrName of ['name','paradox','chronal']) retval[attrName] = this[attrName];
+                for (const attrName of ['name','paradox','chronal','event']) retval[attrName] = this[attrName];
                 return retval;
             },
             
@@ -212,12 +211,39 @@
             setEvent: function(event) {
                 if (this.event !== event) {
                     this._eventModel = null;
-                    this.set('event', event, true);
+                    this.setAndNotifyCollection('event', event, true);
                 }
             },
             getEvent: function() {return this.event;},
             getEventModel: function() {
                 return this._eventModel ?? (this._eventModel = model.getEventModel(this.event));
+            },
+            isAtEvent: function(eventModelOrId) {
+                switch (typeof eventModelOrId) {
+                    case 'string':
+                        return this.event === eventModelOrId;
+                    case 'object':
+                        return this.getEventModel() === eventModelOrId;
+                    default:
+                        console.warn('Unexpected type in isAtEvent', typeof eventModelOrId);
+                        return false;
+                }
+            },
+            
+            // Actions
+            doDeployToEvent: function(eventModel) {
+                if (eventModel) {
+                    const cost = pkg.getChronalToDeploy(this, eventModel);
+                    if (cost <= this.chronal) {
+                        this.setChronal(this.chronal - cost);
+                        this.setEvent(eventModel.id);
+                        eventModel.notifyCollectionOfUpdate();
+                    } else {
+                        console.warn('insufficent chronal');
+                    }
+                } else {
+                    console.warn('doDeployToEvent: no eventModel');
+                }
             }
         }),
         
@@ -322,6 +348,11 @@
                 return this._locModel ?? (this._locModel = model.getLocation(this.location));
             },
             
+            // Agents
+            getAgentModels: function() {
+                return model.getAgentModelsForEvent(this.id);
+            },
+            
             // Actions
             setActions: function(actions) {
                 for (const id in actions) {
@@ -383,9 +414,23 @@
         initNode: function(parent, attrs) {
             model = this;
             
-            model.events = new BaseModelCollection({modelClass:EventModel});
-            model.agents = new BaseModelCollection({modelClass:AgentModel});
-            model.locations = new BaseModelCollection({modelClass:LocationModel});
+            // Note: events, agents and locations are part of the external API.
+            model[SCOPE_EVENTS] = new BaseModelCollection({modelClass:EventModel}, [{
+                fireAddedEvent: function(model) {
+                    this.callSuper(model);
+                    pkg.app.notifyEventModelAdded(model);
+                },
+                fireUpdatedEvent: function(model) {
+                    this.callSuper(model);
+                    pkg.app.notifyEventModelUpdated(model);
+                },
+                fireRemovedEvent: function(model) {
+                    this.callSuper(model);
+                    pkg.app.notifyEventModelRemoved(model);
+                }
+            }]);
+            model[SCOPE_AGENTS] = new BaseModelCollection({modelClass:AgentModel});
+            model[SCOPE_LOCATIONS] = new BaseModelCollection({modelClass:LocationModel});
             
             model.callSuper(parent, attrs);
             
@@ -403,15 +448,16 @@
         getChronalLimit: () => model.chronalLimit,
         setChronalLimit: v => {model.set('chronalLimit', v, true);},
         
-        getEventModel: id => model.events.getById(id),
-        getEventModels: () => model.events.getAll(),
+        getEventModel: id => model[SCOPE_EVENTS].getById(id),
+        getEventModels: () => model[SCOPE_EVENTS].getAll(),
         
-        getAgentModel: id => model.agents.getById(id),
-        getAgentModels: () => model.agents.getAll(),
+        getAgentModel: id => model[SCOPE_AGENTS].getById(id),
+        getAgentModels: () => model[SCOPE_AGENTS].getAll(),
+        getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsList(agent => agent.event === eventId),
         
-        getLocation: id => model.locations.getById(id),
-        getLocations: () => model.locations.getAll(),
-        getLocationsInOrder: () => model.locations.getAsSortedList((a, b) => a.order - b.order),
+        getLocation: id => model[SCOPE_LOCATIONS].getById(id),
+        getLocations: () => model[SCOPE_LOCATIONS].getAll(),
+        getLocationsInOrder: () => model[SCOPE_LOCATIONS].getAsSortedList((a, b) => a.order - b.order),
         
         // Methods /////////////////////////////////////////////////////////////
         reset: () => {
@@ -423,7 +469,7 @@
         },
         
         processData: json => {
-            for (const dataKey of ['locations','events','agents']) {
+            for (const dataKey of [SCOPE_LOCATIONS,SCOPE_EVENTS,SCOPE_AGENTS]) {
                 const data = json[dataKey];
                 if (data) {
                     for (const id in data) {
@@ -438,7 +484,7 @@
     
     // FIXME: testing
     /*setInterval(() => {
-        const agents = model.agents.getAsList(),
+        const agents = model[SCOPE_AGENTS].getAsList(),
             len = agents.length;
         for (let i = 0; i < len; i++) {
             const agent = agents[i];
@@ -446,10 +492,10 @@
             agent.setChronal(myt.getRandomInt(10, 25));
         }
         
-        model.agents.removeById(agents[myt.getRandomInt(0, len - 1)].id, true);
+        model[SCOPE_AGENTS].removeById(agents[myt.getRandomInt(0, len - 1)].id, true);
         
         const guid = myt.generateGuid();
-        model.agents.addModel({id:'id-' + guid, name:'name-' + guid, paradox:0, chronal:10});
+        model[SCOPE_AGENTS].addModel({id:'id-' + guid, name:'name-' + guid, paradox:0, chronal:10});
     }, 1000);*/
     
 })(tc);

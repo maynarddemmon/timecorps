@@ -488,6 +488,14 @@
             if (eventModelOrId) return this.boxesByEventId[typeof eventModelOrId === 'string' ? eventModelOrId : eventModelOrId.id];
         },
         
+        doSelectEvent: function(eventModelOrId, scrollTo, smoothly=true) {
+            const eventBox = this.getEventBox(eventModelOrId);
+            if (eventBox) {
+                this.select(eventBox);
+                if (scrollTo) this.scrollToEventBox(eventModelOrId, smoothly);
+            }
+        },
+        
         getLocationColumn: function(modelOrId) {
             if (modelOrId) {
                 let locationId;

@@ -13,7 +13,9 @@
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
             getColIds: () => ['id','name','event','where','when','paradox','chronal'],
             supportsDoubleClick: () => true,
-            doDoubleClick: () => console.log('double click'),
+            doDoubleClick: function() {
+                pkg.app.getTimelineView().doSelectEvent(this.model.getEventModel(), true);
+            },
             notifyCellUpdated: function(colId) {
                 switch (colId) {
                     case 'event': {
@@ -94,7 +96,9 @@
                     new GridColHdr(gridHeader, {columnId:'paradox', minValue:60, maxValue:60, text:'Paradox'});
                     new GridColHdr(gridHeader, {columnId:'chronal', minValue:60, maxValue:60, text:'Chronal'});
                 },
-                doRowModelSelected: model => {},
+                doRowModelSelected: model => {
+                    self.fireEvent('selectionChanged', model);
+                },
                 getTieBreakerSortFunction: (sortColumnId, ascending) => {
                     const sortAsc = ascending ? 1 : -1;
                     return (a, b) => a.id.localeCompare(b.id) * sortAsc;

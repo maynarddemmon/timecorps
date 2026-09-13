@@ -1,7 +1,10 @@
 (pkg => {
     const {Class:JSClass, Module:JSModule} = JS,
         
-        {round:mathRound} = Math,
+        {
+            min:mathMin, max:mathMax, round:mathRound, ceil:mathCeil, floor:mathFloor, 
+            log2:mathLog2, log10:mathLog10, abs:mathAbs, trunc:mathTrunc
+        } = Math,
         
         M = myt,
         {
@@ -9,6 +12,12 @@
             NOOP, FALSE_FUNC, TRUE_FUNC
         } = M,
         
+        // Game Properties /////////////////////////////////////////////////////
+        HQ_TIME = new Date('2174-10-14T00:00:00').getTime(),
+        MIN_DEPLOY_CHRONAL = 1,
+        
+        
+        // Theme ///////////////////////////////////////////////////////////////
         layoutSpacing = 1,
         spacing = 2,
         padding = 8,
@@ -35,6 +44,8 @@
             fontFamilyMono
         },
         
+        
+        // UI Classes //////////////////////////////////////////////////////////
         Spacer = new JSClass('Spacer', View, {
             initNode: function(parent, attrs) {
                 attrs.layoutHint ??= 1;
@@ -214,6 +225,7 @@
                 this.callSuper(parent, attrs);
             }
         }),
+        
         
         // Grids ///////////////////////////////////////////////////////////////
         InfiniteGridWrapper = new JSClass('InfiniteGridWrapper', View, {
@@ -624,7 +636,7 @@
             /*  The coarser of two precisions. Use to clamp what a player may see
                 against what the author actually knew. */
             coarser: (a, b) => PRECISION_ORDER[
-                Math.min(PRECISION_RANK[a] ?? 0, PRECISION_RANK[b] ?? 0)
+                mathMin(PRECISION_RANK[a] ?? 0, PRECISION_RANK[b] ?? 0)
             ],
             
             format: (date, precision=TO_SECOND) => {
@@ -636,11 +648,11 @@
                 switch (precision) {
                     case TO_MILLENIUM:
                         // "c." only where the number is genuinely a rounding
-                        return 'c. ' + eraLabel({n:Math.max(1000, mathRound(era.n / 1000) * 1000), era:era.era});
+                        return 'c. ' + eraLabel({n:mathMax(1000, mathRound(era.n / 1000) * 1000), era:era.era});
                     case TO_CENTURY:
-                        return ordinal(Math.ceil(era.n / 100)) + ' century' + (era.era === 'BCE' ? ' BCE' : '');
+                        return ordinal(mathCeil(era.n / 100)) + ' century' + (era.era === 'BCE' ? ' BCE' : '');
                     case TO_DECADE:
-                        return (Math.floor(era.n / 10) * 10) + 's' + (era.era === 'BCE' ? ' BCE' : '');
+                        return (mathFloor(era.n / 10) * 10) + 's' + (era.era === 'BCE' ? ' BCE' : '');
                     case TO_YEAR:
                         return year;
                     case TO_MONTH:
@@ -668,17 +680,17 @@
             
             /*  Elapsed time, for action blocks and travel legs. */
             formatDuration: millis => {
-                const abs = Math.abs(millis),
+                const abs = mathAbs(millis),
                     unit = (v, one, many) => v + ' ' + (v === 1 ? one : many);
                 if (abs < MILLIS_PER_SECOND) return millis + ' ms';
                 if (abs < MILLIS_PER_MINUTE) return mathRound(millis / MILLIS_PER_SECOND) + ' sec';
                 if (abs < MILLIS_PER_HOUR) {
-                    const m = Math.trunc(millis / MILLIS_PER_MINUTE),
+                    const m = mathTrunc(millis / MILLIS_PER_MINUTE),
                         s = mathRound((abs % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND);
                     return s ? m + 'm ' + s + 's' : m + ' min';
                 }
                 if (abs < MILLIS_PER_DAY) {
-                    const h = Math.trunc(millis / MILLIS_PER_HOUR),
+                    const h = mathTrunc(millis / MILLIS_PER_HOUR),
                         m = mathRound((abs % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE);
                     return m ? h + 'h ' + m + 'm' : h + ' hr';
                 }
@@ -718,7 +730,7 @@
                         const step = SCALE_YEARS[scale] || 1;
                         d.setUTCHours(0, 0, 0, 0);
                         // setUTCFullYear, not Date.UTC — the latter folds 0-99 into the 1900s.
-                        d.setUTCFullYear(Math.floor(d.getUTCFullYear() / step) * step, 0, 1);
+                        d.setUTCFullYear(mathFloor(d.getUTCFullYear() / step) * step, 0, 1);
                         return d;
                     }
                 }
@@ -769,16 +781,43 @@
                 }
                 return out;
             }
+        },
+        
+        getChronalByTimeDiff = (a, b) => {
+            if (a === b) return 0;
+            return mathFloor(mathLog2(2 + 2* mathAbs(a - b) / MILLIS_PER_WEEK));
+        },
+        
+        getChronalFromHQ = a => {
+            b = HQ_TIME;
+            if (a === b) return 0;
+            return mathFloor(mathLog10(2 + 2* mathAbs(a - b) / MILLIS_PER_YEAR));
+        },
+        
+        getChronalToDeploy = (agentModel, eventModel) => {
+            const eventTime = eventModel.getStart(),
+                agentEvent = agentModel.getEventModel();
+            let cost;
+            if (agentEvent) {
+                cost = getChronalByTimeDiff(agentEvent.getEnd(), eventTime);
+            } else {
+                cost = getChronalFromHQ(eventTime);
+            }
+            return mathMax(MIN_DEPLOY_CHRONAL, cost);
         };
     
     pkg.tc = {
         app:null, // Holds the App instance.
         model:null, // Holds the Model instance.
         
+        HQ_TIME,
+        
         theme,
         Spacer, WideView, TallView, Panel, Btn, SquareBtn, LabeledValue,
         InfiniteGridWrapper, GridColHdr, GridCell, PlainGridCell, GridCellBtn, GridRow, SelectableGridRow,
         
-        timeUtil
+        timeUtil,
+        
+        getChronalToDeploy
     };
 })(window);
