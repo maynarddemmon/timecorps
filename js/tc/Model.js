@@ -454,10 +454,10 @@
         },
         
         // Accessors ///////////////////////////////////////////////////////////
-        getTeamParadox: () => model.teamParadox,
-        setTeamParadox: v => {model.set('teamParadox', v, true);},
-        getTeamParadoxLimit: () => model.teamParadoxLimit,
-        setTeamParadoxLimit: v => {model.set('teamParadoxLimit', v, true);},
+        getTimelineParadox: () => model.timelineParadox,
+        setTimelineParadox: v => {model.set('timelineParadox', v, true);},
+        getTimelineParadoxLimit: () => model.timelineParadoxLimit,
+        setTimelineParadoxLimit: v => {model.set('timelineParadoxLimit', v, true);},
         
         getChronal: () => model.chronal,
         setChronal: v => {model.set('chronal', v, true);},
@@ -480,8 +480,8 @@
             model.setChronal(STARTING_CHRONAL);
             model.setChronalLimit(STARTING_CHRONAL_LIMIT);
             
-            model.setTeamParadox(STARTING_PARADOX);
-            model.setTeamParadoxLimit(STARTING_PARADOX_LIMIT);
+            model.setTimelineParadox(STARTING_PARADOX);
+            model.setTimelineParadoxLimit(STARTING_PARADOX_LIMIT);
         },
         
         processData: json => {

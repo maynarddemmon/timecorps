@@ -7,16 +7,44 @@
         } = myt,
         
         {
-            Btn, WideView, timeUtil:{format},
+            Btn, WideView, MiniPanel, timeUtil:{format},
             theme:{
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMedium
-            }
+            },
+            ICON_NAV_FORWARD
         } = pkg,
         
         LABEL_WIDTH = 75,
         ROW_PADDING_TOP = 3,
+        GrandWidthMixin = new JS.Module('GrandWidthMixin', {
+            initNode: function(parent, attrs) {
+                // Compensate for parents x position
+                attrs.x ??= -parent.x;
+                attrs.percentOfParentWidthOffset = 2*parent.x;
+                
+                this.callSuper(parent, attrs);
+            }
+        }),
+        DividerRow = new JSClass('DividerRow', WideView, {
+            include: [GrandWidthMixin],
+            
+            initNode: function(parent, attrs) {
+                const self = this,
+                    label = attrs.label;
+                delete attrs.label;
+                
+                attrs.height ??= rowHeight;
+                attrs.bgColor ??= colorDark;
+                attrs.textColor ??= colorMedium;
+                
+                self.callSuper(parent, attrs);
+                
+                self._label = new PlainText(self, {x:parent.x, valign:'middle', fontSize:fontSizeMedium, text:label});
+            },
+            setLabel: function(v) {this._label.setText(v);}
+        }),
         DetailRow = new JSClass('DetailRow', WideView, {
             initNode: function(parent, attrs) {
                 const self = this,
@@ -74,6 +102,35 @@
             clearContent: function() {
                 this._content.destroyAllSubviews();
             }
+        }),
+        AgentRow = new JSClass('AgentRow', WideView, {
+            initNode: function(parent, attrs) {
+                const self = this,
+                    agentModel = attrs.agentModel;
+                delete attrs.agentModel;
+                
+                attrs.bgColor ??= colorMegaDark;
+                
+                self.callSuper(parent, attrs);
+                
+                self.idTxt = new PaddedPlainText(self, {
+                    paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
+                }, [SizeToParent]);
+                self.nameTxt = new PaddedPlainText(self, {
+                    paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
+                }, [SizeToParent]);
+                
+                new SpacedLayout(self, {axis:'y', inset:spacing, spacing:spacing, outset:spacing, collapseParent:true});
+                
+                self.setAgentModel(agentModel);
+            },
+            setAgentModel: function(agentModel) {
+                const self = this;
+                if (self.inited) {
+                    self.idTxt.setText(agentModel.id);
+                    self.nameTxt.setText(agentModel.name);
+                }
+            }
         });
     
     pkg.EventDetails = new JSClass('EventDetails', pkg.Panel, {
@@ -99,14 +156,18 @@
             self.descriptionRow = new DetailRow(detailsContainer, {label:'Description'});
             self.descendantsRow = new DetailRowFlow(detailsContainer, {label:'Descendants'});
             
-            self.actionsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
-            self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
-            self.agentsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
-            self.deployAgentBtn = new Btn(detailsContainer, {buttonType:'solid'}, [{
+            const agentsRow = self.agentsRow = new MiniPanel(detailsContainer, {
+                title:'Agent Activity', percentOfParentWidth:100
+            }, [GrandWidthMixin, SizeToParent]);
+            self.deployAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
                 doActivated: () => {
                     self.selectedAgentModel.doDeployToEvent(self.eventModel);
                 }
             }]);
+            new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            
+            self.actionsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
+            self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
             
             new SpacedLayout(detailsContainer, {axis:'y', spacing:spacing, collapseParent:true});
             
@@ -164,7 +225,7 @@
                 precursorsRow.clearContent();
                 if (precursors.size > 0) {
                     for (const precursorEvent of precursors) {
-                        new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name}, [{
+                        new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                             doActivated: () => {
                                 pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
                             }
@@ -181,7 +242,7 @@
                 descendantsRow.clearContent();
                 if (descendants.size > 0) {
                     for (const descendantEvent of descendants) {
-                        new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name}, [{
+                        new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                             doActivated: () => {
                                 pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
                             }
@@ -191,6 +252,12 @@
                     new PaddedPlainText(descendantsRow, {
                         fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'
                     });
+                }
+                
+                const agentsRow = self.agentsRow;
+                agentsRow.getContentView().destroyAllSubviews();
+                for (const agentModel of eventModel.getAgentModels()) {
+                    new AgentRow(agentsRow, {agentModel});
                 }
                 
                 let txt = 'Actions';
@@ -208,12 +275,6 @@
                     txt += '<br>- ' + valueId + ': ' + valueModel.value;
                 }
                 self.valuesTxt.setText(txt);
-                
-                txt = 'Agents';
-                for (const agentModel of eventModel.getAgentModels()) {
-                    txt += '<br>- ' + agentModel.id + ': ' + agentModel.name;
-                }
-                self.agentsTxt.setText(txt);
             }
             
             self.updateTitle();
@@ -227,7 +288,7 @@
                 hasModel = selectedAgentModel != null;
             
             if (hasEventModel) {
-                deployAgentBtn.setVisible(hasModel);
+                deployAgentBtn.setVisible(hasModel && !selectedAgentModel.isAtEvent(eventModel));
                 if (hasModel) {
                     const chronalNeeded = pkg.getChronalToDeploy(selectedAgentModel, eventModel),
                         chronalAvailable = selectedAgentModel.chronal,

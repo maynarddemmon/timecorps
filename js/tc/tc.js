@@ -101,6 +101,20 @@
             getContentView: function() {return this._contentView;}
         }),
         
+        MiniPanel = new JSClass('MiniPanel', Panel, {
+            initNode: function(parent, attrs) {
+                this.callSuper(parent, attrs);
+                this._titleView.setY(4);
+                this._titleView.setFontSize(fontSizeMedium);
+                //this._contentView.setBgColor(colorMegaDark);
+                this.syncTo(this._contentView, '_updateHeight', 'height');
+            },
+            _updateHeight: function(_event) {
+                const contentView = this.getContentView();
+                this.setHeight(contentView.y + contentView.height);
+            }
+        }),
+        
         LabeledValue = new JSClass('LabeledValue', PaddedText, {
             initNode: function(parent, attrs) {
                 attrs.paddingLeft ??= padding;
@@ -817,11 +831,14 @@
         HQ_TIME,
         
         theme,
-        Spacer, WideView, TallView, Panel, Btn, SquareBtn, LabeledValue,
+        Spacer, WideView, TallView, Panel, MiniPanel, Btn, SquareBtn, LabeledValue,
         InfiniteGridWrapper, GridColHdr, GridCell, PlainGridCell, GridCellBtn, GridRow, SelectableGridRow,
         
         timeUtil,
         
-        getChronalToDeploy
+        getChronalToDeploy,
+        
+        ICON_NAV_BACK:'❮',
+        ICON_NAV_FORWARD:'❯'
     };
 })(window);

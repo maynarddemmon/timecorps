@@ -3,38 +3,34 @@
         
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
-            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format}
+            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
+            ICON_NAV_FORWARD
         } = pkg,
         
-        /*AgentRow = new JSClass('AgentRow', pkg.GridRow, {
-            getColIds: () => ['id','name', 'paradox', 'chronal']
-        })*/
+        updateBtnCell = (row, colId, eventExistsTxtFunc) => {
+            const event = row.model.getEventModel(),
+                cell = row.getRef(colId);
+            cell.setText(event ? eventExistsTxtFunc(event) : 'unknown');
+            cell.setDisabled(!event);
+        },
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
             getColIds: () => ['id','name','event','where','when','paradox','chronal'],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
-                pkg.app.getTimelineView().doSelectEvent(this.model.getEventModel(), true);
+                this.doCellBtnActivated('event');
             },
             notifyCellUpdated: function(colId) {
+                let eventExistsTxtFunc;
                 switch (colId) {
-                    case 'event': {
-                        const event = this.model.getEventModel();
-                        this.getRef(colId).setText(event ? event.name : 'unknown');
-                        break;
-                    }
-                    case 'where': {
-                        const event = this.model.getEventModel();
-                        this.getRef(colId).setText(event ? event.getLocationModel()?.name : 'unknown');
-                        break;
-                    }
-                    case 'when': {
-                        const event = this.model.getEventModel();
-                        this.getRef(colId).setText(event ? format(event.getStart()) : 'unknown');
-                        break;
-                    }
-                    default:
-                        this.callSuper(colId);
+                    case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
+                    case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
+                    case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
+                }
+                if (eventExistsTxtFunc) {
+                    updateBtnCell(this, colId, eventExistsTxtFunc);
+                } else {
+                    this.callSuper(colId);
                 }
             },
             getCellClass: function(colId) {
@@ -50,7 +46,7 @@
             doCellBtnActivated: function(colId) {
                 switch (colId) {
                     case 'event':
-                        pkg.app.getTimelineView().scrollToEventBox(this.model.getEventModel());
+                        pkg.app.getTimelineView().doSelectEvent(this.model.getEventModel(), true);
                         break;
                     case 'where':
                         pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel());
@@ -74,11 +70,6 @@
             self.chronalPool = new LabeledValue(header, {label:'Chronal Pool'}, [{
                 update: function(v) {
                     if (self.ready) this.callSuper(self.model.chronal + '/' + self.model.chronalLimit);
-                }
-            }]);
-            self.teamParadox = new LabeledValue(header, {label:'Team Paradox'}, [{
-                update: function(v) {
-                    if (self.ready) this.callSuper(self.model.teamParadox + '/' + self.model.teamParadoxLimit);
                 }
             }]);
             
@@ -194,7 +185,6 @@
             this.model = model;
             
             this.chronalPool.constrain('update', [model, 'chronal', model, 'chronalLimit']);
-            this.teamParadox.constrain('update', [model, 'teamParadox', model, 'teamParadoxLimit']);
             this.gridWrapper.setModelCollection(model.agents);
         }
     });

@@ -7,7 +7,7 @@
         } = myt,
         
         {
-            SquareBtn,
+            SquareBtn, LabeledValue,
             timeUtil:{
                 stringToMillis, ticksForRange, format,
                 
@@ -69,6 +69,7 @@
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
         MAX_HISTORY_LENGTH = 1000,
+        SCROLL_TO_PADDING = -16,
         
         millisToPx = (timeline, millis) => {
             const millisOffset = millis - timeline.start,
@@ -369,6 +370,13 @@
             self.getContentView().setBgColor(colorMedium);
             
             // Build UI
+            const header = self.getHeaderView();
+            self.timelineParadox = new LabeledValue(header, {label:'Timeline Paradox'}, [{
+                update: function(v) {
+                    if (self.ready) this.callSuper(self.model.timelineParadox + '/' + self.model.timelineParadoxLimit);
+                }
+            }]);
+            
             const 
                 scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
                     _handleScroll: event => {
@@ -419,12 +427,12 @@
             // Selected Event History Nav
             self.histPrevBtn = new SquareBtn(self, {
                 x:37, y:1, buttonType:'plain', disabled:true,
-                icon:'❮', iconSize:fontSizeLarge, iconX:6, iconY:1, 
+                icon:pkg.ICON_NAV_BACK, iconSize:fontSizeLarge, iconX:6, iconY:1, 
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
                 x:62, y:1, buttonType:'plain', disabled:true,
-                icon:'❯', iconSize:fontSizeLarge, iconX:8, iconY:1, 
+                icon:pkg.ICON_NAV_FORWARD, iconSize:fontSizeLarge, iconX:8, iconY:1, 
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
             
@@ -581,7 +589,7 @@
         // Scrolling
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
-            if (eventBox) this.scrollCaptureView.scrollXYTo(eventBox.x, eventBox.y, true, smoothly);
+            if (eventBox) this.scrollCaptureView.scrollXYTo(eventBox.x + SCROLL_TO_PADDING, eventBox.y + SCROLL_TO_PADDING, true, smoothly);
         },
         
         scrollToLocation: function(modelOrId, smoothly=true) {
@@ -596,6 +604,7 @@
         // Setup
         setup: function(model) {
             this.model = model;
+            this.timelineParadox.constrain('update', [model, 'timelineParadox', model, 'timelineParadoxLimit']);
             refreshLocationColumns(this);
         },
         
