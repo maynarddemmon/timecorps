@@ -244,7 +244,7 @@
                 // Update connections between boxes
                 const endId = model.id,
                     flowLayer = timeline.flowLayer;
-                for (const eventModel of model.getInfluencingEvents()) {
+                for (const eventModel of model.getPrecursors()) {
                     const startId = eventModel.id,
                         startBox = timeline.boxesByEventId[startId];
                     if (startBox) {

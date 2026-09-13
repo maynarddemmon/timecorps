@@ -326,8 +326,8 @@
                     updateEndAttr(this);
                 }
             },
-            getStart: function() {return this.start;},
-            getEnd: function() {return this.end;},
+            getStart: function(formatted) {return formatted ? formatDate(this.start) : this.start;},
+            getEnd: function(formatted) {return formatted ? formatDate(this.end) : this.end;},
             setDuration: function(duration) {
                 if (typeof duration !== 'number') duration = durationToMillis(duration);
                 if (this.duration !== duration) {
@@ -335,6 +335,7 @@
                     updateEndAttr(this);
                 }
             },
+            getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
             
             // Location
             setLocation: function(location) { // An ID string.
@@ -393,11 +394,26 @@
             
             
             // Methods /////////////////////////////////////////////////////////
-            getInfluencingEvents: function(noSelf=true) {
+            getPrecursors: function(noSelf=true) {
                 // Accumulate Observables
                 const self = this,
                     accum = new Set();
                 for (const valueModel of Object.values(self.values)) valueModel.getAllObservables(null, accum);
+                
+                // Filter them down to EventModels
+                const filtered = new Set();
+                for (const obs of accum) {
+                    const event = obs.isA(EventModel) ? obs : obs.event?.isA(EventModel) ? obs.event : null;
+                    if (event && (!noSelf || event !== self)) filtered.add(event);
+                }
+                return filtered;
+            },
+            
+            getDescendants: function(noSelf=true) {
+                // Accumulate Observables
+                const self = this,
+                    accum = new Set();
+                for (const valueModel of Object.values(self.values)) valueModel.getAllObservers(null, accum);
                 
                 // Filter them down to EventModels
                 const filtered = new Set();

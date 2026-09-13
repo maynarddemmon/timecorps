@@ -33,6 +33,7 @@
         colorExtraLight = '#dd0',
         colorUltraLight = '#ff9',
         colorBtn = '#a50',
+        fontSizeMedium = '14px',
         fontSizeLarge = '16px',
         fontSizeVeryLarge = '20px',
         fontFamilyMono = 'SpaceMono',
@@ -40,7 +41,7 @@
         theme = {
             layoutSpacing, spacing, padding, cornerRadius, btnHeight, rowHeight,
             colorMegaDark, colorUltraDark, colorDark, colorMedium, colorLight, colorUltraLight, colorBtn,
-            fontSizeLarge, fontSizeVeryLarge,
+            fontSizeMedium, fontSizeLarge, fontSizeVeryLarge,
             fontFamilyMono
         },
         
@@ -466,7 +467,11 @@
                 const textColor = this.selected ? colorUltraLight : null;
                 this.setTextColor(textColor);
                 for (const sv of this.getSubviews()) {
-                    if (sv.isA(GridCellBtn)) sv.setTextColor(textColor);
+                    if (sv.isA(GridCellBtn)) {
+                        sv.setTextColor(textColor);
+                        // Work around undesirable behavior in View.setTextColor
+                        if (textColor == null) sv.getODS().removeProperty('color');
+                    }
                 }
             },
             
@@ -661,12 +666,12 @@
                         return day + ' ' + month + ', ' + year;
                     case TO_HOUR:
                         // "23:00" would claim you know the minute is zero. You do not.
-                        return 'around ' + pad2(d.getUTCHours()) + ':00 · ' + day + ' ' + month + ', ' + year;
+                        return day + ' ' + month + ', ' + year + ' around ' + pad2(d.getUTCHours()) + ':00';
                     case TO_MINUTE:
-                        return pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ' · ' + day + ' ' + month + ', ' + year;
+                        return day + ' ' + month + ', ' + year + ' · ' +  pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
                     case TO_SECOND:
                     default:
-                        return pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds()) + ' · ' + day + ' ' + month + ', ' + year;
+                        return day + ' ' + month + ', ' + year + ' · ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
                 }
             },
             
