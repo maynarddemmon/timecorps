@@ -794,9 +794,8 @@
         },
         
         getChronalFromHQ = a => {
-            b = HQ_TIME;
-            if (a === b) return 0;
-            return mathFloor(mathLog10(2 + 2* mathAbs(a - b) / MILLIS_PER_YEAR));
+            if (a === HQ_TIME) return 0;
+            return mathFloor(mathLog10(2 + 2* mathAbs(a - HQ_TIME) / MILLIS_PER_YEAR));
         },
         
         getChronalToDeploy = (agentModel, eventModel) => {

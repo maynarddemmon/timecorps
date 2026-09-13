@@ -117,13 +117,9 @@
                                         return sortAsc;
                                     }
                                 } else if (!eventB) {
-                                    if (!eventA) {
-                                        return tieBreakerSortFunc(a, b);
-                                    } else {
-                                        return -sortAsc;
-                                    }
+                                    return -sortAsc;
                                 } else {
-                                    const vA = eventA.name;
+                                    const vA = eventA.name,
                                         vB = eventB.name;
                                     if (vA === vB) return tieBreakerSortFunc(a, b);
                                     return vA.localeCompare(vB) * sortAsc;
@@ -140,13 +136,9 @@
                                         return sortAsc;
                                     }
                                 } else if (!locB) {
-                                    if (!locA) {
-                                        return tieBreakerSortFunc(a, b);
-                                    } else {
-                                        return -sortAsc;
-                                    }
+                                    return -sortAsc;
                                 } else {
-                                    const vA = locA.name;
+                                    const vA = locA.name,
                                         vB = locB.name;
                                     if (vA === vB) return tieBreakerSortFunc(a, b);
                                     return vA.localeCompare(vB) * sortAsc;
@@ -163,13 +155,9 @@
                                         return sortAsc;
                                     }
                                 } else if (!eventB) {
-                                    if (!eventA) {
-                                        return tieBreakerSortFunc(a, b);
-                                    } else {
-                                        return -sortAsc;
-                                    }
+                                    return -sortAsc;
                                 } else {
-                                    const vA = eventA.getStart();
+                                    const vA = eventA.getStart(),
                                         vB = eventB.getStart();
                                     if (vA === vB) return tieBreakerSortFunc(a, b);
                                     return (vA - vB) * sortAsc;
