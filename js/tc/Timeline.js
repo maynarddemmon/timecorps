@@ -7,6 +7,7 @@
         } = myt,
         
         {
+            SquareBtn,
             timeUtil:{
                 stringToMillis, ticksForRange, format,
                 
@@ -25,7 +26,8 @@
             theme:{
                 spacing, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
-                colorBtn
+                colorBtn,
+                fontSizeLarge
             }
         } = pkg,
         
@@ -65,6 +67,8 @@
         BOX_VISIBLE_HEIGHT_THRESHOLD = 20,
         BOX_INSET_FROM_COL = 1,
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
+        
+        MAX_HISTORY_LENGTH = 1000,
         
         millisToPx = (timeline, millis) => {
             const millisOffset = millis - timeline.start,
@@ -129,6 +133,17 @@
                 const eventModel = eventModels[eventModelId];
                 boxesByEventId[eventModelId] = new EventBox(flowLayer, {timeline, model:eventModel});
             }
+        },
+        
+        updateHistoryBtns = timeline => {
+            const {histPrevBtn, histNextBtn, _hist:hist, _histIdx:idx} = timeline,
+                prevDisabled = idx < 1,
+                nextDisabled = idx === hist.length - 1;
+            histPrevBtn.setDisabled(prevDisabled);
+            histNextBtn.setDisabled(nextDisabled);
+            
+            histPrevBtn.setTooltip(prevDisabled ? 'No last Event to select.' : timeline.model.getEventModel(hist[idx - 1])?.name);
+            histNextBtn.setTooltip(nextDisabled ? 'No next Event to select.' : timeline.model.getEventModel(hist[idx + 1])?.name);
         },
         
         EventBox = new JSClass('EventBox', SimpleButton, {
@@ -343,6 +358,9 @@
         initNode: function(parent, attrs) {
             const self = this;
             
+            self._hist = [];
+            self._histIdx = -1;
+            
             attrs.maxSelected = 1;
             attrs.itemSelectionId = 'eventId';
             
@@ -397,6 +415,18 @@
                 vLine = self.vLine = new View(self, {x:ROW_HEADER_WIDTH - 1, width:1, bgColor:colorUltraDark});
             hLine.getIDS().pointerEvents = 'none';
             vLine.getIDS().pointerEvents = 'none';
+            
+            // Selected Event History Nav
+            self.histPrevBtn = new SquareBtn(self, {
+                x:37, y:1, buttonType:'plain', disabled:true,
+                icon:'❮', iconSize:fontSizeLarge, iconX:6, iconY:1, 
+                tooltip:'Select the last Event you viewed.'
+            }, [{doActivated: function() {self.navigateHistory(-1);}}]);
+            self.histNextBtn = new SquareBtn(self, {
+                x:62, y:1, buttonType:'plain', disabled:true,
+                icon:'❯', iconSize:fontSizeLarge, iconX:8, iconY:1, 
+                tooltip:'Select the next Event you viewed.'
+            }, [{doActivated: function() {self.navigateHistory(1);}}]);
             
             self.ready = true;
             
@@ -476,7 +506,11 @@
             return retval;
         },
         /** @overrides SelectionManager */
-        doSelected: function() {this.fireEvent('selectionChanged', this.getSelected()[0]);},
+        doSelected: function() {
+            const selectedEvent = this.getSelected()[0];
+            this.fireEvent('selectionChanged', selectedEvent);
+            this.pushOntoHistory(selectedEvent.model.id);
+        },
         /** @overrides SelectionManager */
         doDeselected: function() {this.fireEvent('selectionChanged', this.getSelected()[0]);},
         
@@ -512,6 +546,39 @@
             }
         },
         
+        // History
+        pushOntoHistory: function(eventId) {
+            if (eventId && !this._noHistUpdate) {
+                const hist = this._hist,
+                    idx = this._histIdx;
+                if (eventId !== hist[idx]) {
+                    hist.length = idx + 1; // Truncate to current
+                    hist.push(eventId);
+                    
+                    // Keep History from growing arbitrarily long
+                    if (hist.length > MAX_HISTORY_LENGTH) {
+                        hist.shift();
+                    } else {
+                        this._histIdx++;
+                    }
+                    
+                    updateHistoryBtns(this);
+                }
+            }
+        },
+        navigateHistory: function(adj) {
+            const newIdx = this._histIdx + adj,
+                eventIdToSelect = this._hist[newIdx];
+            if (eventIdToSelect) {
+                this._noHistUpdate = true;
+                this.doSelectEvent(eventIdToSelect,true, true);
+                this._noHistUpdate = false;
+                this._histIdx = newIdx;
+                updateHistoryBtns(this);
+            }
+        },
+        
+        // Scrolling
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
             if (eventBox) this.scrollCaptureView.scrollXYTo(eventBox.x, eventBox.y, true, smoothly);
@@ -526,6 +593,7 @@
             this.scrollCaptureView.scrollYTo(millisToPx(this, millis), true, smoothly);
         },
         
+        // Setup
         setup: function(model) {
             this.model = model;
             refreshLocationColumns(this);
