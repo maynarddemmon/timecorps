@@ -44,7 +44,7 @@
             
             let propPaths;
             if (cachedSerializedPropPaths) {
-                propPaths = JSON.Parse(cachedSerializedPropPaths);
+                propPaths = JSON.parse(cachedSerializedPropPaths);
             } else {
                 let parseTree;
                 try {
@@ -268,11 +268,36 @@
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
             init: function(attrs) {
+                this.done = false;
                 this.event = attrs.event;
                 delete attrs.event;
                 this.callSuper(attrs);
             },
-            setValue: function(value) {this.set('value', value, true);}
+            setLabel: function(label) {this.set('label', label, true);},
+            setSet: function(set) {this.set('setObj', set, true);},
+            setDone: function(done) {
+                this.set('done', done, true);
+                this.event.notifyCollectionOfUpdate();
+            },
+            
+            doIt: function(agentModel) {
+                if (this.done) {
+                    console.warn('Attemp to do a done action.', this);
+                    return;
+                }
+                
+                const {setObj, event} = this;
+                for (const key in setObj) {
+                    const value = setObj[key],
+                        eventValueModel = event.values[key];
+                    if (eventValueModel) {
+                        eventValueModel.setValue(value, false);
+                    } else {
+                        console.warn('Missing Value in doIt:' + key);
+                    }
+                }
+                this.setDone(true);
+            }
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
@@ -284,6 +309,7 @@
             setValue: function(value, isActual) {
                 if (isActual) {
                     this.set('value', value, true);
+                    this.event.notifyCollectionOfUpdate();
                 } else {
                     setConstrainedValue(this.event, this, 'value', value);
                 }

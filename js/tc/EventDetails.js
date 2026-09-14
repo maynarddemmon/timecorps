@@ -105,9 +105,9 @@
         }),
         AgentRow = new JSClass('AgentRow', WideView, {
             initNode: function(parent, attrs) {
-                const self = this,
-                    agentModel = attrs.agentModel;
-                delete attrs.agentModel;
+                const self = this;
+                
+                self.quickSet(['agentModel','eventModel'], attrs);
                 
                 attrs.bgColor ??= colorMegaDark;
                 
@@ -119,16 +119,25 @@
                 self.nameTxt = new PaddedPlainText(self, {
                     paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
                 }, [SizeToParent]);
+                self.actionView = new DetailRowFlow(self, {label:'Take Action'});
                 
                 new SpacedLayout(self, {axis:'y', inset:spacing, spacing:spacing, outset:spacing, collapseParent:true});
                 
-                self.setAgentModel(agentModel);
+                self.update();
             },
-            setAgentModel: function(agentModel) {
-                const self = this;
-                if (self.inited) {
-                    self.idTxt.setText(agentModel.id);
-                    self.nameTxt.setText(agentModel.name);
+            update: function() {
+                const self = this,
+                    {agentModel, eventModel, actionView} = self;
+                
+                self.idTxt.setText(agentModel.id);
+                self.nameTxt.setText(agentModel.name);
+                
+                const actionModels = eventModel.getActionModels();
+                for (const actionId in actionModels) {
+                    const actionModel = actionModels[actionId];
+                    new Btn(actionView, {buttonType:'solid', text:actionModel.label, disabled:actionModel.done}, [{
+                        doActivated: () => {actionModel.doIt(agentModel);}
+                    }]);
                 }
             }
         });
@@ -158,7 +167,11 @@
             
             const agentsRow = self.agentsRow = new MiniPanel(detailsContainer, {
                 title:'Agent Activity', percentOfParentWidth:100
-            }, [GrandWidthMixin, SizeToParent]);
+            }, [GrandWidthMixin, SizeToParent, {
+                clearContent: function() {
+                    this.getContentView().destroyAllSubviews();
+                }
+            }]);
             self.deployAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
                 doActivated: () => {
                     self.selectedAgentModel.doDeployToEvent(self.eventModel);
@@ -166,7 +179,6 @@
             }]);
             new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
-            self.actionsTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
             self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
             
             new SpacedLayout(detailsContainer, {axis:'y', spacing:spacing, collapseParent:true});
@@ -255,18 +267,10 @@
                 }
                 
                 const agentsRow = self.agentsRow;
-                agentsRow.getContentView().destroyAllSubviews();
+                agentsRow.clearContent();
                 for (const agentModel of eventModel.getAgentModels()) {
-                    new AgentRow(agentsRow, {agentModel});
+                    new AgentRow(agentsRow, {agentModel, eventModel});
                 }
-                
-                let txt = 'Actions';
-                const actionModels = eventModel.getActionModels();
-                for (const actionId in actionModels) {
-                    const actionModel = actionModels[actionId];
-                    txt += '<br>- ' + actionId + ': ' + actionModel.value;
-                }
-                self.actionsTxt.setText(txt);
                 
                 txt = 'Values';
                 const valueModels = eventModel.getValueModels();

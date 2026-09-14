@@ -6,8 +6,9 @@
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
 			"actions":{
-				"fullDavits":{
-					"value":false
+				"argue":{
+					"label":"Argue for Full Davits",
+					"set":{"fullDavits":"true"}
 				}
 			},
 			"exits":[
@@ -15,9 +16,8 @@
 				{"mode":"walk", "to":"titanic_departs"}
 			],
 			"values":{
-				"boatsForAll":{
-					"value":"event.actions.fullDavits.value"
-				}
+				"fullDavits":{"value":"false"},
+				"boatsForAll":{"value":"event.values.fullDavits.value"}
 			}
 		},
 		"roster_reshuffle":{
@@ -26,23 +26,23 @@
 			"duration":{"h":2},
 			"location":"southampton.quay.berth_44",
 			"actions":{
-				"preventReshuffle":{
-					"value":false
+				"prevent":{
+					"label":"Prevent Reshuffle",
+					"set":{"preventReshuffle":"true"}
 				},
-				"remindBlair":{
-					"value":false
+				"remind":{
+					"label":"Remind Blair",
+					"set":{"remindBlair":"true"}
 				}
 			},
 			"exits":[
 				{"mode":"wait", "to":"titanic_departs"}
 			],
 			"values":{
-				"keyOnShip":{
-					"value":"event.actions.preventReshuffle.value || event.actions.remindBlair.value"
-				},
-				"blairOnShip":{
-					"value":"event.actions.preventReshuffle.value"
-				}
+				"preventReshuffle":{"value":"false"},
+				"remindBlair":{"value":"false"},
+				"keyOnShip":{"value":"event.values.preventReshuffle.value || event.values.remindBlair.value"},
+				"blairOnShip":{"value":"event.values.preventReshuffle.value"}
 			}
 		},
 		"titanic_departs":{
@@ -65,8 +65,9 @@
 			"duration":{"h":12},
 			"location":"titanic.wireless",
 			"actions":{
-				"relayToBridge":{
-					"value":false
+				"relay":{
+					"label":"Relay to Bridge",
+					"set":{"relayToBridge":"true"}
 				}
 			},
 			"exits":[
@@ -77,9 +78,8 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"warningsHeeded":{
-					"value":"event.actions.relayToBridge.value"
-				}
+				"relayToBridge":{"value":"false"},
+				"warningsHeeded":{"value":"event.values.relayToBridge.value"}
 			}
 		},
 		"purser_spare":{
@@ -88,8 +88,9 @@
 			"duration":{"h":1},
 			"location":"titanic.pursers",
 			"actions":{
-				"spareRecovered":{
-					"value":false
+				"recover":{
+					"label":"Spare Recovered",
+					"set":{"spareRecovered":"true"}
 				}
 			},
 			"exits":[
@@ -100,9 +101,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"spareRecovered":{
-					"value":"event.actions.spareRecovered.value"
-				}
+				"spareRecovered":{"value":"false"}
 			}
 		},
 		"wireless_priority":{
@@ -111,8 +110,9 @@
 			"duration":{"h":1,"m":50},
 			"location":"titanic.wireless",
 			"actions":{
-				"clearBacklogEarlier":{
-					"value":false
+				"clear":{
+					"label":"Clear Backlog Earlier",
+					"set":{"clearBacklogEarlier":"true"}
 				}
 			},
 			"exits":[
@@ -120,8 +120,9 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
+				"clearBacklogEarlier":{"value":"false"},
 				"californianContact":{
-					"value":"event.actions.clearBacklogEarlier.value"
+					"value":"event.values.clearBacklogEarlier.value"
 				}
 			}
 		},
@@ -131,11 +132,13 @@
 			"duration":{"h":2,"m":39},
 			"location":"titanic.nest",
 			"actions":{
-				"plantKey":{
-					"value":false
+				"plant":{
+					"label":"Plant Key",
+					"set":{"plantKey":"true"}
 				},
 				"pickTheLocker":{
-					"value":false
+					"label":"Pick the Locker",
+					"set":{"pickTheLocker":"true"}
 				}
 			},
 			"exits":[
@@ -143,8 +146,10 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
+				"plantKey":{"value":"false"},
+				"pickTheLocker":{"value":"false"},
 				"binocularsAccessible":{
-					"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.actions.plantKey.value || event.actions.pickTheLocker.value"
+					"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.values.plantKey.value || event.values.pickTheLocker.value"
 				}
 			}
 		},
@@ -154,16 +159,18 @@
 			"duration":{"m":10},
 			"location":"titanic.engine",
 			"actions":{
-				"countermandAstern":{
-					"value":false
+				"countermand":{
+					"label":"Countermand Astern",
+					"set":{"countermandAstern":"true"}
 				}
 			},
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
+				"countermandAstern":{"value":"false"},
 				"rudderAuthority":{
-					"value":"event.actions.countermandAstern.value"
+					"value":"event.values.countermandAstern.value"
 				}
 			}
 		},
