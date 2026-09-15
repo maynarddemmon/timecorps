@@ -3,6 +3,8 @@
     
     const JSClass = JS.Class,
         
+        {min:mathMin, max:mathMax, abs:mathAbs} = Math,
+        
         {
             Node, resolveName, ExpressionParser,
             BaseModel, BaseModelCollection,
@@ -18,6 +20,7 @@
         STARTING_PARADOX_LIMIT = 18,
         
         // Constraints /////////////////////////////////////////////////////////
+        SCOPE_TIMELINE = 'timeline',
         SCOPE_AGENTS = 'agents',
         SCOPE_LOCATIONS = 'locations',
         SCOPE_EVENTS = 'events',
@@ -66,7 +69,7 @@
                                 // We constructed a stack to a "this" reference so save off the 
                                 // current stack state as a property path
                                 propPaths.push(stack.slice().reverse());
-                            } else if (nodeType === 'Variable' && (nodeName === SCOPE_EVENTS || nodeName === SCOPE_EVENT)) {
+                            } else if (nodeType === 'Variable' && (nodeName === SCOPE_TIMELINE || nodeName === SCOPE_EVENTS || nodeName === SCOPE_EVENT)) {
                                 propPaths.push(stack.concat([nodeName]).reverse());
                             } else if (nodeType === 'PropertyAccess') {
                                 if (parentNode?.type === 'FunctionCall') {
@@ -102,7 +105,7 @@
             target[funcName] = CONSTRAINT_FUNCTIONS.get(funcCacheKey) ?? (CONSTRAINT_FUNCTIONS.set(
                 funcCacheKey, 
                 new Function(
-                    [SCOPE_EVENTS, SCOPE_EVENT].join(','),
+                    [SCOPE_TIMELINE, SCOPE_EVENTS, SCOPE_EVENT].join(','),
                     'try{this.' + generateSetterName(name) + '(' + constraintTxt + ', true);' + '}catch(e){console.warn(e);}'
                 )
             ),/* comma operator */ CONSTRAINT_FUNCTIONS.get(funcCacheKey));
@@ -127,11 +130,18 @@
                 let scope;
                 if (path.length > 0) {
                     let resolveRoot = resolveTarget;
-                    if (path[0] === SCOPE_EVENTS) {
-                        resolveRoot = eventsById
-                        path.shift();
-                    } else if (path[0] === SCOPE_EVENT) {
-                        path.shift();
+                    switch (path[0]) {
+                        case SCOPE_TIMELINE:
+                            resolveRoot = {[SCOPE_TIMELINE]:model};
+                            //path.shift();
+                            break;
+                        case SCOPE_EVENTS:
+                            resolveRoot = eventsById
+                            path.shift();
+                            break;
+                        case SCOPE_EVENT:
+                            path.shift();
+                            break;
                     }
                     scope = resolveName(path, resolveRoot);
                 } else {
@@ -164,7 +174,7 @@
             
             // Wrap the function so we can provide common context
             const existingFunc = target[funcName],
-                funcParams = [eventsById, resolveTarget];
+                funcParams = [model, eventsById, resolveTarget];
             target[funcName] = _event => {existingFunc.apply(target, funcParams);};
             
             if (observables.length > 0) {
@@ -213,11 +223,9 @@
                 if (this.event !== event) {
                     this._eventModel = null;
                     
-                    this.accrueEntryParadox(event);
                     this.setAndNotifyCollection('event', event, true);
-                    
-                    if (!logEntry) logEntry = {type:'origin', event:this.getEventModel()};
-                    this.pushOntoLog(logEntry);
+                    this.accrueEntryParadox(event);
+                    this.pushOntoLog(logEntry ?? {type:'origin', event:this.getEventModel()});
                 }
             },
             getEvent: function() {return this.event;},
@@ -568,7 +576,7 @@
         
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),
         getAgentModels: () => model[SCOPE_AGENTS].getAll(),
-        getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsList(agent => agent.event === eventId),
+        getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsList(agent => agent.getEvent() === eventId),
         
         getLocation: id => model[SCOPE_LOCATIONS].getById(id),
         getLocations: () => model[SCOPE_LOCATIONS].getAll(),
