@@ -13,7 +13,7 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMedium
             },
-            ICON_NAV_FORWARD
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW
         } = pkg,
         
         LABEL_WIDTH = 75,
@@ -66,7 +66,7 @@
                 }, [SizeToParent, {
                     sizeViewToDom: function() {
                         this.callSuper();
-                        self.setHeight(this.height);
+                        if (self.height !== this.height) self.setHeight(this.height);
                     }
                 }]);
             },
@@ -92,8 +92,11 @@
                         x:contentX, percentOfParentWidth:100, percentOfParentWidthOffset:-contentX
                     }, [SizeToParent, {
                         setHeight: function(v) {
-                            this.callSuper(v);
-                            self.setHeight(Math.max(labelView.height, this.height));
+                            if (this.height !== v) {
+                                this.callSuper(v);
+                                const newHeight = Math.max(labelView.height, this.height);
+                                if (self.height !== newHeight) self.setHeight(newHeight);
+                            }
                         }
                     }]);
                 new WrappingLayout(contentView, {spacing:spacing, lineSpacing:spacing, collapseParent:true});
@@ -120,6 +123,7 @@
                     paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
                 }, [SizeToParent]);
                 self.actionView = new DetailRowFlow(self, {label:'Take Action'});
+                self.exitView = new DetailRowFlow(self, {label:'Exit'});
                 
                 new SpacedLayout(self, {axis:'y', inset:spacing, spacing:spacing, outset:spacing, collapseParent:true});
                 
@@ -127,7 +131,7 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, actionView} = self;
+                    {agentModel, eventModel, actionView, exitView} = self;
                 
                 self.idTxt.setText(agentModel.id);
                 self.nameTxt.setText(agentModel.name);
@@ -135,8 +139,21 @@
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
-                    new Btn(actionView, {buttonType:'solid', text:actionModel.label, disabled:actionModel.done}, [{
+                    new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:actionModel.done}, [{
                         doActivated: () => {actionModel.doIt(agentModel);}
+                    }]);
+                }
+                
+                const exitModels = eventModel.getExitModels();
+                for (const exitId in exitModels) {
+                    const exitModel = exitModels[exitId];
+                    new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
+                        doActivated: () => {
+                            pkg.app.getTimelineView().scrollToEventBox(exitModel.getToEventModel());
+                        }
+                    }]);
+                    new Btn(exitView, {buttonType:'solid', text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel()}, [{
+                        doActivated: () => {exitModel.doIt(agentModel);}
                     }]);
                 }
             }
@@ -150,6 +167,13 @@
             self.callSuper(parent, attrs);
             
             // Build UI
+            const header = self.getHeaderView();
+            self.scrollToBtn = new Btn(header, {y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, visible:false}, [{
+                doActivated: () => {
+                    pkg.app.getTimelineView().scrollToEventBox(self.eventModel);
+                }
+            }]);
+            
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding:padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
             });
@@ -219,13 +243,16 @@
         
         updateForEventModel: function() {
             const self = this,
-                {eventModel, noSelectionTxt, detailsContainer} = self,
+                {eventModel, detailsContainer} = self,
                 hasModel = eventModel != null;
             
-            noSelectionTxt.setVisible(!hasModel);
+            self.noSelectionTxt.setVisible(!hasModel);
             detailsContainer.setVisible(hasModel);
+            self.scrollToBtn.setVisible(hasModel);
             
             if (hasModel) {
+                myt.Layout.incrementGlobalLock();
+                
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
                 self.startRow.setValue(eventModel.getStart(true));
                 self.durationRow.setValue(eventModel.getDuration(true));
@@ -279,6 +306,8 @@
                     txt += '<br>- ' + valueId + ': ' + valueModel.value;
                 }
                 self.valuesTxt.setText(txt);
+                
+                myt.Layout.decrementGlobalLock();
             }
             
             self.updateTitle();

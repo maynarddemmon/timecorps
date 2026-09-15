@@ -281,7 +281,7 @@
                 
                 // Update travel paths between boxes
                 if (show) {
-                    for (const exit of model.getExits()) {
+                    for (const exit of model.getExitModels()) {
                         const toBox = timeline.boxesByEventId[exit.getToEventModel()?.id];
                         if (toBox) {
                             const connection = flowLayer.connect({

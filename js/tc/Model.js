@@ -331,6 +331,32 @@
             },
             getToEventModel: function() {
                 return this._toEventModel ?? (this._toEventModel = model.getEventModel(this.to));
+            },
+            
+            getBtnLabel: function() {
+                const toEvent = this.getToEventModel(),
+                    toEventName = toEvent ? toEvent.name : this.to;
+                switch (this.mode) {
+                    case TRAVEL_MODE_WAIT: return 'Wait for "' + toEventName + '"';
+                    case TRAVEL_MODE_WALK: return 'Walk to "' + toEventName + '"';
+                    default: return 'To "' + toEventName + '"';
+                }
+            },
+            
+            doIt: function(agentModel) {
+                const exitEvent = this.event;
+                if (agentModel.getEventModel() !== exitEvent) {
+                    console.warn('Agent not at event for exit:', this);
+                    return;
+                }
+                
+                const toEvent = this.getToEventModel();
+                if (toEvent) {
+                    agentModel.setEvent(toEvent.id);
+                    exitEvent.notifyCollectionOfUpdate();
+                    toEvent.notifyCollectionOfUpdate();
+                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
+                }
             }
         }),
         
@@ -405,6 +431,7 @@
             // Exits
             setExits: function(newExits) {
                 const exits = this.exits;
+                
                 // Clear existing exits
                 if (this.inited) {
                     for (const exit of exits) exit.destroy();
@@ -416,7 +443,7 @@
                     exits.push(new EventExitModel(datum));
                 }
             },
-            getExits: function() {return this.exits;},
+            getExitModels: function() {return this.exits;},
             
             
             // Methods /////////////////////////////////////////////////////////

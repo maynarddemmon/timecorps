@@ -106,7 +106,6 @@
                 this.callSuper(parent, attrs);
                 this._titleView.setY(4);
                 this._titleView.setFontSize(fontSizeMedium);
-                //this._contentView.setBgColor(colorMegaDark);
                 this.syncTo(this._contentView, '_updateHeight', 'height');
             },
             _updateHeight: function(_event) {
@@ -839,6 +838,9 @@
         getChronalToDeploy,
         
         ICON_NAV_BACK:'❮',
-        ICON_NAV_FORWARD:'❯'
+        ICON_NAV_FORWARD:'❯',
+        ICON_ACTION:'☟',
+        ICON_TRAVEL:'⎈',
+        ICON_VIEW:'⏿',
     };
 })(window);
