@@ -520,7 +520,6 @@
                 const paradox = this.calculateParadoxForEntry(eventModelOrId);
                 if (paradox > 0) {
                     this.paradox.adjValue(paradox);
-                    // FIXME: deal with agent paradox max. Should be in setParadox function.
                     
                     const eventModel = this.getEventModel();
                     if (eventModel) {
@@ -640,14 +639,9 @@
             init: function(attrs) {
                 const self = this;
                 self.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
-                    // FIXME: deal with event paradox max. Need some kind of function/event/trigger when
-                    // value === min/max
                     adjValue: function(adj, cfg) {
                         const retval = this.callSuper(adj, cfg);
-                        if (retval !== 0) {
-                            model.timelineParadox.adjValue(retval);
-                            // FIXME: deal with timeline paradox max. Should be in setParadox function.
-                        }
+                        if (retval !== 0) model.timelineParadox.adjValue(retval);
                         return retval;
                     },
                     triggerValueAtMax: function() {
