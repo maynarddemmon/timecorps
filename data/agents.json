@@ -9,19 +9,17 @@
 			"name":"Okonjo",
 			"paradox":2,
 			"chronal":12,
-			"event":"roster_reshuffle"
+			"event":"casualties"
 		},
 		"hw":{
 			"name":"Halloway",
 			"paradox":3,
-			"chronal":14,
-			"event":"lifeboat_capacity"
+			"chronal":14
 		},
 		"go":{
 			"name":"Gordon",
 			"paradox":3,
-			"chronal":14,
-			"event":"purser_spare"
+			"chronal":14
 		},
 		"pi":{
 			"name":"Pierce",

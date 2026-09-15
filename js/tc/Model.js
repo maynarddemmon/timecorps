@@ -194,6 +194,7 @@
         // Agents //////////////////////////////////////////////////////////////
         AgentModel = pkg.AgentModel = new JSClass('AgentModel', BaseModel, {
             init: function(attrs) {
+                this.log = [];
                 this.paradox = this.chronal = 0;
                 this.callSuper(attrs);
             },
@@ -208,10 +209,15 @@
             setParadox: function(paradox) {this.setAndNotifyCollection('paradox', paradox, true);},
             setChronal: function(chronal) {this.setAndNotifyCollection('chronal', chronal, true);},
             
-            setEvent: function(event) {
+            setEvent: function(event, logEntry) {
                 if (this.event !== event) {
                     this._eventModel = null;
+                    
+                    this.accrueEntryParadox(event);
                     this.setAndNotifyCollection('event', event, true);
+                    
+                    if (!logEntry) logEntry = {type:'origin', event:this.getEventModel()};
+                    this.pushOntoLog(logEntry);
                 }
             },
             getEvent: function() {return this.event;},
@@ -230,13 +236,13 @@
                 }
             },
             
-            // Actions
+            // Movement and Actions
             doDeployToEvent: function(eventModel) {
                 if (eventModel) {
                     const cost = pkg.getChronalToDeploy(this, eventModel);
                     if (cost <= this.chronal) {
                         this.setChronal(this.chronal - cost);
-                        this.setEvent(eventModel.id);
+                        this.setEvent(eventModel.id, {type:'deploy', event:eventModel});
                         eventModel.notifyCollectionOfUpdate();
                     } else {
                         console.warn('insufficent chronal');
@@ -244,6 +250,80 @@
                 } else {
                     console.warn('doDeployToEvent: no eventModel');
                 }
+            },
+            doFollowExit: function(exitModel) {
+                const exitEvent = exitModel.event;
+                if (this.getEventModel() !== exitEvent) {
+                    console.warn('Agent not at event for exit:', exitModel, this);
+                    return;
+                }
+                
+                const toEvent = exitModel.getToEventModel();
+                if (toEvent) {
+                    this.setEvent(toEvent.id, {type:'exit', exit:exitModel});
+                    exitEvent.notifyCollectionOfUpdate();
+                    toEvent.notifyCollectionOfUpdate();
+                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
+                }
+            },
+            doAction: function(actionModel) {
+                if (actionModel.isDone()) {
+                    console.warn('Attemp to do a done action.', actionModel, this);
+                    return;
+                }
+                
+                const eventModel = this.getEventModel(),
+                    {setObj, event} = actionModel;
+                
+                if (eventModel !== event) {
+                    console.warn('Agent not in same event as action.', actionModel, this);
+                    return;
+                }
+                
+                for (const key in setObj) {
+                    const value = setObj[key],
+                        eventValueModel = event.values[key];
+                    if (eventValueModel) {
+                        eventValueModel.setValue(value, false);
+                    } else {
+                        console.warn('Missing Value in doIt:' + key);
+                    }
+                }
+                actionModel.setDone(true);
+                
+                this.pushOntoLog({type:'action', action:actionModel});
+            },
+            
+            // Paradox
+            accrueEntryParadox: function(eventId) {
+                const eventModel = model.getEventModel(eventId);
+                if (eventModel) {
+                    if (this.hasBeenInEvent(eventModel)) {
+                        this.setParadox(this.paradox + 1);
+                        // FIXME: deal with paradox max. Should be in setParadox function.
+                        model.setTimelineParadox(model.timelineParadox + 1);
+                    }
+                }
+            },
+            
+            // Life and Log
+            pushOntoLog: function(logEntry) {
+                this.log.push(logEntry);
+            },
+            getLog: function() {return this.log;},
+            hasBeenInEvent: function(eventModel) {
+                for (const entry of this.log) {
+                    switch (entry.type) {
+                        case 'exit':
+                            if (entry.exit.getToEventModel() === eventModel) return true;
+                            break;
+                        case 'deploy':
+                        case 'origin':
+                            if (entry.event === eventModel) return true;
+                            break;
+                    }
+                }
+                return false;
             }
         }),
         
@@ -279,25 +359,7 @@
                 this.set('done', done, true);
                 this.event.notifyCollectionOfUpdate();
             },
-            
-            doIt: function(agentModel) {
-                if (this.done) {
-                    console.warn('Attemp to do a done action.', this);
-                    return;
-                }
-                
-                const {setObj, event} = this;
-                for (const key in setObj) {
-                    const value = setObj[key],
-                        eventValueModel = event.values[key];
-                    if (eventValueModel) {
-                        eventValueModel.setValue(value, false);
-                    } else {
-                        console.warn('Missing Value in doIt:' + key);
-                    }
-                }
-                this.setDone(true);
-            }
+            isDone: function() {return this.done;}
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
@@ -340,22 +402,6 @@
                     case TRAVEL_MODE_WAIT: return 'Wait for "' + toEventName + '"';
                     case TRAVEL_MODE_WALK: return 'Walk to "' + toEventName + '"';
                     default: return 'To "' + toEventName + '"';
-                }
-            },
-            
-            doIt: function(agentModel) {
-                const exitEvent = this.event;
-                if (agentModel.getEventModel() !== exitEvent) {
-                    console.warn('Agent not at event for exit:', this);
-                    return;
-                }
-                
-                const toEvent = this.getToEventModel();
-                if (toEvent) {
-                    agentModel.setEvent(toEvent.id);
-                    exitEvent.notifyCollectionOfUpdate();
-                    toEvent.notifyCollectionOfUpdate();
-                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
                 }
             }
         }),

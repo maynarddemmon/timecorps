@@ -3,7 +3,7 @@
         
         {
             View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            SpacedLayout, WrappingLayout
+            Layout, SpacedLayout, WrappingLayout
         } = myt,
         
         {
@@ -137,7 +137,7 @@
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
                     new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:actionModel.done}, [{
-                        doActivated: () => {actionModel.doIt(agentModel);}
+                        doActivated: () => {agentModel.doAction(actionModel);}
                     }]);
                     addedCount++;
                 }
@@ -153,7 +153,7 @@
                         }
                     }]);
                     new Btn(exitView, {buttonType:'solid', text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel()}, [{
-                        doActivated: () => {exitModel.doIt(agentModel);}
+                        doActivated: () => {agentModel.doFollowExit(exitModel);}
                     }]);
                     addedCount++;
                 }
@@ -253,7 +253,7 @@
             self.scrollToBtn.setVisible(hasModel);
             
             if (hasModel) {
-                myt.Layout.incrementGlobalLock();
+                Layout.incrementGlobalLock();
                 
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
                 self.startRow.setValue(eventModel.getStart(true));
@@ -301,7 +301,8 @@
                     new AgentRow(agentsRow, {agentModel, eventModel});
                 }
                 
-                txt = 'Values';
+                // FIXME: this goes away or is controlled by knowledge/attestation.
+                let txt = 'Values';
                 const valueModels = eventModel.getValueModels();
                 for (const valueId in valueModels) {
                     const valueModel = valueModels[valueId];
@@ -309,7 +310,7 @@
                 }
                 self.valuesTxt.setText(txt);
                 
-                myt.Layout.decrementGlobalLock();
+                Layout.decrementGlobalLock();
             }
             
             self.updateTitle();
