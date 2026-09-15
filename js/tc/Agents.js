@@ -181,6 +181,10 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        selectAgent: function(agentModelOrId) {
+            this.gridWrapper.selectRowForModelOrId(agentModelOrId);
+        },
+        
         setup: function(model) {
             this.model = model;
             

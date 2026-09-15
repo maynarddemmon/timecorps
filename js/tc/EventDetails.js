@@ -116,12 +116,7 @@
                 
                 self.callSuper(parent, attrs);
                 
-                self.idTxt = new PaddedPlainText(self, {
-                    paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
-                }, [SizeToParent]);
-                self.nameTxt = new PaddedPlainText(self, {
-                    paddingLeft:padding, paddingRight:padding, percentOfParentWidth:100
-                }, [SizeToParent]);
+                self.vitaeView = new DetailRowFlow(self, {label:'Vitae'});
                 self.actionView = new DetailRowFlow(self, {label:'Take Action'});
                 self.exitView = new DetailRowFlow(self, {label:'Exit'});
                 
@@ -131,10 +126,14 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, actionView, exitView} = self;
+                    {agentModel, eventModel, vitaeView, actionView, exitView} = self;
                 
-                self.idTxt.setText(agentModel.id);
-                self.nameTxt.setText(agentModel.name);
+                new Btn(vitaeView, {buttonType:'underline', textColor:colorLight, text:agentModel.name + ' (' + agentModel.id + ')'}, [{
+                    doActivated: () => pkg.app.getTeamView().selectAgent(agentModel.id)
+                }]);
+                
+                //self.idTxt.setText(agentModel.id);
+                //self.nameTxt.setText(agentModel.name);
                 
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {

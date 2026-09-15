@@ -355,7 +355,15 @@
                 this.getGrid().refreshListData(true, true);
             },
             
-            doRowModelSelected: NOOP // model => {}
+            doRowModelSelected: NOOP, // model => {}
+            
+            /*  Use this to update the selection from external sources. */
+            selectRowForModelOrId: function(modelOrId) {
+                if (typeof modelOrId === 'string') {
+                    modelOrId = this.modelCollection.getById(modelOrId);
+                }
+                this.getGrid().selectRowForModel(modelOrId);
+            }
         }),
         
         GridColHdr = new JSClass('GridColHdr', M.SimpleGridColHdr, {

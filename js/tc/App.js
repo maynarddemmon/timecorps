@@ -164,6 +164,7 @@
         buildFooterView: footerView => {},
         
         getTimelineView: () => timelineView,
+        getTeamView: () => teamView,
         
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
