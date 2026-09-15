@@ -132,18 +132,19 @@
                     doActivated: () => pkg.app.getTeamView().selectAgent(agentModel.id)
                 }]);
                 
-                //self.idTxt.setText(agentModel.id);
-                //self.nameTxt.setText(agentModel.name);
-                
                 const actionModels = eventModel.getActionModels();
+                let addedCount = 0;
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
                     new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:actionModel.done}, [{
                         doActivated: () => {actionModel.doIt(agentModel);}
                     }]);
+                    addedCount++;
                 }
+                if (addedCount === 0) new PaddedPlainText(actionView, {text:'No actions available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
                 
                 const exitModels = eventModel.getExitModels();
+                addedCount = 0;
                 for (const exitId in exitModels) {
                     const exitModel = exitModels[exitId];
                     new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
@@ -154,7 +155,9 @@
                     new Btn(exitView, {buttonType:'solid', text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel()}, [{
                         doActivated: () => {exitModel.doIt(agentModel);}
                     }]);
+                    addedCount++;
                 }
+                if (addedCount === 0) new PaddedPlainText(exitView, {text:'No exits available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
             }
         });
     
