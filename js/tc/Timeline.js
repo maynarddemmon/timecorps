@@ -28,7 +28,8 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 colorBtn,
                 fontSizeLarge
-            }
+            },
+            I18N_PARADOX
         } = pkg,
         
         SCALE_TO_TICK_SCALE = {
@@ -371,9 +372,9 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.timelineParadox = new LabeledValue(header, {label:'Timeline Paradox'}, [{
+            self.timelineParadox = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX}, [{
                 update: function(v) {
-                    if (self.ready) this.callSuper(self.model.timelineParadox + '/' + self.model.timelineParadoxLimit);
+                    if (self.ready) this.callSuper(self.model.timelineParadox.value + '/' + self.model.timelineParadox.max);
                 }
             }]);
             
@@ -604,7 +605,7 @@
         // Setup
         setup: function(model) {
             this.model = model;
-            this.timelineParadox.constrain('update', [model, 'timelineParadox', model, 'timelineParadoxLimit']);
+            this.timelineParadox.constrain('update', [model.timelineParadox, 'value', model.timelineParadox, 'max']);
             refreshLocationColumns(this);
         },
         

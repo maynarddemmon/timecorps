@@ -13,7 +13,7 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMedium
             },
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_CHRONAL, ICON_PARADOX
         } = pkg,
         
         LABEL_WIDTH = 75,
@@ -146,13 +146,16 @@
                 const exitModels = eventModel.getExitModels();
                 addedCount = 0;
                 for (const exitId in exitModels) {
-                    const exitModel = exitModels[exitId];
+                    const exitModel = exitModels[exitId],
+                        toEventModel = exitModel.getToEventModel(),
+                        paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
                     new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
-                        doActivated: () => {
-                            pkg.app.getTimelineView().scrollToEventBox(exitModel.getToEventModel());
-                        }
+                        doActivated: () => {pkg.app.getTimelineView().scrollToEventBox(toEventModel);}
                     }]);
-                    new Btn(exitView, {buttonType:'solid', text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel()}, [{
+                    new Btn(exitView, {
+                        buttonType:'solid', 
+                        text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' [' + paradoxCost + ICON_PARADOX + ']': '')
+                    }, [{
                         doActivated: () => {agentModel.doFollowExit(exitModel);}
                     }]);
                     addedCount++;
@@ -327,10 +330,15 @@
                 deployAgentBtn.setVisible(hasModel && !selectedAgentModel.isAtEvent(eventModel));
                 if (hasModel) {
                     const chronalNeeded = pkg.getChronalToDeploy(selectedAgentModel, eventModel),
-                        chronalAvailable = selectedAgentModel.chronal,
-                        hasEnoughChronal = chronalNeeded <= chronalAvailable;
+                        chronalAvailable = -selectedAgentModel.chronal.getValueToMin(),
+                        hasEnoughChronal = chronalNeeded <= chronalAvailable,
+                        paradoxCost = selectedAgentModel.calculateParadoxForEntry(eventModel);
                     deployAgentBtn.setDisabled(!hasEnoughChronal || selectedAgentModel.isAtEvent(eventModel));
-                    deployAgentBtn.setText('Deploy ' + selectedAgentModel.name + ' [' + chronalNeeded + '/' + chronalAvailable + ']');
+                    deployAgentBtn.setText(
+                        'Deploy ' + selectedAgentModel.name + 
+                        ' [' + chronalNeeded + ICON_CHRONAL + 
+                        (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']'
+                    );
                 }
             }
         },

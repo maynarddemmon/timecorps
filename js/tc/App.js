@@ -69,7 +69,7 @@
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
             dividerV.setValue(187);
-            dividerH.setValue(338);
+            dividerH.setValue(800);
             
             // Fetch Data
             loadDataIntoModel('./data/locations.json', success => {
@@ -105,11 +105,11 @@
         },
         
         buildMiddleView: middleView => {
-            appView.buildOpView(opsView = new Panel(middleView, {title:'Operation'}));
             teamView = new pkg.Agents(middleView, {title:'Agents'});
+            appView.buildOpView(opsView = new Panel(middleView, {title:'Operation'}));
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
-            eventDetailsView = new pkg.EventDetails(middleView);
             timelineView = new pkg.Timeline(middleView, {title:'Timeline'});
+            eventDetailsView = new pkg.EventDetails(middleView);
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
@@ -135,7 +135,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:338, limitToParent:438,
+                width:5, percentOfParentHeight:100, minValue:475, limitToParent:375,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {
@@ -145,14 +145,11 @@
                 updateLayout: function() {
                     const v = this.value,
                         leftWidth = v + 2;
-                    opsView.setWidth(leftWidth);
-                    eventDetailsView.setWidth(leftWidth);
-                    
-                    teamView.setX(leftWidth + layoutSpacing);
-                    teamView.setWidth(middleView.width - teamView.x);
-                    
-                    timelineView.setX(leftWidth + layoutSpacing);
-                    timelineView.setWidth(middleView.width - timelineView.x);
+                    for (const sv of [teamView, timelineView]) sv.setWidth(leftWidth);
+                    for (const sv of [opsView, eventDetailsView]) {
+                        sv.setX(leftWidth + layoutSpacing);
+                        sv.setWidth(middleView.width - sv.x);
+                    }
                 }
             }]);
             

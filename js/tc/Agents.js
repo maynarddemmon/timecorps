@@ -4,7 +4,7 @@
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
             LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
-            ICON_NAV_FORWARD
+            ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX
         } = pkg,
         
         updateBtnCell = (row, colId, eventExistsTxtFunc) => {
@@ -26,6 +26,17 @@
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
+                    case 'paradox':
+                    case 'chronal': {
+                        const statModel = this.model[colId],
+                            value = statModel.getValue(),
+                            max = statModel.getMax();
+                        this.getRef(colId).setText(
+                            '[<b>' + value + '</b>/' + max + ']', 
+                            'Current Value: ' + value + ' Max Value: ' + max
+                        );
+                        return;
+                    }
                 }
                 if (eventExistsTxtFunc) {
                     updateBtnCell(this, colId, eventExistsTxtFunc);
@@ -39,6 +50,15 @@
                     case 'where':
                     case 'when':
                         return GridCellBtn;
+                    default:
+                        return this.callSuper(colId);
+                }
+            },
+            isPlainCell: function(colId) {
+                switch (colId) {
+                    case 'paradox':
+                    case 'chronal':
+                        return false;
                     default:
                         return this.callSuper(colId);
                 }
@@ -67,7 +87,7 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.chronalPool = new LabeledValue(header, {label:'Chronal Pool'}, [{
+            self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool'}, [{
                 update: function(v) {
                     if (self.ready) this.callSuper(self.model.chronal + '/' + self.model.chronalLimit);
                 }
@@ -84,8 +104,8 @@
                     new GridColHdr(gridHeader, {columnId:'event',   minValue:70, maxValue:2000, flex:1, text:'Event'});
                     new GridColHdr(gridHeader, {columnId:'where',   minValue:70, maxValue:2000, flex:1, text:'Where'});
                     new GridColHdr(gridHeader, {columnId:'when',    minValue:70, maxValue:2000, flex:1, text:'When'});
-                    new GridColHdr(gridHeader, {columnId:'paradox', minValue:60, maxValue:60, text:'Paradox'});
-                    new GridColHdr(gridHeader, {columnId:'chronal', minValue:60, maxValue:60, text:'Chronal'});
+                    new GridColHdr(gridHeader, {columnId:'paradox', minValue:70, maxValue:70, text:I18N_PARADOX});
+                    new GridColHdr(gridHeader, {columnId:'chronal', minValue:70, maxValue:70, text:I18N_CHRONAL});
                 },
                 doRowModelSelected: model => {
                     self.fireEvent('selectionChanged', model);
@@ -153,6 +173,14 @@
                                     if (vA === vB) return tieBreakerSortFunc(a, b);
                                     return (vA - vB) * sortAsc;
                                 }
+                            };
+                        case 'paradox':
+                        case 'chronal':
+                            return (a, b) => {
+                                const vA = a[sortColumnId].getValue(),
+                                    vB = b[sortColumnId].getValue();
+                                if (vA === vB) return tieBreakerSortFunc(a, b);
+                                return (vA - vB) * sortAsc;
                             };
                         default:
                             return this.callSuper(sortColumnId, ascending, tieBreakerSortFunc);

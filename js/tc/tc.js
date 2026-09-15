@@ -829,7 +829,10 @@
                 cost = getChronalFromHQ(eventTime);
             }
             return mathMax(MIN_DEPLOY_CHRONAL, cost);
-        };
+        },
+        
+        ICON_CHRONAL ='⏲', // ⏲ ⌚ ♾
+        ICON_PARADOX = '꩜'; // ⥁ ☣
     
     pkg.tc = {
         app:null, // Holds the App instance.
@@ -845,10 +848,14 @@
         
         getChronalToDeploy,
         
+        I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
+        I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
         ICON_NAV_BACK:'❮',
         ICON_NAV_FORWARD:'❯',
-        ICON_ACTION:'☟',
-        ICON_TRAVEL:'⎈',
+        ICON_ACTION:'⎇', // ⎌ ⎇ ☟
+        ICON_TRAVEL:'⎆', // ⎈
         ICON_VIEW:'⏿',
+        ICON_CHRONAL,
+        ICON_PARADOX
     };
 })(window);

@@ -6,7 +6,7 @@
         {min:mathMin, max:mathMax, abs:mathAbs} = Math,
         
         {
-            Node, resolveName, ExpressionParser,
+            Node, resolveName, stableStringify, ExpressionParser,
             BaseModel, BaseModelCollection,
             AccessorSupport:{generateName, generateSetterName}
         } = myt,
@@ -17,7 +17,10 @@
         STARTING_CHRONAL_LIMIT = 24,
         
         STARTING_PARADOX = 0,
-        STARTING_PARADOX_LIMIT = 18,
+        STARTING_PARADOX_LIMIT = 3,
+        
+        AGENT_PARADOX_LIMIT = 6,
+        AGENT_CHRONAL_LIMIT = 15,
         
         // Constraints /////////////////////////////////////////////////////////
         SCOPE_TIMELINE = 'timeline',
@@ -201,30 +204,204 @@
         },
         
         
+        // Stat ////////////////////////////////////////////////////////////////
+        /** A stat that maintains a numerical value bounded by a min, max, absolute min and
+            absolute max. */
+        NumericStatModel = pkg.NumericStatModel = new JSClass('NumericStatModel', BaseModel, {
+            init: function(attrs) {
+                const self = this,
+                    {absMin, absMax, min, max, value} = attrs;
+                delete attrs.absMin;
+                delete attrs.absMax;
+                delete attrs.min;
+                delete attrs.max;
+                delete attrs.value;
+                
+                // Need to set attrs in an exact order
+                self.setAbsMin(absMin ?? Number. MIN_SAFE_INTEGER);
+                self.setAbsMax(absMax ?? Number. MAX_SAFE_INTEGER);
+                self.setMin(min ?? self.absMin);
+                self.setMax(max ?? self.absMax);
+                self.setValue(value ?? self.min);
+                
+                self.callSuper(attrs);
+            },
+            
+            /*  The absolute minimum for the stat in the game. This value will never change 
+                once set. */
+            setAbsMin: function(v) {
+                if (this.absMin == null) this.setAndNotifyCollection('absMin', v, true);
+            },
+            getAbsMin: function() {return this.absMin;},
+            
+            /*  The absolute maximum for the stat in the game. This value will never change 
+                once set. */
+            setAbsMax: function(v) {
+                if (this.absMax == null) this.setAndNotifyCollection('absMax', v, true);
+            },
+            getAbsMax: function() {return this.absMax;},
+            
+            /*  The minimum value for the stat for the object it is attached to. */
+            setMin: function(v) {
+                const curMin = this.min,
+                    newMin = mathMax(this.getAbsMin(), v);
+                if (curMin !== newMin) {
+                    this.set('min', newMin, true);
+                    if (this.value < this.min && this.setValue(this.min)) return true;
+                    if (this.inited) this.notifyCollectionOfUpdate();
+                    return true;
+                }
+                return false;
+            },
+            getMin: function() {return this.min;},
+            
+            /* The minimum value for the stat for the object it is attached to. */
+            setMax: function(v) {
+                const curMax = this.max,
+                    newMax = mathMin(this.getAbsMax(), v);
+                if (curMax !== newMax) {
+                    this.set('max', newMax, true);
+                    if (this.value > this.max && this.setValue(this.max)) return true;
+                    if (this.inited) this.notifyCollectionOfUpdate();
+                    return true;
+                }
+                return false;
+            },
+            getMax: function() {return this.max;},
+            
+            /* The minimum value for the stat for the object it is attached to. */
+            setValue: function(v) {
+                const curValue = this.value,
+                    newValue = mathMin(mathMax(v, this.getMin()), this.getMax());
+                if (curValue !== newValue) {
+                    this.setAndNotifyCollection('value', newValue, true);
+                    return true;
+                }
+                return false;
+            },
+            getValue: function() {return this.value;},
+            
+            adjValue: function(adj, cfg) {
+                if (adj === 0) return 0;
+                
+                const curValue = this.getValue();
+                if (adj > 0) {
+                    const max = this.getMax(),
+                        allowedAdj = max - curValue;
+                    if (adj <= allowedAdj) {
+                        this.setValue(curValue + adj);
+                        return adj;
+                    } else {
+                        if (cfg?.allOrNothing) {
+                            // Change would exceed max so do not change.
+                            return 0;
+                        } else {
+                            this.setValue(curValue + allowedAdj);
+                            return allowedAdj;
+                        }
+                    }
+                } else {
+                    const min = this.getMin(),
+                        allowedAdj = min - curValue;
+                    if (adj >= allowedAdj) {
+                        this.setValue(curValue + adj);
+                        return adj;
+                    } else {
+                        if (cfg?.allOrNothing) {
+                            // Change would exceed max so do not change.
+                            return 0;
+                        } else {
+                            this.setValue(curValue + allowedAdj);
+                            return allowedAdj;
+                        }
+                    }
+                }
+            },
+            
+            getValueToMin: function() {return this.getMin() - this.getValue();},
+            isAtMinValue: function() {return this.getMin() === this.getValue();},
+            
+            getValueToMax: function() {return this.getMax() - this.getValue();},
+            isAtMaxValue: function() {return this.getMax() === this.getValue();},
+            
+            getAsObj: function(cfg) {
+                const self = this,
+                    retval = self.callSuper(cfg);
+                for (const key in ['absMin','min','value','max','absMax']) {
+                    retval[key] = self[key];
+                }
+                return retval;
+            }
+        }),
+        
+        
+        /** A stat that gets its value from other StatModels. */
+        /*DerivedStatModelMixin = pkg.DerivedStatModelMixin = new JS.Module('DerivedStatModelMixin', {
+            init: function(attrs) {
+                const watch = attrs.watch;
+                delete attrs.watch;
+                
+                this.callSuper(attrs);
+                
+                this.setValuesToWatch(watch);
+            },
+            
+            setValuesToWatch: function(observables) {
+                this.releaseConstraint('updateValue');
+                this.constrain('updateValue', observables);
+            },
+            
+            updateValue: function(ignoreEvent) {
+                this.setValue(this.calculateValue());
+            },
+            
+            calculateValue: () => {},
+        }),*/
+        
+        
         // Agents //////////////////////////////////////////////////////////////
         AgentModel = pkg.AgentModel = new JSClass('AgentModel', BaseModel, {
             init: function(attrs) {
                 this.log = [];
-                this.paradox = this.chronal = 0;
+                this.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT});
+                this.chronal = new NumericStatModel({id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT});
                 this.callSuper(attrs);
             },
             
             getAsObj: function(cfg) {
                 const retval = this.callSuper(cfg);
-                for (const attrName of ['name','paradox','chronal','event']) retval[attrName] = this[attrName];
+                for (const attrName of ['name','event']) retval[attrName] = this[attrName];
+                for (const attrName of ['paradox','chronal']) {
+                    // Use stableStringify since similarTo uses shallowEqual. If this gets 
+                    // unwieldy change similarTo to use deepEqual and drop the stableStringify.
+                    retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
+                }
                 return retval;
             },
             
             setName: function(name) {this.setAndNotifyCollection('name', name, true);},
-            setParadox: function(paradox) {this.setAndNotifyCollection('paradox', paradox, true);},
-            setChronal: function(chronal) {this.setAndNotifyCollection('chronal', chronal, true);},
+            
+            setParadox: function(v) { // Used by instantiation only.
+                if (this.inited) {
+                    console.warn('AgentModel.setParadox after init', this);
+                } else {
+                    this.paradox.setValue(v);
+                }
+            },
+            setChronal: function(v) { // Used by instantiation only.
+                if (this.inited) {
+                    console.warn('AgentModel.setChronal after init', this);
+                } else {
+                    this.chronal.setValue(v);
+                }
+            },
             
             setEvent: function(event, logEntry) {
                 if (this.event !== event) {
                     this._eventModel = null;
                     
                     this.setAndNotifyCollection('event', event, true);
-                    this.accrueEntryParadox(event);
+                    this.accrueEntryParadox(this.getEventModel());
                     this.pushOntoLog(logEntry ?? {type:'origin', event:this.getEventModel()});
                 }
             },
@@ -248,8 +425,8 @@
             doDeployToEvent: function(eventModel) {
                 if (eventModel) {
                     const cost = pkg.getChronalToDeploy(this, eventModel);
-                    if (cost <= this.chronal) {
-                        this.setChronal(this.chronal - cost);
+                    if (cost <= -this.chronal.getValueToMin()) {
+                        this.chronal.adjValue(-cost);
                         this.setEvent(eventModel.id, {type:'deploy', event:eventModel});
                         eventModel.notifyCollectionOfUpdate();
                     } else {
@@ -303,14 +480,20 @@
             },
             
             // Paradox
-            accrueEntryParadox: function(eventId) {
-                const eventModel = model.getEventModel(eventId);
-                if (eventModel) {
-                    if (this.hasBeenInEvent(eventModel)) {
-                        this.setParadox(this.paradox + 1);
-                        // FIXME: deal with paradox max. Should be in setParadox function.
-                        model.setTimelineParadox(model.timelineParadox + 1);
-                    }
+            calculateParadoxForEntry: function(eventModelOrId) {
+                const eventModel = typeof eventModelOrId === 'string' ? model.getEventModel(eventId) : eventModelOrId;
+                if (eventModel && this.hasBeenInEvent(eventModel)) return 1;
+                return 0;
+            },
+            
+            accrueEntryParadox: function(eventModelOrId) {
+                const paradox = this.calculateParadoxForEntry(eventModelOrId);
+                if (paradox > 0) {
+                    this.paradox.adjValue(1);
+                    // FIXME: deal with agent paradox max. Should be in setParadox function.
+                    
+                    model.timelineParadox.adjValue(1);
+                    // FIXME: deal with timeline paradox max. Should be in setParadox function.
                 }
             },
             
@@ -537,6 +720,8 @@
         initNode: function(parent, attrs) {
             model = this;
             
+            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:STARTING_PARADOX, max:STARTING_PARADOX_LIMIT});
+            
             // Note: events, agents and locations are part of the external API.
             model[SCOPE_EVENTS] = new BaseModelCollection({modelClass:EventModel}, [{
                 fireAddedEvent: function(model) {
@@ -561,11 +746,6 @@
         },
         
         // Accessors ///////////////////////////////////////////////////////////
-        getTimelineParadox: () => model.timelineParadox,
-        setTimelineParadox: v => {model.set('timelineParadox', v, true);},
-        getTimelineParadoxLimit: () => model.timelineParadoxLimit,
-        setTimelineParadoxLimit: v => {model.set('timelineParadoxLimit', v, true);},
-        
         getChronal: () => model.chronal,
         setChronal: v => {model.set('chronal', v, true);},
         getChronalLimit: () => model.chronalLimit,
@@ -587,12 +767,12 @@
             model.setChronal(STARTING_CHRONAL);
             model.setChronalLimit(STARTING_CHRONAL_LIMIT);
             
-            model.setTimelineParadox(STARTING_PARADOX);
-            model.setTimelineParadoxLimit(STARTING_PARADOX_LIMIT);
+            model.timelineParadox.setMax(STARTING_PARADOX_LIMIT);
+            model.timelineParadox.setValue(STARTING_PARADOX);
         },
         
         processData: json => {
-            for (const dataKey of [SCOPE_LOCATIONS,SCOPE_EVENTS,SCOPE_AGENTS]) {
+            for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS]) {
                 const data = json[dataKey];
                 if (data) {
                     for (const id in data) {
@@ -604,21 +784,4 @@
             }
         }
     });
-    
-    // FIXME: testing
-    /*setInterval(() => {
-        const agents = model[SCOPE_AGENTS].getAsList(),
-            len = agents.length;
-        for (let i = 0; i < len; i++) {
-            const agent = agents[i];
-            agent.setParadox(myt.getRandomInt(0, 25));
-            agent.setChronal(myt.getRandomInt(10, 25));
-        }
-        
-        model[SCOPE_AGENTS].removeById(agents[myt.getRandomInt(0, len - 1)].id, true);
-        
-        const guid = myt.generateGuid();
-        model[SCOPE_AGENTS].addModel({id:'id-' + guid, name:'name-' + guid, paradox:0, chronal:10});
-    }, 1000);*/
-    
 })(tc);
