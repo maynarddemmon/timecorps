@@ -7,13 +7,14 @@
         } = myt,
         
         {
-            Btn, WideView, MiniPanel, timeUtil:{format},
+            Btn, SquareBtn, WideView, MiniPanel, timeUtil:{format},
             theme:{
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
-                fontSizeMedium
+                fontSizeMedium, fontSizeLarge
             },
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_CHRONAL, ICON_PARADOX
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_CHRONAL, ICON_PARADOX,
+            I18N_PARADOX
         } = pkg,
         
         LABEL_WIDTH = 75,
@@ -173,11 +174,24 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.scrollToBtn = new Btn(header, {y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, visible:false}, [{
+            self.histPrevBtn = new SquareBtn(header, {
+                y:1, buttonType:'plain', textColor:colorLight, disabled:true,
+                icon:pkg.ICON_NAV_BACK, iconSize:fontSizeLarge, iconX:6, iconY:1, 
+                tooltip:'Select the last Event you viewed.'
+            }, [{doActivated: function() {pkg.app.getTimelineView().navigateHistory(-1);}}]);
+            self.scrollToBtn = new Btn(header, {
+                y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, disabled:true
+            }, [{
                 doActivated: () => {
                     pkg.app.getTimelineView().scrollToEventBox(self.eventModel);
                 }
             }]);
+            self.histNextBtn = new SquareBtn(header, {
+                y:1, buttonType:'plain', textColor:colorLight, disabled:true,
+                icon:pkg.ICON_NAV_FORWARD, iconSize:fontSizeLarge, iconX:8, iconY:1, 
+                tooltip:'Select the next Event you viewed.'
+            }, [{doActivated: function() {pkg.app.getTimelineView().navigateHistory(1);}}]);
+            
             
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding:padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
@@ -187,6 +201,7 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             self.locationRow = new DetailRow(detailsContainer, {label:'Location'});
+            self.paradoxRow = new DetailRow(detailsContainer, {label:I18N_PARADOX});
             self.startRow = new DetailRow(detailsContainer, {label:'Begins'});
             self.durationRow = new DetailRow(detailsContainer, {label:'Duration'});
             self.endRow = new DetailRow(detailsContainer, {label:'Ends'});
@@ -246,6 +261,14 @@
             this.updateForSelectedAgent();
         },
         
+        updateHistoryBtns: function(prevDisabled, prevBtnTooltip, nextDisabled, nextBtnTooltip) {
+            const {histPrevBtn, histNextBtn} = this;
+            histPrevBtn.setDisabled(prevDisabled);
+            histPrevBtn.setTooltip(prevBtnTooltip);
+            histNextBtn.setDisabled(nextDisabled);
+            histNextBtn.setTooltip(nextBtnTooltip);
+        },
+        
         updateForEventModel: function() {
             const self = this,
                 {eventModel, detailsContainer} = self,
@@ -253,12 +276,14 @@
             
             self.noSelectionTxt.setVisible(!hasModel);
             detailsContainer.setVisible(hasModel);
-            self.scrollToBtn.setVisible(hasModel);
+            self.scrollToBtn.setDisabled(!hasModel);
             
             if (hasModel) {
                 Layout.incrementGlobalLock();
                 
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
+                const paradoxStat = eventModel.paradox;
+                self.paradoxRow.setValue('[' + paradoxStat.value + '/' + paradoxStat.max + ']');
                 self.startRow.setValue(eventModel.getStart(true));
                 self.durationRow.setValue(eventModel.getDuration(true));
                 self.endRow.setValue(eventModel.getEnd(true));

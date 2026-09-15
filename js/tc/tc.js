@@ -832,7 +832,7 @@
         },
         
         ICON_CHRONAL ='⏲', // ⏲ ⌚ ♾
-        ICON_PARADOX = '꩜'; // ⥁ ☣
+        ICON_PARADOX = '⥁'; // ⥁ ☣ ꩜
     
     pkg.tc = {
         app:null, // Holds the App instance.

@@ -140,12 +140,16 @@
         updateHistoryBtns = timeline => {
             const {histPrevBtn, histNextBtn, _hist:hist, _histIdx:idx} = timeline,
                 prevDisabled = idx < 1,
-                nextDisabled = idx === hist.length - 1;
+                nextDisabled = idx === hist.length - 1,
+                prevBtnTooltip = prevDisabled ? 'No last Event to select.' : timeline.model.getEventModel(hist[idx - 1])?.name,
+                nextBtnTooltip = nextDisabled ? 'No next Event to select.' : timeline.model.getEventModel(hist[idx + 1])?.name;
             histPrevBtn.setDisabled(prevDisabled);
-            histNextBtn.setDisabled(nextDisabled);
+            histPrevBtn.setTooltip(prevBtnTooltip);
             
-            histPrevBtn.setTooltip(prevDisabled ? 'No last Event to select.' : timeline.model.getEventModel(hist[idx - 1])?.name);
-            histNextBtn.setTooltip(nextDisabled ? 'No next Event to select.' : timeline.model.getEventModel(hist[idx + 1])?.name);
+            histNextBtn.setDisabled(nextDisabled);
+            histNextBtn.setTooltip(nextBtnTooltip);
+            
+            pkg.app.getEventDetailsView().updateHistoryBtns(prevDisabled, prevBtnTooltip, nextDisabled, nextBtnTooltip);
         },
         
         EventBox = new JSClass('EventBox', SimpleButton, {

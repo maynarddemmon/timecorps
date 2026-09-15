@@ -13,14 +13,17 @@
         
         {timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}} = pkg,
         
-        STARTING_CHRONAL = 16,
-        STARTING_CHRONAL_LIMIT = 24,
+        // FIXME: I'm not sure we have a use for this. Possibly this is the HQ limit for resupply.
+        TIMELINE_STARTING_CHRONAL = 16,
+        TIMELINE_CHRONAL_LIMIT = 24,
         
-        STARTING_PARADOX = 0,
-        STARTING_PARADOX_LIMIT = 3,
+        TIMELINE_STARTING_PARADOX = 0,
+        TIMELINE_PARADOX_LIMIT = 3,
         
-        AGENT_PARADOX_LIMIT = 6,
         AGENT_CHRONAL_LIMIT = 15,
+        AGENT_PARADOX_LIMIT = 8,
+        
+        EVENT_PARADOX_LIMIT = 5,
         
         // Constraints /////////////////////////////////////////////////////////
         SCOPE_TIMELINE = 'timeline',
@@ -308,7 +311,7 @@
                         return adj;
                     } else {
                         if (cfg?.allOrNothing) {
-                            // Change would exceed max so do not change.
+                            // Change would preceed min so do not change.
                             return 0;
                         } else {
                             this.setValue(curValue + allowedAdj);
@@ -327,7 +330,7 @@
             getAsObj: function(cfg) {
                 const self = this,
                     retval = self.callSuper(cfg);
-                for (const key in ['absMin','min','value','max','absMax']) {
+                for (const key of ['absMin','min','value','max','absMax']) {
                     retval[key] = self[key];
                 }
                 return retval;
@@ -489,11 +492,16 @@
             accrueEntryParadox: function(eventModelOrId) {
                 const paradox = this.calculateParadoxForEntry(eventModelOrId);
                 if (paradox > 0) {
-                    this.paradox.adjValue(1);
+                    const paradox = 1;
+                    this.paradox.adjValue(paradox);
                     // FIXME: deal with agent paradox max. Should be in setParadox function.
                     
-                    model.timelineParadox.adjValue(1);
-                    // FIXME: deal with timeline paradox max. Should be in setParadox function.
+                    const eventModel = this.getEventModel();
+                    if (eventModel) {
+                        this.getEventModel().paradox.adjValue(paradox);
+                    } else {
+                        console.warn('accrueEntryParadox for timeline should be mediated by an event');
+                    }
                 }
             },
             
@@ -599,10 +607,36 @@
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             init: function(attrs) {
+                this.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
+                    // FIXME: deal with event paradox max. Need some kind of function/event/trigger when
+                    // value === min/max
+                    adjValue: function(adj, cfg) {
+                        const retval = this.callSuper(adj, cfg);
+                        if (retval !== 0) {
+                            model.timelineParadox.adjValue(retval);
+                            // FIXME: deal with timeline paradox max. Should be in setParadox function.
+                        }
+                        return retval;
+                    }
+                }]);
+                
                 this.actions = {};
                 this.values = {};
                 this.exits = [];
                 this.callSuper(attrs);
+            },
+            
+            getAsObj: function(cfg) {
+                // FIXME: this is not really correct. We will fix once it's clear how EventModel
+                // will be serialized both for Save and for an Event grid (once it is introduced).
+                const retval = this.callSuper(cfg);
+                for (const attrName of ['actions','values','exits']) retval[attrName] = this[attrName];
+                for (const attrName of ['paradox']) {
+                    // Use stableStringify since similarTo uses shallowEqual. If this gets 
+                    // unwieldy change similarTo to use deepEqual and drop the stableStringify.
+                    retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
+                }
+                return retval;
             },
             
             
@@ -625,6 +659,14 @@
                 }
             },
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
+            
+            setParadox: function(v) { // Used by instantiation only.
+                if (this.inited) {
+                    console.warn('EventModel.setParadox after init', this);
+                } else {
+                    this.paradox.setValue(v);
+                }
+            },
             
             // Location
             setLocation: function(location) { // An ID string.
@@ -720,7 +762,8 @@
         initNode: function(parent, attrs) {
             model = this;
             
-            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:STARTING_PARADOX, max:STARTING_PARADOX_LIMIT});
+            model.timelineChronal = new NumericStatModel({id:'timelineChronal', absMin:0, min:0, value:0, max:0});
+            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:0, max:0});
             
             // Note: events, agents and locations are part of the external API.
             model[SCOPE_EVENTS] = new BaseModelCollection({modelClass:EventModel}, [{
@@ -746,11 +789,6 @@
         },
         
         // Accessors ///////////////////////////////////////////////////////////
-        getChronal: () => model.chronal,
-        setChronal: v => {model.set('chronal', v, true);},
-        getChronalLimit: () => model.chronalLimit,
-        setChronalLimit: v => {model.set('chronalLimit', v, true);},
-        
         getEventModel: id => model[SCOPE_EVENTS].getById(id),
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
         
@@ -764,11 +802,11 @@
         
         // Methods /////////////////////////////////////////////////////////////
         reset: () => {
-            model.setChronal(STARTING_CHRONAL);
-            model.setChronalLimit(STARTING_CHRONAL_LIMIT);
+            model.timelineChronal.setMax(TIMELINE_CHRONAL_LIMIT);
+            model.timelineChronal.setValue(TIMELINE_STARTING_CHRONAL);
             
-            model.timelineParadox.setMax(STARTING_PARADOX_LIMIT);
-            model.timelineParadox.setValue(STARTING_PARADOX);
+            model.timelineParadox.setMax(TIMELINE_PARADOX_LIMIT);
+            model.timelineParadox.setValue(TIMELINE_STARTING_PARADOX);
         },
         
         processData: json => {

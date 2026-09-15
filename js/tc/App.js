@@ -162,6 +162,7 @@
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
+        getEventDetailsView: () => eventDetailsView,
         
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);

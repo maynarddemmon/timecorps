@@ -222,8 +222,11 @@
 				"massLossOfLife":{
 					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.boatsForAll.value)"
 				},
-				"TEST":{
+				"TEST_PARADOX":{
 					"value":"timeline.timelineParadox.value"
+				},
+				"TEST_CHRONAL":{
+					"value":"timeline.timelineChronal.value + '/' + timeline.timelineChronal.max"
 				}
 			}
 		}
