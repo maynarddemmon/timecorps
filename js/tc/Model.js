@@ -18,12 +18,12 @@
         TIMELINE_CHRONAL_LIMIT = 24,
         
         TIMELINE_STARTING_PARADOX = 0,
-        TIMELINE_PARADOX_LIMIT = 3,
+        TIMELINE_PARADOX_LIMIT = 9,
         
         AGENT_CHRONAL_LIMIT = 15,
-        AGENT_PARADOX_LIMIT = 8,
+        AGENT_PARADOX_LIMIT = 3,
         
-        EVENT_PARADOX_LIMIT = 5,
+        EVENT_PARADOX_LIMIT = 4,
         
         // Constraints /////////////////////////////////////////////////////////
         SCOPE_TIMELINE = 'timeline',
@@ -244,13 +244,16 @@
             },
             getAbsMax: function() {return this.absMax;},
             
-            /*  The minimum value for the stat for the object it is attached to. */
+            /*  The minimum value. */
             setMin: function(v) {
                 const curMin = this.min,
                     newMin = mathMax(this.getAbsMin(), v);
                 if (curMin !== newMin) {
                     this.set('min', newMin, true);
-                    if (this.value < this.min && this.setValue(this.min)) return true;
+                    if (this.value < this.min && this.setValue(this.min)) {
+                        this.triggerValueClampedToMin();
+                        return true;
+                    }
                     if (this.inited) this.notifyCollectionOfUpdate();
                     return true;
                 }
@@ -258,13 +261,16 @@
             },
             getMin: function() {return this.min;},
             
-            /* The minimum value for the stat for the object it is attached to. */
+            /* The maximum value for the stat. */
             setMax: function(v) {
                 const curMax = this.max,
                     newMax = mathMin(this.getAbsMax(), v);
                 if (curMax !== newMax) {
                     this.set('max', newMax, true);
-                    if (this.value > this.max && this.setValue(this.max)) return true;
+                    if (this.value > this.max && this.setValue(this.max)) {
+                        this.triggerValueClampedToMax();
+                        return true;
+                    }
                     if (this.inited) this.notifyCollectionOfUpdate();
                     return true;
                 }
@@ -272,15 +278,19 @@
             },
             getMax: function() {return this.max;},
             
-            /* The minimum value for the stat for the object it is attached to. */
+            /* The value for the stat. */
             setValue: function(v) {
                 const curValue = this.value,
-                    newValue = mathMin(mathMax(v, this.getMin()), this.getMax());
-                if (curValue !== newValue) {
+                    newValue = mathMin(mathMax(v, this.getMin()), this.getMax()),
+                    changed = curValue !== newValue;
+                if (changed) {
                     this.setAndNotifyCollection('value', newValue, true);
-                    return true;
+                    if (this.isAtMinValue()) this.triggerValueAtMin();
+                    if (this.isAtMaxValue()) this.triggerValueAtMax();
                 }
-                return false;
+                if (newValue < v) this.triggerValueClampedToMax();
+                if (newValue > v) this.triggerValueClampedToMin();
+                return changed;
             },
             getValue: function() {return this.value;},
             
@@ -300,6 +310,7 @@
                             return 0;
                         } else {
                             this.setValue(curValue + allowedAdj);
+                            this.triggerValueClampedToMax();
                             return allowedAdj;
                         }
                     }
@@ -315,6 +326,7 @@
                             return 0;
                         } else {
                             this.setValue(curValue + allowedAdj);
+                            this.triggerValueClampedToMin();
                             return allowedAdj;
                         }
                     }
@@ -323,9 +335,13 @@
             
             getValueToMin: function() {return this.getMin() - this.getValue();},
             isAtMinValue: function() {return this.getMin() === this.getValue();},
+            triggerValueAtMin: function() {this.fireEvent('valueAtMin', true);},
+            triggerValueClampedToMin: function() {this.fireEvent('valueClampedToMin', true);},
             
             getValueToMax: function() {return this.getMax() - this.getValue();},
             isAtMaxValue: function() {return this.getMax() === this.getValue();},
+            triggerValueAtMax: function() {this.fireEvent('valueAtMax', true);},
+            triggerValueClampedToMax: function() {this.fireEvent('valueClampedToMax', true);},
             
             getAsObj: function(cfg) {
                 const self = this,
@@ -365,10 +381,21 @@
         // Agents //////////////////////////////////////////////////////////////
         AgentModel = pkg.AgentModel = new JSClass('AgentModel', BaseModel, {
             init: function(attrs) {
-                this.log = [];
-                this.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT});
-                this.chronal = new NumericStatModel({id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT});
-                this.callSuper(attrs);
+                const self = this;
+                self.log = [];
+                self.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT}, [{
+                    triggerValueAtMax: function() {
+                        this.callSuper();
+                        // FIXME: perhaps provide a warning in the UI.
+                        console.log('agent max paradox reached.');
+                    },
+                    triggerValueClampedToMax: function() {
+                        this.callSuper();
+                        self.doDevouredByChronovores();
+                    }
+                }]);
+                self.chronal = new NumericStatModel({id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT});
+                self.callSuper(attrs);
             },
             
             getAsObj: function(cfg) {
@@ -492,7 +519,6 @@
             accrueEntryParadox: function(eventModelOrId) {
                 const paradox = this.calculateParadoxForEntry(eventModelOrId);
                 if (paradox > 0) {
-                    const paradox = 1;
                     this.paradox.adjValue(paradox);
                     // FIXME: deal with agent paradox max. Should be in setParadox function.
                     
@@ -503,6 +529,11 @@
                         console.warn('accrueEntryParadox for timeline should be mediated by an event');
                     }
                 }
+            },
+            
+            doDevouredByChronovores: function() {
+                console.log('Agent devoured by chronovores', this);
+                // FIXME: disabled, removed or in some other way indicate the Agent has been devoured.
             },
             
             // Life and Log
@@ -607,7 +638,8 @@
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             init: function(attrs) {
-                this.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
+                const self = this;
+                self.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
                     // FIXME: deal with event paradox max. Need some kind of function/event/trigger when
                     // value === min/max
                     adjValue: function(adj, cfg) {
@@ -617,13 +649,22 @@
                             // FIXME: deal with timeline paradox max. Should be in setParadox function.
                         }
                         return retval;
+                    },
+                    triggerValueAtMax: function() {
+                        this.callSuper();
+                        // FIXME: perhaps provide a warning in the UI.
+                        console.log('event max paradox reached.');
+                    },
+                    triggerValueClampedToMax: function() {
+                        this.callSuper();
+                        self.doDevouredByChronovores();
                     }
                 }]);
                 
-                this.actions = {};
-                this.values = {};
-                this.exits = [];
-                this.callSuper(attrs);
+                self.actions = {};
+                self.values = {};
+                self.exits = [];
+                self.callSuper(attrs);
             },
             
             getAsObj: function(cfg) {
@@ -754,7 +795,12 @@
                     if (event && (!noSelf || event !== self)) filtered.add(event);
                 }
                 return filtered;
-            }
+            },
+            
+            doDevouredByChronovores: function() {
+                console.log('Event devoured by chronovores', this);
+                // FIXME: disable the event or in some other way indicate the Event has been devoured.
+            },
         });
     
     pkg.Model = new JSClass('Model', Node, {
@@ -762,8 +808,18 @@
         initNode: function(parent, attrs) {
             model = this;
             
-            model.timelineChronal = new NumericStatModel({id:'timelineChronal', absMin:0, min:0, value:0, max:0});
-            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:0, max:0});
+            model.timelineChronal = new NumericStatModel({id:'timelineChronal', absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT});
+            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT}, [{
+                triggerValueAtMax: function() {
+                    this.callSuper();
+                    // FIXME: perhaps provide a warning in the UI.
+                    console.log('timeline max paradox reached.');
+                },
+                triggerValueClampedToMax: function() {
+                    this.callSuper();
+                    pkg.app.notifyTimelineParadoxExceeded();
+                }
+            }]);
             
             // Note: events, agents and locations are part of the external API.
             model[SCOPE_EVENTS] = new BaseModelCollection({modelClass:EventModel}, [{
@@ -802,10 +858,7 @@
         
         // Methods /////////////////////////////////////////////////////////////
         reset: () => {
-            model.timelineChronal.setMax(TIMELINE_CHRONAL_LIMIT);
             model.timelineChronal.setValue(TIMELINE_STARTING_CHRONAL);
-            
-            model.timelineParadox.setMax(TIMELINE_PARADOX_LIMIT);
             model.timelineParadox.setValue(TIMELINE_STARTING_PARADOX);
         },
         

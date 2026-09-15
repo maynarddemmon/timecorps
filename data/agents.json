@@ -3,27 +3,24 @@
 		"vq":{
 			"name":"Vasquez",
 			"chronal":10,
+			"paradox":2,
 			"event":"casualties"
 		},
 		"ok":{
 			"name":"Okonjo",
-			"paradox":2,
-			"chronal":12,
+			"paradox":1,
 			"event":"casualties"
 		},
 		"hw":{
 			"name":"Halloway",
-			"paradox":3,
-			"chronal":14
+			"chronal":15
 		},
 		"go":{
 			"name":"Gordon",
-			"paradox":3,
 			"chronal":14
 		},
 		"pi":{
 			"name":"Pierce",
-			"paradox":3,
 			"chronal":14
 		}
 	}

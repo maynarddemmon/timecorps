@@ -183,6 +183,11 @@
         
         notifyEventModelRemoved: eventModel => {
             //console.log('remove event', eventModel);
+        },
+        
+        notifyTimelineParadoxExceeded: () => {
+            console.log('timeline max paradox EXCEEDED.');
+            // FIXME: do end game.
         }
     });
 })(tc);
