@@ -1,0 +1,252 @@
+(pkg => {
+    const stableStringify = myt.stableStringify,
+        
+        {
+            NumericStatModel,
+            ICON_HQ, ICON_CHRONAL, ICON_PARADOX, ICON_JUMP,
+            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ
+        } = pkg,
+        
+        AGENT_CHRONAL_LIMIT = 15,
+        AGENT_PARADOX_LIMIT = 3,
+        
+        LOG_TYPE_ORIGIN = 'origin',
+        LOG_TYPE_DEPLOY = 'deploy',
+        LOG_TYPE_RECALL = 'recall',
+        LOG_TYPE_EXIT = 'exit',
+        LOG_TYPE_ACTION = 'action';
+    
+    pkg.AgentModel = new JS.Class('AgentModel', myt.BaseModel, {
+        // Life Cycle //////////////////////////////////////////////////////////
+        init: function(attrs) {
+            const self = this;
+            self.log = [];
+            self.paradox = new NumericStatModel({
+                id:'paradox', absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
+            }, [{
+                triggerValueAtMax: function() {
+                    this.callSuper();
+                    // FIXME: perhaps provide a warning in the UI.
+                    console.log('agent max paradox reached.');
+                },
+                triggerValueClampedToMax: function() {
+                    this.callSuper();
+                    self.doDevouredByChronovores();
+                }
+            }]);
+            self.chronal = new NumericStatModel({
+                id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
+            });
+            
+            // Nullish event during init is assumed to be the HQ.
+            attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
+            
+            self.callSuper(attrs);
+        },
+        
+        getAsObj: function(cfg) {
+            const retval = this.callSuper(cfg);
+            for (const attrName of ['name','event']) retval[attrName] = this[attrName];
+            for (const attrName of ['paradox','chronal']) {
+                // Use stableStringify since similarTo uses shallowEqual. If this gets 
+                // unwieldy change similarTo to use deepEqual and drop the stableStringify.
+                retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
+            }
+            return retval;
+        },
+        
+        
+        // Accessors ///////////////////////////////////////////////////////////
+        setName: function(name) {this.setAndNotifyCollection('name', name, true);},
+        
+        setParadox: function(v) { // Used by instantiation only.
+            if (this.inited) {
+                console.warn('AgentModel.setParadox after init', this);
+            } else {
+                this.paradox.setValue(v);
+            }
+        },
+        setChronal: function(v) { // Used by instantiation only.
+            if (this.inited) {
+                console.warn('AgentModel.setChronal after init', this);
+            } else {
+                this.chronal.setValue(v);
+            }
+        },
+        
+        setEvent: function(event, logEntry) {
+            if (this.event !== event) {
+                const oldEventModel = this.getEventModel();
+                
+                this._eventModel = null;
+                
+                this.setAndNotifyCollection('event', event, true);
+                const newEventModel = this.getEventModel();
+                this.accrueEntryParadox(newEventModel);
+                oldEventModel?.notifyCollectionOfUpdate();
+                newEventModel?.notifyCollectionOfUpdate();
+                this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
+            }
+        },
+        getEvent: function() {return this.event;},
+        getEventModel: function() {
+            return this._eventModel ?? (this._eventModel = pkg.model.getEventModel(this.event));
+        },
+        isAtEvent: function(eventModelOrId) {
+            switch (typeof eventModelOrId) {
+                case 'string':
+                    return this.event === eventModelOrId;
+                case 'object':
+                    return this.getEventModel() === eventModelOrId;
+                default:
+                    console.warn('Unexpected type in isAtEvent', typeof eventModelOrId);
+                    return false;
+            }
+        },
+        isAtHQ: function() {return this.event === EVENT_ID_TIME_CORPS_HQ;},
+        isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
+        
+        
+        // Methods /////////////////////////////////////////////////////////////
+        getInfoForTimeTravel: function(eventModel) {
+            const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ,
+                chronalNeeded = isHQ ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel),
+                chronalAvailable = -this.chronal.getValueToMin(),
+                hasEnoughChronal = chronalNeeded <= chronalAvailable,
+                paradoxCost = this.calculateParadoxForEntry(eventModel);
+            let disabled,
+                btnTxt;
+            if (isHQ) {
+                disabled = !hasEnoughChronal;
+                btnTxt = ICON_HQ + ' Recall "' + this.name + '" to HQ [' + chronalNeeded + ICON_CHRONAL + 
+                    (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+            } else {
+                disabled = !hasEnoughChronal;
+                const actionWord = this.isAtHQ() ? 'Deploy' : 'Jump';
+                btnTxt = ICON_JUMP + ' ' + actionWord + ' "' + this.name + '" [' + chronalNeeded + ICON_CHRONAL + 
+                    (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+            }
+            return {disabled, btnTxt};
+        },
+        
+        doDeployToEvent: function(eventModel) {
+            if (eventModel) {
+                const cost = pkg.getChronalToDeploy(this, eventModel);
+                if (cost <= -this.chronal.getValueToMin()) {
+                    this.chronal.adjValue(-cost);
+                    this.setEvent(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
+                } else {
+                    console.warn('insufficent chronal');
+                }
+            } else {
+                console.warn('doDeployToEvent: no eventModel');
+            }
+        },
+        doRecallToHQ: function() {
+            const hqEventModel = pkg.model.getHQEventModel();
+            if (hqEventModel) {
+                const cost = pkg.getChronalToRecall(this);
+                if (cost <= -this.chronal.getValueToMin()) {
+                    this.chronal.adjValue(-cost);
+                    this.setEvent(hqEventModel.id, {type:LOG_TYPE_RECALL, event:hqEventModel});
+                } else {
+                    console.warn('insufficent chronal');
+                }
+            } else {
+                console.warn('doRecallToHQ: no eventModel');
+            }
+        },
+        doFollowExit: function(exitModel) {
+            if (this.getEventModel() === exitModel.event) {
+                const toEvent = exitModel.getToEventModel();
+                if (toEvent) {
+                    this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
+                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
+                }
+            } else {
+                console.warn('Agent not at event for exit:', exitModel, this);
+            }
+        },
+        doAction: function(actionModel) {
+            if (actionModel.isDone()) {
+                console.warn('Attemp to do a done action.', actionModel, this);
+                return;
+            }
+            
+            const eventModel = this.getEventModel(),
+                {setObj, event} = actionModel;
+            
+            if (eventModel !== event) {
+                console.warn('Agent not in same event as action.', actionModel, this);
+                return;
+            }
+            
+            for (const key in setObj) {
+                const value = setObj[key],
+                    eventValueModel = event.values[key];
+                if (eventValueModel) {
+                    eventValueModel.setValue(value, false);
+                } else {
+                    console.warn('Missing Value in doIt:' + key);
+                }
+            }
+            actionModel.setDone(true);
+            
+            this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
+        },
+        
+        // Paradox
+        calculateParadoxForEntry: function(eventModelOrId) {
+            const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
+            if (eventModel) {
+                // No paradox to enter "special" events.
+                if (eventModel.id !== EVENT_ID_THE_VOID && eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                    if (this.hasBeenInEvent(eventModel)) {
+                        return 1;
+                    }
+                }
+            }
+            return 0;
+        },
+        
+        accrueEntryParadox: function(eventModelOrId) {
+            const paradox = this.calculateParadoxForEntry(eventModelOrId);
+            if (paradox > 0) {
+                this.paradox.adjValue(paradox);
+                
+                const eventModel = this.getEventModel();
+                if (eventModel) {
+                    this.getEventModel().paradox.adjValue(paradox);
+                } else {
+                    console.warn('accrueEntryParadox for timeline should be mediated by an event');
+                }
+            }
+        },
+        
+        doDevouredByChronovores: function() {
+            this.chronal.setMax(0); // They have lost the ability to time travel.
+            this.setEvent(EVENT_ID_THE_VOID);
+        },
+        
+        // Life and Log
+        pushOntoLog: function(logEntry) {
+            this.log.push(logEntry);
+        },
+        getLog: function() {return this.log;},
+        hasBeenInEvent: function(eventModel) {
+            for (const entry of this.log) {
+                switch (entry.type) {
+                    case LOG_TYPE_EXIT:
+                        if (entry.exit.getToEventModel() === eventModel) return true;
+                        break;
+                    case LOG_TYPE_DEPLOY:
+                    case LOG_TYPE_RECALL:
+                    case LOG_TYPE_ORIGIN:
+                        if (entry.event === eventModel) return true;
+                        break;
+                }
+            }
+            return false;
+        }
+    });
+})(tc);

@@ -851,6 +851,12 @@
         
         getChronalToDeploy, getChronalToRecall,
         
+        SCOPE_TIMELINE: 'timeline',
+        SCOPE_AGENTS: 'agents',
+        SCOPE_LOCATIONS: 'locations',
+        SCOPE_EVENTS: 'events',
+        SCOPE_EVENT: 'event',
+        
         I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
         I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
         
