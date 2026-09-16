@@ -13,6 +13,8 @@
         
         {timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}} = pkg,
         
+        EVENT_ID_THE_VOID = 'the_void',
+        
         // FIXME: I'm not sure we have a use for this. Possibly this is the HQ limit for resupply.
         TIMELINE_STARTING_CHRONAL = 16,
         TIMELINE_CHRONAL_LIMIT = 24,
@@ -531,8 +533,7 @@
             },
             
             doDevouredByChronovores: function() {
-                console.log('Agent devoured by chronovores', this);
-                // FIXME: disabled, removed or in some other way indicate the Agent has been devoured.
+                this.setEvent(EVENT_ID_THE_VOID);
             },
             
             // Life and Log
@@ -565,6 +566,7 @@
         LocationModel = pkg.LocationModel = new JSClass('LocationModel', BaseModel, {
             setName: function(name) {this.set('name', name, true);},
             setColor: function(color) {this.set('color', color, true);},
+            setTextColor: function(color) {this.set('textColor', color, true);},
             setOrder: function(order) {this.set('order', order, true);}
         }),
         
@@ -638,10 +640,12 @@
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             init: function(attrs) {
                 const self = this;
+                self.hidden = false;
+                
                 self.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
                     adjValue: function(adj, cfg) {
                         const retval = this.callSuper(adj, cfg);
-                        if (retval !== 0) model.timelineParadox.adjValue(retval);
+                        if (retval !== 0) model.paradox.adjValue(retval);
                         return retval;
                     },
                     triggerValueAtMax: function() {
@@ -694,6 +698,15 @@
                 }
             },
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
+            
+            setHidden: function(value, isActual) {
+                if (isActual) {
+                    this.set('hidden', value, true);
+                    this.notifyCollectionOfUpdate();
+                } else {
+                    setConstrainedValue(this, this, 'hidden', value);
+                }
+            },
             
             setParadox: function(v) { // Used by instantiation only.
                 if (this.inited) {
@@ -802,8 +815,8 @@
         initNode: function(parent, attrs) {
             model = this;
             
-            model.timelineChronal = new NumericStatModel({id:'timelineChronal', absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT});
-            model.timelineParadox = new NumericStatModel({id:'timelineParadox', absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT}, [{
+            model.chronal = new NumericStatModel({id:'chronal', absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT});
+            model.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT}, [{
                 triggerValueAtMax: function() {
                     this.callSuper();
                     // FIXME: perhaps provide a warning in the UI.
@@ -852,8 +865,8 @@
         
         // Methods /////////////////////////////////////////////////////////////
         reset: () => {
-            model.timelineChronal.setValue(TIMELINE_STARTING_CHRONAL);
-            model.timelineParadox.setValue(TIMELINE_STARTING_PARADOX);
+            model.chronal.setValue(TIMELINE_STARTING_CHRONAL);
+            model.paradox.setValue(TIMELINE_STARTING_PARADOX);
         },
         
         processData: json => {

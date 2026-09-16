@@ -1,10 +1,19 @@
 {
 	"events":{
+		"the_void":{
+			"name":"The Void",
+			"start":"0000-01-01T00:00:00",
+			"duration":{"s":0},
+			"location":"nowhere",
+			"hidden":"true"
+		},
+		
 		"lifeboat_capacity":{
 			"name":"Davit Capacity Settled",
 			"start":"1912-03-01T10:00:00",
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
+			"hidden":"timeline.paradox.value === 0",
 			"actions":{
 				"argue":{
 					"label":"Argue for Full Davits",
@@ -223,10 +232,10 @@
 					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.boatsForAll.value)"
 				},
 				"TEST_PARADOX":{
-					"value":"timeline.timelineParadox.value"
+					"value":"timeline.paradox.value"
 				},
 				"TEST_CHRONAL":{
-					"value":"timeline.timelineChronal.value + '/' + timeline.timelineChronal.max"
+					"value":"timeline.chronal.value + '/' + timeline.chronal.max"
 				}
 			}
 		}

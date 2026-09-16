@@ -90,7 +90,7 @@
             self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool'}, [{
                 update: function(v) {
                     if (self.ready) {
-                        const chronalStat = self.model.timelineChronal;
+                        const chronalStat = self.model.chronal;
                         this.callSuper(chronalStat.getValue() + '/' + chronalStat.getMax());
                     }
                 }
@@ -219,7 +219,7 @@
         setup: function(model) {
             this.model = model;
             
-            const chronalStat = model.timelineChronal;
+            const chronalStat = model.chronal;
             this.chronalPool.constrain('update', [chronalStat, 'value', chronalStat, 'max']);
             this.gridWrapper.setModelCollection(model.agents);
         }

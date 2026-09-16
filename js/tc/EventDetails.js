@@ -148,18 +148,20 @@
                 addedCount = 0;
                 for (const exitId in exitModels) {
                     const exitModel = exitModels[exitId],
-                        toEventModel = exitModel.getToEventModel(),
-                        paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
-                    new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
-                        doActivated: () => {pkg.app.getTimelineView().scrollToEventBox(toEventModel);}
-                    }]);
-                    new Btn(exitView, {
-                        buttonType:'solid', 
-                        text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' [' + paradoxCost + ICON_PARADOX + ']': '')
-                    }, [{
-                        doActivated: () => {agentModel.doFollowExit(exitModel);}
-                    }]);
-                    addedCount++;
+                        toEventModel = exitModel.getToEventModel();
+                    if (!toEventModel.hidden) {
+                        const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
+                        new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
+                            doActivated: () => {pkg.app.getTimelineView().scrollToEventBox(toEventModel);}
+                        }]);
+                        new Btn(exitView, {
+                            buttonType:'solid', 
+                            text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' [' + paradoxCost + ICON_PARADOX + ']': '')
+                        }, [{
+                            doActivated: () => {agentModel.doFollowExit(exitModel);}
+                        }]);
+                        addedCount++;
+                    }
                 }
                 if (addedCount === 0) new PaddedPlainText(exitView, {text:'No exits available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
             }
@@ -292,36 +294,38 @@
                 const precursorsRow = self.precursorsRow,
                     precursors = eventModel.getPrecursors();
                 precursorsRow.clearContent();
+                let addedCount = 0;
                 if (precursors.size > 0) {
                     for (const precursorEvent of precursors) {
-                        new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
-                            doActivated: () => {
-                                pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
-                            }
-                        }]);
+                        if (!precursorEvent.hidden) {
+                            new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                                doActivated: () => {
+                                    pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
+                                }
+                            }]);
+                            addedCount++;
+                        }
                     }
-                } else {
-                    new PaddedPlainText(precursorsRow, {
-                        fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'
-                    });
                 }
+                if (addedCount === 0) new PaddedPlainText(precursorsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
                 
                 const descendantsRow = self.descendantsRow,
                     descendants = eventModel.getDescendants();
                 descendantsRow.clearContent();
+                addedCount = 0;
                 if (descendants.size > 0) {
                     for (const descendantEvent of descendants) {
-                        new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
-                            doActivated: () => {
-                                pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
-                            }
-                        }]);
+                        if (!descendantEvent.hidden) {
+                            new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                                doActivated: () => {
+                                    pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
+                                }
+                            }]);
+                            addedCount++;
+                        }
                     }
-                } else {
-                    new PaddedPlainText(descendantsRow, {
-                        fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'
-                    });
                 }
+                if (addedCount === 0) new PaddedPlainText(descendantsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
                 
                 const agentsRow = self.agentsRow;
                 agentsRow.clearContent();
@@ -352,7 +356,7 @@
                 hasModel = selectedAgentModel != null;
             
             if (hasEventModel) {
-                deployAgentBtn.setVisible(hasModel && !selectedAgentModel.isAtEvent(eventModel));
+                deployAgentBtn.setVisible(hasModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.hidden);
                 if (hasModel) {
                     const chronalNeeded = pkg.getChronalToDeploy(selectedAgentModel, eventModel),
                         chronalAvailable = -selectedAgentModel.chronal.getValueToMin(),

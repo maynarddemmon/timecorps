@@ -1,5 +1,11 @@
 {
 	"locations":{
+		"nowhere":{
+			"name":"Nowhere",
+			"color":"#000",
+			"textColor":"#fff",
+			"order":-1
+		},
 		"southampton.harland_wolff":{
 			"name":"Harland & Wolff",
 			"color":"#fcc9",

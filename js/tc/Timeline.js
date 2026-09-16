@@ -118,8 +118,10 @@
             let extent = 0;
             for (let i = 0; i < len; i++) {
                 const model = locModels[i];
-                colsByLocId[model.id] = new LocationColumn(colHeaders, {x:extent, height:h, model});
-                extent += w;
+                if (model.order >= 0) { // Locations with negative order are not shown.
+                    colsByLocId[model.id] = new LocationColumn(colHeaders, {x:extent, height:h, model});
+                    extent += w;
+                }
             }
             scrollToken.setX(extent - scrollToken.width + ROW_HEADER_WIDTH);
             colHeaders.setWidth(extent);
@@ -182,7 +184,9 @@
             
             setModel: function(model) {
                 if (this.model !== model) {
+                    this.releaseConstraint('_updateForModelChanges');
                     this.set('model', model, true);
+                    if (this.model) this.constrain('_updateForModelChanges', [this.model, 'hidden']);
                     if (this.inited) this._update();
                 }
             },
@@ -244,17 +248,22 @@
                 }
             },
             
+            _updateForModelChanges: function() {
+                if (this.inited) this.timeline.revalidateForEvent(this.model);
+            },
+            
             _update: function() {
                 const self = this,
                     {timeline, model, _label} = self,
                     start = model.getStart(),
                     end = model.getEnd(),
                     locId = model.getLocation(),
-                    col = timeline.colsByLocId[locId];
+                    col = timeline.colsByLocId[locId],
+                    hidden = model.hidden;
                 self.eventId = model.id;
                 _label.setText(model.name || '');
                 this.setTooltip(_label.text);
-                self.setX(col.x + BOX_INSET_FROM_COL);
+                self.setX(col ? col.x + BOX_INSET_FROM_COL : 0);
                 
                 const startPx = millisToPx(timeline, start),
                     endPx = millisToPx(timeline, end);
@@ -262,18 +271,22 @@
                 self.setY(startPx);
                 self.setHeight(endPx - startPx);
                 
+                self.setVisible(!hidden);
+                
                 // Update connections between boxes
-                const endId = model.id,
-                    flowLayer = timeline.flowLayer;
-                for (const eventModel of model.getPrecursors()) {
-                    const startId = eventModel.id,
-                        startBox = timeline.boxesByEventId[startId];
-                    if (startBox) {
-                        flowLayer.connect({
-                            splineId:startId + '-' + endId,
-                            start:{view:startBox, side:'bottom', position:'75%'},
-                            end:{view:self, side:'top', position:'25%'}
-                        });
+                if (!hidden) {
+                    const endId = model.id,
+                        flowLayer = timeline.flowLayer;
+                    for (const eventModel of model.getPrecursors()) {
+                        const startId = eventModel.id,
+                            startBox = timeline.boxesByEventId[startId];
+                        if (startBox && !startBox.model.hidden) {
+                            flowLayer.connect({
+                                splineId:startId + '-' + endId,
+                                start:{view:startBox, side:'bottom', position:'75%'},
+                                end:{view:self, side:'top', position:'25%'}
+                            });
+                        }
                     }
                 }
             },
@@ -288,7 +301,7 @@
                 if (show) {
                     for (const exit of model.getExitModels()) {
                         const toBox = timeline.boxesByEventId[exit.getToEventModel()?.id];
-                        if (toBox) {
+                        if (toBox && !toBox.model.hidden) {
                             const connection = flowLayer.connect({
                                 start:{view:self, side:'bottom', position:'85%'},
                                 end:{view:toBox, side:'top', position:'35%'},
@@ -352,6 +365,7 @@
             _update: function() {
                 const {model, _label} = this;
                 this.setBgColor(model.color || 'transparent');
+                this.setTextColor(model.textColor || null);
                 _label.setText(model.name || '');
             }
         });
@@ -376,9 +390,9 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.timelineParadox = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX}, [{
+            self.timelineParadoxView = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX}, [{
                 update: function(v) {
-                    if (self.ready) this.callSuper(self.model.timelineParadox.value + '/' + self.model.timelineParadox.max);
+                    if (self.ready) this.callSuper(self.model.paradox.value + '/' + self.model.paradox.max);
                 }
             }]);
             
@@ -518,12 +532,14 @@
             }
             return retval;
         },
+        
         /** @overrides SelectionManager */
         doSelected: function() {
             const selectedEvent = this.getSelected()[0];
             this.fireEvent('selectionChanged', selectedEvent);
             this.pushOntoHistory(selectedEvent.model.id);
         },
+        
         /** @overrides SelectionManager */
         doDeselected: function() {this.fireEvent('selectionChanged', this.getSelected()[0]);},
         
@@ -540,6 +556,19 @@
             if (eventBox) {
                 this.select(eventBox);
                 if (scrollTo) this.scrollToEventBox(eventModelOrId, smoothly);
+            }
+        },
+        
+        revalidateForEvent: function(eventModel) {
+            const self = this,
+                eventBox = self.getEventBox(eventModel);
+            if (eventBox) {
+                eventBox._update();
+                eventBox._updateExits(eventBox.selected);
+                
+                for (const descEventModel of eventModel.getDescendants()) {
+                    self.getEventBox(descEventModel)?._update();
+                }
             }
         },
         
@@ -594,7 +623,7 @@
         // Scrolling
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
-            if (eventBox) this.scrollCaptureView.scrollXYTo(eventBox.x + SCROLL_TO_PADDING, eventBox.y + SCROLL_TO_PADDING, true, smoothly);
+            if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + SCROLL_TO_PADDING, eventBox.y + SCROLL_TO_PADDING, true, smoothly);
         },
         
         scrollToLocation: function(modelOrId, smoothly=true) {
@@ -609,7 +638,8 @@
         // Setup
         setup: function(model) {
             this.model = model;
-            this.timelineParadox.constrain('update', [model.timelineParadox, 'value', model.timelineParadox, 'max']);
+            const statModelParadox = model.paradox;
+            this.timelineParadoxView.constrain('update', [statModelParadox, 'value', statModelParadox, 'max']);
             refreshLocationColumns(this);
         },
         
