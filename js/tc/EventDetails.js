@@ -168,10 +168,7 @@
                 if (eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
                     const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
                     new Btn(exitView, {buttonType:'solid', text:info.btnTxt, disabled:info.disabled, layoutHint:'break'}, [{
-                        doActivated: () => {
-// FIXME:current event needs to update
-                            agentModel.doRecallToHQ();
-                        }
+                        doActivated: () => {agentModel.doRecallToHQ();}
                     }]);
                     addedCount++;
                 }

@@ -56,6 +56,27 @@
         
         CURVATURE = 0.25,
         
+        DEFAULT_STYLE = [{
+            color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
+            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            //startArrow:'dot',
+            endArrow:'triangle',
+            startStub:6, endStub:6, startGap:2, endGap:2
+        }],
+        SELECTED_CONNECTION_STYLE = {
+            color:colorUltraLight, cap:null, thickness:4, startAngle:'vertical', endAngle:'vertical', 
+            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            //endArrow:'triangle',
+            startStub:6, endStub:6, startGap:0, endGap:0
+        },
+        EXIT_STYLE = {
+            color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
+            dash:1,
+            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            endArrow:'triangle',
+            startStub:6, endStub:6, startGap:2, endGap:2
+        },
+        
         COL_HEADER_HEIGHT = rowHeight,
         ROW_HEADER_WIDTH = 125,
         
@@ -201,26 +222,21 @@
                 this.updateUI();
                 
                 this.bringToFront();
-                
-                // Update Connections
+                this.refreshConnectionsForSelection();
+                this._updateExits(this.selected);
+            },
+            
+            refreshConnectionsForSelection: function() {
                 const selected = this.selected,
                     connections = this.timeline.getConnectionsForEventBox(this);
                 for (const connection of connections) {
-                    connection.setStyle(selected ? {
-                        color:colorUltraLight, cap:null, thickness:4, startAngle:'vertical', endAngle:'vertical', 
-                        startCurvature:CURVATURE, endCurvature:CURVATURE, 
-                        //endArrow:'triangle',
-                        startStub:6, endStub:6, startGap:0, endGap:0
-                    } : null);
+                    connection.setStyle(selected ? SELECTED_CONNECTION_STYLE : null);
                     if (connection.startView === this) {
                         connection.endView.setAdjacentIsSelected(selected);
                     } else {
                         connection.startView.setAdjacentIsSelected(selected);
                     }
                 }
-                
-                // Update Exists
-                this._updateExits(this.selected);
             },
             
             setAdjacentIsSelected: function(v) {
@@ -289,6 +305,8 @@
                         }
                     }
                 }
+                
+                self.refreshConnectionsForSelection();
             },
             
             _updateExits: function(show) {
@@ -305,13 +323,7 @@
                             const connection = flowLayer.connect({
                                 start:{view:self, side:'bottom', position:'85%'},
                                 end:{view:toBox, side:'top', position:'35%'},
-                                style:{
-                                    color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
-                                    dash:1,
-                                    startCurvature:CURVATURE, endCurvature:CURVATURE, 
-                                    endArrow:'triangle',
-                                    startStub:6, endStub:6, startGap:2, endGap:2
-                                }
+                                style:EXIT_STYLE
                             });
                             exitsById[connection.splineId] = connection;
                         }
@@ -418,15 +430,7 @@
                 
                 flowContainer = self.flowContainer = new View(stickyView, {x:ROW_HEADER_WIDTH, y:COL_HEADER_HEIGHT, overflow:'hidden'}),
                 flowLayer = self.flowLayer = new SplineFlow(flowContainer, {
-                    defaultStyle:[
-                        {
-                            color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
-                            startCurvature:CURVATURE, endCurvature:CURVATURE, 
-                            //startArrow:'dot',
-                            endArrow:'triangle',
-                            startStub:6, endStub:6, startGap:2, endGap:2
-                        }
-                    ]
+                    defaultStyle:DEFAULT_STYLE
                 });
             const flowSVG = flowLayer.getSVG();
             flowSVG.style.zIndex = 2;

@@ -500,7 +500,6 @@
                     if (cost <= -this.chronal.getValueToMin()) {
                         this.chronal.adjValue(-cost);
                         this.setEvent(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
-                        eventModel.notifyCollectionOfUpdate();
                     } else {
                         console.warn('insufficent chronal');
                     }
@@ -515,7 +514,6 @@
                     if (cost <= -this.chronal.getValueToMin()) {
                         this.chronal.adjValue(-cost);
                         this.setEvent(hqEventModel.id, {type:LOG_TYPE_RECALL, event:hqEventModel});
-                        hqEventModel.notifyCollectionOfUpdate();
                     } else {
                         console.warn('insufficent chronal');
                     }
@@ -524,18 +522,14 @@
                 }
             },
             doFollowExit: function(exitModel) {
-                const exitEvent = exitModel.event;
-                if (this.getEventModel() !== exitEvent) {
+                if (this.getEventModel() === exitModel.event) {
+                    const toEvent = exitModel.getToEventModel();
+                    if (toEvent) {
+                        this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
+                        pkg.app.getTimelineView().doSelectEvent(toEvent, true);
+                    }
+                } else {
                     console.warn('Agent not at event for exit:', exitModel, this);
-                    return;
-                }
-                
-                const toEvent = exitModel.getToEventModel();
-                if (toEvent) {
-                    this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
-                    exitEvent.notifyCollectionOfUpdate();
-                    toEvent.notifyCollectionOfUpdate();
-                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
                 }
             },
             doAction: function(actionModel) {
@@ -568,7 +562,7 @@
             
             // Paradox
             calculateParadoxForEntry: function(eventModelOrId) {
-                const eventModel = typeof eventModelOrId === 'string' ? model.getEventModel(eventId) : eventModelOrId;
+                const eventModel = typeof eventModelOrId === 'string' ? model.getEventModel(eventModelOrId) : eventModelOrId;
                 if (eventModel) {
                     // No paradox to enter "special" events.
                     if (eventModel.id !== EVENT_ID_THE_VOID && eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
