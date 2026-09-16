@@ -4,9 +4,10 @@
     const {Node, BaseModelCollection} = myt,
         
         {
-            NumericStatModel, AgentModel, LocationModel, EventModel,
+            NotifyingNumericStatModel, AgentModel, LocationModel, EventModel,
             EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
         
         // FIXME: I'm not sure we have a use for this. Possibly this is the HQ limit for resupply.
@@ -21,11 +22,11 @@
         initNode: function(parent, attrs) {
             model = this;
             
-            model.chronal = new NumericStatModel({
-                id:'chronal', absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT
+            model[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
+                notifyTargets:model, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT
             });
-            model.paradox = new NumericStatModel({
-                id:'paradox', absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT
+            model[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
+                notifyTargets:model, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT
             }, [{
                 triggerValueAtMax: function() {
                     this.callSuper();
@@ -78,9 +79,13 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /*notifyStatChanged: function(statModel) {
+            if (this.inited) console.log('Stat Changed', statModel);
+        },*/
+        
         reset: () => {
-            model.chronal.setValue(TIMELINE_STARTING_CHRONAL);
-            model.paradox.setValue(TIMELINE_STARTING_PARADOX);
+            model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
+            model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
         },
         
         processData: json => {

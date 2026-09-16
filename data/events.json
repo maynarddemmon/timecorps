@@ -20,7 +20,7 @@
 			"start":"1912-03-01T10:00:00",
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
-			"hidden":"timeline.paradox.value === 0",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"argue":{
 					"label":"Argue for Full Davits",
@@ -41,6 +41,7 @@
 			"start":"1912-04-09T11:00:00",
 			"duration":{"h":2},
 			"location":"southampton.quay.berth_44",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"prevent":{
 					"label":"Prevent Reshuffle",
@@ -66,6 +67,7 @@
 			"start":"1912-04-10T09:30:00",
 			"duration":{"h":2,"m":30},
 			"location":"titanic",
+			"historicity":"75", "attestation":"25",
 			"exits":[
 				{"mode":"walk", "to":"ice_warnings"},
 				{"mode":"walk", "to":"purser_spare"},
@@ -80,6 +82,7 @@
 			"start":"1912-04-14T09:00:00",
 			"duration":{"h":12},
 			"location":"titanic.wireless",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
@@ -103,6 +106,8 @@
 			"start":"1912-04-14T20:00:00",
 			"duration":{"h":1},
 			"location":"titanic.pursers",
+			"historicity":"0", "attestation":"0",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0",
 			"actions":{
 				"recover":{
 					"label":"Spare Recovered",
@@ -125,6 +130,7 @@
 			"start":"1912-04-14T21:40:00",
 			"duration":{"h":1,"m":50},
 			"location":"titanic.wireless",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"clear":{
 					"label":"Clear Backlog Earlier",
@@ -147,6 +153,7 @@
 			"start":"1912-04-14T21:00:00",
 			"duration":{"h":2,"m":39},
 			"location":"titanic.nest",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"plant":{
 					"label":"Plant Key",
@@ -174,6 +181,7 @@
 			"start":"1912-04-14T23:30:00",
 			"duration":{"m":10},
 			"location":"titanic.engine",
+			"historicity":"75", "attestation":"25",
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
@@ -195,6 +203,7 @@
 			"start":"1912-04-14T23:39:00",
 			"duration":{"m":1},
 			"location":"titanic.nest",
+			"historicity":"75", "attestation":"25",
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],
@@ -209,6 +218,7 @@
 			"start":"1912-04-14T23:40:00",
 			"duration":{"m":1},
 			"location":"titanic.bridge",
+			"historicity":"75", "attestation":"25",
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],
@@ -223,6 +233,7 @@
 			"start":"1912-04-15T00:10:00",
 			"duration":{"h":1},
 			"location":"atlantic.californian",
+			"historicity":"75", "attestation":"25",
 			"values":{
 				"rescueResponds":{
 					"value":"events.wireless_priority.values.californianContact.value"
@@ -234,6 +245,7 @@
 			"start":"1912-04-15T02:20:00",
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
+			"historicity":"75", "attestation":"25",
 			"values":{
 				"massLossOfLife":{
 					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.boatsForAll.value)"

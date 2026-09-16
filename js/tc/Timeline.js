@@ -29,7 +29,8 @@
                 colorBtn,
                 fontSizeLarge
             },
-            I18N_PARADOX
+            I18N_PARADOX,
+            STAT_ID_PARADOX
         } = pkg,
         
         SCALE_TO_TICK_SCALE = {
@@ -404,7 +405,10 @@
             const header = self.getHeaderView();
             self.timelineParadoxView = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX}, [{
                 update: function(v) {
-                    if (self.ready) this.callSuper(self.model.paradox.value + '/' + self.model.paradox.max);
+                    if (self.ready) {
+                        const statParadox = self.model[STAT_ID_PARADOX];
+                        this.callSuper(statParadox.value + '/' + statParadox.max);
+                    }
                 }
             }]);
             
@@ -642,8 +646,8 @@
         // Setup
         setup: function(model) {
             this.model = model;
-            const statModelParadox = model.paradox;
-            this.timelineParadoxView.constrain('update', [statModelParadox, 'value', statModelParadox, 'max']);
+            const statParadox = model[STAT_ID_PARADOX];
+            this.timelineParadoxView.constrain('update', [statParadox, 'value', statParadox, 'max']);
             refreshLocationColumns(this);
         },
         

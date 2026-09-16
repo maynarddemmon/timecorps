@@ -4,8 +4,9 @@
         {stableStringify, BaseModel, BaseModelCollection} = myt,
         
         {
-            NumericStatModel, setConstrainedValue,
-            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}
+            NotifyingNumericStatModel, setConstrainedValue,
+            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration},
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION
         } = pkg,
         
         EVENT_PARADOX_LIMIT = 4,
@@ -89,10 +90,12 @@
                 const self = this;
                 self.hidden = false;
                 
-                self.paradox = new NumericStatModel({id:'paradox', absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
+                self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
+                self[STAT_ID_ATTESTATION] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_ATTESTATION, absMin:0, min:0, value:0, max:100, absMax:100});
+                self[STAT_ID_PARADOX] =     new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_PARADOX,     absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
                     adjValue: function(adj, cfg) {
                         const retval = this.callSuper(adj, cfg);
-                        if (retval !== 0) pkg.model.paradox.adjValue(retval);
+                        if (retval !== 0) pkg.model[STAT_ID_PARADOX].adjValue(retval);
                         return retval;
                     },
                     triggerValueAtMax: function() {
@@ -117,7 +120,7 @@
                 // will be serialized both for Save and for an Event grid (once it is introduced).
                 const retval = this.callSuper(cfg);
                 for (const attrName of ['actions','values','exits']) retval[attrName] = this[attrName];
-                for (const attrName of ['paradox']) {
+                for (const attrName of [STAT_ID_PARADOX,STAT_ID_HISTORICITY,STAT_ID_ATTESTATION]) {
                     // Use stableStringify since similarTo uses shallowEqual. If this gets 
                     // unwieldy change similarTo to use deepEqual and drop the stableStringify.
                     retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
@@ -160,7 +163,23 @@
                 if (this.inited) {
                     console.warn('EventModel.setParadox after init', this);
                 } else {
-                    this.paradox.setValue(v);
+                    this[STAT_ID_PARADOX].setValue(v);
+                }
+            },
+            
+            setHistoricity: function(v) { // Used by instantiation only.
+                if (this.inited) {
+                    console.warn('EventModel.setHistoricity after init', this);
+                } else {
+                    this[STAT_ID_HISTORICITY].setValue(v);
+                }
+            },
+            
+            setAttestation: function(v) { // Used by instantiation only.
+                if (this.inited) {
+                    console.warn('EventModel.setAttestation after init', this);
+                } else {
+                    this[STAT_ID_ATTESTATION].setValue(v);
                 }
             },
             
@@ -222,6 +241,14 @@
             
             
             // Methods /////////////////////////////////////////////////////////
+            notifyCollectionOfUpdate: function() {
+                if (this.inited) this.callSuper();
+            },
+            
+            notifyStatChanged: function(statModel) {
+                if (this.inited) this.notifyCollectionOfUpdate();
+            },
+            
             getPrecursors: function(noSelf=true) {
                 // Accumulate Observables
                 const self = this,

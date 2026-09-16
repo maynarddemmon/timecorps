@@ -14,11 +14,11 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
-    file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel').requires('tc');
+    file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc');
-    file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires('tc.NumericStatModel');
+    file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires('tc.NotifyingNumericStatModel');
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
-        'tc.timeUtil','tc.setConstrainedValue','tc.NumericStatModel'
+        'tc.timeUtil','tc.setConstrainedValue','tc.NotifyingNumericStatModel'
     );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
         'tc.LocationModel','tc.AgentModel','tc.EventModel'

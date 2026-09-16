@@ -70,6 +70,12 @@
             SCOPE_EVENTS: 'events',
             SCOPE_EVENT: 'event',
             
+            // Stat IDs
+            STAT_ID_PARADOX:'paradox',
+            STAT_ID_CHRONAL:'chronal',
+            STAT_ID_HISTORICITY:'historicity',
+            STAT_ID_ATTESTATION:'attestation',
+            
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
             I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
@@ -84,6 +90,7 @@
             ICON_CHRONAL,
             ICON_PARADOX,
             ICON_THE_VOID:'⦰',
-            ICON_HQ:'❉'
+            ICON_HQ:'❉',
+            ICON_SEARCH:'?'
         };
 })(window);

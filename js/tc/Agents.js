@@ -4,7 +4,8 @@
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
             LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
-            ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX
+            ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
+            STAT_ID_CHRONAL, STAT_ID_PARADOX
         } = pkg,
         
         updateBtnCell = (row, colId, eventExistsTxtFunc) => {
@@ -15,7 +16,7 @@
         },
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
-            getColIds: () => ['id','name','event','where','when','paradox','chronal'],
+            getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
                 this.doCellBtnActivated('event');
@@ -26,8 +27,8 @@
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
-                    case 'paradox':
-                    case 'chronal': {
+                    case STAT_ID_PARADOX:
+                    case STAT_ID_CHRONAL: {
                         const statModel = this.model[colId],
                             value = statModel.getValue(),
                             max = statModel.getMax();
@@ -56,8 +57,8 @@
             },
             isPlainCell: function(colId) {
                 switch (colId) {
-                    case 'paradox':
-                    case 'chronal':
+                    case STAT_ID_PARADOX:
+                    case STAT_ID_CHRONAL:
                         return false;
                     default:
                         return this.callSuper(colId);
@@ -90,8 +91,8 @@
             self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool'}, [{
                 update: function(v) {
                     if (self.ready) {
-                        const chronalStat = self.model.chronal;
-                        this.callSuper(chronalStat.getValue() + '/' + chronalStat.getMax());
+                        const statChronal = self.model[STAT_ID_CHRONAL];
+                        this.callSuper(statChronal.getValue() + '/' + statChronal.getMax());
                     }
                 }
             }]);
@@ -102,13 +103,13 @@
                 initialSort:['id', SORT_ORDER_ASC]
             }, [{
                 makeGridHeaders: gridHeader => {
-                    new GridColHdr(gridHeader, {columnId:'id',      minValue:40, maxValue:40,  text:'ID'});
-                    new GridColHdr(gridHeader, {columnId:'name',    minValue:70, maxValue:2000, flex:1, text:'Name'});
-                    new GridColHdr(gridHeader, {columnId:'event',   minValue:70, maxValue:2000, flex:1, text:'Event'});
-                    new GridColHdr(gridHeader, {columnId:'where',   minValue:70, maxValue:2000, flex:1, text:'Where'});
-                    new GridColHdr(gridHeader, {columnId:'when',    minValue:70, maxValue:2000, flex:1, text:'When'});
-                    new GridColHdr(gridHeader, {columnId:'paradox', minValue:70, maxValue:70, text:I18N_PARADOX});
-                    new GridColHdr(gridHeader, {columnId:'chronal', minValue:70, maxValue:70, text:I18N_CHRONAL});
+                    new GridColHdr(gridHeader, {columnId:'id',            minValue:40, maxValue:40,  text:'ID'});
+                    new GridColHdr(gridHeader, {columnId:'name',          minValue:70, maxValue:2000, flex:1, text:'Name'});
+                    new GridColHdr(gridHeader, {columnId:'event',         minValue:70, maxValue:2000, flex:1, text:'Event'});
+                    new GridColHdr(gridHeader, {columnId:'where',         minValue:70, maxValue:2000, flex:1, text:'Where'});
+                    new GridColHdr(gridHeader, {columnId:'when',          minValue:70, maxValue:2000, flex:1, text:'When'});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:70, maxValue:70, text:I18N_PARADOX});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL, minValue:70, maxValue:70, text:I18N_CHRONAL});
                 },
                 doRowModelSelected: model => {
                     self.fireEvent('selectionChanged', model);
@@ -177,8 +178,8 @@
                                     return (vA - vB) * sortAsc;
                                 }
                             };
-                        case 'paradox':
-                        case 'chronal':
+                        case STAT_ID_PARADOX:
+                        case STAT_ID_CHRONAL:
                             return (a, b) => {
                                 const vA = a[sortColumnId].getValue(),
                                     vB = b[sortColumnId].getValue();
@@ -219,8 +220,8 @@
         setup: function(model) {
             this.model = model;
             
-            const chronalStat = model.chronal;
-            this.chronalPool.constrain('update', [chronalStat, 'value', chronalStat, 'max']);
+            const statChronal = model[STAT_ID_CHRONAL];
+            this.chronalPool.constrain('update', [statChronal, 'value', statChronal, 'max']);
             this.gridWrapper.setModelCollection(model.agents);
         }
     });

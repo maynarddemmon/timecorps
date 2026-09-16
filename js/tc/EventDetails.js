@@ -13,9 +13,11 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_PARADOX, ICON_HQ, ICON_THE_VOID,
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_PARADOX, ICON_HQ, 
+            ICON_THE_VOID, ICON_SEARCH,
             I18N_PARADOX,
-            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
+            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
+            STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
         LABEL_WIDTH = 75,
@@ -134,19 +136,19 @@
                     doActivated: () => pkg.app.getTeamView().selectAgent(agentModel.id)
                 }]);
                 
+                new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:eventModel.attestation.isAtMaxValue()}, [{
+                    doActivated: () => {agentModel.doInvestigate(eventModel);}
+                }]);
                 const actionModels = eventModel.getActionModels();
-                let addedCount = 0;
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
                     new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:actionModel.done}, [{
                         doActivated: () => {agentModel.doAction(actionModel);}
                     }]);
-                    addedCount++;
                 }
-                if (addedCount === 0) new PaddedPlainText(actionView, {text:'No actions available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
                 
                 const exitModels = eventModel.getExitModels();
-                addedCount = 0;
+                let addedCount = 0;
                 for (const exitId in exitModels) {
                     const exitModel = exitModels[exitId],
                         toEventModel = exitModel.getToEventModel();
@@ -222,6 +224,8 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             self.locationRow = new DetailRow(detailsContainer, {label:'Location'});
+            self.historicityRow = new DetailRow(detailsContainer, {label:'Historicity'});
+            self.attestationRow = new DetailRow(detailsContainer, {label:'Attestation'});
             self.paradoxRow = new DetailRow(detailsContainer, {label:I18N_PARADOX});
             self.startRow = new DetailRow(detailsContainer, {label:'Begins'});
             self.durationRow = new DetailRow(detailsContainer, {label:'Duration'});
@@ -308,8 +312,11 @@
                 Layout.incrementGlobalLock();
                 
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
-                const paradoxStat = eventModel.paradox;
-                self.paradoxRow.setValue('[' + paradoxStat.value + '/' + paradoxStat.max + ']');
+                for (const statId of [STAT_ID_HISTORICITY,STAT_ID_ATTESTATION,STAT_ID_PARADOX]) {
+                    // FIXME: lets do these as progress bars.
+                    const stat = eventModel[statId];
+                    self[statId + 'Row'].setValue('[' + stat.value + '/' + stat.max + ']');
+                }
                 self.startRow.setValue(eventModel.getStart(true));
                 self.durationRow.setValue(eventModel.getDuration(true));
                 self.endRow.setValue(eventModel.getEnd(true));
@@ -358,13 +365,13 @@
                 }
                 
                 // FIXME: this goes away or is controlled by knowledge/attestation.
-                let txt = 'Values';
+                let txt = '';
                 const valueModels = eventModel.getValueModels();
                 for (const valueId in valueModels) {
                     const valueModel = valueModels[valueId];
                     txt += '<br>- ' + valueId + ': ' + valueModel.value;
                 }
-                self.valuesTxt.setText(txt);
+                self.valuesTxt.setText(txt ? 'Values' + txt : '');
                 
                 Layout.decrementGlobalLock();
             }

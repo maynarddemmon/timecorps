@@ -1,10 +1,12 @@
 (pkg => {
-    const stableStringify = myt.stableStringify,
+    const M = myt,
+        {stableStringify, getRandomInt} = M,
         
         {
-            NumericStatModel,
+            NotifyingNumericStatModel,
             ICON_HQ, ICON_CHRONAL, ICON_PARADOX, ICON_JUMP,
-            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ
+            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
         
         AGENT_CHRONAL_LIMIT = 15,
@@ -16,13 +18,13 @@
         LOG_TYPE_EXIT = 'exit',
         LOG_TYPE_ACTION = 'action';
     
-    pkg.AgentModel = new JS.Class('AgentModel', myt.BaseModel, {
+    pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
         // Life Cycle //////////////////////////////////////////////////////////
         init: function(attrs) {
             const self = this;
             self.log = [];
-            self.paradox = new NumericStatModel({
-                id:'paradox', absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
+            self[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
+                notifyTargets:self, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
             }, [{
                 triggerValueAtMax: function() {
                     this.callSuper();
@@ -34,8 +36,8 @@
                     self.doDevouredByChronovores();
                 }
             }]);
-            self.chronal = new NumericStatModel({
-                id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
+            self[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
+                notifyTargets:self, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
             });
             
             // Nullish event during init is assumed to be the HQ.
@@ -47,7 +49,7 @@
         getAsObj: function(cfg) {
             const retval = this.callSuper(cfg);
             for (const attrName of ['name','event']) retval[attrName] = this[attrName];
-            for (const attrName of ['paradox','chronal']) {
+            for (const attrName of [STAT_ID_PARADOX,STAT_ID_CHRONAL]) {
                 // Use stableStringify since similarTo uses shallowEqual. If this gets 
                 // unwieldy change similarTo to use deepEqual and drop the stableStringify.
                 retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
@@ -63,14 +65,14 @@
             if (this.inited) {
                 console.warn('AgentModel.setParadox after init', this);
             } else {
-                this.paradox.setValue(v);
+                this[STAT_ID_PARADOX].setValue(v);
             }
         },
         setChronal: function(v) { // Used by instantiation only.
             if (this.inited) {
                 console.warn('AgentModel.setChronal after init', this);
             } else {
-                this.chronal.setValue(v);
+                this[STAT_ID_CHRONAL].setValue(v);
             }
         },
         
@@ -108,10 +110,14 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /*notifyStatChanged: function(statModel) {
+            if (this.inited) console.log('Stat Changed', statModel);
+        },*/
+        
         getInfoForTimeTravel: function(eventModel) {
             const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ,
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel),
-                chronalAvailable = -this.chronal.getValueToMin(),
+                chronalAvailable = -this[STAT_ID_CHRONAL].getValueToMin(),
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
                 paradoxCost = this.calculateParadoxForEntry(eventModel);
             let disabled,
@@ -132,11 +138,11 @@
         doDeployToEvent: function(eventModel) {
             if (eventModel) {
                 const cost = pkg.getChronalToDeploy(this, eventModel);
-                if (cost <= -this.chronal.getValueToMin()) {
-                    this.chronal.adjValue(-cost);
+                if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
+                    this[STAT_ID_CHRONAL].adjValue(-cost);
                     this.setEvent(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
                 } else {
-                    console.warn('insufficent chronal');
+                    console.warn('insufficent chronal to deploy');
                 }
             } else {
                 console.warn('doDeployToEvent: no eventModel');
@@ -146,11 +152,11 @@
             const hqEventModel = pkg.model.getHQEventModel();
             if (hqEventModel) {
                 const cost = pkg.getChronalToRecall(this);
-                if (cost <= -this.chronal.getValueToMin()) {
-                    this.chronal.adjValue(-cost);
+                if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
+                    this[STAT_ID_CHRONAL].adjValue(-cost);
                     this.setEvent(hqEventModel.id, {type:LOG_TYPE_RECALL, event:hqEventModel});
                 } else {
-                    console.warn('insufficent chronal');
+                    console.warn('insufficent chronal to recall');
                 }
             } else {
                 console.warn('doRecallToHQ: no eventModel');
@@ -194,6 +200,20 @@
             
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
         },
+        doInvestigate: function(eventModel) {
+            // FIXME: determine if agent is allowed to investigate.
+            
+            const attestationStat = eventModel.attestation,
+                discoverableAmt = attestationStat.getValueToMax();
+            if (discoverableAmt > 0) {
+                let discovered = 1;
+                if (discoverableAmt > discovered) discovered = getRandomInt(discovered, discoverableAmt);
+                
+                attestationStat.adjValue(discovered);
+                
+                // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
+            }
+        },
         
         // Paradox
         calculateParadoxForEntry: function(eventModelOrId) {
@@ -212,11 +232,11 @@
         accrueEntryParadox: function(eventModelOrId) {
             const paradox = this.calculateParadoxForEntry(eventModelOrId);
             if (paradox > 0) {
-                this.paradox.adjValue(paradox);
+                this[STAT_ID_PARADOX].adjValue(paradox);
                 
                 const eventModel = this.getEventModel();
                 if (eventModel) {
-                    this.getEventModel().paradox.adjValue(paradox);
+                    this.getEventModel()[STAT_ID_PARADOX].adjValue(paradox);
                 } else {
                     console.warn('accrueEntryParadox for timeline should be mediated by an event');
                 }
@@ -224,7 +244,7 @@
         },
         
         doDevouredByChronovores: function() {
-            this.chronal.setMax(0); // They have lost the ability to time travel.
+            this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
             this.setEvent(EVENT_ID_THE_VOID);
         },
         
