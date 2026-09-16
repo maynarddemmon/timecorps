@@ -13,8 +13,9 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_CHRONAL, ICON_PARADOX,
-            I18N_PARADOX
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_PARADOX, ICON_HQ, ICON_THE_VOID,
+            I18N_PARADOX,
+            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
         } = pkg,
         
         LABEL_WIDTH = 75,
@@ -163,6 +164,18 @@
                         addedCount++;
                     }
                 }
+                // Also try to add a recall exit.
+                if (eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                    const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
+                    new Btn(exitView, {buttonType:'solid', text:info.btnTxt, disabled:info.disabled, layoutHint:'break'}, [{
+                        doActivated: () => {
+// FIXME:current event needs to update
+                            agentModel.doRecallToHQ();
+                        }
+                    }]);
+                    addedCount++;
+                }
+                
                 if (addedCount === 0) new PaddedPlainText(exitView, {text:'No exits available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
             }
         });
@@ -175,24 +188,33 @@
             self.callSuper(parent, attrs);
             
             // Build UI
-            const header = self.getHeaderView();
+            const header = self.getHeaderView(),
+                timelineView = pkg.app.getTimelineView();
+            
+            self.hqBtn = new Btn(header, {
+                y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ,
+                tooltip:'Select HQ'
+            }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getHQEventModel());}}]);
+            self.theVoidBtn = new Btn(header, {
+                y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID,
+                tooltip:'Select The Void'
+            }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getTheVoidEventModel());}}]);
+            
+            new View(header, {width:2*padding}); // Spacer
+            
             self.histPrevBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
                 icon:pkg.ICON_NAV_BACK, iconSize:fontSizeLarge, iconX:6, iconY:1, 
                 tooltip:'Select the last Event you viewed.'
-            }, [{doActivated: function() {pkg.app.getTimelineView().navigateHistory(-1);}}]);
+            }, [{doActivated: function() {timelineView.navigateHistory(-1);}}]);
             self.scrollToBtn = new Btn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, disabled:true
-            }, [{
-                doActivated: () => {
-                    pkg.app.getTimelineView().scrollToEventBox(self.eventModel);
-                }
-            }]);
+            }, [{doActivated: () => {timelineView.scrollToEventBox(self.eventModel);}}]);
             self.histNextBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
                 icon:pkg.ICON_NAV_FORWARD, iconSize:fontSizeLarge, iconX:8, iconY:1, 
                 tooltip:'Select the next Event you viewed.'
-            }, [{doActivated: function() {pkg.app.getTimelineView().navigateHistory(1);}}]);
+            }, [{doActivated: function() {timelineView.navigateHistory(1);}}]);
             
             
             self.noSelectionTxt = new PaddedPlainText(self, {
@@ -219,9 +241,10 @@
                 }
             }]);
             self.deployAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
-                doActivated: () => {
-                    self.selectedAgentModel.doDeployToEvent(self.eventModel);
-                }
+                doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
+            }]);
+            self.recallAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
+                doActivated: () => {self.selectedAgentModel.doRecallToHQ();}
             }]);
             new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
@@ -278,9 +301,13 @@
             
             self.noSelectionTxt.setVisible(!hasModel);
             detailsContainer.setVisible(hasModel);
-            self.scrollToBtn.setDisabled(!hasModel);
+            self.scrollToBtn.setDisabled(!hasModel || eventModel.hidden);
             
             if (hasModel) {
+                const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
+                self.hqBtn.setDisabled(isHQ);
+                self.theVoidBtn.setDisabled(eventModel.id === EVENT_ID_THE_VOID);
+                
                 Layout.incrementGlobalLock();
                 
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
@@ -351,23 +378,23 @@
         
         updateForSelectedAgent: function() {
             const self = this,
-                {selectedAgentModel, eventModel, deployAgentBtn} = self,
+                {selectedAgentModel, eventModel, deployAgentBtn, recallAgentBtn} = self,
                 hasEventModel = eventModel != null,
-                hasModel = selectedAgentModel != null;
+                hasAgentModel = selectedAgentModel != null;
             
             if (hasEventModel) {
-                deployAgentBtn.setVisible(hasModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.hidden);
-                if (hasModel) {
-                    const chronalNeeded = pkg.getChronalToDeploy(selectedAgentModel, eventModel),
-                        chronalAvailable = -selectedAgentModel.chronal.getValueToMin(),
-                        hasEnoughChronal = chronalNeeded <= chronalAvailable,
-                        paradoxCost = selectedAgentModel.calculateParadoxForEntry(eventModel);
-                    deployAgentBtn.setDisabled(!hasEnoughChronal || selectedAgentModel.isAtEvent(eventModel));
-                    deployAgentBtn.setText(
-                        'Deploy ' + selectedAgentModel.name + 
-                        ' [' + chronalNeeded + ICON_CHRONAL + 
-                        (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']'
-                    );
+                const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
+                recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
+                deployAgentBtn.setVisible(hasAgentModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.hidden);
+                if (hasAgentModel) {
+                    const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
+                    if (isHQ) {
+                        recallAgentBtn.setDisabled(info.disabled);
+                        recallAgentBtn.setText(info.btnTxt);
+                    } else {
+                        deployAgentBtn.setDisabled(info.disabled);
+                        deployAgentBtn.setText(info.btnTxt);
+                    }
                 }
             }
         },

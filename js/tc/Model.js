@@ -11,9 +11,11 @@
             AccessorSupport:{generateName, generateSetterName}
         } = myt,
         
-        {timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration}} = pkg,
-        
-        EVENT_ID_THE_VOID = 'the_void',
+        {
+            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration},
+            ICON_HQ, ICON_CHRONAL, ICON_PARADOX, ICON_JUMP,
+            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ
+        } = pkg,
         
         // FIXME: I'm not sure we have a use for this. Possibly this is the HQ limit for resupply.
         TIMELINE_STARTING_CHRONAL = 16,
@@ -26,6 +28,12 @@
         AGENT_PARADOX_LIMIT = 3,
         
         EVENT_PARADOX_LIMIT = 4,
+        
+        LOG_TYPE_ORIGIN = 'origin',
+        LOG_TYPE_DEPLOY = 'deploy',
+        LOG_TYPE_RECALL = 'recall',
+        LOG_TYPE_EXIT = 'exit',
+        LOG_TYPE_ACTION = 'action',
         
         // Constraints /////////////////////////////////////////////////////////
         SCOPE_TIMELINE = 'timeline',
@@ -397,6 +405,10 @@
                     }
                 }]);
                 self.chronal = new NumericStatModel({id:'chronal', absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT});
+                
+                // Nullish event during init is assumed to be the HQ.
+                attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
+                
                 self.callSuper(attrs);
             },
             
@@ -430,11 +442,16 @@
             
             setEvent: function(event, logEntry) {
                 if (this.event !== event) {
+                    const oldEventModel = this.getEventModel();
+                    
                     this._eventModel = null;
                     
                     this.setAndNotifyCollection('event', event, true);
-                    this.accrueEntryParadox(this.getEventModel());
-                    this.pushOntoLog(logEntry ?? {type:'origin', event:this.getEventModel()});
+                    const newEventModel = this.getEventModel();
+                    this.accrueEntryParadox(newEventModel);
+                    oldEventModel?.notifyCollectionOfUpdate();
+                    newEventModel?.notifyCollectionOfUpdate();
+                    this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
                 }
             },
             getEvent: function() {return this.event;},
@@ -452,20 +469,58 @@
                         return false;
                 }
             },
+            isAtHQ: function() {return this.event === EVENT_ID_TIME_CORPS_HQ;},
+            isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
             
             // Movement and Actions
+            getInfoForTimeTravel: function(eventModel) {
+                const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ,
+                    chronalNeeded = isHQ ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel),
+                    chronalAvailable = -this.chronal.getValueToMin(),
+                    hasEnoughChronal = chronalNeeded <= chronalAvailable,
+                    paradoxCost = this.calculateParadoxForEntry(eventModel);
+                let disabled,
+                    btnTxt;
+                if (isHQ) {
+                    disabled = !hasEnoughChronal;
+                    btnTxt = ICON_HQ + ' Recall "' + this.name + '" to HQ [' + chronalNeeded + ICON_CHRONAL + 
+                        (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+                } else {
+                    disabled = !hasEnoughChronal;
+                    const actionWord = this.isAtHQ() ? 'Deploy' : 'Jump';
+                    btnTxt = ICON_JUMP + ' ' + actionWord + ' "' + this.name + '" [' + chronalNeeded + ICON_CHRONAL + 
+                        (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+                }
+                return {disabled, btnTxt};
+            },
+            
             doDeployToEvent: function(eventModel) {
                 if (eventModel) {
                     const cost = pkg.getChronalToDeploy(this, eventModel);
                     if (cost <= -this.chronal.getValueToMin()) {
                         this.chronal.adjValue(-cost);
-                        this.setEvent(eventModel.id, {type:'deploy', event:eventModel});
+                        this.setEvent(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
                         eventModel.notifyCollectionOfUpdate();
                     } else {
                         console.warn('insufficent chronal');
                     }
                 } else {
                     console.warn('doDeployToEvent: no eventModel');
+                }
+            },
+            doRecallToHQ: function() {
+                const hqEventModel = model.getHQEventModel();
+                if (hqEventModel) {
+                    const cost = pkg.getChronalToRecall(this);
+                    if (cost <= -this.chronal.getValueToMin()) {
+                        this.chronal.adjValue(-cost);
+                        this.setEvent(hqEventModel.id, {type:LOG_TYPE_RECALL, event:hqEventModel});
+                        hqEventModel.notifyCollectionOfUpdate();
+                    } else {
+                        console.warn('insufficent chronal');
+                    }
+                } else {
+                    console.warn('doRecallToHQ: no eventModel');
                 }
             },
             doFollowExit: function(exitModel) {
@@ -477,7 +532,7 @@
                 
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
-                    this.setEvent(toEvent.id, {type:'exit', exit:exitModel});
+                    this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
                     exitEvent.notifyCollectionOfUpdate();
                     toEvent.notifyCollectionOfUpdate();
                     pkg.app.getTimelineView().doSelectEvent(toEvent, true);
@@ -508,13 +563,20 @@
                 }
                 actionModel.setDone(true);
                 
-                this.pushOntoLog({type:'action', action:actionModel});
+                this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
             },
             
             // Paradox
             calculateParadoxForEntry: function(eventModelOrId) {
                 const eventModel = typeof eventModelOrId === 'string' ? model.getEventModel(eventId) : eventModelOrId;
-                if (eventModel && this.hasBeenInEvent(eventModel)) return 1;
+                if (eventModel) {
+                    // No paradox to enter "special" events.
+                    if (eventModel.id !== EVENT_ID_THE_VOID && eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                        if (this.hasBeenInEvent(eventModel)) {
+                            return 1;
+                        }
+                    }
+                }
                 return 0;
             },
             
@@ -533,6 +595,7 @@
             },
             
             doDevouredByChronovores: function() {
+                this.chronal.setMax(0); // They have lost the ability to time travel.
                 this.setEvent(EVENT_ID_THE_VOID);
             },
             
@@ -544,11 +607,12 @@
             hasBeenInEvent: function(eventModel) {
                 for (const entry of this.log) {
                     switch (entry.type) {
-                        case 'exit':
+                        case LOG_TYPE_EXIT:
                             if (entry.exit.getToEventModel() === eventModel) return true;
                             break;
-                        case 'deploy':
-                        case 'origin':
+                        case LOG_TYPE_DEPLOY:
+                        case LOG_TYPE_RECALL:
+                        case LOG_TYPE_ORIGIN:
                             if (entry.event === eventModel) return true;
                             break;
                     }
@@ -681,6 +745,7 @@
             
             // Accessors ///////////////////////////////////////////////////////
             setName: function(name) {this.set('name', name, true);},
+            getName: function() {return this.name;},
             setStart: function(start) {
                 if (typeof start !== 'number') start = stringToMillis(start);
                 if (this.start !== start) {
@@ -853,6 +918,8 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         getEventModel: id => model[SCOPE_EVENTS].getById(id),
+        getHQEventModel: () => model.getEventModel(EVENT_ID_TIME_CORPS_HQ),
+        getTheVoidEventModel: () => model.getEventModel(EVENT_ID_THE_VOID),
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
         
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),

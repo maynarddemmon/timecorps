@@ -13,8 +13,11 @@
         } = M,
         
         // Game Properties /////////////////////////////////////////////////////
-        HQ_TIME = new Date('2174-10-14T00:00:00').getTime(),
+        EVENT_ID_THE_VOID = 'the_void',
+        EVENT_ID_TIME_CORPS_HQ = 'time_corps_hq',
+        
         MIN_DEPLOY_CHRONAL = 1,
+        MIN_RECALL_CHRONAL = 1,
         
         
         // Theme ///////////////////////////////////////////////////////////////
@@ -814,21 +817,23 @@
             return mathFloor(mathLog2(2 + 2* mathAbs(a - b) / MILLIS_PER_WEEK));
         },
         
-        getChronalFromHQ = a => {
-            if (a === HQ_TIME) return 0;
-            return mathFloor(mathLog10(2 + 2* mathAbs(a - HQ_TIME) / MILLIS_PER_YEAR));
+        getChronalEfficiently = (a, b) => {
+            if (a === b) return 0;
+            return mathFloor(mathLog10(2 + 2* mathAbs(a - b) / MILLIS_PER_YEAR));
         },
         
         getChronalToDeploy = (agentModel, eventModel) => {
             const eventTime = eventModel.getStart(),
-                agentEvent = agentModel.getEventModel();
-            let cost;
-            if (agentEvent) {
-                cost = getChronalByTimeDiff(agentEvent.getEnd(), eventTime);
-            } else {
-                cost = getChronalFromHQ(eventTime);
-            }
+                agentEvent = agentModel.getEventModel(),
+                getFunc = agentEvent.id === EVENT_ID_TIME_CORPS_HQ ? getChronalEfficiently : getChronalByTimeDiff,
+                cost = getFunc(agentEvent.getEnd(), eventTime);
             return mathMax(MIN_DEPLOY_CHRONAL, cost);
+        },
+        
+        getChronalToRecall = agentModel => {
+            const agentEvent = agentModel.getEventModel(),
+                cost = getChronalEfficiently(pkg.tc.model.getEventModel(EVENT_ID_TIME_CORPS_HQ).getStart(), agentEvent.getEnd()) / 2;
+            return mathMax(MIN_RECALL_CHRONAL, cost);
         },
         
         ICON_CHRONAL ='⏲', // ⏲ ⌚ ♾
@@ -838,24 +843,29 @@
         app:null, // Holds the App instance.
         model:null, // Holds the Model instance.
         
-        HQ_TIME,
-        
         theme,
         Spacer, WideView, TallView, Panel, MiniPanel, Btn, SquareBtn, LabeledValue,
         InfiniteGridWrapper, GridColHdr, GridCell, PlainGridCell, GridCellBtn, GridRow, SelectableGridRow,
         
         timeUtil,
         
-        getChronalToDeploy,
+        getChronalToDeploy, getChronalToRecall,
         
         I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
         I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
+        
         ICON_NAV_BACK:'❮',
         ICON_NAV_FORWARD:'❯',
         ICON_ACTION:'⎇', // ⎌ ⎇ ☟
+        ICON_JUMP:'⎌',
         ICON_TRAVEL:'⎆', // ⎈
         ICON_VIEW:'⏿',
         ICON_CHRONAL,
-        ICON_PARADOX
+        ICON_PARADOX,
+        ICON_THE_VOID:'⦰',
+        ICON_HQ:'❉',
+        
+        EVENT_ID_THE_VOID,
+        EVENT_ID_TIME_CORPS_HQ
     };
 })(window);

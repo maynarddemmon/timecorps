@@ -1,6 +1,12 @@
 {
 	"locations":{
-		"nowhere":{
+		"_nexus":{
+			"name":"The Nexus",
+			"color":"#fff",
+			"textColor":"#000",
+			"order":-2
+		},
+		"_nowhere":{
 			"name":"Nowhere",
 			"color":"#000",
 			"textColor":"#fff",

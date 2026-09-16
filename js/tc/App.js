@@ -177,7 +177,6 @@
         },
         
         notifyEventModelUpdated: eventModel => {
-            //console.log('update event', eventModel);
             eventDetailsView.notifyEventModelChanged(eventModel);
         },
         
