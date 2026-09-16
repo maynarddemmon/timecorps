@@ -4,17 +4,18 @@ JS.Packages(file => {
     
     file(TC_ROOT + '../../lib/myt.min.js').provides('myt.all');
     file(TC_ROOT + 'tc.js').provides('tc').requires('myt.all');
+    file(TC_ROOT + 'timeUtil.js').provides('tc.timeUtil').requires('tc');
     
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
     file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel').requires('tc');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires('tc.NumericStatModel');
-    file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires('tc.setConstrainedValue','tc.NumericStatModel');
+    file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires('tc.timeUtil','tc.setConstrainedValue','tc.NumericStatModel');
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires('tc.LocationModel','tc.AgentModel','tc.EventModel');
     
-    file(TC_ROOT + 'Agents.js').provides('tc.Agents').requires('tc');
-    file(TC_ROOT + 'Timeline.js').provides('tc.Timeline').requires('tc');
-    file(TC_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires('tc');
+    file(TC_ROOT + 'Agents.js').provides('tc.Agents').requires('tc.timeUtil');
+    file(TC_ROOT + 'Timeline.js').provides('tc.Timeline').requires('tc.timeUtil');
+    file(TC_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires('tc.timeUtil');
     file(TC_ROOT + 'App.js').provides('tc.App').requires('tc.Model','tc.Agents','tc.Timeline','tc.EventDetails');
     
     // Include Everything
