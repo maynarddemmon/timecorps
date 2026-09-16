@@ -12,21 +12,13 @@
         teamView;
     
     const JSClass = JS.Class,
+        
         M = myt,
-        {
-            View, Text, PlainText,
-            SpacedLayout, ResizeLayout, SizeToParent, 
-            global:G,
-            getRandomInt
-        } = M,
+        {View, ResizeLayout, SizeToParent, global:G} = M,
         
         {
-            Spacer, WideView, Panel, Btn, SquareBtn, LabeledValue,
-            theme:{
-                layoutSpacing, spacing, padding, cornerRadius, 
-                colorUltraDark, colorDark, colorMedium, colorLight,
-                fontSizeVeryLarge
-            }
+            WideView,
+            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeVeryLarge}
         } = pkg,
         
         loadDataIntoModel = (url, resultCallback) => {
@@ -34,7 +26,7 @@
                 response => {
                     model.processData(JSON.parse(response));
                     resultCallback?.(true);
-                }, 
+                },
                 err => {
                     console.error('err', err);
                     resultCallback?.(false);
@@ -91,22 +83,20 @@
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
             
-            new PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
-            new Spacer(topView);
+            new M.PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            new pkg.Spacer(topView);
             
-            new Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
-                doActivated: () => {
-                    model.reset();
-                }
+            new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
+                doActivated: () => {model.reset();}
             }]);
-            new SquareBtn(topView, {valign:'middle', icon:'⚙', iconSize:fontSizeVeryLarge, iconX:5, iconY:-2, tooltip:'Settings'});
+            new pkg.SquareBtn(topView, {valign:'middle', icon:'⚙', iconSize:fontSizeVeryLarge, iconX:5, iconY:-2, tooltip:'Settings'});
             
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },
         
         buildMiddleView: middleView => {
             teamView = new pkg.Agents(middleView, {title:'Agents'});
-            appView.buildOpView(opsView = new Panel(middleView, {title:'Operation'}));
+            appView.buildOpView(opsView = new pkg.Panel(middleView, {title:'Operation'}));
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             timelineView = new pkg.Timeline(middleView, {title:'Timeline'});
             eventDetailsView = new pkg.EventDetails(middleView);

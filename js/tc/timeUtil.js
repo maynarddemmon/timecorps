@@ -1,5 +1,8 @@
 (pkg => {
-    const {min:mathMin, max:mathMax, round:mathRound, ceil:mathCeil, floor:mathFloor, abs:mathAbs, trunc:mathTrunc} = Math,
+    const {
+            min:mathMin, max:mathMax, round:mathRound, ceil:mathCeil, floor:mathFloor, 
+            abs:mathAbs, trunc:mathTrunc
+        } = Math,
         
         // Time Parsing and Formatting /////////////////////////////////////////
         TO_SECOND = 'second',
