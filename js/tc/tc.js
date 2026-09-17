@@ -145,5 +145,20 @@
         };
     
     // Apply config overrides
-    TC.cfg = {...TC.cfg, ...pkg.TC_CFG_OVERRIDES};
+    const CFG = TC.cfg,
+        OVERRIDES = pkg.TC_CFG_OVERRIDES;
+    for (const key in OVERRIDES) {
+        if (Object.hasOwn(CFG, key)) {
+            const cfgValue = CFG[key],
+                newCfgValue = OVERRIDES[key];
+            if (cfgValue !== newCfgValue) {
+                CFG[key] = OVERRIDES[key];
+                console.log('Override cfg:', key, cfgValue, '->', newCfgValue);
+            } else {
+                console.warn('Override cfg no change:', key, cfgValue, '->', newCfgValue);
+            }
+        } else {
+            console.error('Unknown cfg override:', key, OVERRIDES[key]);
+        }
+    }
 })(window);
