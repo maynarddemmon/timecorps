@@ -163,7 +163,7 @@
                     
                     const notifyTargets = this.notifyTargets;
                     if (Array.isArray(notifyTargets)) {
-                        for (const target of notifyTargets) notifyTarget.notifyStatChanged?.(this);
+                        for (const notifyTarget of notifyTargets) notifyTarget.notifyStatChanged?.(this);
                     } else {
                         notifyTargets.notifyStatChanged?.(this);
                     }
