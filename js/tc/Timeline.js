@@ -567,7 +567,7 @@
         
         getExitConnectionsForEventBox: function(eventBox) {
             // Only fetch exit type splines that originate from the provided eventBox.
-            const matchStr = SPLINE_ID_PREFIX_EXIT + eventBox.model.id;
+            const matchStr = SPLINE_ID_PREFIX_EXIT + eventBox.model.id + '-';
             return this.getConnectionsForEventBox(
                 eventBox, 
                 connection => connection.splineId.startsWith(matchStr)
