@@ -16,13 +16,19 @@
         LOG_TYPE_DEPLOY = 'deploy',
         LOG_TYPE_RECALL = 'recall',
         LOG_TYPE_EXIT = 'exit',
-        LOG_TYPE_ACTION = 'action';
+        LOG_TYPE_ACTION = 'action',
+        LOG_TYPE_INVESTIGATE = 'investigate';
     
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
         // Life Cycle //////////////////////////////////////////////////////////
         init: function(attrs) {
             const self = this;
+            
             self.log = [];
+            
+            // The number of actions the Agent has executed in the EventModel they are currently in.
+            self.actionExecCount = 0;
+            
             self[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
                 notifyTargets:self, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
             }, [{
@@ -36,6 +42,7 @@
                     self.doDevouredByChronovores();
                 }
             }]);
+            
             self[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
                 notifyTargets:self, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
             });
@@ -68,6 +75,7 @@
                 this[STAT_ID_PARADOX].setValue(v);
             }
         },
+        
         setChronal: function(v) { // Used by instantiation only.
             if (this.inited) {
                 console.warn('AgentModel.setChronal after init', this);
@@ -76,14 +84,26 @@
             }
         },
         
+        setActionEventCount: function(v, noEventUpdate) {
+            if (this.actionEventCount !== v) {
+                this.setAndNotifyCollection('actionEventCount', v, true);
+                if (this.inited && !noEventUpdate) this.getEventModel()?.notifyCollectionOfUpdate();
+            }
+        },
+        incrementActionEventCount: function() {this.setActionEventCount(this.actionEventCount + 1);},
+        canAct: function() {return this.getEventModel()?.getActionLimit() > this.actionEventCount;},
+        
         setEvent: function(event, logEntry) {
             if (this.event !== event) {
                 const oldEventModel = this.getEventModel();
                 
                 this._eventModel = null;
+                this.setActionEventCount(0, true);
                 
-                this.setAndNotifyCollection('event', event, true);
-                const newEventModel = this.getEventModel();
+                this.set('event', event, true);
+                const newEventModel = this._eventModel = pkg.model.getEventModel(this.event); // Populate immediately
+                this.notifyCollectionOfUpdate();
+                
                 this.accrueEntryParadox(newEventModel);
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
@@ -91,9 +111,7 @@
             }
         },
         getEvent: function() {return this.event;},
-        getEventModel: function() {
-            return this._eventModel ?? (this._eventModel = pkg.model.getEventModel(this.event));
-        },
+        getEventModel: function() {return this._eventModel;},
         isAtEvent: function(eventModelOrId) {
             switch (typeof eventModelOrId) {
                 case 'string':
@@ -174,6 +192,8 @@
             }
         },
         doAction: function(actionModel) {
+            if (!this.canAct()) return;
+            
             if (actionModel.isDone()) {
                 console.warn('Attemp to do a done action.', actionModel, this);
                 return;
@@ -198,20 +218,28 @@
             }
             actionModel.setDone(true);
             
+            this.incrementActionEventCount();
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
         },
-        doInvestigate: function(eventModel) {
-            // FIXME: determine if agent is allowed to investigate.
-            
-            const attestationStat = eventModel.attestation,
-                discoverableAmt = attestationStat.getValueToMax();
-            if (discoverableAmt > 0) {
-                let discovered = 1;
-                if (discoverableAmt > discovered) discovered = getRandomInt(discovered, discoverableAmt);
-                
-                attestationStat.adjValue(discovered);
-                
-                // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
+        doInvestigate: function() {
+            if (this.canAct()) {
+                const eventModel = this.getEventModel();
+                if (eventModel) {
+                    const attestationStat = eventModel.attestation,
+                        discoverableAmt = attestationStat.getValueToMax();
+                    if (discoverableAmt > 0) {
+                        let discovered = 1;
+                        if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
+                            discovered = getRandomInt(discovered, discoverableAmt);
+                        }
+                        
+                        attestationStat.adjValue(discovered);
+                        this.incrementActionEventCount();
+                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:discovered});
+                        
+                        // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
+                    }
+                }
             }
         },
         

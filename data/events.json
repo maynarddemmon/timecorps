@@ -20,7 +20,7 @@
 			"start":"1912-03-01T10:00:00",
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
-			"historicity":"75", "attestation":"25",
+			"historicity":"75", "attestation":"25", "actionLimit":2,
 			"actions":{
 				"argue":{
 					"label":"Argue for Full Davits",

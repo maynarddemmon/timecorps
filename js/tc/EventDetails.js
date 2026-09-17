@@ -130,19 +130,20 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, vitaeView, actionView, exitView} = self;
+                    {agentModel, eventModel, vitaeView, actionView, exitView} = self,
+                    agentCantActHere = !agentModel.canAct();
                 
                 new Btn(vitaeView, {buttonType:'underline', textColor:colorLight, text:agentModel.name + ' (' + agentModel.id + ')'}, [{
                     doActivated: () => pkg.app.getTeamView().selectAgent(agentModel.id)
                 }]);
                 
-                new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:eventModel.attestation.isAtMaxValue()}, [{
-                    doActivated: () => {agentModel.doInvestigate(eventModel);}
+                new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
+                    doActivated: () => {agentModel.doInvestigate();}
                 }]);
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
-                    new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:actionModel.done}, [{
+                    new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
                         doActivated: () => {agentModel.doAction(actionModel);}
                     }]);
                 }

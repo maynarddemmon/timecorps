@@ -6,16 +6,12 @@
         {
             NotifyingNumericStatModel, setConstrainedValue,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration},
-            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
+            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
         } = pkg,
         
         EVENT_PARADOX_LIMIT = 4,
-        
-        LOG_TYPE_ORIGIN = 'origin',
-        LOG_TYPE_DEPLOY = 'deploy',
-        LOG_TYPE_RECALL = 'recall',
-        LOG_TYPE_EXIT = 'exit',
-        LOG_TYPE_ACTION = 'action',
+        DEFAULT_ACTION_LIMIT = 1,
         
         TRAVEL_MODE_WAIT = 'wait',
         TRAVEL_MODE_WALK = 'walk',
@@ -89,6 +85,7 @@
             init: function(attrs) {
                 const self = this;
                 self.hidden = false;
+                self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
                 self[STAT_ID_ATTESTATION] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_ATTESTATION, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -119,7 +116,9 @@
                 // FIXME: this is not really correct. We will fix once it's clear how EventModel
                 // will be serialized both for Save and for an Event grid (once it is introduced).
                 const retval = this.callSuper(cfg);
-                for (const attrName of ['actions','values','exits']) retval[attrName] = this[attrName];
+                for (const attrName of ['name','start','duration','hidden','actionLimit','actions','values','exits']) {
+                    retval[attrName] = this[attrName];
+                }
                 for (const attrName of [STAT_ID_PARADOX,STAT_ID_HISTORICITY,STAT_ID_ATTESTATION]) {
                     // Use stableStringify since similarTo uses shallowEqual. If this gets 
                     // unwieldy change similarTo to use deepEqual and drop the stableStringify.
@@ -130,6 +129,11 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
+            isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ},
+            isTheVoid: function() {return this.id === EVENT_ID_THE_VOID},
+            isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},
+            isRegularEvent: function() {return !this.isNotRegularEvent();},
+            
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
             setStart: function(start) {
@@ -158,6 +162,9 @@
                     setConstrainedValue(this, this, 'hidden', value);
                 }
             },
+            
+            setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
+            getActionLimit: function() {return this.actionLimit;},
             
             setParadox: function(v) { // Used by instantiation only.
                 if (this.inited) {
