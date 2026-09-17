@@ -161,6 +161,12 @@
                 self.values = {};
                 self.exits = [];
                 self.hideAffectedBy = {};
+                
+                // Default to hidden if nothing is known about this Event.
+                // FIXME: ideally this will take into account the descendant Events with a default
+                // attestation/historicty check of say 15.
+                attrs.hidden ??= "event.attestation.value === 0 && event.historicity.value === 0";
+                
                 self.callSuper(attrs);
             },
             
