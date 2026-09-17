@@ -41,26 +41,76 @@
                 fontFamilyMono:'SpaceMono'
             },
             
-            // Game Properties //
-            EVENT_ID_THE_VOID:'the_void',
-            EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
-            
-            MIN_DEPLOY_CHRONAL:1,
-            MIN_RECALL_CHRONAL:1,
+            // Game Config
+            cfg: {
+                EVENT_ID_THE_VOID:'the_void',
+                EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
+                
+                TRAVEL_MODE_WAIT:'wait',
+                TRAVEL_MODE_WALK:'walk',
+                
+                // The absolute minimum chronal needed to deploy an Agent from HQ or jump from
+                // another Event.
+                MIN_DEPLOY_CHRONAL:1,
+                
+                // The absolute minimum chronal needed to recall an Agent to HQ.
+                MIN_RECALL_CHRONAL:1,
+                
+                // The starting maximum chronal an Agent can have.
+                AGENT_CHRONAL_LIMIT:15,
+                
+                // The starting maximum paradox an Agent can have.
+                AGENT_PARADOX_LIMIT:3,
+                
+                // The absolute maximum discovery per investigate.
+                MAX_DISCOVERY_PER_INVESTIGATE:25,
+                
+                // The starting maximum paradox an Event can have.
+                EVENT_PARADOX_LIMIT:4,
+                
+                // The default actions allowed by an Agent per visit within an Event.
+                DEFAULT_ACTION_LIMIT:1,
+                
+                // FIXME: I'm not sure we have a use for these two. Possibly this is the HQ limit 
+                // for resupply.
+                TIMELINE_STARTING_CHRONAL:16,
+                TIMELINE_CHRONAL_LIMIT:24,
+                
+                // The amount of paradox the Timeline begins the game with.
+                TIMELINE_STARTING_PARADOX:0,
+                
+                // The starting maximum paradox for the Timeline.
+                TIMELINE_PARADOX_LIMIT:9,
+                
+                
+                //// Timeline UI Config ////
+                
+                // The maximum length of the next/prev Event history.
+                MAX_HISTORY_LENGTH:1000,
+                
+                // The curvature value used by Splines within the Timeline.
+                SPLINE_CURVATURE:0.25,
+                
+                TL_BOX_VISIBLE_HEIGHT_THRESHOLD:20,
+                TL_SCROLL_TO_PADDING:-16,
+                TL_ROW_HEADER_WIDTH:125,
+                TL_COL_WIDTH:100,
+                TL_COL_SPACING:1,
+            },
             
             // Chronal Util
             getChronalToDeploy: (agentModel, eventModel) => {
                 const eventTime = eventModel.getStart(),
                     agentEvent = agentModel.getEventModel(),
-                    getFunc = agentEvent.id === TC.EVENT_ID_TIME_CORPS_HQ ? getChronalEfficiently : getChronalByTimeDiff,
+                    getFunc = agentEvent.id === TC.cfg.EVENT_ID_TIME_CORPS_HQ ? getChronalEfficiently : getChronalByTimeDiff,
                     cost = getFunc(agentEvent.getEnd(), eventTime);
-                return mathMax(TC.MIN_DEPLOY_CHRONAL, cost);
+                return mathMax(TC.cfg.MIN_DEPLOY_CHRONAL, cost);
             },
             
             getChronalToRecall: agentModel => {
                 const agentEvent = agentModel.getEventModel(),
-                    cost = getChronalEfficiently(pkg.tc.model.getEventModel(TC.EVENT_ID_TIME_CORPS_HQ).getStart(), agentEvent.getEnd()) / 2;
-                return mathMax(TC.MIN_RECALL_CHRONAL, cost);
+                    cost = getChronalEfficiently(TC.model.getEventModel(TC.cfg.EVENT_ID_TIME_CORPS_HQ).getStart(), agentEvent.getEnd()) / 2;
+                return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
             // Constraint Scopes
@@ -93,4 +143,7 @@
             ICON_HQ:'❉',
             ICON_SEARCH:'?'
         };
+    
+    // Apply config overrides
+    TC.cfg = {...TC.cfg, ...pkg.TC_CFG_OVERRIDES};
 })(window);

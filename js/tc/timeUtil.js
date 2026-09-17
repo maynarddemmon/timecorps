@@ -125,8 +125,7 @@
                 
                 Note there is deliberately no y or mo: years and months are not
                 fixed lengths, and a duration that means "until this date" should
-                be authored as an end instant instead.
-            */
+                be authored as an end instant instead. */
             durationToMillis: spec => {
                 if (spec == null) return 0;
                 if (typeof spec === 'number') return spec;

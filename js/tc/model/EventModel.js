@@ -7,14 +7,12 @@
             NotifyingNumericStatModel, setConstrainedValue,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
-            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
+            cfg:{
+                EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
+                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
+                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
+            }
         } = pkg,
-        
-        EVENT_PARADOX_LIMIT = 4,
-        DEFAULT_ACTION_LIMIT = 1,
-        
-        TRAVEL_MODE_WAIT = 'wait',
-        TRAVEL_MODE_WALK = 'walk',
         
         updateEndAttr = eventModel => {
             const {start, duration} = eventModel;

@@ -166,6 +166,10 @@ writeScript('js/tc/manifest');
 </head><body></div><div id="appDiv"></div><div id="loader"><div id="spinner"></div></div>
 <script>
 	showSpinner();
+	globalThis.TC_CFG_OVERRIDES = {
+		AGENT_PARADOX_LIMIT:2,
+		DEFAULT_ACTION_LIMIT:3,
+	};
 	JS.require('tc.all', () => {
 		tc.IMAGE_ROOT = './img/';
 		new tc.App(getElem('appDiv'));

@@ -11,7 +11,6 @@
         CONSTRAINT_NAMES = new Map(),
         CONSTRAINT_FUNCTIONS = new Map(),
         
-        
         //REF_CONSTRAINTS = '_constraints',
         
         generateConfigAttrName = name => CONFIG_ATTR_NAMES.get(name) ?? (CONFIG_ATTR_NAMES.set(name, generateName(name, '_cfg')), CONFIG_ATTR_NAMES.get(name)),

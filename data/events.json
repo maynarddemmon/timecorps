@@ -33,8 +33,7 @@
 				{"mode":"walk", "to":"titanic_departs", "hidden":"event.attestation.value < 5"}
 			],
 			"values":{
-				"fullDavits":{"value":"false"},
-				"boatsForAll":{"value":"event.values.fullDavits.value"}
+				"fullDavits":{"value":"false"}
 			}
 		},
 		"roster_reshuffle":{
@@ -59,8 +58,7 @@
 			"values":{
 				"preventReshuffle":{"value":"false"},
 				"remindBlair":{"value":"false"},
-				"keyOnShip":{"value":"event.values.preventReshuffle.value || event.values.remindBlair.value"},
-				"blairOnShip":{"value":"event.values.preventReshuffle.value"}
+				"keyOnShip":{"value":"event.values.preventReshuffle.value || event.values.remindBlair.value"}
 			}
 		},
 		"titanic_departs":{
@@ -98,8 +96,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"relayToBridge":{"value":"false"},
-				"warningsHeeded":{"value":"event.values.relayToBridge.value"}
+				"relayToBridge":{"value":"false"}
 			}
 		},
 		"purser_spare":{
@@ -143,10 +140,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"clearBacklogEarlier":{"value":"false"},
-				"californianContact":{
-					"value":"event.values.clearBacklogEarlier.value"
-				}
+				"clearBacklogEarlier":{"value":"false"}
 			}
 		},
 		"missing_binoculars":{
@@ -172,9 +166,7 @@
 			"values":{
 				"plantKey":{"value":"false"},
 				"pickTheLocker":{"value":"false"},
-				"binocularsAccessible":{
-					"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.values.plantKey.value || event.values.pickTheLocker.value"
-				}
+				"binocularsAccessible":{"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.values.plantKey.value || event.values.pickTheLocker.value"}
 			}
 		},
 		"engine_order":{
@@ -193,10 +185,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"countermandAstern":{"value":"false"},
-				"rudderAuthority":{
-					"value":"event.values.countermandAstern.value"
-				}
+				"countermandAstern":{"value":"false"}
 			}
 		},
 		"lookout_sights_berg":{
@@ -209,9 +198,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"earlySighting":{
-					"value":"events.missing_binoculars.values.binocularsAccessible.value || events.ice_warnings.values.warningsHeeded.value"
-				}
+				"earlySighting":{"value":"events.missing_binoculars.values.binocularsAccessible.value || events.ice_warnings.values.relayToBridge.value"}
 			}
 		},
 		"collision":{
@@ -224,9 +211,7 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"struck":{
-					"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.rudderAuthority.value)"
-				}
+				"struck":{"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)"}
 			}
 		},
 		"californian_nearby":{
@@ -236,9 +221,7 @@
 			"location":"atlantic.californian",
 			"historicity":"75", "attestation":"25",
 			"values":{
-				"rescueResponds":{
-					"value":"events.wireless_priority.values.californianContact.value"
-				}
+				"rescueResponds":{"value":"events.wireless_priority.values.clearBacklogEarlier.value"}
 			}
 		},
 		"casualties":{
@@ -248,15 +231,14 @@
 			"location":"titanic.boatdeck",
 			"historicity":"75", "attestation":"25",
 			"values":{
-				"massLossOfLife":{
-					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.boatsForAll.value)"
-				},
-				"TEST_PARADOX":{
-					"value":"timeline.paradox.value"
-				},
-				"TEST_CHRONAL":{
-					"value":"timeline.chronal.value + '/' + timeline.chronal.max"
-				}
+				"massLossOfLife":{"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.fullDavits.value)"},
+				"TEST_PARADOX":{"value":"timeline.paradox.value"},
+				"TEST_CHRONAL":{"value":"timeline.chronal.value + '/' + timeline.chronal.max"}
+			},
+			"hideAffectedBy":{
+				"collision":"event.attestation.value < 30",
+				"californian_nearby":"event.attestation.value < 40",
+				"lifeboat_capacity":"event.attestation.value < 50"
 			}
 		}
 	}

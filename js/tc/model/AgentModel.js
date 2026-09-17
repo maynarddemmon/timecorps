@@ -7,14 +7,12 @@
         {
             NotifyingNumericStatModel,
             ICON_HQ, ICON_CHRONAL, ICON_PARADOX, ICON_JUMP,
-            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+            cfg:{
+                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE
+            },
             STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
-        
-        AGENT_CHRONAL_LIMIT = 15,
-        AGENT_PARADOX_LIMIT = 3,
-        
-        MAX_DISCOVERY_PER_INVESTIGATE = 25,
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',

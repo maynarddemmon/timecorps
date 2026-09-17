@@ -8,6 +8,9 @@
         
         {
             Btn, SquareBtn, WideView, MiniPanel, timeUtil:{format},
+            cfg:{
+                EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
+            },
             theme:{
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
@@ -16,7 +19,6 @@
             ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_PARADOX, ICON_HQ, 
             ICON_THE_VOID, ICON_SEARCH,
             I18N_PARADOX,
-            EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         

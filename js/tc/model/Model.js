@@ -1,23 +1,20 @@
 (pkg => {
     let model;
     
-    const {Node, BaseModelCollection} = myt,
+    const BaseModelCollection = myt.BaseModelCollection,
         
         {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel,
-            EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+            cfg:{
+                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+                TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
+                TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT
+            },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
-        } = pkg,
-        
-        // FIXME: I'm not sure we have a use for this. Possibly this is the HQ limit for resupply.
-        TIMELINE_STARTING_CHRONAL = 16,
-        TIMELINE_CHRONAL_LIMIT = 24,
-        
-        TIMELINE_STARTING_PARADOX = 0,
-        TIMELINE_PARADOX_LIMIT = 9;
+        } = pkg;
     
-    pkg.Model = new JS.Class('Model', Node, {
+    pkg.Model = new JS.Class('Model', myt.Node, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             model = this;

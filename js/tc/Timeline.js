@@ -23,6 +23,11 @@
                 
                 SCALE_TO_MILLIS
             },
+            cfg:{
+                SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, MAX_HISTORY_LENGTH, 
+                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING
+            },
+            
             theme:{
                 spacing, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
@@ -58,44 +63,34 @@
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
         SPLINE_ID_PREFIX_EXIT = 'exit-',
         
-        CURVATURE = 0.25,
-        
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
-            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
             //startArrow:'dot',
             endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         }],
         SELECTED_CONNECTION_STYLE = {
             color:colorUltraLight, cap:null, thickness:4, startAngle:'vertical', endAngle:'vertical', 
-            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
             //endArrow:'triangle',
             startStub:6, endStub:6, startGap:0, endGap:0
         },
         EXIT_STYLE = {
             color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
             dash:1,
-            startCurvature:CURVATURE, endCurvature:CURVATURE, 
+            startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
             endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         },
         
         COL_HEADER_HEIGHT = rowHeight,
-        ROW_HEADER_WIDTH = 125,
-        
-        COL_WIDTH = 100,
-        COL_SPACING = 1,
         
         TICK_LINE_HEIGHT = 1,
         TICK_LABEL_ADJ = TICK_LINE_HEIGHT + spacing,
         
-        BOX_VISIBLE_HEIGHT_THRESHOLD = 20,
         BOX_INSET_FROM_COL = 1,
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
-        
-        MAX_HISTORY_LENGTH = 1000,
-        SCROLL_TO_PADDING = -16,
         
         millisToPx = (timeline, millis) => {
             const millisOffset = millis - timeline.start,
@@ -138,7 +133,7 @@
                 locModels = model.getLocationsInOrder(),
                 len = locModels.length,
                 h = colHeaders.height,
-                w = COL_WIDTH + COL_SPACING;
+                w = TL_COL_WIDTH + TL_COL_SPACING;
             
             let extent = 0;
             for (let i = 0; i < len; i++) {
@@ -148,7 +143,7 @@
                     extent += w;
                 }
             }
-            scrollToken.setX(extent - scrollToken.width + ROW_HEADER_WIDTH);
+            scrollToken.setX(extent - scrollToken.width + TL_ROW_HEADER_WIDTH);
             colHeaders.setWidth(extent);
             timeline.flowLayer.setWidth(extent);
         },
@@ -188,7 +183,7 @@
                 attrs.readyColor ??= colorDark;
                 attrs.focusable = false;
                 
-                const width = attrs.width ??= COL_WIDTH - 2*BOX_INSET_FROM_COL;
+                const width = attrs.width ??= TL_COL_WIDTH - 2*BOX_INSET_FROM_COL;
                 attrs.roundedCorners ??= cornerRadius;
                 //attrs.outline ??= BOX_OUTLINE;
                 
@@ -200,7 +195,7 @@
                 this.callSuper(parent, attrs);
                 
                 (this._label = new PaddedPlainText(this, {
-                    textAlign:'center', y:spacing, width:width, visible:this.height >= BOX_VISIBLE_HEIGHT_THRESHOLD,
+                    textAlign:'center', y:spacing, width:width, visible:this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD,
                     paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
@@ -218,7 +213,7 @@
             
             setHeight: function(v) {
                 this.callSuper(v);
-                this._label?.setVisible(this.height >= BOX_VISIBLE_HEIGHT_THRESHOLD);
+                this._label?.setVisible(this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD);
             },
             
             setSelected: function(v) {
@@ -355,7 +350,7 @@
                 this.callSuper(parent, attrs);
                 
                 this._label = new PlainText(this, {
-                    y:TICK_LABEL_ADJ, width:ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ,
+                    y:TICK_LABEL_ADJ, width:TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ,
                     textAlign:'right', text:format(time, timeline.scale)
                 });
             }
@@ -363,7 +358,7 @@
         
         LocationColumn = new JSClass('LocationColumn', View, {
             initNode: function(parent, attrs) {
-                const width = attrs.width ??= COL_WIDTH;
+                const width = attrs.width ??= TL_COL_WIDTH;
                 
                 this.callSuper(parent, attrs);
                 
@@ -433,13 +428,13 @@
                 
                 stickyView = self.stickyView = new View(scrollCaptureView, {}),
                 
-                colHeadersContainer = self.colHeadersContainer = new View(stickyView, {x:ROW_HEADER_WIDTH, overflow:'hidden'}),
+                colHeadersContainer = self.colHeadersContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, overflow:'hidden'}),
                 colHeaders = self.colHeaders = new View(colHeadersContainer, {textColor:colorUltraDark}),
                 
                 rowHeadersContainer = self.rowHeadersContainer = new View(stickyView, {y:COL_HEADER_HEIGHT, overflow:'hidden'}),
                 rowHeaders = self.rowHeaders = new View(rowHeadersContainer, {textColor:colorUltraDark}),
                 
-                flowContainer = self.flowContainer = new View(stickyView, {x:ROW_HEADER_WIDTH, y:COL_HEADER_HEIGHT, overflow:'hidden'}),
+                flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:COL_HEADER_HEIGHT, overflow:'hidden'}),
                 flowLayer = self.flowLayer = new SplineFlow(flowContainer, {
                     defaultStyle:DEFAULT_STYLE
                 });
@@ -454,7 +449,7 @@
             scrollCaptureView.attachToDom(scrollCaptureView, '_handleScroll', 'scroll');
             
             const hLine = self.hLine = new View(self, {y:COL_HEADER_HEIGHT, height:1, bgColor:colorUltraDark}),
-                vLine = self.vLine = new View(self, {x:ROW_HEADER_WIDTH - 1, width:1, bgColor:colorUltraDark});
+                vLine = self.vLine = new View(self, {x:TL_ROW_HEADER_WIDTH - 1, width:1, bgColor:colorUltraDark});
             hLine.getIDS().pointerEvents = 'none';
             vLine.getIDS().pointerEvents = 'none';
             
@@ -652,7 +647,7 @@
         // Scrolling
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
-            if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + SCROLL_TO_PADDING, eventBox.y + SCROLL_TO_PADDING, true, smoothly);
+            if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + TL_SCROLL_TO_PADDING, eventBox.y + TL_SCROLL_TO_PADDING, true, smoothly);
         },
         
         scrollToLocation: function(modelOrId, smoothly=true) {
