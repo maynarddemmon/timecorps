@@ -107,7 +107,7 @@
 			"duration":{"h":1},
 			"location":"titanic.pursers",
 			"historicity":"0", "attestation":"0",
-			"hidden":"event.attestation.value === 0 && event.historicity.value === 0",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.missing_binoculars.attestation.value < 15",
 			"actions":{
 				"recover":{
 					"label":"Spare Recovered",
@@ -153,7 +153,7 @@
 			"start":"1912-04-14T21:00:00",
 			"duration":{"h":2,"m":39},
 			"location":"titanic.nest",
-			"historicity":"75", "attestation":"25",
+			"historicity":"75", "attestation":"1",
 			"actions":{
 				"plant":{
 					"label":"Plant Key",

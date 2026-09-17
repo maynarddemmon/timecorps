@@ -1,5 +1,7 @@
 (pkg => {
-    const M = myt,
+    const mathMin = Math.min,
+        
+        M = myt,
         {stableStringify, getRandomInt} = M,
         
         {
@@ -11,6 +13,8 @@
         
         AGENT_CHRONAL_LIMIT = 15,
         AGENT_PARADOX_LIMIT = 3,
+        
+        MAX_DISCOVERY_PER_INVESTIGATE = 25,
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -226,7 +230,7 @@
                 const eventModel = this.getEventModel();
                 if (eventModel) {
                     const attestationStat = eventModel.attestation,
-                        discoverableAmt = attestationStat.getValueToMax();
+                        discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
                     if (discoverableAmt > 0) {
                         let discovered = 1;
                         if (eventModel.isRegularEvent() && discoverableAmt > discovered) {

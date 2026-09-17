@@ -1,4 +1,6 @@
 (pkg => {
+    let bindingPaused = false;
+    
     const {resolveName, ExpressionParser, AccessorSupport:{generateName, generateSetterName}} = myt,
         
         {SCOPE_TIMELINE, SCOPE_EVENTS, SCOPE_EVENT} = pkg,
@@ -7,6 +9,8 @@
         CONFIG_ATTR_NAMES = new Map(),
         CONSTRAINT_NAMES = new Map(),
         CONSTRAINT_FUNCTIONS = new Map(),
+        
+        PAUSED_BINDINGS = [],
         
         //REF_CONSTRAINTS = '_constraints',
         
@@ -92,8 +96,12 @@
             
             // Remember all constraints so they can be reapplied when necessary
             //target[REF_CONSTRAINTS][name] = constraintTxt;
-            
-            bindConstraint(resolveTarget, target, funcName, propPaths);
+                
+            if (bindingPaused) {
+                PAUSED_BINDINGS.push(resolveTarget, target, funcName, propPaths);
+            } else {
+                bindConstraint(resolveTarget, target, funcName, propPaths);
+            }
             
             return true;
         },
@@ -113,7 +121,6 @@
                     switch (path[0]) {
                         case SCOPE_TIMELINE:
                             resolveRoot = {[SCOPE_TIMELINE]:pkg.model};
-                            //path.shift();
                             break;
                         case SCOPE_EVENTS:
                             resolveRoot = eventsById
@@ -168,6 +175,17 @@
                 target[funcName]();
             }
         };
+    
+    pkg.pauseConstraintBinding = () => {bindingPaused = true;};
+    pkg.unpauseConstraintBinding = () => {
+        bindingPaused = false;
+        
+        const len = PAUSED_BINDINGS.length;
+        for (let i = 0; i < len;) {
+            bindConstraint(PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++]);
+        }
+        PAUSED_BINDINGS.length = 0;
+    },
     
     pkg.setConstrainedValue = (resolveTarget, target, name, constraintValue) => {
         const cfgName = generateConfigAttrName(name);
