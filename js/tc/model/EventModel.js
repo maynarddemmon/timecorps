@@ -195,6 +195,7 @@
                     setConstrainedValue(this, this, 'hidden', value);
                 }
             },
+            isHidden: function() {return this.hidden;},
             
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
             getActionLimit: function() {return this.actionLimit;},

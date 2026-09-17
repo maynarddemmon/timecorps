@@ -157,7 +157,7 @@
                     if (exitModel.isHidden()) continue;
                     
                     const toEventModel = exitModel.getToEventModel();
-                    if (!toEventModel.hidden) {
+                    if (!toEventModel.isHidden()) {
                         const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
                         new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
                             doActivated: () => {pkg.app.getTimelineView().scrollToEventBox(toEventModel);}
@@ -307,7 +307,7 @@
             
             self.noSelectionTxt.setVisible(!hasModel);
             detailsContainer.setVisible(hasModel);
-            self.scrollToBtn.setDisabled(!hasModel || eventModel.hidden);
+            self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
                 const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
@@ -333,7 +333,7 @@
                 let addedCount = 0;
                 if (precursors.size > 0) {
                     for (const precursorEvent of precursors) {
-                        if (!precursorEvent.hidden) {
+                        if (!precursorEvent.isHidden()) {
                             new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
@@ -351,7 +351,7 @@
                 addedCount = 0;
                 if (descendants.size > 0) {
                     for (const descendantEvent of descendants) {
-                        if (!descendantEvent.hidden) {
+                        if (!descendantEvent.isHidden()) {
                             new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
@@ -394,7 +394,7 @@
             if (hasEventModel) {
                 const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
                 recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
-                deployAgentBtn.setVisible(hasAgentModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.hidden);
+                deployAgentBtn.setVisible(hasAgentModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.isHidden());
                 if (hasAgentModel) {
                     const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
                     if (isHQ) {

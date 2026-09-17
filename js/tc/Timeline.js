@@ -279,7 +279,7 @@
                     end = model.getEnd(),
                     locId = model.getLocation(),
                     col = timeline.colsByLocId[locId],
-                    hidden = model.hidden;
+                    hidden = model.isHidden();
                 self.eventId = model.id;
                 _label.setText(model.name || '');
                 this.setTooltip(_label.text);
@@ -300,7 +300,7 @@
                     for (const eventModel of model.getPrecursors()) {
                         const startId = eventModel.id,
                             startBox = timeline.boxesByEventId[startId];
-                        if (startBox && !startBox.model.hidden) {
+                        if (startBox && !startBox.model.isHidden()) {
                             flowLayer.connect({
                                 splineId:SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
                                 start:{view:startBox, side:'bottom', position:'75%'},
@@ -326,7 +326,7 @@
                         if (exitModel.isHidden()) continue;
                         
                         const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
-                        if (toBox && !toBox.model.hidden) {
+                        if (toBox && !toBox.model.isHidden()) {
                             const connection = flowLayer.connect({
                                 splineId:SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
                                 start:{view:self, side:'bottom', position:'85%'},
