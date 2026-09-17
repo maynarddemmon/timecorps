@@ -159,6 +159,43 @@
             }
         },
         
+        getLocationColumn = (timeline, modelOrId) => {
+            if (modelOrId) {
+                let locationId;
+                if (typeof modelOrId === 'string') {
+                    locationId = modelOrId;
+                } else if (modelOrId.isA(pkg.EventModel)) {
+                    locationId = modelOrId.getLocation();
+                } else {
+                    // Assume LocationModel
+                    locationId = modelOrId.id;
+                }
+                
+                if (locationId) return timeline.colsByLocId[locationId];
+            }
+        },
+        
+        // History //
+        pushOntoHistory = (timeline, eventId) => {
+            if (eventId && !timeline._noHistUpdate) {
+                const hist = timeline._hist,
+                    idx = timeline._histIdx;
+                if (eventId !== hist[idx]) {
+                    hist.length = idx + 1; // Truncate to current
+                    hist.push(eventId);
+                    
+                    // Keep History from growing arbitrarily long
+                    if (hist.length > MAX_HISTORY_LENGTH) {
+                        hist.shift();
+                    } else {
+                        timeline._histIdx++;
+                    }
+                    
+                    updateHistoryBtns(timeline);
+                }
+            }
+        },
+        
         updateHistoryBtns = timeline => {
             const {histPrevBtn, histNextBtn, _hist:hist, _histIdx:idx} = timeline,
                 prevDisabled = idx < 1,
@@ -172,6 +209,105 @@
             histNextBtn.setTooltip(nextBtnTooltip);
             
             pkg.app.getEventDetailsView().updateHistoryBtns(prevDisabled, prevBtnTooltip, nextDisabled, nextBtnTooltip);
+        },
+        
+        
+        // Event Box //
+        revalidateForEvent = eventBox => {
+            const {timeline, model:eventModel} = eventBox;
+            
+            updateEventBox(eventBox);
+            updateExits(eventBox);
+            
+            for (const descEventModel of eventModel.getDescendants()) {
+                const descEventBox = timeline.getEventBox(descEventModel);
+                if (descEventBox) updateEventBox(descEventBox);
+            }
+        },
+        
+        refreshConnectionsForSelection = eventBox => {
+            for (const connection of eventBox.timeline.getAffectiveConnectionsForEventBox(eventBox)) {
+                connection.setStyle(connection.endView.selected || connection.startView.selected ? SELECTED_CONNECTION_STYLE : null);
+            }
+        },
+        
+        updateEventBox = eventBox => {
+            const {timeline, model, _label} = eventBox,
+                start = model.getStart(),
+                end = model.getEnd(),
+                locId = model.getLocation(),
+                col = timeline.colsByLocId[locId],
+                hidden = model.isHidden();
+            eventBox.eventId = model.id;
+            _label.setText(model.name || '');
+            eventBox.setTooltip(_label.text);
+            eventBox.setX(col ? col.x + BOX_INSET_FROM_COL : 0);
+            
+            const startPx = millisToPx(timeline, start),
+                endPx = millisToPx(timeline, end);
+            
+            eventBox.setY(startPx);
+            eventBox.setHeight(endPx - startPx);
+            
+            eventBox.setVisible(!hidden);
+            
+            // Update connections between boxes
+            if (!hidden) {
+                const endId = model.id,
+                    flowLayer = timeline.flowLayer;
+                for (const eventModel of model.getPrecursors()) {
+                    const startId = eventModel.id,
+                        startBox = timeline.boxesByEventId[startId];
+                    if (startBox) {
+                        const startEventModel = startBox.model,
+                            hideAffectedBy = model.isAffectedByHidden(startEventModel);
+                        if (!hideAffectedBy && !startEventModel.isHidden()) {
+                            const splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
+                                existingConnection = flowLayer.getSpline(splineId);
+                            if (!existingConnection) {
+                                flowLayer.connect({
+                                    splineId,
+                                    start:{view:startBox, side:'bottom', position:'75%'},
+                                    end:{view:eventBox, side:'top', position:'25%'}
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            refreshConnectionsForSelection(eventBox);
+        },
+        
+        updateExits = eventBox => {
+            const {timeline, model, selected:show} = eventBox,
+                flowLayer = timeline.flowLayer,
+                exitsById = eventBox._exitsById ??= {};
+            
+            // Update travel paths between boxes
+            if (show) {
+                const startId = model.id;
+                for (const exitModel of model.getExitModels()) {
+                    if (exitModel.isHidden()) continue;
+                    
+                    const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
+                    if (toBox && !toBox.model.isHidden()) {
+                        const splineId = SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
+                            existingConnection = flowLayer.getSpline(splineId);
+                        if (!existingConnection) {
+                            exitsById[splineId] = flowLayer.connect({
+                                splineId,
+                                start:{view:eventBox, side:'bottom', position:'85%'},
+                                end:{view:toBox, side:'top', position:'35%'},
+                                style:EXIT_STYLE
+                            });
+                        }
+                    }
+                } 
+            } else {
+                for (const connectionId in exitsById) flowLayer.disconnect(connectionId);
+                eventBox._exitsById = {};
+            }
         },
         
         EventBox = new JSClass('EventBox', SimpleButton, {
@@ -199,7 +335,7 @@
                     paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
-                this._update();
+                updateEventBox(this);
             },
             
             setModel: function(model) {
@@ -207,7 +343,7 @@
                     this.releaseConstraint('_updateForModelChanges');
                     this.set('model', model, true);
                     if (this.model) this.constrain('_updateForModelChanges', [this.model, 'updated']);
-                    if (this.inited) this._update();
+                    if (this.inited) updateEventBox(this);
                 }
             },
             
@@ -221,26 +357,8 @@
                 this.updateUI();
                 
                 this.bringToFront();
-                this.refreshConnectionsForSelection();
-                this._updateExits(this.selected);
-            },
-            
-            refreshConnectionsForSelection: function() {
-                const selected = this.selected,
-                    connections = this.timeline.getAffectiveConnectionsForEventBox(this);
-                for (const connection of connections) {
-                    connection.setStyle(selected ? SELECTED_CONNECTION_STYLE : null);
-                    if (connection.startView === this) {
-                        connection.endView.setAdjacentIsSelected(selected);
-                    } else {
-                        connection.startView.setAdjacentIsSelected(selected);
-                    }
-                }
-            },
-            
-            setAdjacentIsSelected: function(v) {
-                this.set('adjacentIsSelected', v, true);
-                this.updateUI();
+                refreshConnectionsForSelection(this);
+                updateExits(this);
             },
             
             doActivated: function() {
@@ -264,87 +382,12 @@
             },
             
             _updateForModelChanges: function() {
-                if (this.inited) this.timeline.revalidateForEvent(this.model);
-            },
-            
-            _update: function() {
-                const self = this,
-                    {timeline, model, _label} = self,
-                    start = model.getStart(),
-                    end = model.getEnd(),
-                    locId = model.getLocation(),
-                    col = timeline.colsByLocId[locId],
-                    hidden = model.isHidden();
-                self.eventId = model.id;
-                _label.setText(model.name || '');
-                this.setTooltip(_label.text);
-                self.setX(col ? col.x + BOX_INSET_FROM_COL : 0);
-                
-                const startPx = millisToPx(timeline, start),
-                    endPx = millisToPx(timeline, end);
-                
-                self.setY(startPx);
-                self.setHeight(endPx - startPx);
-                
-                self.setVisible(!hidden);
-                
-                // Update connections between boxes
-                if (!hidden) {
-                    const endId = model.id,
-                        flowLayer = timeline.flowLayer;
-                    for (const eventModel of model.getPrecursors()) {
-                        const startId = eventModel.id,
-                            startBox = timeline.boxesByEventId[startId];
-                        if (startBox && !startBox.model.isHidden()) {
-                            const splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
-                                existingConnection = flowLayer.getSpline(splineId);
-                            if (!existingConnection) {
-                                flowLayer.connect({
-                                    splineId,
-                                    start:{view:startBox, side:'bottom', position:'75%'},
-                                    end:{view:self, side:'top', position:'25%'}
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                self.refreshConnectionsForSelection();
-            },
-            
-            _updateExits: function(show) {
-                const self = this,
-                    {timeline, model} = self,
-                    flowLayer = timeline.flowLayer,
-                    exitsById = self._exitsById ??= {};
-                
-                // Update travel paths between boxes
-                if (show) {
-                    const startId = model.id;
-                    for (const exitModel of model.getExitModels()) {
-                        if (exitModel.isHidden()) continue;
-                        
-                        const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
-                        if (toBox && !toBox.model.isHidden()) {
-                            const splineId = SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
-                                existingConnection = flowLayer.getSpline(splineId);
-                            if (!existingConnection) {
-                                exitsById[splineId] = flowLayer.connect({
-                                    splineId,
-                                    start:{view:self, side:'bottom', position:'85%'},
-                                    end:{view:toBox, side:'top', position:'35%'},
-                                    style:EXIT_STYLE
-                                });
-                            }
-                        }
-                    } 
-                } else {
-                    for (const connectionId in exitsById) flowLayer.disconnect(connectionId);
-                    self._exitsById = {};
-                }
+                if (this.inited) revalidateForEvent(this);
             }
         }),
         
+        
+        // Tick //
         Tick = new JSClass('Tick', View, {
             initNode: function(parent, attrs) {
                 const time = attrs.time,
@@ -363,6 +406,15 @@
             }
         }),
         
+        
+        // Location Column //
+        updateLocationColumn = locationColumn => {
+            const {model, _label} = locationColumn;
+            locationColumn.setBgColor(model.color || 'transparent');
+            locationColumn.setTextColor(model.textColor || null);
+            _label.setText(model.name || '');
+        },
+        
         LocationColumn = new JSClass('LocationColumn', View, {
             initNode: function(parent, attrs) {
                 const width = attrs.width ??= TL_COL_WIDTH;
@@ -374,21 +426,14 @@
                     paddingTop:5, paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
-                this._update();
+                updateLocationColumn(this);
             },
             
             setModel: function(model) {
                 if (this.model !== model) {
                     this.set('model', model, true);
-                    if (this.inited) this._update();
+                    if (this.inited) updateLocationColumn(this);
                 }
-            },
-            
-            _update: function() {
-                const {model, _label} = this;
-                this.setBgColor(model.color || 'transparent');
-                this.setTextColor(model.textColor || null);
-                _label.setText(model.name || '');
             }
         });
     
@@ -554,7 +599,7 @@
         doSelected: function() {
             const selectedEvent = this.getSelected()[0];
             this.fireEvent('selectionChanged', selectedEvent);
-            this.pushOntoHistory(selectedEvent.model.id);
+            pushOntoHistory(this, selectedEvent.model.id);
         },
         
         /** @overrides SelectionManager */
@@ -590,55 +635,8 @@
             }
         },
         
-        revalidateForEvent: function(eventModel) {
-            const self = this,
-                eventBox = self.getEventBox(eventModel);
-            if (eventBox) {
-                eventBox._update();
-                eventBox._updateExits(eventBox.selected);
-                
-                for (const descEventModel of eventModel.getDescendants()) {
-                    self.getEventBox(descEventModel)?._update();
-                }
-            }
-        },
         
-        getLocationColumn: function(modelOrId) {
-            if (modelOrId) {
-                let locationId;
-                if (typeof modelOrId === 'string') {
-                    locationId = modelOrId;
-                } else if (modelOrId.isA(pkg.EventModel)) {
-                    locationId = modelOrId.getLocation();
-                } else {
-                    // Assume LocationModel
-                    locationId = modelOrId.id;
-                }
-                
-                if (locationId) return this.colsByLocId[locationId];
-            }
-        },
-        
-        // History
-        pushOntoHistory: function(eventId) {
-            if (eventId && !this._noHistUpdate) {
-                const hist = this._hist,
-                    idx = this._histIdx;
-                if (eventId !== hist[idx]) {
-                    hist.length = idx + 1; // Truncate to current
-                    hist.push(eventId);
-                    
-                    // Keep History from growing arbitrarily long
-                    if (hist.length > MAX_HISTORY_LENGTH) {
-                        hist.shift();
-                    } else {
-                        this._histIdx++;
-                    }
-                    
-                    updateHistoryBtns(this);
-                }
-            }
-        },
+        // History //
         navigateHistory: function(adj) {
             const newIdx = this._histIdx + adj,
                 eventIdToSelect = this._hist[newIdx];
@@ -651,14 +649,15 @@
             }
         },
         
-        // Scrolling
+        
+        // Scrolling //
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
             if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + TL_SCROLL_TO_PADDING, eventBox.y + TL_SCROLL_TO_PADDING, true, smoothly);
         },
         
         scrollToLocation: function(modelOrId, smoothly=true) {
-            const locationColumn = this.getLocationColumn(modelOrId);
+            const locationColumn = getLocationColumn(this, modelOrId);
             if (locationColumn) this.scrollCaptureView.scrollXTo(locationColumn.x, true, smoothly);
         },
         
@@ -666,7 +665,8 @@
             this.scrollCaptureView.scrollYTo(millisToPx(this, millis), true, smoothly);
         },
         
-        // Setup
+        
+        // Setup //
         setup: function(model) {
             this.model = model;
             const statParadox = model[STAT_ID_PARADOX];

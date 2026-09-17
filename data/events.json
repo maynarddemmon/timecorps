@@ -206,12 +206,16 @@
 			"start":"1912-04-14T23:40:00",
 			"duration":{"m":1},
 			"location":"titanic.bridge",
-			"historicity":"75", "attestation":"25",
+			"historicity":"75", "attestation":"0",
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
 				"struck":{"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)"}
+			},
+			"hideAffectedBy":{
+				"lookout_sights_berg":"event.attestation.value < 15",
+				"engine_order":"event.attestation.value < 50"
 			}
 		},
 		"californian_nearby":{
@@ -229,7 +233,7 @@
 			"start":"1912-04-15T02:20:00",
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
-			"historicity":"75", "attestation":"25",
+			"historicity":"75", "attestation":"0",
 			"values":{
 				"massLossOfLife":{"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.fullDavits.value)"},
 				"TEST_PARADOX":{"value":"timeline.paradox.value"},

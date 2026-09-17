@@ -329,13 +329,14 @@
                 self.endRow.setValue(eventModel.getEnd(true));
                 self.descriptionRow.setValue();
                 
+                // Precursor Nav Buttons //
                 const precursorsRow = self.precursorsRow,
                     precursors = eventModel.getPrecursors();
                 precursorsRow.clearContent();
                 let addedCount = 0;
                 if (precursors.size > 0) {
                     for (const precursorEvent of precursors) {
-                        if (!precursorEvent.isHidden()) {
+                        if (!precursorEvent.isHidden() && !eventModel.isAffectedByHidden(precursorEvent)) {
                             new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
@@ -347,13 +348,14 @@
                 }
                 if (addedCount === 0) new PaddedPlainText(precursorsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
                 
+                // Descendant Nav Buttons //
                 const descendantsRow = self.descendantsRow,
                     descendants = eventModel.getDescendants();
                 descendantsRow.clearContent();
                 addedCount = 0;
                 if (descendants.size > 0) {
                     for (const descendantEvent of descendants) {
-                        if (!descendantEvent.isHidden()) {
+                        if (!descendantEvent.isHidden() && !descendantEvent.isAffectedByHidden(eventModel)) {
                             new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
@@ -365,6 +367,7 @@
                 }
                 if (addedCount === 0) new PaddedPlainText(descendantsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
                 
+                // Agent Information //
                 const agentsRow = self.agentsRow;
                 agentsRow.clearContent();
                 for (const agentModel of eventModel.getAgentModels()) {

@@ -112,6 +112,26 @@
             }
         }),
         
+        HideAffectedByModel = new JSClass('HideAffectedByModel', BaseModel, {
+            init: function(attrs) {
+                this.event = attrs.event;
+                delete attrs.event;
+                this.callSuper(attrs);
+            },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
+            setHidden: function(value, isActual) {
+                if (isActual) {
+                    this.set('hidden', value, true);
+                    this.event.notifyCollectionOfUpdate();
+                } else {
+                    setConstrainedValue(this.event, this, 'hidden', value);
+                }
+            },
+            isHidden: function() {return this.hidden;}
+        }),
+        
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             init: function(attrs) {
                 const self = this;
@@ -140,6 +160,7 @@
                 self.actions = {};
                 self.values = {};
                 self.exits = [];
+                self.hideAffectedBy = {};
                 self.callSuper(attrs);
             },
             
@@ -147,7 +168,10 @@
                 // FIXME: this is not really correct. We will fix once it's clear how EventModel
                 // will be serialized both for Save and for an Event grid (once it is introduced).
                 const retval = this.callSuper(cfg);
-                for (const attrName of ['name','start','duration','hidden','actionLimit','actions','values','exits']) {
+                for (const attrName of [
+                    'name','start','duration','hidden','actionLimit','actions','values',
+                    'exits','hideAffectedBy'
+                ]) {
                     retval[attrName] = this[attrName];
                 }
                 for (const attrName of [STAT_ID_PARADOX,STAT_ID_HISTORICITY,STAT_ID_ATTESTATION]) {
@@ -277,6 +301,24 @@
                 }
             },
             getExitModels: function() {return this.exits;},
+            
+            // Hide Affected By
+            setHideAffectedBy: function(hideAffectedBy) {
+                for (const id in hideAffectedBy) {
+                    this.hideAffectedBy[id] = new HideAffectedByModel({
+                        id, 
+                        event:this, 
+                        hidden:hideAffectedBy[id]
+                    });
+                }
+            },
+            getHideAffectedByModels: function() {return this.hideAffectedBy;},
+            getHideAffectedByModel: function(affectorEventModelOrId) {
+                return this.hideAffectedBy[typeof affectorEventModelOrId === 'string' ? affectorEventModelOrId : affectorEventModelOrId?.id];
+            },
+            isAffectedByHidden: function(affectorEventModelOrId) {
+                return this.getHideAffectedByModel(affectorEventModelOrId)?.isHidden() ?? false;
+            },
             
             
             // Methods /////////////////////////////////////////////////////////
