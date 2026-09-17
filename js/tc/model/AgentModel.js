@@ -84,21 +84,21 @@
             }
         },
         
-        setActionEventCount: function(v, noEventUpdate) {
-            if (this.actionEventCount !== v) {
-                this.setAndNotifyCollection('actionEventCount', v, true);
+        setActionExecCount: function(v, noEventUpdate) {
+            if (this.actionExecCount !== v) {
+                this.setAndNotifyCollection('actionExecCount', v, true);
                 if (this.inited && !noEventUpdate) this.getEventModel()?.notifyCollectionOfUpdate();
             }
         },
-        incrementActionEventCount: function() {this.setActionEventCount(this.actionEventCount + 1);},
-        canAct: function() {return this.getEventModel()?.getActionLimit() > this.actionEventCount;},
+        incrementActionExecCount: function() {this.setActionExecCount(this.actionExecCount + 1);},
+        canAct: function() {return this.getEventModel()?.getActionLimit() > this.actionExecCount;},
         
         setEvent: function(event, logEntry) {
             if (this.event !== event) {
                 const oldEventModel = this.getEventModel();
                 
                 this._eventModel = null;
-                this.setActionEventCount(0, true);
+                this.setActionExecCount(0, true);
                 
                 this.set('event', event, true);
                 const newEventModel = this._eventModel = pkg.model.getEventModel(this.event); // Populate immediately
@@ -218,7 +218,7 @@
             }
             actionModel.setDone(true);
             
-            this.incrementActionEventCount();
+            this.incrementActionExecCount();
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
         },
         doInvestigate: function() {
@@ -234,7 +234,7 @@
                         }
                         
                         attestationStat.adjValue(discovered);
-                        this.incrementActionEventCount();
+                        this.incrementActionExecCount();
                         this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:discovered});
                         
                         // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
