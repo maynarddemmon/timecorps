@@ -56,6 +56,7 @@
         },
         
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
+        SPLINE_ID_PREFIX_EXIT = 'exit-',
         
         CURVATURE = 0.25,
         
@@ -320,10 +321,12 @@
                 
                 // Update travel paths between boxes
                 if (show) {
+                    const startId = model.id;
                     for (const exit of model.getExitModels()) {
                         const toBox = timeline.boxesByEventId[exit.getToEventModel()?.id];
                         if (toBox && !toBox.model.hidden) {
                             const connection = flowLayer.connect({
+                                splineId:SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
                                 start:{view:self, side:'bottom', position:'85%'},
                                 end:{view:toBox, side:'top', position:'35%'},
                                 style:EXIT_STYLE
@@ -560,6 +563,15 @@
         
         getAffectiveConnectionsForEventBox: function(eventBox) {
             return this.getConnectionsForEventBox(eventBox, connection => connection.splineId.startsWith(SPLINE_ID_PREFIX_AFFECT));
+        },
+        
+        getExitConnectionsForEventBox: function(eventBox) {
+            // Only fetch exit type splines that originate from the provided eventBox.
+            const matchStr = SPLINE_ID_PREFIX_EXIT + eventBox.model.id;
+            return this.getConnectionsForEventBox(
+                eventBox, 
+                connection => connection.splineId.startsWith(matchStr)
+            );
         },
         
         getEventBox: function(eventModelOrId) {
