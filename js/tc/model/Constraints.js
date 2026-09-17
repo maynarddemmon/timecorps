@@ -1,5 +1,6 @@
 (pkg => {
-    let bindingPaused = false;
+    let bindingPaused = false,
+        pausedBinding = [];
     
     const {resolveName, ExpressionParser, AccessorSupport:{generateName, generateSetterName}} = myt,
         
@@ -10,7 +11,6 @@
         CONSTRAINT_NAMES = new Map(),
         CONSTRAINT_FUNCTIONS = new Map(),
         
-        PAUSED_BINDINGS = [],
         
         //REF_CONSTRAINTS = '_constraints',
         
@@ -98,7 +98,7 @@
             //target[REF_CONSTRAINTS][name] = constraintTxt;
                 
             if (bindingPaused) {
-                PAUSED_BINDINGS.push(resolveTarget, target, funcName, propPaths);
+                pausedBinding.push(resolveTarget, target, funcName, propPaths);
             } else {
                 bindConstraint(resolveTarget, target, funcName, propPaths);
             }
@@ -177,15 +177,16 @@
         };
     
     pkg.pauseConstraintBinding = () => {bindingPaused = true;};
-    pkg.unpauseConstraintBinding = () => {
+    pkg.resumeConstraintBinding = () => {
         bindingPaused = false;
         
-        const len = PAUSED_BINDINGS.length;
+        const refToPausedBindings = pausedBinding,
+            len = refToPausedBindings.length;
+        pausedBinding = []; // Assign a new accumulator before proceeding in case that triggers another pause.
         for (let i = 0; i < len;) {
-            bindConstraint(PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++], PAUSED_BINDINGS[i++]);
+            bindConstraint(refToPausedBindings[i++], refToPausedBindings[i++], refToPausedBindings[i++], refToPausedBindings[i++]);
         }
-        PAUSED_BINDINGS.length = 0;
-    },
+    };
     
     pkg.setConstrainedValue = (resolveTarget, target, name, constraintValue) => {
         const cfgName = generateConfigAttrName(name);

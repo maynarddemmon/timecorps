@@ -55,6 +55,8 @@
             [TO_CENTURY]: 10
         },
         
+        SPLINE_ID_PREFIX_AFFECT = 'affect-',
+        
         CURVATURE = 0.25,
         
         DEFAULT_STYLE = [{
@@ -229,7 +231,7 @@
             
             refreshConnectionsForSelection: function() {
                 const selected = this.selected,
-                    connections = this.timeline.getConnectionsForEventBox(this);
+                    connections = this.timeline.getAffectiveConnectionsForEventBox(this);
                 for (const connection of connections) {
                     connection.setStyle(selected ? SELECTED_CONNECTION_STYLE : null);
                     if (connection.startView === this) {
@@ -299,7 +301,7 @@
                             startBox = timeline.boxesByEventId[startId];
                         if (startBox && !startBox.model.hidden) {
                             flowLayer.connect({
-                                splineId:startId + '-' + endId,
+                                splineId:SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
                                 start:{view:startBox, side:'bottom', position:'75%'},
                                 end:{view:self, side:'top', position:'25%'}
                             });
@@ -551,8 +553,13 @@
         /** @overrides SelectionManager */
         doDeselected: function() {this.fireEvent('selectionChanged', this.getSelected()[0]);},
         
-        getConnectionsForEventBox: function(eventBox) {
-            return this.flowLayer.getConnections(eventBox);
+        getConnectionsForEventBox: function(eventBox, filter) {
+            const retval = this.flowLayer.getConnections(eventBox);
+            return filter ? retval.filter(filter) : retval;
+        },
+        
+        getAffectiveConnectionsForEventBox: function(eventBox) {
+            return this.getConnectionsForEventBox(eventBox, connection => connection.splineId.startsWith(SPLINE_ID_PREFIX_AFFECT));
         },
         
         getEventBox: function(eventModelOrId) {
