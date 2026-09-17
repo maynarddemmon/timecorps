@@ -167,11 +167,9 @@ writeScript('js/tc/manifest');
 <script>
 	showSpinner();
 	globalThis.TC_CFG_OVERRIDES = {
-		_TC_CFG_OVERRIDES_SILENTLY:true,
+		_TC_CFG_OVERRIDES_INFO:false,
 		
-		AGENT_PARADOX_LIMIT:3,
 		DEFAULT_ACTION_LIMIT:3,
-		BROKEN_KEY:'This should break.',
 	};
 	JS.require('tc.all', () => {
 		tc.IMAGE_ROOT = './img/';

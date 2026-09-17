@@ -147,20 +147,26 @@
     // Apply config overrides
     const CFG = TC.cfg,
         OVERRIDES = pkg.TC_CFG_OVERRIDES,
-        VERBOSE = !OVERRIDES?._TC_CFG_OVERRIDES_SILENTLY;
-    if (OVERRIDES) delete OVERRIDES._TC_CFG_OVERRIDES_SILENTLY;
+        VERBOSE_INFO = OVERRIDES?._TC_CFG_OVERRIDES_INFO ?? true,
+        VERBOSE_WARN = OVERRIDES?._TC_CFG_OVERRIDES_WARN ?? true,
+        VERBOSE_ERROR = OVERRIDES?._TC_CFG_OVERRIDES_ERROR ?? true;
+    if (OVERRIDES) {
+        delete OVERRIDES._TC_CFG_OVERRIDES_INFO;
+        delete OVERRIDES._TC_CFG_OVERRIDES_WARN;
+        delete OVERRIDES._TC_CFG_OVERRIDES_ERROR;
+    }
     for (const key in OVERRIDES) {
         if (Object.hasOwn(CFG, key)) {
             const cfgValue = CFG[key],
                 newCfgValue = OVERRIDES[key];
             if (cfgValue !== newCfgValue) {
                 CFG[key] = OVERRIDES[key];
-                if (VERBOSE) console.log('Override cfg:', key, cfgValue, '->', newCfgValue);
+                if (VERBOSE_INFO) console.log('Override cfg:', key, cfgValue, '->', newCfgValue);
             } else {
-                if (VERBOSE) console.warn('Override cfg no change:', key, cfgValue, '->', newCfgValue);
+                if (VERBOSE_WARN) console.warn('Override cfg no change:', key, cfgValue, '->', newCfgValue);
             }
         } else {
-            if (VERBOSE) console.error('Unknown cfg override:', key, OVERRIDES[key]);
+            if (VERBOSE_ERROR) console.error('Unknown cfg override:', key, OVERRIDES[key]);
         }
     }
 })(window);
