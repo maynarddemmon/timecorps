@@ -226,8 +226,10 @@
         },
         
         refreshConnectionsForSelection = eventBox => {
+            const selected = eventBox.selected;
             for (const connection of eventBox.timeline.getAffectiveConnectionsForEventBox(eventBox)) {
                 connection.setStyle(connection.endView.selected || connection.startView.selected ? SELECTED_CONNECTION_STYLE : null);
+                connection[connection.startView === eventBox ? 'endView' : 'startView'].setAdjacentIsSelected(selected);
             }
         },
         
@@ -359,6 +361,11 @@
                 this.bringToFront();
                 refreshConnectionsForSelection(this);
                 updateExits(this);
+            },
+            
+            setAdjacentIsSelected: function(adjacentIsSelected) {
+                this.set('adjacentIsSelected', adjacentIsSelected, true);
+                this.updateUI();
             },
             
             doActivated: function() {
