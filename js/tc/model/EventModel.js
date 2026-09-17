@@ -23,18 +23,34 @@
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
             init: function(attrs) {
+                this.hidden = false;
                 this.done = false;
                 this.event = attrs.event;
                 delete attrs.event;
                 this.callSuper(attrs);
             },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
+            
             setSet: function(set) {this.set('setObj', set, true);},
+            
             setDone: function(done) {
                 this.set('done', done, true);
                 this.event.notifyCollectionOfUpdate();
             },
-            isDone: function() {return this.done;}
+            isDone: function() {return this.done;},
+            
+            setHidden: function(value, isActual) {
+                if (isActual) {
+                    this.set('hidden', value, true);
+                    this.event.notifyCollectionOfUpdate();
+                } else {
+                    setConstrainedValue(this.event, this, 'hidden', value);
+                }
+            },
+            isHidden: function() {return this.hidden;}
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
@@ -55,11 +71,16 @@
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
             init: function(attrs) {
+                this.hidden = false;
                 this.event = attrs.event;
                 delete attrs.event;
                 this.callSuper(attrs);
             },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
             setMode: function(mode) {this.set('mode', mode, true);},
+            
             setTo: function(to) {
                 if (this.to !== to) {
                     this._toEventModel = null;
@@ -70,6 +91,18 @@
                 return this._toEventModel ?? (this._toEventModel = pkg.model.getEventModel(this.to));
             },
             
+            setHidden: function(value, isActual) {
+                if (isActual) {
+                    this.set('hidden', value, true);
+                    this.event.notifyCollectionOfUpdate();
+                } else {
+                    setConstrainedValue(this.event, this, 'hidden', value);
+                }
+            },
+            isHidden: function() {return this.hidden;},
+            
+            
+            // Methods /////////////////////////////////////////////////////////
             getBtnLabel: function() {
                 const toEvent = this.getToEventModel(),
                     toEventName = toEvent ? toEvent.name : this.to;
@@ -249,7 +282,10 @@
             
             // Methods /////////////////////////////////////////////////////////
             notifyCollectionOfUpdate: function() {
-                if (this.inited) this.callSuper();
+                if (this.inited) {
+                    this.callSuper();
+                    this.fireEvent('updated');
+                }
             },
             
             notifyStatChanged: function(statModel) {

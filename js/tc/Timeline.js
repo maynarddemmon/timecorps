@@ -211,7 +211,7 @@
                 if (this.model !== model) {
                     this.releaseConstraint('_updateForModelChanges');
                     this.set('model', model, true);
-                    if (this.model) this.constrain('_updateForModelChanges', [this.model, 'hidden']);
+                    if (this.model) this.constrain('_updateForModelChanges', [this.model, 'updated']);
                     if (this.inited) this._update();
                 }
             },
@@ -322,8 +322,10 @@
                 // Update travel paths between boxes
                 if (show) {
                     const startId = model.id;
-                    for (const exit of model.getExitModels()) {
-                        const toBox = timeline.boxesByEventId[exit.getToEventModel()?.id];
+                    for (const exitModel of model.getExitModels()) {
+                        if (exitModel.isHidden()) continue;
+                        
+                        const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
                         if (toBox && !toBox.model.hidden) {
                             const connection = flowLayer.connect({
                                 splineId:SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,

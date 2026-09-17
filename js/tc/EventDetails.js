@@ -143,6 +143,9 @@
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
+                    
+                    if (actionModel.isHidden()) continue;
+                    
                     new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
                         doActivated: () => {agentModel.doAction(actionModel);}
                     }]);
@@ -150,9 +153,10 @@
                 
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
-                for (const exitId in exitModels) {
-                    const exitModel = exitModels[exitId],
-                        toEventModel = exitModel.getToEventModel();
+                for (const exitModel of exitModels) {
+                    if (exitModel.isHidden()) continue;
+                    
+                    const toEventModel = exitModel.getToEventModel();
                     if (!toEventModel.hidden) {
                         const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
                         new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{

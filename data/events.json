@@ -20,16 +20,17 @@
 			"start":"1912-03-01T10:00:00",
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
-			"historicity":"75", "attestation":"25", "actionLimit":2,
+			"historicity":"75", "attestation":"0", "actionLimit":2,
 			"actions":{
 				"argue":{
 					"label":"Argue for Full Davits",
-					"set":{"fullDavits":"true"}
+					"set":{"fullDavits":"true"},
+					"hidden":"event.attestation.value < 25"
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"roster_reshuffle"},
-				{"mode":"walk", "to":"titanic_departs"}
+				{"mode":"walk", "to":"roster_reshuffle", "hidden":"event.attestation.value < 10"},
+				{"mode":"walk", "to":"titanic_departs", "hidden":"event.attestation.value < 5"}
 			],
 			"values":{
 				"fullDavits":{"value":"false"},
