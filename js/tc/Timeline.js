@@ -296,11 +296,15 @@
                         const startId = eventModel.id,
                             startBox = timeline.boxesByEventId[startId];
                         if (startBox && !startBox.model.isHidden()) {
-                            flowLayer.connect({
-                                splineId:SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
-                                start:{view:startBox, side:'bottom', position:'75%'},
-                                end:{view:self, side:'top', position:'25%'}
-                            });
+                            const splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
+                                existingConnection = flowLayer.getSpline(splineId);
+                            if (!existingConnection) {
+                                flowLayer.connect({
+                                    splineId,
+                                    start:{view:startBox, side:'bottom', position:'75%'},
+                                    end:{view:self, side:'top', position:'25%'}
+                                });
+                            }
                         }
                     }
                 }
@@ -322,13 +326,16 @@
                         
                         const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
                         if (toBox && !toBox.model.isHidden()) {
-                            const connection = flowLayer.connect({
-                                splineId:SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
-                                start:{view:self, side:'bottom', position:'85%'},
-                                end:{view:toBox, side:'top', position:'35%'},
-                                style:EXIT_STYLE
-                            });
-                            exitsById[connection.splineId] = connection;
+                            const splineId = SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
+                                existingConnection = flowLayer.getSpline(splineId);
+                            if (!existingConnection) {
+                                exitsById[splineId] = flowLayer.connect({
+                                    splineId,
+                                    start:{view:self, side:'bottom', position:'85%'},
+                                    end:{view:toBox, side:'top', position:'35%'},
+                                    style:EXIT_STYLE
+                                });
+                            }
                         }
                     } 
                 } else {
