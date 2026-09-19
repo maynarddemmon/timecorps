@@ -44,9 +44,9 @@
                 });
             },
             
-            setTitle: function(v) {
+            setTitle: function(v, tooltip) {
                 this._titleView.setText(v);
-                this._titleView.setTooltip(v);
+                this._titleView.setTooltip(tooltip ?? v);
             },
             
             getHeaderView: function() {return this._headerView;},

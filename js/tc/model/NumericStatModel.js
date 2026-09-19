@@ -8,7 +8,7 @@
         {
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             I18N_PARADOX, I18N_CHRONAL,
-            ICON_SEPARATOR
+            ICON_SEPARATOR, ICON_NIL
         } = pkg,
         
         /** A stat that maintains a numerical value bounded by a min, max, absolute min and
@@ -166,7 +166,7 @@
                         }
                     case '%':
                     case 'percent':
-                        return formatAsPercentage(value / max, 0);
+                        return max ? formatAsPercentage(value / max, 0) : ICON_NIL ;
                     case 'verbose':
                         return 'Current Value: ' + value + ' Max Value: ' + max;
                     case 'tooltip':

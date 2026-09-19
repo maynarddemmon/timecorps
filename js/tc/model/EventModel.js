@@ -14,7 +14,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
-            ICON_ARROW, ICON_SEPARATOR
+            ICON_SEPARATOR
         } = pkg,
         
         updateEndAttr = eventModel => {
