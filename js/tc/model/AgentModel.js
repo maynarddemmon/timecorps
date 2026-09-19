@@ -21,7 +21,7 @@
         LOG_TYPE_RECALL = 'recall',
         LOG_TYPE_EXIT = 'exit',
         LOG_TYPE_ACTION = 'action',
-        LOG_TYPE_INVESTIGATE = 'investigate';
+        LOG_TYPE_INVESTIGATE = 'investigate',
         LOG_TYPE_DEVOURED = 'devoured',
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
@@ -115,7 +115,7 @@
         getActionsRemainingPhrase: function() {
             const eventActionLimit = this.getEventModel()?.getActionLimit() ?? 0,
                 actionExecCount = this.actionExecCount;
-            return 'Actions Remaining: <span style="color:' + colorBtn + ';fontFamily:' + fontFamilyMono + ';">' + (eventActionLimit - actionExecCount) + '/' + eventActionLimit + '</span>';
+            return 'Actions Remaining: <span style="color:' + colorBtn + ';font-family:' + fontFamilyMono + ';">' + (eventActionLimit - actionExecCount) + '/' + eventActionLimit + '</span>';
         },
         
         setEvent: function(event, logEntry) {

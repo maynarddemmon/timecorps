@@ -383,7 +383,7 @@
                         }
                     }
                 }
-                if (addedCount === 0) new NoValueText(precursorsRow);
+                if (addedCount === 0) new NoValueText(descendantsRow);
                 
                 // Agent Information //
                 const agentsRow = self.agentsRow;
