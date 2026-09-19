@@ -4,6 +4,7 @@
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
             LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
+            SCOPE_AGENTS,
             ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
             STAT_ID_CHRONAL, STAT_ID_PARADOX
         } = pkg,
@@ -189,6 +190,9 @@
                         default:
                             return this.callSuper(sortColumnId, ascending, tieBreakerSortFunc);
                     }
+                },
+                doOnFirstRefresh: () => {
+                    self.selectAgent(self.model.getInitialAgentSelection());
                 }
             }]);
             
@@ -222,7 +226,7 @@
             
             const statChronal = model[STAT_ID_CHRONAL];
             this.chronalPool.constrain('update', [statChronal, 'value', statChronal, 'max']);
-            this.gridWrapper.setModelCollection(model.agents);
+            this.gridWrapper.setModelCollection(model[SCOPE_AGENTS]);
         }
     });
 })(tc);

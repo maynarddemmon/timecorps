@@ -66,14 +66,16 @@
             // Fetch Data
             pkg.pauseConstraintBinding();
             loadDataIntoModel('./data/locations.json', success => {
-                loadDataIntoModel('./data/events.json', success => {
-                    loadDataIntoModel('./data/agents.json', success => {
-                        pkg.resumeConstraintBinding();
-                        
-                        timelineView.setup(model);
-                        if (!pkg.cfg.TL_COMPACT) timelineView.setTimeWindow("1912-03-01T09:00:00", "1912-04-15T04:00:00", pkg.timeUtil.TO_MINUTE);
-                        
-                        teamView.setup(model);
+                if (success) loadDataIntoModel('./data/events.json', success => {
+                    if (success) loadDataIntoModel('./data/agents.json', success => {
+                        if (success) {
+                            pkg.resumeConstraintBinding();
+                            
+                            timelineView.setup(model);
+                            if (!pkg.cfg.TL_COMPACT) timelineView.setTimeWindow("1912-03-01T09:00:00", "1912-04-15T04:00:00", pkg.timeUtil.TO_MINUTE);
+                            
+                            teamView.setup(model);
+                        }
                     });
                 });
             });

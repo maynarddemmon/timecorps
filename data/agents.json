@@ -1,4 +1,5 @@
 {
+	"initialAgentSelection":"vq",
 	"agents":{
 		"vq":{
 			"name":"Vasquez",

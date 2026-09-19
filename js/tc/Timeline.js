@@ -25,7 +25,8 @@
             },
             cfg:{
                 SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, MAX_HISTORY_LENGTH, 
-                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING
+                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING,
+                TL_CLICK_TO_DESELECT
             },
             
             theme:{
@@ -369,7 +370,11 @@
             },
             
             doActivated: function() {
-                this.timeline[this.selected ? 'deselect' : 'select'](this);
+                if (TL_CLICK_TO_DESELECT) {
+                    this.timeline[this.selected ? 'deselect' : 'select'](this);
+                } else {
+                    if (!this.selected) this.timeline.select(this);
+                }
             },
             
             updateUI: function() {

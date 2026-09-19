@@ -74,6 +74,11 @@
         getLocations: () => model[SCOPE_LOCATIONS].getAll(),
         getLocationsInOrder: () => model[SCOPE_LOCATIONS].getAsSortedList((a, b) => a.order - b.order),
         
+        setInitialSelection: eventId => model.initialSelection = eventId,
+        getInitialSelection: () => model.getEventModel(model.initialSelection),
+        
+        setInitialAgentSelection: agentId => model.initialAgentSelection = agentId,
+        getInitialAgentSelection: () => model.getAgentModel(model.initialAgentSelection),
         
         // Methods /////////////////////////////////////////////////////////////
         /*notifyStatChanged: function(statModel) {
@@ -122,6 +127,12 @@
                     }
                 }
             }
+            
+            const initialSelection = json.initialSelection;
+            if (initialSelection !== undefined) model.setInitialSelection(initialSelection);
+            
+            const initialAgentSelection = json.initialAgentSelection;
+            if (initialAgentSelection !== undefined) model.setInitialAgentSelection(initialAgentSelection);
         }
     });
 })(tc);

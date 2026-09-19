@@ -234,9 +234,7 @@
         
         setWidth: function(v) {
             this.callSuper(v);
-            if (this.inited) {
-                this.getGridHeader().setWidth(this.width);
-            }
+            if (this.inited) this.getGridHeader().setWidth(this.width);
         },
         
         makeGridHeaders: NOOP, // gridHeader => {} subclasses should implement.
@@ -263,7 +261,13 @@
         
         __refreshGrid: function() {
             this.getGrid().refreshListData(true, true);
+            if (!this._notFirstTime) {
+                this._notFirstTime = true;
+                this.doOnFirstRefresh();
+            }
         },
+        
+        doOnFirstRefresh: NOOP, // () => {}
         
         doRowModelSelected: NOOP, // model => {}
         

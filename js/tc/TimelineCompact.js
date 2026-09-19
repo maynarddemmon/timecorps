@@ -111,7 +111,7 @@
             
             if (isInitial) {
                 // Special Handling for HQ and The Void
-                orderedEvents.push(model.getHQEventModel(), model.getTheVoidEventModel());
+                orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             }
             
             let targetY = 0;
@@ -630,6 +630,8 @@
             
             updateTimelineLayout(this, true);
             this.timelineReady = true;
+            
+            this.doSelectEvent(model.getInitialSelection());
         },
         
         notifyEventVisibilityChange: function(_eventModel) {
