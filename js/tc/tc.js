@@ -168,7 +168,8 @@
             ICON_PARADOX,
             ICON_THE_VOID:'⦰',
             ICON_HQ:'❉',
-            ICON_SEARCH:'?'
+            ICON_SEARCH:'?',
+            ICON_NIL:'–',
         };
     
     // Apply config overrides

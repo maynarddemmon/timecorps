@@ -22,7 +22,7 @@
             },
             formatChronalAndParadox,
             ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
-            ICON_THE_VOID, ICON_SEARCH,
+            ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
@@ -83,7 +83,7 @@
                 self._value = new PaddedText(self, {
                     x:valueX, fontSize:fontSizeMedium,
                     percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, whiteSpace:'normal',
-                    paddingTop:ROW_PADDING_TOP, text:'–'
+                    paddingTop:ROW_PADDING_TOP, text:ICON_NIL
                 }, [SizeToParent, {
                     sizeViewToDom: function() {
                         this.callSuper();
@@ -92,7 +92,7 @@
                 }]);
             },
             setLabel: function(v) {this._label.setText(v);},
-            setValue: function(v) {this._value.setText(v || '–');}
+            setValue: function(v) {this._value.setText(v || ICON_NIL);}
         }),
         DetailRowFlow = new JSClass('DetailRowFlow', WideView, {
             initNode: function(parent, attrs) {
@@ -139,7 +139,7 @@
             initNode: function(parent, attrs) {
                 attrs.paddingTop ??= ROW_PADDING_TOP;
                 attrs.fontSize ??= fontSizeMedium;
-                attrs.text ??= '–';
+                attrs.text ??= ICON_NIL;
                 this.callSuper(parent, attrs);
             }
         }),
@@ -357,7 +357,7 @@
                 self.paradoxBar.updateForStat(eventModel[STAT_ID_PARADOX]);
                 
                 self.whereWhen.setText(
-                    eventModel.getLocationModel()?.name +
+                    (eventModel.getLocationModel()?.name ?? ICON_NIL) +
                     ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
                 );
                 

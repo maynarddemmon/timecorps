@@ -390,7 +390,7 @@
             },
             
             formatAsTemporalExtent: function() {
-                return formatCompactRange(this.getStart(), this.getEnd()) + ICON_SEPARATOR + ' (' + this.getDuration(true) + ')';
+                return formatCompactRange(this.getStart(), this.getEnd()) + ICON_SEPARATOR + '(' + this.getDuration(true) + ')';
             }
         });
 })(tc);
