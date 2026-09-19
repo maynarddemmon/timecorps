@@ -21,7 +21,7 @@
             btn.sizeViewToDom();
         },
         
-        Btn = pkg.Btn = new JSClass('Btn', M.PaddedPlainText, {
+        Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
             include: [M.Button],
             
             

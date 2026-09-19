@@ -1,6 +1,8 @@
 (pkg => {
-    const {min:mathMin, max:mathMax} = Math,
-    
+    const formatAsPercentage = myt.formatAsPercentage,
+        
+        {min:mathMin, max:mathMax} = Math,
+        
         /** A stat that maintains a numerical value bounded by a min, max, absolute min and
             absolute max. */
         NumericStatModel = pkg.NumericStatModel = new JS.Class('NumericStatModel', myt.BaseModel, {
@@ -140,6 +142,29 @@
             isAtMaxValue: function() {return this.getMax() === this.getValue();},
             triggerValueAtMax: function() {this.fireEvent('valueAtMax', true);},
             triggerValueClampedToMax: function() {this.fireEvent('valueClampedToMax', true);},
+            
+            format: function(format) {
+                const value = this.getValue(),
+                    max = this.getMax();
+                switch (format) {
+                    case '%':
+                    case 'percent':
+                        return formatAsPercentage(value / max, 0);
+                    case 'verbose':
+                        return 'Current Value: ' + value + ' Max Value: ' + max;
+                    case '[/]':
+                    case 'bracketFraction':
+                        return '[' + value + '/' + max + ']';
+                    case '/':
+                    case 'fraction':
+                    default:
+                        return value + '/' + max;
+                }
+            },
+            formatVerbose: function() {return this.format('verbose');},
+            formatAsPercent: function() {return this.format('%');},
+            formatAsFraction: function() {return this.format('/');},
+            formatAsBracketFraction: function() {return this.format('[/]');},
             
             getAsObj: function(cfg) {
                 const self = this,

@@ -27,9 +27,6 @@ JS.Packages(file => {
     file(TC_ROOT + 'Agents.js').provides('tc.Agents').requires(
         'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper'
     );
-    file(TC_ROOT + 'Timeline.js').provides('tc.Timeline').requires(
-        'tc.timeUtil','tc.Panel','tc.SquareBtn'
-    );
     file(TC_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
         'tc.timeUtil','tc.Panel','tc.SquareBtn'
     );
@@ -38,7 +35,7 @@ JS.Packages(file => {
     );
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
-        'tc.Timeline','tc.TimelineCompact','tc.EventDetails'
+        'tc.TimelineCompact','tc.EventDetails'
     );
     
     // Include Everything

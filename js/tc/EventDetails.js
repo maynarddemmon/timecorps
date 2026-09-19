@@ -14,9 +14,11 @@
             theme:{
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
+                colorParadox, colorHistoricity, colorAttestation,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_PARADOX, ICON_HQ, 
+            formatChronalAndParadox,
+            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ, 
             ICON_THE_VOID, ICON_SEARCH,
             I18N_PARADOX,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
@@ -166,7 +168,7 @@
                         }]);
                         new Btn(exitView, {
                             buttonType:'solid', 
-                            text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' [' + paradoxCost + ICON_PARADOX + ']': '')
+                            text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : '')
                         }, [{
                             doActivated: () => {agentModel.doFollowExit(exitModel);}
                         }]);
@@ -231,9 +233,9 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             self.locationRow = new DetailRow(detailsContainer, {label:'Location'});
-            self.historicityRow = new DetailRow(detailsContainer, {label:'Historicity'});
-            self.attestationRow = new DetailRow(detailsContainer, {label:'Attestation'});
-            self.paradoxRow = new DetailRow(detailsContainer, {label:I18N_PARADOX});
+            self.historicityRow = new DetailRow(detailsContainer, {label:'Historicity', textColor:colorHistoricity});
+            self.attestationRow = new DetailRow(detailsContainer, {label:'Attestation', textColor:colorAttestation});
+            self.paradoxRow = new DetailRow(detailsContainer, {label:I18N_PARADOX, textColor:colorParadox});
             self.startRow = new DetailRow(detailsContainer, {label:'Begins'});
             self.durationRow = new DetailRow(detailsContainer, {label:'Duration'});
             self.endRow = new DetailRow(detailsContainer, {label:'Ends'});
@@ -321,8 +323,7 @@
                 self.locationRow.setValue(eventModel.getLocationModel()?.name);
                 for (const statId of [STAT_ID_HISTORICITY,STAT_ID_ATTESTATION,STAT_ID_PARADOX]) {
                     // FIXME: lets do these as progress bars.
-                    const stat = eventModel[statId];
-                    self[statId + 'Row'].setValue('[' + stat.value + '/' + stat.max + ']');
+                    self[statId + 'Row'].setValue(eventModel[statId].formatAsPercent());
                 }
                 self.startRow.setValue(eventModel.getStart(true));
                 self.durationRow.setValue(eventModel.getDuration(true));

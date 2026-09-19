@@ -38,7 +38,11 @@
                 fontSizeMedium:'14px',
                 fontSizeLarge:'16px',
                 fontSizeVeryLarge:'20px',
-                fontFamilyMono:'SpaceMono'
+                fontFamilyMono:'SpaceMono',
+                colorParadox:'#f69',
+                colorChronal:'#69f',
+                colorHistoricity:'#da6',
+                colorAttestation:'#fc0',
             },
             
             // Game Config
@@ -84,8 +88,6 @@
                 
                 
                 //// Timeline UI Config ////
-                TL_COMPACT:true,
-                
                 // The maximum length of the next/prev Event history.
                 MAX_HISTORY_LENGTH:1000,
                 
@@ -98,6 +100,18 @@
                 TL_COL_WIDTH:120,
                 TL_COL_SPACING:1,
                 TL_CLICK_TO_DESELECT:false
+            },
+            
+            // Misc Formatters
+            formatChronalAndParadox: (chronal, paradox) => {
+                const THEME = TC.theme,
+                    hasChronal = chronal > 0,
+                    hasParadox = paradox > 0;
+                return '[' + 
+                    (hasChronal ? '<span style="color:' + THEME.colorChronal + ';">' + chronal + ICON_CHRONAL + '</span>' : '') + 
+                    (hasChronal && hasParadox ? ' + ' : '') +
+                    (hasParadox ? '<span style="color:' + THEME.colorParadox + ';">' + paradox + ICON_PARADOX + '</span>' : '') + 
+                    ']';
             },
             
             // Chronal Util

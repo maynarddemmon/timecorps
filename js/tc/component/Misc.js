@@ -73,6 +73,8 @@
             attrs.paddingLeft ??= padding;
             attrs.paddingRight ??= spacing;
             attrs.textColor ??= colorMedium;
+            attrs.valueTextColor ??= colorBtn;
+            attrs.valueFontFamily ??= fontFamilyMono;
             attrs.fontSize ??= fontSizeLarge;
             attrs.y ??= 1;
             
@@ -90,12 +92,22 @@
             if (this.inited) this.updateText();
         },
         
+        setValueTextColor: function(v) {
+            this.set('valueTextColor', v, true);
+            if (this.inited) this.updateText();
+        },
+        
+        setValueFontFamily: function(v) {
+            this.set('valueFontFamily', v, true);
+            if (this.inited) this.updateText();
+        },
+        
         update: function(v) {
             this.setValue(v ?? '-');
         },
         
         updateText: function() {
-            this.setText(this.label + ' : <span style="color:' + colorBtn + '; font-family:' + fontFamilyMono + ';">' + this.value + '</span>');
+            this.setText(this.label + ' : <span style="color:' + this.valueTextColor + '; font-family:' + this.valueFontFamily + ';">' + this.value + '</span>');
         }
     });
 })(tc);

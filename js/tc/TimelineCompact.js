@@ -15,7 +15,7 @@
             theme:{
                 spacing, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
-                colorBtn,
+                colorBtn, colorParadox,
                 fontSizeLarge
             },
             I18N_PARADOX,
@@ -305,7 +305,7 @@
                 this.callSuper(parent, attrs);
                 
                 (this._label = new PaddedPlainText(this, {
-                    textAlign:'center', y:spacing, width:width, visible:this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD,
+                    y:spacing, width:width, visible:this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD,
                     paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
@@ -440,11 +440,10 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.timelineParadoxView = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX}, [{
+            self.timelineParadoxView = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX, valueTextColor:colorParadox}, [{
                 update: function(v) {
                     if (self.ready) {
-                        const statParadox = self.model[STAT_ID_PARADOX];
-                        this.callSuper(statParadox.value + '/' + statParadox.max);
+                        this.callSuper(self.model[STAT_ID_PARADOX].formatAsPercent());
                     }
                 }
             }]);

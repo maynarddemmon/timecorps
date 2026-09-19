@@ -4,6 +4,7 @@
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
             LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
+            theme:{colorParadox, colorChronal, fontFamilyMono},
             SCOPE_AGENTS,
             ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
             STAT_ID_CHRONAL, STAT_ID_PARADOX
@@ -17,6 +18,19 @@
         },
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
+            initNode: function(parent, attrs) {
+                this.callSuper(parent, attrs);
+                
+                const cellParadox = this.getRef(STAT_ID_PARADOX),
+                    cellChronal = this.getRef(STAT_ID_CHRONAL);
+                cellParadox.setTextColor(colorParadox);
+                cellParadox.setFontFamily(fontFamilyMono);
+                cellParadox.setTextAlign('center');
+                cellChronal.setTextColor(colorChronal);
+                cellChronal.setFontFamily(fontFamilyMono);
+                cellChronal.setTextAlign('center');
+            },
+            
             getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
@@ -29,13 +43,17 @@
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
                     case STAT_ID_PARADOX:
-                    case STAT_ID_CHRONAL: {
-                        const statModel = this.model[colId],
-                            value = statModel.getValue(),
-                            max = statModel.getMax();
+                        const statModel = this.model[colId];
                         this.getRef(colId).setText(
-                            '[<b>' + value + '</b>/' + max + ']', 
-                            'Current Value: ' + value + ' Max Value: ' + max
+                            statModel.formatAsPercent(), 
+                            statModel.formatVerbose()
+                        );
+                        return;
+                    case STAT_ID_CHRONAL: {
+                        const statModel = this.model[colId];
+                        this.getRef(colId).setText(
+                            statModel.formatAsBracketFraction(), 
+                            statModel.formatVerbose()
                         );
                         return;
                     }
@@ -89,11 +107,11 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool'}, [{
+            self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool', valueTextColor:colorChronal}, [{
                 update: function(v) {
                     if (self.ready) {
                         const statChronal = self.model[STAT_ID_CHRONAL];
-                        this.callSuper(statChronal.getValue() + '/' + statChronal.getMax());
+                        this.callSuper(statChronal.formatAsFraction());
                     }
                 }
             }]);

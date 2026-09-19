@@ -6,11 +6,12 @@
         
         {
             NotifyingNumericStatModel,
-            ICON_HQ, ICON_CHRONAL, ICON_PARADOX, ICON_JUMP,
+            ICON_HQ, ICON_JUMP,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE
             },
+            formatChronalAndParadox,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
         
@@ -144,13 +145,12 @@
                 btnTxt;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                btnTxt = ICON_HQ + ' Recall "' + this.name + '" to HQ [' + chronalNeeded + ICON_CHRONAL + 
-                    (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+                btnTxt = ICON_HQ + ' Recall "' + this.name + '" to HQ ' + 
+                    formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
                 disabled = !hasEnoughChronal;
-                const actionWord = this.isAtHQ() ? 'Deploy' : 'Jump';
-                btnTxt = ICON_JUMP + ' ' + actionWord + ' "' + this.name + '" [' + chronalNeeded + ICON_CHRONAL + 
-                    (paradoxCost > 0 ? ' + ' + paradoxCost + ICON_PARADOX : '') + ']';
+                btnTxt = ICON_JUMP + ' ' + (this.isAtHQ() ? 'Deploy' : 'Jump') + ' "' + this.name + '" ' + 
+                    formatChronalAndParadox(chronalNeeded, paradoxCost);
             }
             return {disabled, btnTxt};
         },
@@ -262,14 +262,15 @@
         accrueEntryParadox: function(eventModelOrId) {
             const paradox = this.calculateParadoxForEntry(eventModelOrId);
             if (paradox > 0) {
-                this[STAT_ID_PARADOX].adjValue(paradox);
-                
+                // Accrue in Event first since the Agent might get sent to The Void.
                 const eventModel = this.getEventModel();
                 if (eventModel) {
                     this.getEventModel()[STAT_ID_PARADOX].adjValue(paradox);
                 } else {
                     console.warn('accrueEntryParadox for timeline should be mediated by an event');
                 }
+                
+                this[STAT_ID_PARADOX].adjValue(paradox);
             }
         },
         
