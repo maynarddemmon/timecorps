@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const JSClass = JS.Class,
         
         {stableStringify, BaseModel, BaseModelCollection} = myt,

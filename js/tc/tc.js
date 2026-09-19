@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const {max:mathMax, floor:mathFloor, log2:mathLog2, log10:mathLog10, abs:mathAbs} = Math,
         
         // Chronal Util

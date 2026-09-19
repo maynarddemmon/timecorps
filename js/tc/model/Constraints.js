@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     let bindingPaused = false,
         pausedBinding = [];
     

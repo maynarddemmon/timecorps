@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     let model;
     
     const BaseModelCollection = myt.BaseModelCollection,

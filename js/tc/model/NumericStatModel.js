@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const formatAsPercentage = myt.formatAsPercentage,
         
         {min:mathMin, max:mathMax} = Math,

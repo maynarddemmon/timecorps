@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const mathMin = Math.min,
         
         M = myt,

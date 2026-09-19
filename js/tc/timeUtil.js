@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const {
             min:mathMin, max:mathMax, round:mathRound, ceil:mathCeil, floor:mathFloor, 
             abs:mathAbs, trunc:mathTrunc

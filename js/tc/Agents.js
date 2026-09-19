@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     const JSClass = JS.Class,
         
         {Grid:{SORT_ORDER_ASC}} = myt,

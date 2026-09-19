@@ -1,4 +1,6 @@
 (pkg => {
+    'use strict';
+    
     pkg.LocationModel = new JS.Class('LocationModel', myt.BaseModel, {
         setName: function(name) {this.set('name', name, true);},
         setColor: function(color) {this.set('color', color, true);},
