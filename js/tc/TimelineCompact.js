@@ -293,7 +293,7 @@
                 
                 this.callSuper(parent, attrs);
                 
-                // Setup debounced refreshGrid so it is unique per instance.
+                // Setup debounced revalidateForEvent so it is unique per instance.
                 this.revalidateForEvent = M.debounce(this._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
                 
                 (this._label = new PaddedPlainText(this, {

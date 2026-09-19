@@ -66,19 +66,25 @@
             dividerH.setValue(800);
             
             // Fetch Data
+            const filesToLoad = ['titanic_scenario','lusitania_scenario','agents'];
+            let idx = 0;
+            const chainFunc = success => {
+                if (!success) {
+                    console.error('Data load failed:', filesToLoad[idx - 1]);
+                    pkg.resumeConstraintBinding();
+                    return;
+                }
+                const namePart = filesToLoad[idx++];
+                if (namePart) {
+                    loadDataIntoModel('./data/' + namePart + '.json', chainFunc);
+                } else {
+                    pkg.resumeConstraintBinding();
+                    timelineView.setup(model);
+                    teamView.setup(model);
+                }
+            };
             pkg.pauseConstraintBinding();
-            loadDataIntoModel('./data/locations.json', success => {
-                if (success) loadDataIntoModel('./data/events.json', success => {
-                    if (success) loadDataIntoModel('./data/agents.json', success => {
-                        if (success) {
-                            pkg.resumeConstraintBinding();
-                            
-                            timelineView.setup(model);
-                            teamView.setup(model);
-                        }
-                    });
-                });
-            });
+            chainFunc(true);
         },
         
         

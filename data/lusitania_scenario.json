@@ -1,0 +1,402 @@
+{
+	"locations":{
+		"london.admiralty":{
+			"name":"The Admiralty",
+			"color":"#fdb9",
+			"order":11
+		},
+		"london.westminster":{
+			"name":"Westminster",
+			"color":"#edc9",
+			"order":12
+		},
+		"new_york.pier_54":{
+			"name":"Pier 54",
+			"color":"#cfc9",
+			"order":13
+		},
+		"lusitania":{
+			"name":"Lusitania",
+			"color":"#cdf9",
+			"order":14
+		},
+		"lusitania.boilers":{
+			"name":"Boiler room No. 4",
+			"color":"#cdf9",
+			"order":14.1
+		},
+		"lusitania.holds":{
+			"name":"Forward hold",
+			"color":"#cdf9",
+			"order":14.2
+		},
+		"lusitania.bridge":{
+			"name":"Bridge",
+			"color":"#cdf9",
+			"order":14.3
+		},
+		"lusitania.wireless":{
+			"name":"Wireless room",
+			"color":"#cdf9",
+			"order":14.4
+		},
+		"lusitania.boatdeck":{
+			"name":"Boat deck",
+			"color":"#cdf9",
+			"order":14.5
+		},
+		"atlantic.u20":{
+			"name":"U-20",
+			"color":"#ccc9",
+			"order":15
+		},
+		"atlantic.kinsale":{
+			"name":"Old Head of Kinsale",
+			"color":"#9cf9",
+			"order":16
+		},
+		"queenstown":{
+			"name":"Queenstown",
+			"color":"#fcd9",
+			"order":17
+		}
+	},
+	
+	"initialSelection":"lusitania_sinks",
+	
+	"events":{
+		"solas_davits":{
+			"name":"Boats For All Signed",
+			"start":"1914-01-20T10:00:00",
+			"duration":{"h":6},
+			"location":"london.westminster",
+			"actionLimit":2,
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lifeboats_fail.attestation.value < 25",
+			"actions":{
+				"drill":{
+					"label":"Order Full Boat Drill For The Crew",
+					"set":{"crewDrilled":"true"},
+					"hidden":"event.attestation.value < 20"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"munitions_manifest"},
+				{"mode":"walk", "to":"new_york_departure", "hidden":"event.attestation.value < 15"}
+			],
+			"values":{
+				"crewDrilled":{"value":"false"},
+				"boatsForAll":{"value":"true"}
+			}
+		},
+		"munitions_manifest":{
+			"name":"The Supplementary Manifest",
+			"start":"1915-04-30T14:00:00",
+			"duration":{"h":5},
+			"location":"new_york.pier_54",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.second_explosion.attestation.value < 15",
+			"actions":{
+				"offload":{
+					"label":"Have The Cartridge Cases Struck From The Cargo",
+					"set":{"cargoOffloaded":"true"},
+					"hidden":"event.attestation.value < 30"
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"new_york_departure"}
+			],
+			"values":{
+				"cargoOffloaded":{"value":"false"}
+			}
+		},
+		"embassy_warning":{
+			"name":"The Embassy Notice",
+			"start":"1915-05-01T08:00:00",
+			"duration":{"h":4},
+			"location":"new_york.pier_54",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.new_york_departure.attestation.value < 10",
+			"actions":{
+				"publish":{
+					"label":"Run The Notice Beside The Sailing Advertisement",
+					"set":{"warningHeeded":"true"}
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"new_york_departure"}
+			],
+			"values":{
+				"warningHeeded":{"value":"false"}
+			}
+		},
+		"new_york_departure":{
+			"name":"She Clears Pier 54",
+			"start":"1915-05-01T12:20:00",
+			"duration":{"h":2},
+			"location":"new_york.pier_54",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.munitions_manifest.attestation.value < 5 && events.solas_davits.attestation.value < 5",
+			"actions":{
+				"hold":{
+					"label":"Hold The Sailing For Naval Escort",
+					"set":{"sailingHeld":"true"},
+					"hidden":"event.attestation.value < 35"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"boiler_room_four"},
+				{"mode":"walk", "to":"four_point_bearing", "hidden":"event.attestation.value < 20"}
+			],
+			"values":{
+				"sailingHeld":{"value":"false"},
+				"reducedManifest":{"value":"events.embassy_warning.values.warningHeeded.value || event.values.sailingHeld.value"}
+			},
+			"hideAffectedBy":{
+				"embassy_warning":"event.attestation.value < 25"
+			}
+		},
+		"boiler_room_four":{
+			"name":"The Cold Boiler Room",
+			"start":"1915-05-05T09:00:00",
+			"duration":{"h":8},
+			"location":"lusitania.boilers",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.four_point_bearing.attestation.value < 25",
+			"actions":{
+				"relight":{
+					"label":"Relight No. 4 And Give Her All Twenty-Five Knots",
+					"set":{"boilerRoomLit":"true"},
+					"hidden":"event.attestation.value < 25"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"four_point_bearing"},
+				{"mode":"walk", "to":"wireless_sos", "hidden":"event.attestation.value < 30"}
+			],
+			"values":{
+				"boilerRoomLit":{"value":"false"},
+				"fullSteamAvailable":{"value":"event.values.boilerRoomLit.value"}
+			}
+		},
+		"admiralty_warnings":{
+			"name":"Submarines Active Off The Coast",
+			"start":"1915-05-06T19:50:00",
+			"duration":{"h":16},
+			"location":"london.admiralty",
+			"actionLimit":2,
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.four_point_bearing.attestation.value < 15",
+			"actions":{
+				"plot":{
+					"label":"Plot Every Sighting Onto One Chart",
+					"set":{"positionsPlotted":"true"}
+				},
+				"escort":{
+					"label":"Detach Destroyers To Meet Her At The Fastnet",
+					"set":{"escortDispatched":"true"},
+					"hidden":"event.attestation.value < 40"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"four_point_bearing"},
+				{"mode":"walk", "to":"u20_patrol", "hidden":"event.attestation.value < 30"}
+			],
+			"values":{
+				"positionsPlotted":{"value":"false"},
+				"escortDispatched":{"value":"false"},
+				"escortProvided":{"value":"event.values.escortDispatched.value"}
+			}
+		},
+		"u20_patrol":{
+			"name":"U-20 Takes Her Bearing",
+			"start":"1915-05-07T13:20:00",
+			"duration":{"h":1},
+			"location":"atlantic.u20",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 25",
+			"exits":[
+				{"mode":"walk", "to":"torpedo_strike"}
+			],
+			"values":{
+				"firingSolution":{"value":"!(events.four_point_bearing.values.evasiveCourse.value && events.boiler_room_four.values.fullSteamAvailable.value) && !events.admiralty_warnings.values.escortProvided.value"}
+			},
+			"hideAffectedBy":{
+				"four_point_bearing":"event.attestation.value < 20",
+				"boiler_room_four":"event.attestation.value < 35",
+				"admiralty_warnings":"event.attestation.value < 50"
+			}
+		},
+		"four_point_bearing":{
+			"name":"The Four-Point Bearing",
+			"start":"1915-05-07T13:40:00",
+			"duration":{"m":30},
+			"location":"lusitania.bridge",
+			"actionLimit":2,
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 15",
+			"actions":{
+				"zigzag":{
+					"label":"Put Her On A Zigzag And Keep Her There",
+					"set":{"zigzagOrdered":"true"},
+					"hidden":"event.attestation.value < 20"
+				},
+				"abandon":{
+					"label":"Abandon The Bearing And Run For Queenstown",
+					"set":{"bearingAbandoned":"true"},
+					"hidden":"event.attestation.value < 45"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"torpedo_strike"},
+				{"mode":"walk", "to":"lifeboats_fail", "hidden":"event.attestation.value < 25"}
+			],
+			"values":{
+				"zigzagOrdered":{"value":"false"},
+				"bearingAbandoned":{"value":"false"},
+				"evasiveCourse":{"value":"event.values.zigzagOrdered.value || event.values.bearingAbandoned.value"}
+			}
+		},
+		"torpedo_strike":{
+			"name":"One Torpedo, Starboard Bow",
+			"start":"1915-05-07T14:10:00",
+			"duration":{"m":1},
+			"location":"atlantic.kinsale",
+			"historicity":"75",
+			"attestation":"0",
+			"exits":[
+				{"mode":"walk", "to":"second_explosion"},
+				{"mode":"walk", "to":"lusitania_sinks", "hidden":"event.attestation.value < 20"}
+			],
+			"values":{
+				"struck":{"value":"events.u20_patrol.values.firingSolution.value"}
+			},
+			"hideAffectedBy":{
+				"u20_patrol":"event.attestation.value < 35"
+			}
+		},
+		"second_explosion":{
+			"name":"The Second Explosion",
+			"start":"1915-05-07T14:11:00",
+			"duration":{"m":1},
+			"location":"lusitania.holds",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lifeboats_fail.attestation.value < 15",
+			"exits":[
+				{"mode":"walk", "to":"lifeboats_fail"},
+				{"mode":"walk", "to":"wireless_sos"}
+			],
+			"values":{
+				"catastrophicList":{"value":"events.torpedo_strike.values.struck.value && !events.munitions_manifest.values.cargoOffloaded.value"}
+			},
+			"hideAffectedBy":{
+				"munitions_manifest":"event.attestation.value < 30"
+			}
+		},
+		"wireless_sos":{
+			"name":"The Set Loses Its Power",
+			"start":"1915-05-07T14:12:00",
+			"duration":{"m":10},
+			"location":"lusitania.wireless",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.rescue_delayed.attestation.value < 25",
+			"actions":{
+				"rigPower":{
+					"label":"Rig The Emergency Battery To The Key",
+					"set":{"emergencyPower":"true"},
+					"hidden":"event.attestation.value < 25"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"lifeboats_fail"},
+				{"mode":"walk", "to":"rescue_delayed"}
+			],
+			"values":{
+				"emergencyPower":{"value":"false"},
+				"distressHeard":{"value":"event.values.emergencyPower.value"}
+			}
+		},
+		"lifeboats_fail":{
+			"name":"Forty-Eight Boats, Six Launched",
+			"start":"1915-05-07T14:12:00",
+			"duration":{"m":16},
+			"location":"lusitania.boatdeck",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lusitania_sinks.attestation.value < 15",
+			"actions":{
+				"trim":{
+					"label":"Counterflood To Port And Bring Her Upright",
+					"set":{"listCorrected":"true"},
+					"hidden":"event.attestation.value < 40"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"lusitania_sinks"}
+			],
+			"values":{
+				"listCorrected":{"value":"false"},
+				"boatsLaunched":{"value":"events.solas_davits.values.boatsForAll.value && events.solas_davits.values.crewDrilled.value && (!events.second_explosion.values.catastrophicList.value || event.values.listCorrected.value)"}
+			},
+			"hideAffectedBy":{
+				"second_explosion":"event.attestation.value < 30",
+				"solas_davits":"event.attestation.value < 50"
+			}
+		},
+		"lusitania_sinks":{
+			"name":"Eighteen Minutes",
+			"start":"1915-05-07T14:28:00",
+			"duration":{"m":1},
+			"location":"atlantic.kinsale",
+			"historicity":"75",
+			"attestation":"0",
+			"exits":[
+				{"mode":"walk", "to":"rescue_delayed"},
+				{"mode":"walk", "to":"mersey_inquiry", "hidden":"event.attestation.value < 40"}
+			],
+			"values":{
+				"massLossOfLife":{"value":"events.torpedo_strike.values.struck.value && !(events.lifeboats_fail.values.boatsLaunched.value && events.rescue_delayed.values.rescueInTime.value)"},
+				"civilianCatastrophe":{"value":"event.values.massLossOfLife.value && !events.new_york_departure.values.reducedManifest.value"}
+			},
+			"hideAffectedBy":{
+				"torpedo_strike":"event.attestation.value < 30",
+				"lifeboats_fail":"event.attestation.value < 45",
+				"rescue_delayed":"event.attestation.value < 60",
+				"new_york_departure":"event.attestation.value < 70"
+			}
+		},
+		"rescue_delayed":{
+			"name":"The Tenders Sail Late",
+			"start":"1915-05-07T16:00:00",
+			"duration":{"h":2},
+			"location":"queenstown",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lusitania_sinks.attestation.value < 15",
+			"actions":{
+				"ready":{
+					"label":"Have Every Tender Under Steam Before Noon",
+					"set":{"tendersReadied":"true"},
+					"hidden":"event.attestation.value < 30"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"mersey_inquiry"}
+			],
+			"values":{
+				"tendersReadied":{"value":"false"},
+				"rescueInTime":{"value":"events.wireless_sos.values.distressHeard.value && event.values.tendersReadied.value"}
+			},
+			"hideAffectedBy":{
+				"wireless_sos":"event.attestation.value < 40"
+			}
+		},
+		"mersey_inquiry":{
+			"name":"Lord Mersey Sits Again",
+			"start":"1915-06-15T10:00:00",
+			"duration":{"d":3},
+			"location":"london.westminster",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lusitania_sinks.attestation.value < 40",
+			"actions":{
+				"evidence":{
+					"label":"Put The Bridge Log Into The Record",
+					"set":{"evidenceSubmitted":"true"},
+					"hidden":"event.attestation.value < 30"
+				}
+			},
+			"values":{
+				"evidenceSubmitted":{"value":"false"},
+				"turnerBlamed":{"value":"!events.four_point_bearing.values.evasiveCourse.value && !event.values.evidenceSubmitted.value"}
+			},
+			"hideAffectedBy":{
+				"four_point_bearing":"event.attestation.value < 35"
+			}
+		}
+	}
+}
