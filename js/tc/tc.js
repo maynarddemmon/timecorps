@@ -23,7 +23,7 @@
                 layoutSpacing:1,
                 spacing:2,
                 padding:8,
-                cornerRadius:5,
+                cornerRadius:3,
                 btnHeight:24,
                 rowHeight:26,
                 colorMegaDark:'#310',
@@ -84,6 +84,7 @@
                 
                 
                 //// Timeline UI Config ////
+                TL_COMPACT:true,
                 
                 // The maximum length of the next/prev Event history.
                 MAX_HISTORY_LENGTH:1000,

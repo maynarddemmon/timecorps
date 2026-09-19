@@ -72,6 +72,7 @@
 				{"mode":"walk", "to":"ice_warnings"},
 				{"mode":"walk", "to":"purser_spare"},
 				{"mode":"walk", "to":"missing_binoculars"},
+				{"mode":"walk", "to":"lookout_sights_berg"},
 				{"mode":"walk", "to":"engine_order"},
 				{"mode":"walk", "to":"collision"},
 				{"mode":"walk", "to":"casualties"}

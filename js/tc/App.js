@@ -71,7 +71,7 @@
                         pkg.resumeConstraintBinding();
                         
                         timelineView.setup(model);
-                        timelineView.setTimeWindow("1912-03-01T09:00:00", "1912-04-15T04:00:00", pkg.timeUtil.TO_MINUTE);
+                        if (!pkg.cfg.TL_COMPACT) timelineView.setTimeWindow("1912-03-01T09:00:00", "1912-04-15T04:00:00", pkg.timeUtil.TO_MINUTE);
                         
                         teamView.setup(model);
                     });
@@ -101,7 +101,7 @@
             teamView = new pkg.Agents(middleView, {title:'Agents'});
             appView.buildOpView(opsView = new pkg.Panel(middleView, {title:'Operation'}));
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
-            timelineView = new pkg.Timeline(middleView, {title:'Timeline'});
+            timelineView = new pkg[pkg.cfg.TL_COMPACT ? 'TimelineCompact' : 'Timeline'](middleView, {title:'Timeline'});
             eventDetailsView = new pkg.EventDetails(middleView);
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             

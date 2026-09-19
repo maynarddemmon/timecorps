@@ -42,8 +42,10 @@
             
             setHidden: function(value, isActual) {
                 if (isActual) {
-                    this.set('hidden', value, true);
-                    this.event.notifyCollectionOfUpdate();
+                    if (this.hidden !== value) {
+                        this.set('hidden', value, true);
+                        this.event.notifyCollectionOfUpdate();
+                    }
                 } else {
                     setConstrainedValue(this.event, this, 'hidden', value);
                 }
@@ -91,8 +93,10 @@
             
             setHidden: function(value, isActual) {
                 if (isActual) {
-                    this.set('hidden', value, true);
-                    this.event.notifyCollectionOfUpdate();
+                    if (this.hidden !== value) {
+                        this.set('hidden', value, true);
+                        this.event.notifyCollectionOfUpdate();
+                    }
                 } else {
                     setConstrainedValue(this.event, this, 'hidden', value);
                 }
@@ -123,8 +127,10 @@
             // Accessors ///////////////////////////////////////////////////////
             setHidden: function(value, isActual) {
                 if (isActual) {
-                    this.set('hidden', value, true);
-                    this.event.notifyCollectionOfUpdate();
+                    if (this.hidden !== value) {
+                        this.set('hidden', value, true);
+                        this.event.notifyCollectionOfUpdate();
+                    }
                 } else {
                     setConstrainedValue(this.event, this, 'hidden', value);
                 }
@@ -190,6 +196,9 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
+            setTimeOrdering: function(v) {this._tiOr = v;},
+            getTimeOrdering: function() {return this._tiOr;},
+            
             isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ},
             isTheVoid: function() {return this.id === EVENT_ID_THE_VOID},
             isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},
@@ -217,8 +226,11 @@
             
             setHidden: function(value, isActual) {
                 if (isActual) {
-                    this.set('hidden', value, true);
-                    this.notifyCollectionOfUpdate();
+                    if (this.hidden !== value) {
+                        this.set('hidden', value, true);
+                        this.notifyCollectionOfUpdate();
+                        pkg.app.getTimelineView().notifyEventVisibilityChange(this);
+                    }
                 } else {
                     setConstrainedValue(this, this, 'hidden', value);
                 }

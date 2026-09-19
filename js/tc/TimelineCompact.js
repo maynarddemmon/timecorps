@@ -1,33 +1,16 @@
 (pkg => {
     const JSClass = JS.Class,
         
-        {
-            View, PaddedPlainText, PlainText, SimpleButton, SplineFlow, ScrollObservable,
-            Selectable, SelectionManager
-        } = myt,
+        M = myt,
+        {View, PaddedPlainText, PlainText, Selectable} = M,
         
         {
             SquareBtn, LabeledValue,
-            timeUtil:{
-                stringToMillis, ticksForRange, format,
-                
-                TO_SECOND, 
-                TO_MINUTE, 
-                TO_HOUR, 
-                TO_DAY, 
-                TO_MONTH,
-                TO_YEAR, 
-                TO_DECADE, 
-                TO_CENTURY,
-                TO_MILLENIUM,
-                
-                SCALE_TO_MILLIS
-            },
+            timeUtil:{format,},
             cfg:{
                 SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, MAX_HISTORY_LENGTH, 
                 TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING
             },
-            
             theme:{
                 spacing, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
@@ -38,27 +21,17 @@
             STAT_ID_PARADOX
         } = pkg,
         
-        SCALE_TO_TICK_SCALE = {
-            [TO_SECOND]: TO_MINUTE,
-            [TO_MINUTE]: TO_HOUR,
-            [TO_HOUR]: TO_DAY,
-            [TO_DAY]: TO_MONTH,
-            [TO_MONTH]: TO_YEAR,
-            [TO_YEAR]: TO_DECADE,
-            [TO_DECADE]: TO_CENTURY,
-            [TO_CENTURY]: TO_MILLENIUM
-        },
+        EVENT_BOX_HEIGHT = 60,
+        EVENT_BOX_MARGIN = 1,
+        EVENT_TIER_HEIGHT = EVENT_BOX_HEIGHT + 2*EVENT_BOX_MARGIN + 1,
         
-        TICK_HEIGHTS = {
-            [TO_SECOND]: 60,
-            [TO_MINUTE]: 60,
-            [TO_HOUR]: 24,
-            [TO_DAY]: 30,
-            [TO_MONTH]: 12,
-            [TO_YEAR]: 10,
-            [TO_DECADE]: 10,
-            [TO_CENTURY]: 10
-        },
+        COL_HEADER_HEIGHT = rowHeight,
+        
+        TICK_LINE_HEIGHT = 1,
+        TICK_LABEL_ADJ = TICK_LINE_HEIGHT + spacing,
+        
+        BOX_INSET_FROM_COL = 1,
+        BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
         SPLINE_ID_PREFIX_EXIT = 'exit-',
@@ -84,95 +57,143 @@
             startStub:6, endStub:6, startGap:2, endGap:2
         },
         
-        COL_HEADER_HEIGHT = rowHeight,
-        
-        TICK_LINE_HEIGHT = 1,
-        TICK_LABEL_ADJ = TICK_LINE_HEIGHT + spacing,
-        
-        BOX_INSET_FROM_COL = 1,
-        BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
-        
-        millisToPx = (timeline, millis) => {
-            const millisOffset = millis - timeline.start,
-                scale = timeline.scale,
-                tickScale = SCALE_TO_TICK_SCALE[scale];
-            return (millisOffset / SCALE_TO_MILLIS[tickScale]) * TICK_HEIGHTS[scale];
-        },
-        
-        refreshTimeWindow = timeline => {
-            if (timeline.noTimeWindowRefresh) return;
-            timeline.noTimeWindowRefresh = true;
-            refreshTicks(timeline);
-            layoutEvents(timeline);
-            timeline.noTimeWindowRefresh = false;
-        },
-        
-        refreshTicks = timeline => {
-            const {scale, scrollToken, rowHeaders} = timeline;
-            rowHeaders.destroyAllSubviews();
-            
-            const w = rowHeaders.width,
-                ticks = ticksForRange(timeline.start, timeline.end, SCALE_TO_TICK_SCALE[scale]),
-                len = ticks.length,
-                tickHeight = TICK_HEIGHTS[scale];
-            let extent = 0;
-            for (let i = 0; i < len; i++) {
-                new Tick(rowHeaders, {timeline, time:ticks[i], y:extent, width:w, height:TICK_LINE_HEIGHT});
-                extent += tickHeight;
+        animateAttrs = (target, attrs) => {
+            target.stopActiveAnimators();
+            for (const attrName in attrs) {
+                const newValue = attrs[attrName];
+                if (target[attrName] !== newValue) target.animate({attribute:attrName, to:newValue})
             }
-            scrollToken.setY(extent - scrollToken.height + COL_HEADER_HEIGHT);
-            rowHeaders.setHeight(extent);
-            timeline.flowLayer.setHeight(extent);
         },
         
-        refreshLocationColumns = timeline => {
-            const {colHeaders, scrollToken, model} = timeline;
-            colHeaders.destroyAllSubviews();
+        amendTimelineLayout = timeline => {
+            // Order the Events and Locations
+            const {
+                    model, colsByLocId, boxesByEventId, ticksByTime, colHeaders, scrollToken, 
+                    rowHeaders, flowLayer
+                } = timeline,
+                {events:orderedEvents, locations:locModels} = timeline.orderedEvents = model.putEventModelsInTieredTimeOrder(),
+                locModelsLen = locModels.length,
+                colHeadersHeight = colHeaders.height,
+                colWidth = TL_COL_WIDTH + TL_COL_SPACING,
+                rowHeaderWidth = rowHeaders.width;
             
-            const colsByLocId = timeline.colsByLocId = {},
-                locModels = model.getLocationsInOrder(),
-                len = locModels.length,
-                h = colHeaders.height,
-                w = TL_COL_WIDTH + TL_COL_SPACING;
-            
-            let extent = 0;
-            for (let i = 0; i < len; i++) {
-                const model = locModels[i];
-                if (model.order >= 0) { // Locations with negative order are not shown.
-                    colsByLocId[model.id] = new LocationColumn(colHeaders, {x:extent, height:h, model});
-                    extent += w;
+            // Layout Events, Location Columns and Refresh Ticks
+            let xExtent = 0;
+            const locColTargetXById = {};
+            for (let i = 0; i < locModelsLen; i++) {
+                const locModel = locModels[i],
+                    locId = locModel.id;
+                if (locModel.order >= 0) { // Locations with negative order are not shown.
+                    const locCol = colsByLocId[locId];
+                    locColTargetXById[locId] = xExtent;
+                    if (locCol) {
+                        animateAttrs(locCol, {x:xExtent});
+                        locCol.setHeight(colHeadersHeight);
+                    } else {
+                        colsByLocId[locId] = new LocationColumn(colHeaders, {
+                            x:xExtent, height:colHeadersHeight, model:locModel
+                        });
+                    }
+                    xExtent += colWidth;
                 }
             }
-            scrollToken.setX(extent - scrollToken.width + TL_ROW_HEADER_WIDTH);
-            colHeaders.setWidth(extent);
-            timeline.flowLayer.setWidth(extent);
-        },
-        
-        layoutEvents = timeline => {
-            const {model, flowLayer} = timeline,
-                eventModels = model.getEventModels(),
-                boxesByEventId = timeline.boxesByEventId = {};
-            flowLayer.destroyAllSubviews();
-            for (const eventModelId in eventModels) {
-                const eventModel = eventModels[eventModelId];
-                boxesByEventId[eventModelId] = new EventBox(flowLayer, {timeline, model:eventModel});
-            }
-        },
-        
-        getLocationColumn = (timeline, modelOrId) => {
-            if (modelOrId) {
-                let locationId;
-                if (typeof modelOrId === 'string') {
-                    locationId = modelOrId;
-                } else if (modelOrId.isA(pkg.EventModel)) {
-                    locationId = modelOrId.getLocation();
+            
+            let targetY = 0;
+            for (const eventModel of orderedEvents) {
+                const startTime = eventModel.getStart(),
+                    eventId = eventModel.id,
+                    targetX = (locColTargetXById[eventModel.getLocation()] ?? 0) + BOX_INSET_FROM_COL;
+                targetY = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + 2*EVENT_BOX_MARGIN;
+                const eventBox = boxesByEventId[eventId];
+                if (eventBox) {
+                    animateAttrs(eventBox, {x:targetX, y:targetY});
                 } else {
-                    // Assume LocationModel
-                    locationId = modelOrId.id;
+                    boxesByEventId[eventId] = new EventBox(flowLayer, {
+                        x:targetX, y:targetY, timeline, model:eventModel
+                    });
                 }
                 
-                if (locationId) return timeline.colsByLocId[locationId];
+                const tick = ticksByTime[startTime],
+                    tickTargetY = targetY - EVENT_BOX_MARGIN - 1;
+                if (tick) {
+                    animateAttrs(tick, {y:tickTargetY});
+                    tick.setWidth(rowHeaderWidth);
+                    tick.setHeight(TICK_LINE_HEIGHT);
+                } else {
+                    ticksByTime[startTime] = new Tick(rowHeaders, {
+                        timeline, time:startTime,
+                        y:tickTargetY, 
+                        width:rowHeaderWidth, height:TICK_LINE_HEIGHT
+                    });
+                }
             }
+            
+            // Update for new extents
+            const yExtent = targetY ? targetY + EVENT_TIER_HEIGHT : 0;
+            scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
+            scrollToken.setY(COL_HEADER_HEIGHT + yExtent - scrollToken.height);
+            colHeaders.setWidth(xExtent);
+            rowHeaders.setHeight(yExtent);
+            flowLayer.setWidth(xExtent);
+            flowLayer.setHeight(yExtent);
+        },
+        
+        updateTimelineLayout = timeline => {
+            // Order the Events and Locations
+            const {
+                    model, colsByLocId, boxesByEventId, ticksByTime, colHeaders, scrollToken, 
+                    rowHeaders, flowLayer
+                } = timeline,
+                {events:orderedEvents, locations:locModels} = timeline.orderedEvents = model.putEventModelsInTieredTimeOrder(),
+                locModelsLen = locModels.length,
+                colHeadersHeight = colHeaders.height,
+                colWidth = TL_COL_WIDTH + TL_COL_SPACING,
+                rowHeaderWidth = rowHeaders.width;
+            
+            colHeaders.destroyAllSubviews();
+            rowHeaders.destroyAllSubviews();
+            flowLayer.destroyAllSubviews();
+            
+            // Layout Events, Location Columns and Refresh Ticks
+            let xExtent = 0;
+            for (let i = 0; i < locModelsLen; i++) {
+                const locModel = locModels[i];
+                if (locModel.order >= 0) { // Locations with negative order are not shown.
+                    colsByLocId[locModel.id] = new LocationColumn(colHeaders, {
+                        x:xExtent, height:colHeadersHeight, model:locModel
+                    });
+                    xExtent += colWidth;
+                }
+            }
+            
+            // Special Handling for HQ and The Void
+            orderedEvents.push(model.getHQEventModel(), model.getTheVoidEventModel());
+            
+            let eventBox;
+            for (const eventModel of orderedEvents) {
+                const startTime = eventModel.getStart(),
+                    locationColumn = colsByLocId[eventModel.getLocation()];
+                eventBox = boxesByEventId[eventModel.id] = new EventBox(flowLayer, {
+                    x:locationColumn ? locationColumn.x + BOX_INSET_FROM_COL : 0,
+                    y:eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + 2*EVENT_BOX_MARGIN,
+                    timeline, model:eventModel
+                });
+                if (!ticksByTime[startTime]) {
+                    ticksByTime[startTime] = new Tick(rowHeaders, {
+                        timeline, time:startTime, y:eventBox.y - EVENT_BOX_MARGIN - 1, 
+                        width:rowHeaderWidth, height:TICK_LINE_HEIGHT
+                    });
+                }
+            }
+            
+            // Update for new extents
+            const yExtent = eventBox ? eventBox.y + EVENT_TIER_HEIGHT : 0;
+            scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
+            scrollToken.setY(COL_HEADER_HEIGHT + yExtent - scrollToken.height);
+            colHeaders.setWidth(xExtent);
+            rowHeaders.setHeight(yExtent);
+            flowLayer.setWidth(xExtent);
+            flowLayer.setHeight(yExtent);
         },
         
         // History //
@@ -238,19 +259,10 @@
                 start = model.getStart(),
                 end = model.getEnd(),
                 locId = model.getLocation(),
-                col = timeline.colsByLocId[locId],
                 hidden = model.isHidden();
             eventBox.eventId = model.id;
             _label.setText(model.name || '');
             eventBox.setTooltip(_label.text);
-            eventBox.setX(col ? col.x + BOX_INSET_FROM_COL : 0);
-            
-            const startPx = millisToPx(timeline, start),
-                endPx = millisToPx(timeline, end);
-            
-            eventBox.setY(startPx);
-            eventBox.setHeight(endPx - startPx);
-            
             eventBox.setVisible(!hidden);
             
             // Update connections between boxes
@@ -269,8 +281,8 @@
                             if (!existingConnection) {
                                 flowLayer.connect({
                                     splineId,
-                                    start:{view:startBox, side:'bottom', position:'75%'},
-                                    end:{view:eventBox, side:'top', position:'25%'}
+                                    start:{view:startBox, side:'bottom'},
+                                    end:{view:eventBox, side:'top'}
                                 });
                             }
                         }
@@ -312,7 +324,7 @@
             }
         },
         
-        EventBox = new JSClass('EventBox', SimpleButton, {
+        EventBox = new JSClass('EventBox', M.SimpleButton, {
             include: [Selectable],
             
             initNode: function(parent, attrs) {
@@ -321,9 +333,10 @@
                 attrs.readyColor ??= colorDark;
                 attrs.focusable = false;
                 
+                attrs.height ??= EVENT_BOX_HEIGHT;
+                
                 const width = attrs.width ??= TL_COL_WIDTH - 2*BOX_INSET_FROM_COL;
                 attrs.roundedCorners ??= cornerRadius;
-                //attrs.outline ??= BOX_OUTLINE;
                 
                 this.timeline = attrs.timeline;
                 delete attrs.timeline;
@@ -347,11 +360,6 @@
                     if (this.model) this.constrain('_updateForModelChanges', [this.model, 'updated']);
                     if (this.inited) updateEventBox(this);
                 }
-            },
-            
-            setHeight: function(v) {
-                this.callSuper(v);
-                this._label?.setVisible(this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD);
             },
             
             setSelected: function(v) {
@@ -444,8 +452,8 @@
             }
         });
     
-    pkg.Timeline = new JSClass('Timeline', pkg.Panel, {
-        include: [SelectionManager],
+    pkg.TimelineCompact = new JSClass('TimelineCompact', pkg.Panel, {
+        include: [M.SelectionManager],
         
         
         // Life Cycle //////////////////////////////////////////////////////////
@@ -454,6 +462,11 @@
             
             self._hist = [];
             self._histIdx = -1;
+            
+            self.timelineReady = false;
+            self.colsByLocId = {};
+            self.boxesByEventId = {};
+            self.ticksByTime = {};
             
             attrs.maxSelected = 1;
             attrs.itemSelectionId = 'eventId';
@@ -476,7 +489,7 @@
             const 
                 scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
                     _handleScroll: event => {
-                        const {x, y} = ScrollObservable.getScrollFromEvent(event),
+                        const {x, y} = M.ScrollObservable.getScrollFromEvent(event),
                             negX = -x,
                             negY = -y;
                         colHeaders.getODS().transform = 'translate3d(' + negX + 'px,0px,0)';
@@ -494,10 +507,8 @@
                 rowHeaders = self.rowHeaders = new View(rowHeadersContainer, {textColor:colorUltraDark}),
                 
                 flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:COL_HEADER_HEIGHT, overflow:'hidden'}),
-                flowLayer = self.flowLayer = new SplineFlow(flowContainer, {
-                    defaultStyle:DEFAULT_STYLE
-                });
-            const flowSVG = flowLayer.getSVG();
+                flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}),
+                flowSVG = flowLayer.getSVG();
             flowSVG.style.zIndex = 2;
             flowSVG.style.position = 'absolute';
             
@@ -565,29 +576,6 @@
             }
         },
         
-        setStart: function(start) {
-            if (typeof start !== 'number') start = stringToMillis(start);
-            if (this.start !== start) {
-                this.set('start', start, true);
-                if (this.inited) refreshTimeWindow(this);
-            }
-        },
-        
-        setEnd: function(end) {
-            if (typeof end !== 'number') end = stringToMillis(end);
-            if (this.end !== end) {
-                this.set('end', end, true);
-                if (this.inited) refreshTimeWindow(this);
-            }
-        },
-        
-        setScale: function(scale) {
-            if (this.scale !== scale) {
-                this.set('scale', scale, true);
-                if (this.inited) refreshTimeWindow(this);
-            }
-        },
-        
         
         // Methods /////////////////////////////////////////////////////////////
         /** @overrides SelectionManager */
@@ -642,7 +630,6 @@
             }
         },
         
-        
         // History //
         navigateHistory: function(adj) {
             const newIdx = this._histIdx + adj,
@@ -656,43 +643,33 @@
             }
         },
         
-        
         // Scrolling //
         scrollToEventBox: function(modelOrId, smoothly=true) {
             const eventBox = this.getEventBox(modelOrId);
             if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + TL_SCROLL_TO_PADDING, eventBox.y + TL_SCROLL_TO_PADDING, true, smoothly);
         },
         
-        scrollToLocation: function(modelOrId, smoothly=true) {
-            const locationColumn = getLocationColumn(this, modelOrId);
+        scrollToLocation: function(locId, smoothly=true) {
+            const locationColumn = this.colsByLocId[locId];
             if (locationColumn) this.scrollCaptureView.scrollXTo(locationColumn.x, true, smoothly);
         },
         
         scrollToTime: function(millis, smoothly=true) {
-            this.scrollCaptureView.scrollYTo(millisToPx(this, millis), true, smoothly);
+            this.scrollCaptureView.scrollYTo(this.ticksByTime[millis].y, true, smoothly);
         },
-        
         
         // Setup //
         setup: function(model) {
             this.model = model;
             const statParadox = model[STAT_ID_PARADOX];
             this.timelineParadoxView.constrain('update', [statParadox, 'value', statParadox, 'max']);
-            refreshLocationColumns(this);
-        },
-        
-        setTimeWindow: function(start, end, scale) {
-            this.noTimeWindowRefresh = true;
-            this.setStart(start);
-            this.setEnd(end);
-            this.setScale(scale);
-            this.noTimeWindowRefresh = false;
             
-            if (this.inited) refreshTimeWindow(this);
+            updateTimelineLayout(this);
+            this.timelineReady = true;
         },
         
         notifyEventVisibilityChange: function(eventModel) {
-            // Does nothing for this Timeline implementation.
+            if (this.timelineReady) amendTimelineLayout(this);
         }
     });
 })(tc);

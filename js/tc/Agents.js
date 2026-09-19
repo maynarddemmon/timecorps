@@ -70,7 +70,7 @@
                         pkg.app.getTimelineView().doSelectEvent(this.model.getEventModel(), true);
                         break;
                     case 'where':
-                        pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel());
+                        pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel().getLocation());
                         break;
                     case 'when':
                         pkg.app.getTimelineView().scrollToTime(this.model.getEventModel()?.getStart());

@@ -80,6 +80,32 @@
             if (this.inited) console.log('Stat Changed', statModel);
         },*/
         
+        getEventModelsInTimeOrder: () => model[SCOPE_EVENTS].getAsSortedList((a, b) => a.start - b.start),
+        putEventModelsInTieredTimeOrder: () => {
+            const eventsAccum = [],
+                locationsUsed = {},
+                orderedEventModels = model.getEventModelsInTimeOrder();
+            let lastStart = -1,
+                timeOrdering = -1;
+            for (const eventModel of orderedEventModels) {
+                if (eventModel.isHidden()) {
+                    eventModel.setTimeOrdering(-1);
+                } else {
+                    const eventStart = eventModel.start;
+                    if (eventStart !== lastStart) {
+                        lastStart = eventStart;
+                        timeOrdering++;
+                    }
+                    eventModel.setTimeOrdering(timeOrdering);
+                    eventsAccum.push(eventModel);
+                    
+                    const locModel = eventModel.getLocationModel();
+                    locationsUsed[locModel.id] = locModel;
+                }
+            }
+            return {events:eventsAccum, locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)};
+        },
+        
         reset: () => {
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
