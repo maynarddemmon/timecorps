@@ -10,7 +10,8 @@
             SquareBtn, LabeledValue,
             timeUtil:{format,},
             cfg:{
-                SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, MAX_HISTORY_LENGTH, 
+                STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, 
+                MAX_HISTORY_LENGTH, 
                 TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING,
                 TL_CLICK_TO_DESELECT
             },
@@ -42,14 +43,12 @@
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
             startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
-            //startArrow:'dot',
             endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         }],
         SELECTED_CONNECTION_STYLE = {
             color:colorUltraLight, cap:null, thickness:4, startAngle:'vertical', endAngle:'vertical', 
             startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
-            //endArrow:'triangle',
             startStub:6, endStub:6, startGap:0, endGap:0
         },
         EXIT_STYLE = {
@@ -195,18 +194,6 @@
         
         
         // Event Box //
-        revalidateForEvent = eventBox => {
-            const {timeline, model:eventModel} = eventBox;
-            
-            updateEventBox(eventBox);
-            updateExits(eventBox);
-            
-            for (const descEventModel of eventModel.getDescendants()) {
-                const descEventBox = timeline.getEventBox(descEventModel);
-                if (descEventBox) updateEventBox(descEventBox);
-            }
-        },
-        
         refreshConnectionsForSelection = eventBox => {
             const selected = eventBox.selected;
             for (const connection of eventBox.timeline.getAffectiveConnectionsForEventBox(eventBox)) {
@@ -362,8 +349,20 @@
             },
             
             _updateForModelChanges: function() {
-                if (this.inited) revalidateForEvent(this);
-            }
+                if (this.inited) this._revalidateForEvent();
+            },
+            
+            _revalidateForEvent: M.debounce(function() {
+                const {timeline, model:eventModel} = this;
+                
+                updateEventBox(this);
+                updateExits(this);
+                
+                for (const descEventModel of eventModel.getDescendants()) {
+                    const descEventBox = timeline.getEventBox(descEventModel);
+                    if (descEventBox) updateEventBox(descEventBox);
+                }
+            }, STANDARD_DEBOUNCE_MILLIS)
         }),
         
         

@@ -49,6 +49,8 @@
             
             // Game Config
             cfg: {
+                STANDARD_DEBOUNCE_MILLIS:50,
+                
                 EVENT_ID_THE_VOID:'the_void',
                 EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
                 

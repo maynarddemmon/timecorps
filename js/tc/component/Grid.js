@@ -12,7 +12,8 @@
                 rowHeight,
                 colorBtn, colorUltraLight, colorExtraLight, colorLight, colorMedLight, colorMedium,
                 colorDark, colorUltraDark, colorMegaDark
-            }
+            },
+            cfg:{STANDARD_DEBOUNCE_MILLIS}
         } = pkg,
         
         GridColHdr = pkg.GridColHdr = new JSClass('GridColHdr', M.SimpleGridColHdr, {
@@ -213,7 +214,7 @@
             new M.ResizeLayout(self, {axis:'y', spacing:1});
             
             // Setup debounced refreshGrid so it is unique per instance.
-            self.refreshGrid = M.debounce(self.__refreshGrid, 100);
+            self.refreshGrid = M.debounce(self.__refreshGrid, STANDARD_DEBOUNCE_MILLIS);
             
             self.setModelCollection(modelCollection);
             
