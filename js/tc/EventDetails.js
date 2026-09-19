@@ -114,6 +114,22 @@
                 this._content.destroyAllSubviews();
             }
         }),
+        TextForFlow = new JSClass('TextForFlow', PaddedText, {
+            initNode: function(parent, attrs) {
+                attrs.paddingTop ??= 5;
+                attrs.paddingBottom ??= 5;
+                attrs.whiteSpace ??= 'normal';
+                this.callSuper(parent, attrs);
+            }
+        }),
+        NoValueText = new JSClass('NoValueText', PaddedPlainText, {
+            initNode: function(parent, attrs) {
+                attrs.paddingTop ??= ROW_PADDING_TOP;
+                attrs.fontSize ??= fontSizeMedium;
+                attrs.text ??= '–';
+                this.callSuper(parent, attrs);
+            }
+        }),
         AgentRow = new JSClass('AgentRow', WideView, {
             initNode: function(parent, attrs) {
                 const self = this;
@@ -154,6 +170,7 @@
                         doActivated: () => {agentModel.doAction(actionModel);}
                     }]);
                 }
+                new TextForFlow(actionView, {text:agentModel.getActionsRemainingPhrase()});
                 
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
@@ -184,7 +201,7 @@
                     addedCount++;
                 }
                 
-                if (addedCount === 0) new PaddedPlainText(exitView, {text:'No exits available.', paddingTop:5, paddingBottom:5, whiteSpace:'normal'});
+                if (addedCount === 0) new TextForFlow(exitView, {text:'No exits available.'});
             }
         });
     
@@ -347,7 +364,7 @@
                         }
                     }
                 }
-                if (addedCount === 0) new PaddedPlainText(precursorsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
+                if (addedCount === 0) new NoValueText(precursorsRow);
                 
                 // Descendant Nav Buttons //
                 const descendantsRow = self.descendantsRow,
@@ -366,7 +383,7 @@
                         }
                     }
                 }
-                if (addedCount === 0) new PaddedPlainText(descendantsRow, {fontSize:fontSizeMedium, paddingTop:ROW_PADDING_TOP, text:'–'});
+                if (addedCount === 0) new NoValueText(precursorsRow);
                 
                 // Agent Information //
                 const agentsRow = self.agentsRow;

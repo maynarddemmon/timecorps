@@ -11,6 +11,7 @@
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE
             },
+            theme:{colorBtn, fontFamilyMono},
             formatChronalAndParadox,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
@@ -21,6 +22,22 @@
         LOG_TYPE_EXIT = 'exit',
         LOG_TYPE_ACTION = 'action',
         LOG_TYPE_INVESTIGATE = 'investigate';
+        LOG_TYPE_DEVOURED = 'devoured',
+        
+        accrueEntryParadox = (agentModel, eventModelOrId) => {
+            const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, -1); // -1 because we will have just pushed an entry event of some kind onto the log.
+            if (paradox > 0) {
+                // Accrue in Event first since the Agent might get sent to The Void.
+                const eventModel = agentModel.getEventModel();
+                if (eventModel) {
+                    agentModel.getEventModel()[STAT_ID_PARADOX].adjValue(paradox);
+                } else {
+                    console.warn('accrueEntryParadox for timeline should be mediated by an event');
+                }
+                
+                agentModel[STAT_ID_PARADOX].adjValue(paradox);
+            }
+        };
     
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -95,6 +112,11 @@
         },
         incrementActionExecCount: function() {this.setActionExecCount(this.actionExecCount + 1);},
         canAct: function() {return this.getEventModel()?.getActionLimit() > this.actionExecCount;},
+        getActionsRemainingPhrase: function() {
+            const eventActionLimit = this.getEventModel()?.getActionLimit() ?? 0,
+                actionExecCount = this.actionExecCount;
+            return 'Actions Remaining: <span style="color:' + colorBtn + ';fontFamily:' + fontFamilyMono + ';">' + (eventActionLimit - actionExecCount) + '/' + eventActionLimit + '</span>';
+        },
         
         setEvent: function(event, logEntry) {
             if (this.event !== event) {
@@ -107,10 +129,10 @@
                 const newEventModel = this._eventModel = pkg.model.getEventModel(this.event); // Populate immediately
                 this.notifyCollectionOfUpdate();
                 
-                this.accrueEntryParadox(newEventModel);
+                this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
+                accrueEntryParadox(this, newEventModel);
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
-                this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
             }
         },
         getEvent: function() {return this.event;},
@@ -246,58 +268,44 @@
         },
         
         // Paradox
-        calculateParadoxForEntry: function(eventModelOrId) {
+        calculateParadoxForEntry: function(eventModelOrId, visitsAdj=0) {
             const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
             if (eventModel) {
                 // No paradox to enter "special" events.
                 if (eventModel.id !== EVENT_ID_THE_VOID && eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
-                    if (this.hasBeenInEvent(eventModel)) {
-                        return 1;
+                    const visits = this.countVisitsToEvent(eventModel) + visitsAdj;
+                    if (visits > 0) {
+                        // More paradox the more times the Agent has already been to the Event.
+                        return visits;
                     }
                 }
             }
             return 0;
         },
         
-        accrueEntryParadox: function(eventModelOrId) {
-            const paradox = this.calculateParadoxForEntry(eventModelOrId);
-            if (paradox > 0) {
-                // Accrue in Event first since the Agent might get sent to The Void.
-                const eventModel = this.getEventModel();
-                if (eventModel) {
-                    this.getEventModel()[STAT_ID_PARADOX].adjValue(paradox);
-                } else {
-                    console.warn('accrueEntryParadox for timeline should be mediated by an event');
-                }
-                
-                this[STAT_ID_PARADOX].adjValue(paradox);
-            }
-        },
-        
         doDevouredByChronovores: function() {
             this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
-            this.setEvent(EVENT_ID_THE_VOID);
+            this.setEvent(EVENT_ID_THE_VOID, {type:LOG_TYPE_DEVOURED});
         },
         
         // Life and Log
-        pushOntoLog: function(logEntry) {
-            this.log.push(logEntry);
-        },
+        pushOntoLog: function(logEntry) {this.log.push(logEntry);},
         getLog: function() {return this.log;},
-        hasBeenInEvent: function(eventModel) {
-            for (const entry of this.log) {
+        countVisitsToEvent: function(eventModel) {
+            let count = 0;
+            for (const entry of this.getLog()) {
                 switch (entry.type) {
                     case LOG_TYPE_EXIT:
-                        if (entry.exit.getToEventModel() === eventModel) return true;
+                        if (entry.exit.getToEventModel() === eventModel) count++;
                         break;
                     case LOG_TYPE_DEPLOY:
                     case LOG_TYPE_RECALL:
                     case LOG_TYPE_ORIGIN:
-                        if (entry.event === eventModel) return true;
+                        if (entry.event === eventModel) count++;
                         break;
                 }
             }
-            return false;
+            return count;
         }
     });
 })(tc);
