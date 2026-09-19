@@ -293,6 +293,9 @@
                 
                 this.callSuper(parent, attrs);
                 
+                // Setup debounced refreshGrid so it is unique per instance.
+                this.revalidateForEvent = M.debounce(this._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
+                
                 (this._label = new PaddedPlainText(this, {
                     y:spacing, width:width, visible:this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD,
                     paddingLeft:4, paddingRight:4
@@ -349,10 +352,10 @@
             },
             
             _updateForModelChanges: function() {
-                if (this.inited) this._revalidateForEvent();
+                if (this.inited) this.revalidateForEvent();
             },
             
-            _revalidateForEvent: M.debounce(function() {
+            _revalidateForEvent: function() {
                 const {timeline, model:eventModel} = this;
                 
                 updateEventBox(this);
@@ -362,7 +365,7 @@
                     const descEventBox = timeline.getEventBox(descEventModel);
                     if (descEventBox) updateEventBox(descEventBox);
                 }
-            }, STANDARD_DEBOUNCE_MILLIS)
+            }
         }),
         
         
