@@ -95,8 +95,9 @@
                 TL_BOX_VISIBLE_HEIGHT_THRESHOLD:20,
                 TL_SCROLL_TO_PADDING:-16,
                 TL_ROW_HEADER_WIDTH:125,
-                TL_COL_WIDTH:100,
+                TL_COL_WIDTH:120,
                 TL_COL_SPACING:1,
+                TL_CLICK_TO_DESELECT:false
             },
             
             // Chronal Util

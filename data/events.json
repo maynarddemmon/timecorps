@@ -21,7 +21,7 @@
 			"duration":{"h":3},
 			"location":"southampton.harland_wolff",
 			"actionLimit":2,
-			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 15",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 25",
 			"actions":{
 				"argue":{
 					"label":"Argue for Full Davits",
@@ -175,7 +175,7 @@
 			"start":"1912-04-14T23:30:00",
 			"duration":{"m":10},
 			"location":"titanic.engine",
-			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.collision.attestation.value < 25",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.collision.attestation.value < 20",
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
@@ -216,7 +216,7 @@
 			},
 			"hideAffectedBy":{
 				"lookout_sights_berg":"event.attestation.value < 15",
-				"engine_order":"event.attestation.value < 50"
+				"engine_order":"event.attestation.value < 40"
 			}
 		},
 		"californian_nearby":{
@@ -224,7 +224,7 @@
 			"start":"1912-04-15T00:10:00",
 			"duration":{"h":1},
 			"location":"atlantic.californian",
-			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 15",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 20",
 			"values":{
 				"rescueResponds":{"value":"events.wireless_priority.values.clearBacklogEarlier.value"}
 			}
