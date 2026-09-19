@@ -12,8 +12,9 @@
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, 
                 MAX_HISTORY_LENGTH, 
-                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_SPACING,
-                TL_CLICK_TO_DESELECT
+                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
+                TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
+                TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT
             },
             theme:{
                 spacing, cornerRadius, rowHeight, 
@@ -25,16 +26,12 @@
             STAT_ID_PARADOX
         } = pkg,
         
-        EVENT_BOX_HEIGHT = 60,
-        EVENT_BOX_MARGIN = 1,
-        EVENT_TIER_HEIGHT = EVENT_BOX_HEIGHT + 2*EVENT_BOX_MARGIN + 1,
+        EVENT_TIER_HEIGHT = TL_EVENT_BOX_HEIGHT + 2*TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+        TICK_LABEL_ADJ = TL_TICK_LINE_HEIGHT + spacing,
         
-        COL_HEADER_HEIGHT = rowHeight,
+        COL_WIDTH = TL_COL_WIDTH + 2*TL_EVENT_BOX_X_MARGIN,
+        COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
         
-        TICK_LINE_HEIGHT = 1,
-        TICK_LABEL_ADJ = TICK_LINE_HEIGHT + spacing,
-        
-        BOX_INSET_FROM_COL = 1,
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
@@ -73,7 +70,6 @@
                 {events:orderedEvents, locations:locModels} = timeline.orderedEvents = model.putEventModelsInTieredTimeOrder(),
                 locModelsLen = locModels.length,
                 colHeadersHeight = colHeaders.height,
-                colWidth = TL_COL_WIDTH + TL_COL_SPACING,
                 rowHeaderWidth = rowHeaders.width;
             
             if (isInitial) {
@@ -106,7 +102,7 @@
                             x:xExtent, height:colHeadersHeight, model:locModel
                         });
                     }
-                    xExtent += colWidth;
+                    xExtent += COL_EXTENT;
                 }
             }
             
@@ -119,8 +115,8 @@
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
-                    targetX = (locColTargetXById[eventModel.getLocation()] ?? 0) + BOX_INSET_FROM_COL;
-                targetY = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + 2*EVENT_BOX_MARGIN;
+                    targetX = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN;
+                targetY = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     animateAttrs(eventBox, {x:targetX, y:targetY});
@@ -132,24 +128,24 @@
                 }
                 
                 const tick = ticksByTime[startTime],
-                    tickTargetY = targetY - EVENT_BOX_MARGIN - 1;
+                    tickTargetY = targetY - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT;
                 if (tick) {
                     animateAttrs(tick, {y:tickTargetY});
                     tick.setWidth(rowHeaderWidth);
-                    tick.setHeight(TICK_LINE_HEIGHT);
+                    tick.setHeight(TL_TICK_LINE_HEIGHT);
                 } else {
                     ticksByTime[startTime] = new Tick(rowHeaders, {
                         timeline, time:startTime,
                         y:tickTargetY, 
-                        width:rowHeaderWidth, height:TICK_LINE_HEIGHT
+                        width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
                     });
                 }
             }
             
             // Update for new extents
-            const yExtent = targetY ? targetY + EVENT_TIER_HEIGHT : 0;
+            const yExtent = targetY ? targetY + EVENT_TIER_HEIGHT - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT : 0;
             scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
-            scrollToken.setY(COL_HEADER_HEIGHT + yExtent - scrollToken.height);
+            scrollToken.setY(TL_COL_HEADER_HEIGHT + yExtent - scrollToken.height);
             colHeaders.setWidth(xExtent);
             rowHeaders.setHeight(yExtent);
             flowLayer.setWidth(xExtent);
@@ -281,9 +277,9 @@
                 attrs.readyColor ??= colorDark;
                 attrs.focusable = false;
                 
-                attrs.height ??= EVENT_BOX_HEIGHT;
+                attrs.height ??= TL_EVENT_BOX_HEIGHT;
                 
-                const width = attrs.width ??= TL_COL_WIDTH - 2*BOX_INSET_FROM_COL;
+                const width = attrs.width ??= TL_COL_WIDTH;
                 attrs.roundedCorners ??= cornerRadius;
                 
                 this.timeline = attrs.timeline;
@@ -399,12 +395,12 @@
         
         LocationColumn = new JSClass('LocationColumn', View, {
             initNode: function(parent, attrs) {
-                const width = attrs.width ??= TL_COL_WIDTH;
+                const width = attrs.width ??= COL_WIDTH;
                 
                 this.callSuper(parent, attrs);
                 
                 (this._label = new PaddedPlainText(this, {
-                    width:width, height:COL_HEADER_HEIGHT, bgColor:'#fff3', textAlign:'center',
+                    width:width, height:TL_COL_HEADER_HEIGHT, bgColor:'#fff3', textAlign:'center',
                     paddingTop:5, paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
@@ -469,10 +465,10 @@
                 colHeadersContainer = self.colHeadersContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, overflow:'hidden'}),
                 colHeaders = self.colHeaders = new View(colHeadersContainer, {textColor:colorUltraDark}),
                 
-                rowHeadersContainer = self.rowHeadersContainer = new View(stickyView, {y:COL_HEADER_HEIGHT, overflow:'hidden'}),
+                rowHeadersContainer = self.rowHeadersContainer = new View(stickyView, {y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
                 rowHeaders = self.rowHeaders = new View(rowHeadersContainer, {textColor:colorUltraDark}),
                 
-                flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:COL_HEADER_HEIGHT, overflow:'hidden'}),
+                flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
                 flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}),
                 flowSVG = flowLayer.getSVG();
             flowSVG.style.zIndex = 2;
@@ -484,7 +480,7 @@
             self.scrollToken = new View(scrollCaptureView, {width:1, height:1});
             scrollCaptureView.attachToDom(scrollCaptureView, '_handleScroll', 'scroll');
             
-            const hLine = self.hLine = new View(self, {y:COL_HEADER_HEIGHT, height:1, bgColor:colorUltraDark}),
+            const hLine = self.hLine = new View(self, {y:TL_COL_HEADER_HEIGHT, height:1, bgColor:colorUltraDark}),
                 vLine = self.vLine = new View(self, {x:TL_ROW_HEADER_WIDTH - 1, width:1, bgColor:colorUltraDark});
             hLine.getIDS().pointerEvents = 'none';
             vLine.getIDS().pointerEvents = 'none';

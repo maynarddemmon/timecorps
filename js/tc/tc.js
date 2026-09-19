@@ -106,8 +106,13 @@
                 TL_BOX_VISIBLE_HEIGHT_THRESHOLD:20,
                 TL_SCROLL_TO_PADDING:-16,
                 TL_ROW_HEADER_WIDTH:125,
-                TL_COL_WIDTH:120,
+                TL_COL_WIDTH:110,
+                TL_COL_HEADER_HEIGHT:26,
                 TL_COL_SPACING:1,
+                TL_EVENT_BOX_HEIGHT:75,
+                TL_EVENT_BOX_Y_MARGIN:4,
+                TL_EVENT_BOX_X_MARGIN:4,
+                TL_TICK_LINE_HEIGHT:1,
                 TL_CLICK_TO_DESELECT:false
             },
             
