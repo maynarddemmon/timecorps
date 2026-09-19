@@ -6,6 +6,8 @@
             abs:mathAbs, trunc:mathTrunc
         } = Math,
         
+        {ICON_ARROW, ICON_SEPARATOR} = pkg,
+        
         // Time Parsing and Formatting /////////////////////////////////////////
         TO_SECOND = 'second',
         TO_MINUTE = 'minute',
@@ -188,11 +190,27 @@
                         // "23:00" would claim you know the minute is zero. You do not.
                         return day + ' ' + month + ', ' + year + ' around ' + pad2(d.getUTCHours()) + ':00';
                     case TO_MINUTE:
-                        return day + ' ' + month + ', ' + year + ' · ' +  pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
+                        return day + ' ' + month + ', ' + year + ICON_SEPARATOR +  pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
                     case TO_SECOND:
                     default:
-                        return day + ' ' + month + ', ' + year + ' · ' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
+                        return day + ' ' + month + ', ' + year + ICON_SEPARATOR + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
                 }
+            },
+            
+            formatCompactRange: (start, end) => {
+                const noSeconds = ':00',
+                    startDate = timeUtil.format(start, TO_DAY),
+                    endDate = timeUtil.format(end, TO_DAY);
+                let startClock = timeUtil.formatClock(start, true),
+                    endClock = timeUtil.formatClock(end, true);
+                
+                if (startClock.endsWith(noSeconds) && endClock.endsWith(noSeconds)) {
+                    startClock = startClock.slice(0, -3);
+                    endClock = endClock.slice(0, -3);
+                }
+                
+                const prefix = startDate + ICON_SEPARATOR + startClock + ICON_ARROW;
+                return prefix + (startDate === endDate ? endClock : endDate + ICON_SEPARATOR + endClock);
             },
             
             /*  Clock only, for agent clocks and action windows inside an event

@@ -7,13 +7,14 @@
         
         {
             NotifyingNumericStatModel, setConstrainedValue,
-            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatDuration},
+            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
-            }
+            },
+            ICON_ARROW, ICON_SEPARATOR
         } = pkg,
         
         updateEndAttr = eventModel => {
@@ -386,6 +387,10 @@
             doDevouredByChronovores: function() {
                 console.log('Event devoured by chronovores', this);
                 // FIXME: disable the event or in some other way indicate the Event has been devoured.
+            },
+            
+            formatAsTemporalExtent: function() {
+                return formatCompactRange(this.getStart(), this.getEnd()) + ICON_SEPARATOR + ' (' + this.getDuration(true) + ')';
             }
         });
 })(tc);

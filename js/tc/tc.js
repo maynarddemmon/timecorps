@@ -28,6 +28,7 @@
                 cornerRadius:3,
                 btnHeight:24,
                 rowHeight:26,
+                
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',
                 colorDark:'#530',
@@ -37,10 +38,14 @@
                 colorExtraLight:'#dd0',
                 colorUltraLight:'#ff9', 
                 colorBtn:'#a50',
+                
+                fontSizeMicro:'10px',
+                fontSizeSmall:'12px',
                 fontSizeMedium:'14px',
                 fontSizeLarge:'16px',
                 fontSizeVeryLarge:'20px',
                 fontFamilyMono:'SpaceMono',
+                
                 colorParadox:'#f69',
                 colorChronal:'#69f',
                 colorHistoricity:'#da6',
@@ -151,6 +156,8 @@
             I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
             
             // Icons
+            ICON_SEPARATOR:' · ',
+            ICON_ARROW:' → ',
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
             ICON_ACTION:'⎇', // ⎌ ⎇ ☟

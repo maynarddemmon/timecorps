@@ -5,6 +5,12 @@
         
         {min:mathMin, max:mathMax} = Math,
         
+        {
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
+            I18N_PARADOX, I18N_CHRONAL,
+            ICON_SEPARATOR
+        } = pkg,
+        
         /** A stat that maintains a numerical value bounded by a min, max, absolute min and
             absolute max. */
         NumericStatModel = pkg.NumericStatModel = new JS.Class('NumericStatModel', myt.BaseModel, {
@@ -147,13 +153,24 @@
             
             format: function(format) {
                 const value = this.getValue(),
-                    max = this.getMax();
+                    max = this.getMax(),
+                    id = this.id;
                 switch (format) {
+                    case 'label':
+                        switch (id) {
+                            case STAT_ID_PARADOX: return I18N_PARADOX;
+                            case STAT_ID_CHRONAL: return I18N_CHRONAL;
+                            case STAT_ID_HISTORICITY: return 'Historicity';
+                            case STAT_ID_ATTESTATION: return 'Attestation';
+                            default: return id;
+                        }
                     case '%':
                     case 'percent':
                         return formatAsPercentage(value / max, 0);
                     case 'verbose':
                         return 'Current Value: ' + value + ' Max Value: ' + max;
+                    case 'tooltip':
+                        return this.formatAsLabel() + ICON_SEPARATOR + this.formatAsPercent() + ICON_SEPARATOR + this.formatAsBracketFraction();
                     case '[/]':
                     case 'bracketFraction':
                         return '[' + value + '/' + max + ']';
@@ -167,6 +184,8 @@
             formatAsPercent: function() {return this.format('%');},
             formatAsFraction: function() {return this.format('/');},
             formatAsBracketFraction: function() {return this.format('[/]');},
+            formatAsLabel: function() {return this.format('label');},
+            formatAsTooltip: function() {return this.format('tooltip');},
             
             getAsObj: function(cfg) {
                 const self = this,

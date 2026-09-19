@@ -4,13 +4,16 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, SizeToParent} = M,
+        {View, Text, PlainText, SizeToParent} = M,
         
         {
-            spacing, padding, layoutSpacing, btnHeight, rowHeight,
-            colorUltraLight, colorMedium, colorDark, colorUltraDark, colorBtn,
-            fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono
-        } = pkg.theme,
+            theme:{
+                spacing, padding, layoutSpacing, btnHeight, rowHeight,
+                colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark, colorBtn,
+                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono,
+                colorHistoricity, colorAttestation, colorParadox
+            }
+        } = pkg,
         
         WideView = pkg.WideView = new JSClass('WideView', View, {
             include: [SizeToParent],
@@ -31,7 +34,7 @@
                 this.callSuper(parent, attrs);
                 
                 const headerView = this._headerView = new WideView(this, {ignorePlacement:true, height:rowHeight, bgColor:colorDark});
-                (this._titleView = new M.PlainText(headerView, {text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1})).enableEllipsis();
+                (this._titleView = new Text(headerView, {text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1})).enableEllipsis();
                 new M.ResizeLayout(headerView, {inset:padding, spacing:spacing, outset:padding});
                 
                 const y = headerView.y + headerView.height + layoutSpacing;
@@ -48,6 +51,38 @@
             
             getHeaderView: function() {return this._headerView;},
             getContentView: function() {return this._contentView;}
+        }),
+        
+        StatProgressBar = pkg.StatProgressBar = new JSClass('StatProgressBar', M.ProgressBar, {
+            initNode: function(parent, attrs) {
+                attrs.bgColor ??= colorMegaDark;
+                attrs.height ??= 6;
+                attrs.roundedCorners ??= 3;
+                attrs.trackOutset ??= 1;
+                const trackInset = attrs.trackInset ??= 1,
+                    showLabel = attrs.showLabel ??= true,
+                    labelY = attrs.labelY ??= -12,
+                    labelFontSize = attrs.labelFontSize ??= fontSizeMicro;
+                
+                this.callSuper(parent, attrs);
+                
+                this.labelView = new PlainText(this, {
+                    x:trackInset, y:labelY, 
+                    fontSize:labelFontSize, visible:showLabel
+                });
+            },
+            
+            updateForStat: function(statModel) {
+                const self = this,
+                    labelView = self.labelView,
+                    tooltip = statModel.formatAsTooltip();
+                labelView.setText(statModel.formatAsLabel());
+                labelView.setTooltip(tooltip);
+                self.setMinValue(statModel.getMin());
+                self.setMaxValue(statModel.getMax());
+                self.setValue(statModel.getValue());
+                self.setTooltip(tooltip);
+            }
         });
     
     pkg.Spacer = new JSClass('Spacer', View, {
@@ -110,6 +145,25 @@
         
         updateText: function() {
             this.setText(this.label + ' : <span style="color:' + this.valueTextColor + '; font-family:' + this.valueFontFamily + ';">' + this.value + '</span>');
+        }
+    });
+    
+    pkg.HistoricityBar = new JSClass('HistoricityBar', StatProgressBar, {
+        initNode: function(parent, attrs) {
+            attrs.valueColor ??= colorHistoricity;
+            this.callSuper(parent, attrs);
+        }
+    });
+    pkg.AttestationBar = new JSClass('AttestationBar', StatProgressBar, {
+        initNode: function(parent, attrs) {
+            attrs.valueColor ??= colorAttestation;
+            this.callSuper(parent, attrs);
+        }
+    });
+    pkg.ParadoxBar = new JSClass('ParadoxBar', StatProgressBar, {
+        initNode: function(parent, attrs) {
+            attrs.valueColor ??= colorParadox;
+            this.callSuper(parent, attrs);
         }
     });
 })(tc);

@@ -5,7 +5,7 @@
         
         {
             View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            Layout, SpacedLayout, WrappingLayout
+            Layout, SpacedLayout, WrappingLayout, ResizeLayout
         } = myt,
         
         {
@@ -17,12 +17,12 @@
                 spacing, padding, cornerRadius, rowHeight, 
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 colorParadox, colorHistoricity, colorAttestation,
-                fontSizeMedium, fontSizeLarge
+                fontSizeMedium, fontSizeLarge,
+                fontFamilyMono
             },
             formatChronalAndParadox,
-            ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ, 
+            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH,
-            I18N_PARADOX,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
@@ -37,21 +37,32 @@
                 this.callSuper(parent, attrs);
             }
         }),
-        DividerRow = new JSClass('DividerRow', WideView, {
+        Row = new JSClass('Row', WideView, {
             include: [GrandWidthMixin],
             
+            initNode: function(parent, attrs) {
+                attrs.height ??= rowHeight;
+                attrs.textColor ??= colorMedium;
+                
+                const inset = attrs.inset ?? parent.x;
+                delete attrs.inset;
+                
+                this.callSuper(parent, attrs);
+                
+                new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset})
+            }
+        }),
+        DividerRow = new JSClass('DividerRow', Row, {
             initNode: function(parent, attrs) {
                 const self = this,
                     label = attrs.label;
                 delete attrs.label;
                 
-                attrs.height ??= rowHeight;
                 attrs.bgColor ??= colorDark;
-                attrs.textColor ??= colorMedium;
                 
                 self.callSuper(parent, attrs);
                 
-                self._label = new PlainText(self, {x:parent.x, valign:'middle', fontSize:fontSizeMedium, text:label});
+                self._label = new PlainText(self, {valign:'middle', fontSize:fontSizeMedium, text:label});
             },
             setLabel: function(v) {this._label.setText(v);}
         }),
@@ -219,15 +230,13 @@
                 timelineView = pkg.app.getTimelineView();
             
             self.hqBtn = new Btn(header, {
-                y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ,
-                tooltip:'Select HQ'
+                y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
             }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getHQEventModel());}}]);
             self.theVoidBtn = new Btn(header, {
-                y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID,
-                tooltip:'Select The Void'
+                y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
             }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getTheVoidEventModel());}}]);
             
-            new View(header, {width:2*padding}); // Spacer
+            new View(header, {width:padding}); // Spacer
             
             self.histPrevBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
@@ -251,13 +260,17 @@
             const detailsContainer = self.detailsContainer = new WideView(self, {
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
-            self.locationRow = new DetailRow(detailsContainer, {label:'Location'});
-            self.historicityRow = new DetailRow(detailsContainer, {label:'Historicity', textColor:colorHistoricity});
-            self.attestationRow = new DetailRow(detailsContainer, {label:'Attestation', textColor:colorAttestation});
-            self.paradoxRow = new DetailRow(detailsContainer, {label:I18N_PARADOX, textColor:colorParadox});
-            self.startRow = new DetailRow(detailsContainer, {label:'Begins'});
-            self.durationRow = new DetailRow(detailsContainer, {label:'Duration'});
-            self.endRow = new DetailRow(detailsContainer, {label:'Ends'});
+            
+           self.whereWhen = new PaddedPlainText(detailsContainer, {
+                percentOfParentWidth:100,
+                fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
+            }, [GrandWidthMixin, SizeToParent]);
+             
+            const row = new Row(detailsContainer, {height:18, inset:spacing});
+            self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
+            self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
+            self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
+            
             self.precursorsRow = new DetailRowFlow(detailsContainer, {label:'Precursors'});
             self.descriptionRow = new DetailRow(detailsContainer, {label:'Description'});
             self.descendantsRow = new DetailRowFlow(detailsContainer, {label:'Descendants'});
@@ -279,7 +292,7 @@
             
             self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
             
-            new SpacedLayout(detailsContainer, {axis:'y', spacing:spacing, collapseParent:true});
+            new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:spacing, collapseParent:true});
             
             self.ready = true;
             
@@ -339,14 +352,15 @@
                 
                 Layout.incrementGlobalLock();
                 
-                self.locationRow.setValue(eventModel.getLocationModel()?.name);
-                for (const statId of [STAT_ID_HISTORICITY,STAT_ID_ATTESTATION,STAT_ID_PARADOX]) {
-                    // FIXME: lets do these as progress bars.
-                    self[statId + 'Row'].setValue(eventModel[statId].formatAsPercent());
-                }
-                self.startRow.setValue(eventModel.getStart(true));
-                self.durationRow.setValue(eventModel.getDuration(true));
-                self.endRow.setValue(eventModel.getEnd(true));
+                self.historicityBar.updateForStat(eventModel[STAT_ID_HISTORICITY]);
+                self.attestationBar.updateForStat(eventModel[STAT_ID_ATTESTATION]);
+                self.paradoxBar.updateForStat(eventModel[STAT_ID_PARADOX]);
+                
+                self.whereWhen.setText(
+                    eventModel.getLocationModel()?.name +
+                    ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
+                );
+                
                 self.descriptionRow.setValue();
                 
                 // Precursor Nav Buttons //
@@ -434,7 +448,7 @@
         },
         
         updateTitle: function() {
-            this.setTitle('Event : ' + (this.eventModel?.name ?? 'none'));
+            this.setTitle('Event : <span style="color:' + colorUltraLight + ';">' + (this.eventModel?.name ?? 'none') + '</span>');
         }
     });
 })(tc);

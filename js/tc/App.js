@@ -63,7 +63,7 @@
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
             dividerV.setValue(187);
-            dividerH.setValue(800);
+            dividerH.setValue(900);
             
             // Fetch Data
             const filesToLoad = ['titanic_scenario','lusitania_scenario','agents'];
@@ -136,7 +136,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:475, limitToParent:375,
+                width:5, percentOfParentHeight:100, minValue:475, limitToParent:275,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {
