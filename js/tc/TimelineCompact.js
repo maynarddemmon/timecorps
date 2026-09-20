@@ -7,10 +7,10 @@
         {View, PaddedPlainText, PlainText, Selectable} = M,
         
         {
-            SquareBtn, LabeledValue,
+            SquareBtn, LabeledValue, MiniStatBar,
             timeUtil:{format,},
             cfg:{
-                STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, 
+                STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
                 MAX_HISTORY_LENGTH, 
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
@@ -23,7 +23,7 @@
                 fontSizeLarge
             },
             I18N_PARADOX,
-            STAT_ID_PARADOX
+            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
         } = pkg,
         
         EVENT_TIER_HEIGHT = TL_EVENT_BOX_HEIGHT + 2*TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
@@ -207,13 +207,18 @@
         },
         
         updateEventBox = eventBox => {
-            const {timeline, model, _label} = eventBox,
+            const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar} = eventBox,
                 start = model.getStart(),
                 end = model.getEnd(),
                 locId = model.getLocation(),
                 hidden = model.isHidden();
             eventBox.eventId = model.id;
+            
             _label.setText(model.name || '');
+            _historicityBar.updateForStat(model[STAT_ID_HISTORICITY]);
+            _attestationBar.updateForStat(model[STAT_ID_ATTESTATION]);
+            _paradoxBar.updateForStat(model[STAT_ID_PARADOX]);
+            
             eventBox.setTooltip(_label.text);
             eventBox.setVisible(!hidden);
             
@@ -280,32 +285,37 @@
             include: [Selectable],
             
             initNode: function(parent, attrs) {
+                const self = this,
+                    width = attrs.width ??= TL_COL_WIDTH;
+                
                 attrs.activeColor ??= colorMegaDark;
                 attrs.hoverColor ??= colorUltraDark;
                 attrs.readyColor ??= colorDark;
                 attrs.focusable = false;
                 
                 attrs.height ??= TL_EVENT_BOX_HEIGHT;
-                
-                const width = attrs.width ??= TL_COL_WIDTH;
                 attrs.roundedCorners ??= cornerRadius;
                 
-                this.timeline = attrs.timeline;
+                self.timeline = attrs.timeline;
                 delete attrs.timeline;
                 
                 attrs.zIndex = 1;
                 
-                this.callSuper(parent, attrs);
+                self.callSuper(parent, attrs);
                 
                 // Setup debounced revalidateForEvent so it is unique per instance.
-                this.revalidateForEvent = M.debounce(this._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
+                self.revalidateForEvent = M.debounce(self._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
                 
-                (this._label = new PaddedPlainText(this, {
-                    y:spacing, width:width, visible:this.height >= TL_BOX_VISIBLE_HEIGHT_THRESHOLD,
-                    paddingLeft:4, paddingRight:4
+                (self._label = new PaddedPlainText(self, {
+                    y:spacing, width:width, paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
-                updateEventBox(this);
+                const barWidth = width - 2*spacing;
+                self._historicityBar = new pkg.HistoricityBar(self, {x:spacing, y:17, width:barWidth}, [MiniStatBar]);
+                self._attestationBar = new pkg.AttestationBar(self, {x:spacing, y:21, width:barWidth}, [MiniStatBar]);
+                self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:25, width:barWidth}, [MiniStatBar]);
+                
+                updateEventBox(self);
             },
             
             setModel: function(model) {

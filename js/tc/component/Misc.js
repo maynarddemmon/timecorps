@@ -66,18 +66,17 @@
                 
                 this.callSuper(parent, attrs);
                 
-                this.labelView = new PlainText(this, {
-                    x:trackInset, y:labelY, 
-                    fontSize:labelFontSize, visible:showLabel
-                });
+                if (showLabel) {
+                    this.labelView = new PlainText(this, {x:trackInset, y:labelY, fontSize:labelFontSize});
+                }
             },
             
             updateForStat: function(statModel) {
                 const self = this,
                     labelView = self.labelView,
                     tooltip = statModel.formatAsTooltip();
-                labelView.setText(statModel.formatAsLabel());
-                labelView.setTooltip(tooltip);
+                labelView?.setText(statModel.formatAsLabel());
+                labelView?.setTooltip(tooltip);
                 self.setMinValue(statModel.getMin());
                 self.setMaxValue(statModel.getMax());
                 self.setValue(statModel.getValue());
@@ -163,6 +162,17 @@
     pkg.ParadoxBar = new JSClass('ParadoxBar', StatProgressBar, {
         initNode: function(parent, attrs) {
             attrs.valueColor ??= colorParadox;
+            this.callSuper(parent, attrs);
+        }
+    });
+    pkg.MiniStatBar = new JS.Module('MiniStatBar', {
+        initNode: function(parent, attrs) {
+            attrs.showLabel ??= false;
+            attrs.height ??= 5;
+            attrs.roundedCorners ??= 0;
+            //attrs.trackOutset ??= 0;
+            //attrs.trackInset ??= 0;
+            
             this.callSuper(parent, attrs);
         }
     });
