@@ -619,7 +619,7 @@
         
         // Scrolling //
         scrollToEventBox: function(thingy, smoothly=true) {
-            const eventBox = thingy?.isA(EventBox) ? thingy : this.getEventBox(thingy);
+            const eventBox = thingy?.isA?.(EventBox) ? thingy : this.getEventBox(thingy);
             if (eventBox?.visible) this.scrollToBoundingBox(eventBox, smoothly);
         },
         
