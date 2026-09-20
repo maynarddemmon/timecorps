@@ -5,7 +5,7 @@
         
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
-            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, 
+            InfiniteGridWrapper, GridColHdr, GridCellBtn, 
             SimpleAgentGridMarker,
             timeUtil:{format},
             theme:{padding, colorParadox, colorChronal, fontFamilyMono, btnHeight},
@@ -116,14 +116,9 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.chronalPool = new LabeledValue(header, {label:I18N_CHRONAL + ' Pool', valueTextColor:colorChronal}, [{
-                update: function(v) {
-                    if (self.ready) {
-                        const statChronal = self.model[STAT_ID_CHRONAL];
-                        this.callSuper(statChronal.formatAsFraction());
-                    }
-                }
-            }]);
+            self.chronalBar = new pkg.ChronalBar(header, {
+                valign:'middle', labelTemplate:'{label} Pool'
+            }, [pkg.BigStatBar]);
             
             self.gridWrapper = new InfiniteGridWrapper(self, {
                 selectable:true,
@@ -250,9 +245,7 @@
         
         setup: function(model) {
             this.model = model;
-            
-            const statChronal = model[STAT_ID_CHRONAL];
-            this.chronalPool.constrain('update', [statChronal, 'value', statChronal, 'max']);
+            this.chronalBar.watchStatModel(model[STAT_ID_CHRONAL]);
             this.gridWrapper.setModelCollection(model[SCOPE_AGENTS]);
         }
     });

@@ -14,7 +14,7 @@
             return mathFloor(mathLog10(2 + 2* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_YEAR));
         },
         
-        ICON_CHRONAL ='⏲', // ⏲ ⌚ ♾
+        ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
         TC = pkg.tc = {
@@ -32,6 +32,7 @@
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',
                 colorDark:'#530',
+                colorMediumDark:'#770',
                 colorMedium:'#990',
                 colorMedLight:'#bb0',
                 colorLight:'#cc0',
@@ -157,6 +158,8 @@
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
             I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
+            I18N_HISTORICITY:'Historicity',
+            I18N_ATTESTATION:'Attestation',
             
             // Icons
             ICON_SEPARATOR:' · ',

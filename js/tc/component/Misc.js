@@ -1,17 +1,17 @@
 (pkg => {
     'use strict';
     
-    const JSClass = JS.Class,
+    const {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
-        {View, Text, PlainText, SizeToParent} = M,
+        {View, Text, PlainText, SizeToParent, interpolateString} = M,
         
         {
             theme:{
                 spacing, padding, layoutSpacing, btnHeight, rowHeight,
                 colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark, colorBtn,
                 fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono,
-                colorHistoricity, colorAttestation, colorParadox
+                colorHistoricity, colorAttestation, colorParadox, colorChronal
             }
         } = pkg,
         
@@ -35,7 +35,7 @@
                 
                 const headerView = this._headerView = new WideView(this, {ignorePlacement:true, height:rowHeight, bgColor:colorDark});
                 (this._titleView = new Text(headerView, {text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1})).enableEllipsis();
-                new M.ResizeLayout(headerView, {inset:padding, spacing:spacing, outset:padding});
+                new M.ResizeLayout(headerView, {inset:padding/2, spacing:spacing, outset:padding/2});
                 
                 const y = headerView.y + headerView.height + layoutSpacing;
                 this._contentView = new WideView(this, {
@@ -59,23 +59,34 @@
                 attrs.height ??= 6;
                 attrs.roundedCorners ??= 3;
                 attrs.trackOutset ??= 1;
-                const trackInset = attrs.trackInset ??= 1,
-                    showLabel = attrs.showLabel ??= true,
+                attrs.trackInset ??= 1;
+                
+                attrs.labelTemplate ??= '{label}';
+                
+                const showLabel = attrs.showLabel ??= true,
+                    labelX = attrs.labelX ??= attrs.trackInset,
                     labelY = attrs.labelY ??= -12,
                     labelFontSize = attrs.labelFontSize ??= fontSizeMicro;
+                delete attrs.showLabel;
+                delete attrs.labelX;
+                delete attrs.labelY;
+                delete attrs.labelFontSize;
                 
                 this.callSuper(parent, attrs);
                 
-                if (showLabel) {
-                    this.labelView = new PlainText(this, {x:trackInset, y:labelY, fontSize:labelFontSize});
-                }
+                if (showLabel) this.labelView = new PlainText(this, {x:labelX, y:labelY, fontSize:labelFontSize});
+            },
+            
+            setLabelTemplate: function(v) {
+                this.set('labelTemplate', v, true);
             },
             
             updateForStat: function(statModel) {
                 const self = this,
                     labelView = self.labelView,
-                    tooltip = statModel.formatAsTooltip();
-                labelView?.setText(statModel.formatAsLabel());
+                    label = interpolateString(self.labelTemplate, {label:statModel.formatAsLabel()}),
+                    tooltip = label + statModel.formatAsTooltip('{ICON_SEPARATOR}{percent}{ICON_SEPARATOR}{fraction}');
+                labelView?.setText(label);
                 labelView?.setTooltip(tooltip);
                 self.setMinValue(statModel.getMin());
                 self.setMaxValue(statModel.getMax());
@@ -165,7 +176,13 @@
             this.callSuper(parent, attrs);
         }
     });
-    pkg.MiniStatBar = new JS.Module('MiniStatBar', {
+    pkg.ChronalBar = new JSClass('ParadoxBar', StatProgressBar, {
+        initNode: function(parent, attrs) {
+            attrs.valueColor ??= colorChronal;
+            this.callSuper(parent, attrs);
+        }
+    });
+    pkg.MiniStatBar = new JSModule('MiniStatBar', {
         initNode: function(parent, attrs) {
             attrs.showLabel ??= false;
             attrs.height ??= 5;
@@ -174,6 +191,26 @@
             //attrs.trackInset ??= 0;
             
             this.callSuper(parent, attrs);
+        }
+    });
+    pkg.BigStatBar = new JSModule('BigStatBar', {
+        initNode: function(parent, attrs) {
+            attrs.showLabel ??= true;
+            attrs.width ??= 150;
+            attrs.height ??= 18;
+            attrs.roundedCorners ??= 9;
+            attrs.labelY ??= 3;
+            attrs.labelX ??= 8;
+            
+            this.callSuper(parent, attrs);
+        },
+        
+        watchStatModel: function(statModel) {
+            this.statModel = statModel;
+            this.constrain('_update', [statModel, 'value', statModel, 'max']);
+        },
+        _update: function(v) {
+            this.updateForStat(this.statModel);
         }
     });
 })(tc);

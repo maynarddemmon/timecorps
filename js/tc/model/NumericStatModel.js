@@ -1,13 +1,13 @@
 (pkg => {
     'use strict';
     
-    const formatAsPercentage = myt.formatAsPercentage,
+    const {formatAsPercentage, interpolateString} = myt,
         
         {min:mathMin, max:mathMax} = Math,
         
         {
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
-            I18N_PARADOX, I18N_CHRONAL,
+            I18N_PARADOX, I18N_CHRONAL, I18N_HISTORICITY, I18N_ATTESTATION,
             ICON_SEPARATOR, ICON_NIL
         } = pkg,
         
@@ -151,7 +151,7 @@
             triggerValueAtMax: function() {this.fireEvent('valueAtMax', true);},
             triggerValueClampedToMax: function() {this.fireEvent('valueClampedToMax', true);},
             
-            format: function(format) {
+            format: function(format, template) {
                 const value = this.getValue(),
                     max = this.getMax(),
                     id = this.id;
@@ -160,17 +160,28 @@
                         switch (id) {
                             case STAT_ID_PARADOX: return I18N_PARADOX;
                             case STAT_ID_CHRONAL: return I18N_CHRONAL;
-                            case STAT_ID_HISTORICITY: return 'Historicity';
-                            case STAT_ID_ATTESTATION: return 'Attestation';
+                            case STAT_ID_HISTORICITY: return I18N_HISTORICITY;
+                            case STAT_ID_ATTESTATION: return I18N_ATTESTATION;
                             default: return id;
                         }
                     case '%':
                     case 'percent':
                         return max ? formatAsPercentage(value / max, 0) : ICON_NIL ;
                     case 'verbose':
-                        return 'Current Value: ' + value + ' Max Value: ' + max;
+                        return interpolateString(
+                            template ?? 'Current Value: {value}{ICON_SEPARATOR}Max Value: {max}',
+                            {ICON_SEPARATOR, value, max}
+                        );
                     case 'tooltip':
-                        return this.formatAsLabel() + ICON_SEPARATOR + this.formatAsPercent() + ICON_SEPARATOR + this.formatAsBracketFraction();
+                        return interpolateString(
+                            template ?? '{label}{ICON_SEPARATOR}{percent}{ICON_SEPARATOR}{fraction}',
+                            {
+                                ICON_SEPARATOR,
+                                label:this.formatAsLabel(),
+                                percent:this.formatAsPercent(),
+                                fraction:this.formatAsBracketFraction()
+                            }
+                        );
                     case '[/]':
                     case 'bracketFraction':
                         return '[' + value + '/' + max + ']';
@@ -180,12 +191,12 @@
                         return value + '/' + max;
                 }
             },
-            formatVerbose: function() {return this.format('verbose');},
-            formatAsPercent: function() {return this.format('%');},
-            formatAsFraction: function() {return this.format('/');},
-            formatAsBracketFraction: function() {return this.format('[/]');},
-            formatAsLabel: function() {return this.format('label');},
-            formatAsTooltip: function() {return this.format('tooltip');},
+            formatVerbose: function(template) {return this.format('verbose', template);},
+            formatAsPercent: function(template) {return this.format('%', template);},
+            formatAsFraction: function(template) {return this.format('/', template);},
+            formatAsBracketFraction: function(template) {return this.format('[/]', template);},
+            formatAsLabel: function(template) {return this.format('label', template);},
+            formatAsTooltip: function(template) {return this.format('tooltip', template);},
             
             getAsObj: function(cfg) {
                 const self = this,

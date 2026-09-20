@@ -7,7 +7,7 @@
         {View, PaddedPlainText, PlainText, Selectable} = M,
         
         {
-            SquareBtn, LabeledValue, MiniStatBar,
+            SquareBtn, MiniStatBar,
             timeUtil:{format,},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
@@ -18,8 +18,8 @@
             },
             theme:{
                 spacing, cornerRadius, rowHeight, 
-                colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
-                colorBtn, colorParadox,
+                colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
+                colorUltraDark, colorMegaDark, colorBtn, colorParadox,
                 fontSizeLarge
             },
             I18N_PARADOX,
@@ -354,14 +354,22 @@
                 
                 this.setOutline(this.selected ? BOX_SELECTED_OUTLINE : null);
                 
+                let barBgColor;
                 if (this.selected) {
                     this.setBgColor(colorLight);
                     this.setTextColor(colorDark);
+                    barBgColor = colorMedium;
                 } else if (this.adjacentIsSelected) {
                     this.setBgColor(colorMedium);
                     this.setTextColor(null);
+                    barBgColor = colorMediumDark;
                 } else {
                     this.setTextColor(null);
+                    barBgColor = colorMegaDark;
+                }
+                
+                for (const sv of [this._historicityBar, this._attestationBar, this._paradoxBar]) {
+                    sv?.setBgColor(barBgColor);
                 }
             },
             
@@ -458,13 +466,9 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.timelineParadoxView = new LabeledValue(header, {label:'Timeline ' + I18N_PARADOX, valueTextColor:colorParadox}, [{
-                update: function(v) {
-                    if (self.ready) {
-                        this.callSuper(self.model[STAT_ID_PARADOX].formatAsPercent());
-                    }
-                }
-            }]);
+            self.timelineParadoxBar = new pkg.ParadoxBar(header, {
+                valign:'middle', labelTemplate:'Timeline {label}'
+            }, [pkg.BigStatBar]);
             
             const 
                 scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
@@ -655,8 +659,7 @@
         // Setup //
         setup: function(model) {
             this.model = model;
-            const statParadox = model[STAT_ID_PARADOX];
-            this.timelineParadoxView.constrain('update', [statParadox, 'value', statParadox, 'max']);
+            this.timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
             
             updateTimelineLayout(this, true);
             this.timelineReady = true;
