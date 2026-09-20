@@ -154,8 +154,11 @@
                 self.callSuper(parent, attrs);
                 
                 self.markerView = new SimpleAgentMarker(self, {x:spacing, y:spacing, ignoreLayout:true});
-                self.vitaeView = new Btn(self, {x:btnHeight + 2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true}, [{
+                self.vitaeBtn = new Btn(self, {x:btnHeight + 2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true}, [{
                     doActivated: () => pkg.app.getTeamView().selectAgent(self.agentModel.id)
+                }]);
+                self.recallBtn = new Btn(self, {align:'right', alignOffset:2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true, visible:false}, [{
+                    doActivated: () => {self.agentModel.doRecallToHQ();}
                 }]);
                 
                 self.actionView = new DetailRowFlow(self, {label:'Take Action'});
@@ -167,11 +170,20 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, markerView, vitaeView, actionView, exitView} = self,
+                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionView, exitView} = self,
                     agentCantActHere = !agentModel.canAct();
                 
                 markerView.setModel(agentModel);
-                vitaeView.setText(agentModel.name);
+                vitaeBtn.setText(agentModel.name);
+                
+                if (eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                    const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
+                    recallBtn.setVisible(true);
+                    recallBtn.setText(info.btnTxt);
+                    recallBtn.setDisabled(info.disabled);
+                } else {
+                    recallBtn.setVisible(false);
+                }
                 
                 new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
@@ -207,14 +219,6 @@
                         }]);
                         addedCount++;
                     }
-                }
-                // Also try to add a recall exit.
-                if (eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
-                    const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
-                    new Btn(exitView, {buttonType:'solid', text:info.btnTxt, disabled:info.disabled, layoutHint:'break'}, [{
-                        doActivated: () => {agentModel.doRecallToHQ();}
-                    }]);
-                    addedCount++;
                 }
                 
                 if (addedCount === 0) new TextForFlow(exitView, {text:'No exits available.'});

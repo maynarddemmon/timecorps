@@ -30,6 +30,8 @@
                 
                 this.callSuper(parent, attrs);
                 this.addDomClass('tc-Btn', buttonType);
+                
+                this.sizeViewToDom();
             },
             
             

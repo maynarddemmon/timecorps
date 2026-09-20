@@ -169,12 +169,10 @@
                 btnTxt;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                btnTxt = ICON_HQ + ' Recall "' + this.name + '" to HQ ' + 
-                    formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = ICON_HQ + ' Recall to HQ ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
                 disabled = !hasEnoughChronal;
-                btnTxt = (this.isAtHQ() ? 'Deploy' : 'Jump') + ' here ' + 
-                    formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = (this.isAtHQ() ? 'Deploy' : 'Jump') + ' here ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             }
             return {disabled, btnTxt};
         },
