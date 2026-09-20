@@ -104,7 +104,6 @@
                 SPLINE_CURVATURE:0.25,
                 
                 TL_BOX_VISIBLE_HEIGHT_THRESHOLD:20,
-                TL_SCROLL_TO_PADDING:-16,
                 TL_ROW_HEADER_WIDTH:125,
                 TL_COL_WIDTH:110,
                 TL_COL_HEADER_HEIGHT:26,

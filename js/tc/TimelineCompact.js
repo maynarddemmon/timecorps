@@ -12,7 +12,7 @@
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, TL_BOX_VISIBLE_HEIGHT_THRESHOLD, 
                 MAX_HISTORY_LENGTH, 
-                TL_SCROLL_TO_PADDING, TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
+                TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
                 TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT
             },
@@ -56,11 +56,12 @@
             startStub:6, endStub:6, startGap:2, endGap:2
         },
         
+        ANIM_DURATION = 500,
         animateAttrs = (target, attrs) => {
             target.stopActiveAnimators();
             for (const attrName in attrs) {
                 const newValue = attrs[attrName];
-                if (target[attrName] !== newValue) target.animate({attribute:attrName, to:newValue, duration:500})
+                if (target[attrName] !== newValue) target.animate({attribute:attrName, to:newValue, duration:ANIM_DURATION})
             }
         },
         
@@ -111,6 +112,7 @@
                 orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             }
             
+            let selectedBoxAnimatingToBounds;
             let targetY = 0;
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
@@ -119,6 +121,7 @@
                 targetY = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
+                    if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:eventBox.height};
                     animateAttrs(eventBox, {x:targetX, y:targetY});
                     updateEventBox(eventBox);
                 } else {
@@ -150,6 +153,11 @@
             rowHeaders.setHeight(yExtent);
             flowLayer.setWidth(xExtent);
             flowLayer.setHeight(yExtent);
+            
+            // Sometimes the animation pushed the selected box off-screen.
+            if (selectedBoxAnimatingToBounds) {
+                timeline.scrollToBoundingBox(selectedBoxAnimatingToBounds);
+            }
         },
         
         // History //
@@ -552,15 +560,19 @@
             return retval;
         },
         
+        getSelectedEventBox: function() {
+            return this.getSelected()[0];
+        },
+        
         /** @overrides SelectionManager */
         doSelected: function() {
-            const selectedEvent = this.getSelected()[0];
+            const selectedEvent = this.getSelectedEventBox();
             this.fireEvent('selectionChanged', selectedEvent);
             pushOntoHistory(this, selectedEvent.model.id);
         },
         
         /** @overrides SelectionManager */
-        doDeselected: function() {this.fireEvent('selectionChanged', this.getSelected()[0]);},
+        doDeselected: function() {this.fireEvent('selectionChanged', this.getSelectedEventBox());},
         
         getConnectionsForEventBox: function(eventBox, filter) {
             const retval = this.flowLayer.getConnections(eventBox);
@@ -606,9 +618,18 @@
         },
         
         // Scrolling //
-        scrollToEventBox: function(modelOrId, smoothly=true) {
-            const eventBox = this.getEventBox(modelOrId);
-            if (eventBox && eventBox.visible) this.scrollCaptureView.scrollXYTo(eventBox.x + TL_SCROLL_TO_PADDING, eventBox.y + TL_SCROLL_TO_PADDING, true, smoothly);
+        scrollToEventBox: function(thingy, smoothly=true) {
+            const eventBox = thingy?.isA(EventBox) ? thingy : this.getEventBox(thingy);
+            if (eventBox?.visible) this.scrollToBoundingBox(eventBox, smoothly);
+        },
+        
+        scrollToBoundingBox: function(boundingBox, smoothly=true) {
+            const flowContainer = this.flowContainer;
+            this.scrollCaptureView.scrollXYTo(
+                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
+                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
+                true, smoothly
+            );
         },
         
         scrollToLocation: function(locId, smoothly=true) {
