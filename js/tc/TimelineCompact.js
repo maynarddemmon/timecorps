@@ -600,7 +600,7 @@
             const eventBox = this.getEventBox(eventModelOrId);
             if (eventBox) {
                 this.select(eventBox);
-                if (scrollTo) this.scrollToEventBox(eventModelOrId, smoothly);
+                if (scrollTo) this.scrollToEventBox(eventBox, smoothly);
             }
         },
         
