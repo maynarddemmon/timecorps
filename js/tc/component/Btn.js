@@ -5,23 +5,7 @@
         
         M = myt,
         
-        {btnHeight} = pkg.theme,
-        
-        updateBtnIcon = btn => {
-            const {icon, iconSize, iconX, iconY} = btn;
-            let iconView = btn.getIconView();
-            if (icon) {
-                if (!iconView) iconView = btn.__iconView = new M.PlainText(btn);
-                iconView.setX(iconX);
-                iconView.setY(iconY);
-                iconView.setText(icon);
-                iconView.setFontSize(iconSize);
-                iconView.setVisible(true);
-            } else {
-                iconView?.setVisible(false);
-            }
-            btn.sizeViewToDom();
-        },
+        {spacing, btnHeight, colorLight} = pkg.theme,
         
         Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
             include: [M.Button],
@@ -46,8 +30,6 @@
                 
                 this.callSuper(parent, attrs);
                 this.addDomClass('tc-Btn', buttonType);
-                
-                updateBtnIcon(this);
             },
             
             
@@ -65,32 +47,35 @@
                     this.removeDomClass('disabled');
                     if (this.disabled) this.addDomClass('disabled');
                 }
-            },
-            
-            setIcon: function(v) {
-                this.set('icon', v, true);
-                if (this.inited) updateBtnIcon(this);
-            },
-            
-            setIconSize: function(v) {
-                this.set('iconSize', v, true);
-                if (this.inited) updateBtnIcon(this);
-            },
-            
-            setIconX: function(v) {
-                this.set('iconX', v, true);
-                if (this.inited) updateBtnIcon(this);
-            },
-            
-            setIconY: function(v) {
-                this.set('iconY', v, true);
-                if (this.inited) updateBtnIcon(this);
-            },
-            
-            getIconView: function() {
-                return this.__iconView;
             }
         });
+    
+    pkg.AgentBtn = new JSClass('AgentBtn', M.View, {
+        initNode: function(parent, attrs) {
+            const self = this,
+                disabled = attrs.disabled,
+                text = attrs.text,
+                agentModel = attrs.agentModel;
+            delete attrs.agentModel;
+            
+            attrs.height ??= btnHeight;
+            
+            self.callSuper(parent, attrs);
+            
+            self.agentIcon = new pkg.SimpleAgentMarker(self, {disabled, model:agentModel});
+            self.btn = new Btn(self, {
+                buttonType:'underline', textColor:colorLight, text, disabled
+            }, [{doActivated: self.doActivated}]);
+            
+            new M.SpacedLayout(self, {spacing:-5, collapseParent:true});
+        },
+        
+        doActivated: M.NOOP,
+        
+        setDisabled: function(v) {if (this.inited) this.btn.setDisabled(v);},
+        setText: function(v) {if (this.inited) this.btn.setText(v);},
+        setBtnModel: function(v) {if (this.inited) this.agentIcon.setModel(v);}
+    });
     
     pkg.SquareBtn = new JSClass('SquareBtn', Btn, {
         initNode: function(parent, attrs) {

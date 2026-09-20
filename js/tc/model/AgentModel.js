@@ -173,7 +173,7 @@
                     formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
                 disabled = !hasEnoughChronal;
-                btnTxt = ICON_JUMP + ' ' + (this.isAtHQ() ? 'Deploy' : 'Jump') + ' "' + this.name + '" ' + 
+                btnTxt = (this.isAtHQ() ? 'Deploy' : 'Jump') + ' here ' + 
                     formatChronalAndParadox(chronalNeeded, paradoxCost);
             }
             return {disabled, btnTxt};

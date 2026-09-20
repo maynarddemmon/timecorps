@@ -10,9 +10,9 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
-    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.SquareBtn').requires('tc');
+    file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.BaseAgentMarker','tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
+    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn').requires('tc.BaseAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
-    file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
     
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
     file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
@@ -32,7 +32,7 @@ JS.Packages(file => {
         'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker'
     );
     file(TC_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.Btn','tc.SimpleAgentMarker'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker'
     );
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',

@@ -9,7 +9,7 @@
         } = myt,
         
         {
-            Btn, SquareBtn, WideView, MiniPanel, SimpleAgentMarker, timeUtil:{format},
+            Btn, AgentBtn, SquareBtn, WideView, MiniPanel, SimpleAgentMarker, timeUtil:{format},
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
             },
@@ -264,7 +264,7 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             
-           self.whereWhen = new PaddedPlainText(detailsContainer, {
+            self.whereWhen = new PaddedPlainText(detailsContainer, {
                 percentOfParentWidth:100,
                 fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
             }, [GrandWidthMixin, SizeToParent]);
@@ -285,10 +285,10 @@
                     this.getContentView().destroyAllSubviews();
                 }
             }]);
-            self.deployAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
+            self.deployAgentBtn = new AgentBtn(agentsRow.getHeaderView(), {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
             }]);
-            self.recallAgentBtn = new Btn(agentsRow.getHeaderView(), {y:1, buttonType:'solid'}, [{
+            self.recallAgentBtn = new AgentBtn(agentsRow.getHeaderView(), {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doRecallToHQ();}
             }]);
             new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
@@ -438,6 +438,8 @@
                 recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
                 deployAgentBtn.setVisible(hasAgentModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.isHidden());
                 if (hasAgentModel) {
+                    deployAgentBtn.setBtnModel(selectedAgentModel);
+                    recallAgentBtn.setBtnModel(selectedAgentModel);
                     const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
                     if (isHQ) {
                         recallAgentBtn.setDisabled(info.disabled);
