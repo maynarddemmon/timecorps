@@ -1,26 +1,26 @@
 {
-	"initialAgentSelection":"vq",
+	"initialAgentSelection":"VQ",
 	"agents":{
-		"vq":{
+		"VQ":{
 			"name":"Vasquez",
 			"chronal":10,
 			"paradox":2,
 			"event":"casualties"
 		},
-		"ok":{
+		"OK":{
 			"name":"Okonjo",
 			"paradox":1,
 			"event":"casualties"
 		},
-		"hw":{
+		"HW":{
 			"name":"Halloway",
 			"chronal":15
 		},
-		"go":{
+		"GO":{
 			"name":"Gordon",
 			"chronal":14
 		},
-		"pi":{
+		"PI":{
 			"name":"Pierce",
 			"chronal":14
 		}

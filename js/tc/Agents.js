@@ -5,8 +5,10 @@
         
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
-            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, timeUtil:{format},
-            theme:{colorParadox, colorChronal, fontFamilyMono},
+            LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, 
+            SimpleAgentMarker,
+            timeUtil:{format},
+            theme:{padding, colorParadox, colorChronal, fontFamilyMono, btnHeight},
             SCOPE_AGENTS,
             ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
             STAT_ID_CHRONAL, STAT_ID_PARADOX
@@ -31,6 +33,7 @@
                 cellChronal.setTextColor(colorChronal);
                 cellChronal.setFontFamily(fontFamilyMono);
                 cellChronal.setTextAlign('center');
+                this.getRef('id').setY(1);
             },
             
             getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
@@ -41,6 +44,9 @@
             notifyCellUpdated: function(colId) {
                 let eventExistsTxtFunc;
                 switch (colId) {
+                    case 'id':
+                        this.getRef(colId).setModel(this.model);
+                        return;
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
@@ -68,6 +74,8 @@
             },
             getCellClass: function(colId) {
                 switch (colId) {
+                    case 'id':
+                        return SimpleAgentMarker;
                     case 'event':
                     case 'where':
                     case 'when':
@@ -124,7 +132,7 @@
                 initialSort:['id', SORT_ORDER_ASC]
             }, [{
                 makeGridHeaders: gridHeader => {
-                    new GridColHdr(gridHeader, {columnId:'id',            minValue:40, maxValue:40,  text:'ID'});
+                    new GridColHdr(gridHeader, {columnId:'id',            minValue:btnHeight + padding, maxValue:btnHeight + padding, cellXAdj:padding, cellWidthAdj:-padding, text:'ID'});
                     new GridColHdr(gridHeader, {columnId:'name',          minValue:70, maxValue:2000, flex:1, text:'Name'});
                     new GridColHdr(gridHeader, {columnId:'event',         minValue:70, maxValue:2000, flex:1, text:'Event'});
                     new GridColHdr(gridHeader, {columnId:'where',         minValue:70, maxValue:2000, flex:1, text:'Where'});

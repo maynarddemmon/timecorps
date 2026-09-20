@@ -9,12 +9,12 @@
         } = myt,
         
         {
-            Btn, SquareBtn, WideView, MiniPanel, timeUtil:{format},
+            Btn, SquareBtn, WideView, MiniPanel, SimpleAgentMarker, timeUtil:{format},
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
             },
             theme:{
-                spacing, padding, cornerRadius, rowHeight, 
+                spacing, padding, cornerRadius, rowHeight, btnHeight,
                 colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 colorParadox, colorHistoricity, colorAttestation,
                 fontSizeMedium, fontSizeLarge,
@@ -153,22 +153,25 @@
                 
                 self.callSuper(parent, attrs);
                 
-                self.vitaeView = new DetailRowFlow(self, {label:'Vitae'});
+                self.markerView = new SimpleAgentMarker(self, {x:spacing, y:spacing, ignoreLayout:true});
+                self.vitaeView = new Btn(self, {x:btnHeight + 2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true}, [{
+                    doActivated: () => pkg.app.getTeamView().selectAgent(self.agentModel.id)
+                }]);
+                
                 self.actionView = new DetailRowFlow(self, {label:'Take Action'});
                 self.exitView = new DetailRowFlow(self, {label:'Exit'});
                 
-                new SpacedLayout(self, {axis:'y', inset:spacing, spacing:spacing, outset:spacing, collapseParent:true});
+                new SpacedLayout(self, {axis:'y', inset:btnHeight + 2*spacing, spacing:spacing, outset:spacing, collapseParent:true});
                 
                 self.update();
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, vitaeView, actionView, exitView} = self,
+                    {agentModel, eventModel, markerView, vitaeView, actionView, exitView} = self,
                     agentCantActHere = !agentModel.canAct();
                 
-                new Btn(vitaeView, {buttonType:'underline', textColor:colorLight, text:agentModel.name + ' (' + agentModel.id + ')'}, [{
-                    doActivated: () => pkg.app.getTeamView().selectAgent(agentModel.id)
-                }]);
+                markerView.setModel(agentModel);
+                vitaeView.setText(agentModel.name);
                 
                 new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
