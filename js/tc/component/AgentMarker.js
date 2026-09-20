@@ -88,11 +88,20 @@
                 this._idTxt?.setVisible(this.mouseOver);
                 this._photo?.setOpacity(this.mouseOver ? 0.25 : 1);
             }
+        }),
+        
+        SimpleAgentMarker = pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', BaseAgentMarker, {
+            doActivated: function() {
+                console.log('FIXME: open an agent dossier dialog.', this.model);
+            }
         });
     
-    pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', BaseAgentMarker, {
-        doActivated: function() {
-            console.log('FIXME: open an agent dossier dialog.', this.model);
+    pkg.SimpleAgentGridMarker = new JSClass('SimpleAgentGridMarker', SimpleAgentMarker, {
+        include: [M.MouseEventsBubbleUp],
+        
+        initNode: function(parent, attrs) {
+            attrs.y ??= 1;
+            this.callSuper(parent, attrs);
         }
     });
 })(tc);

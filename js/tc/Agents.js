@@ -6,7 +6,7 @@
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
             LabeledValue, InfiniteGridWrapper, GridColHdr, GridCellBtn, 
-            SimpleAgentMarker,
+            SimpleAgentGridMarker,
             timeUtil:{format},
             theme:{padding, colorParadox, colorChronal, fontFamilyMono, btnHeight},
             SCOPE_AGENTS,
@@ -33,7 +33,6 @@
                 cellChronal.setTextColor(colorChronal);
                 cellChronal.setFontFamily(fontFamilyMono);
                 cellChronal.setTextAlign('center');
-                this.getRef('id').setY(1);
             },
             
             getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
@@ -75,7 +74,7 @@
             getCellClass: function(colId) {
                 switch (colId) {
                     case 'id':
-                        return SimpleAgentMarker;
+                        return SimpleAgentGridMarker;
                     case 'event':
                     case 'where':
                     case 'when':
