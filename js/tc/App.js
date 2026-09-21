@@ -100,8 +100,7 @@
             new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
                 doActivated: () => {model.reset();}
             }]);
-            new pkg.SquareBtn(topView, {valign:'middle', icon:'⚙', iconSize:fontSizeVeryLarge, iconX:5, iconY:-2, tooltip:'Settings'});
-            
+            new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },
         

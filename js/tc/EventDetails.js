@@ -236,10 +236,10 @@
             const header = self.getHeaderView(),
                 timelineView = pkg.app.getTimelineView();
             
-            self.hqBtn = new Btn(header, {
+            self.hqBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
             }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getHQEventModel());}}]);
-            self.theVoidBtn = new Btn(header, {
+            self.theVoidBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
             }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getTheVoidEventModel());}}]);
             
@@ -247,15 +247,15 @@
             
             self.histPrevBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
-                icon:pkg.ICON_NAV_BACK, iconSize:fontSizeLarge, iconX:6, iconY:1, 
+                text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge, 
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {timelineView.navigateHistory(-1);}}]);
-            self.scrollToBtn = new Btn(header, {
+            self.scrollToBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, disabled:true
             }, [{doActivated: () => {timelineView.scrollToEventBox(self.eventModel);}}]);
             self.histNextBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
-                icon:pkg.ICON_NAV_FORWARD, iconSize:fontSizeLarge, iconX:8, iconY:1, 
+                text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge, 
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {timelineView.navigateHistory(1);}}]);
             

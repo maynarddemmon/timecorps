@@ -84,6 +84,7 @@
             attrs.width ??= btnHeight;
             attrs.paddingLeft ??= 0;
             attrs.paddingRight ??= 0;
+            attrs.lineHeight ??= '0px';
             
             this.callSuper(parent, attrs);
         }

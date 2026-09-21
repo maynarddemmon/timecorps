@@ -510,12 +510,12 @@
             // Selected Event History Nav
             self.histPrevBtn = new SquareBtn(self, {
                 x:37, y:1, buttonType:'plain', disabled:true,
-                icon:pkg.ICON_NAV_BACK, iconSize:fontSizeLarge, iconX:6, iconY:1, 
+                text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge,
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
                 x:62, y:1, buttonType:'plain', disabled:true,
-                icon:pkg.ICON_NAV_FORWARD, iconSize:fontSizeLarge, iconX:8, iconY:1, 
+                text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge,
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
             
