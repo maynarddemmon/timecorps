@@ -111,31 +111,22 @@
                 self.callSuper(parent, attrs);
                 
                 let w = (self.width / 2) - thickness,
-                    inset = 0,
-                    bgColor = 'transparent',
-                    borderColor = '#0009';
-                self.chronalGauge = new RadialGauge(self, {
-                    x:inset, y:inset, radius:w, thickness, color:colorChronal, borderColor, bgColor
-                }, [{
-                    getTooltipByValue: value => '',
-                    getTextByValue: value => ''
-                }]);
-                w -= thickness;
-                inset += thickness;
-                self.paradoxGauge = new RadialGauge(self, {
-                    x:inset, y:inset, radius:w, thickness, color:colorParadox, borderColor, bgColor
-                }, [{
-                    getTooltipByValue: value => '',
-                    getTextByValue: value => ''
-                }]);
-                w -= thickness;
-                inset += thickness;
-                self.actionGauge = new RadialGauge(self, {
-                    x:inset, y:inset, radius:w, thickness, color:colorAction, borderColor, bgColor
-                }, [{
-                    getTooltipByValue: value => '',
-                    getTextByValue: value => ''
-                }]);
+                    inset = 0;
+                for (const [type,color] of [
+                    ['action',colorAction],
+                    ['chronal',colorChronal],
+                    ['paradox',colorParadox]
+                ]) {
+                    self[type + 'Gauge'] = new RadialGauge(self, {
+                        x:inset, y:inset, radius:w, thickness, color,
+                        borderColor:'#0009', bgColor:'transparent'
+                    }, [{
+                        getTooltipByValue: value => '',
+                        getTextByValue: value => ''
+                    }]);
+                    w -= thickness;
+                    inset += thickness;
+                }
             },
             
             _updateForAgentModel: function() {
@@ -152,7 +143,10 @@
                     paradoxGauge.setMinValue(statParadox.getMin());
                     paradoxGauge.setMaxValue(statParadox.getMax());
                     paradoxGauge.setValue(statParadox.getValue());
-                    // FIXME: actions
+                    //actionGauge.setMinValue(0);
+                    actionGauge.setMaxValue(model.getEventActionLimit());
+                    actionGauge.setValue(model.getActionsRemaining());
+// FIXME: actions
                 }
             },
         });

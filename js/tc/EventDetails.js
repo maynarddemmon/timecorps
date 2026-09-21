@@ -9,7 +9,7 @@
         } = myt,
         
         {
-            Btn, UnderlineBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
+            Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
             },
@@ -198,7 +198,7 @@
                 }
                 
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
-                new UnderlineBtn(actionView, {text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
+                new UnderlineActionBtn(actionView, {text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
                 }]);
                 const actionModels = eventModel.getActionModels();
@@ -206,7 +206,7 @@
                     const actionModel = actionModels[actionId];
                     if (!actionModel.isHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                        new UnderlineBtn(actionView, {text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
+                        new UnderlineActionBtn(actionView, {text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
                             doActivated: () => {agentModel.doAction(actionModel);}
                         }]);
                     }

@@ -5,7 +5,7 @@
         
         M = myt,
         
-        {spacing, btnHeight, colorLight, colorBtnLight} = pkg.theme,
+        {btnHeight, colorBtnLight, colorAction} = pkg.theme,
         
         Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
             include: [M.Button],
@@ -62,6 +62,14 @@
                 this.callSuper(parent, attrs);
             }
         });
+    
+    pkg.UnderlineActionBtn = new JSClass('UnderlineActionBtn', UnderlineBtn, {
+        initNode: function(parent, attrs) {
+            attrs.textColor ??= colorAction;
+            this.callSuper(parent, attrs);
+            this.addDomClass('action');
+        }
+    });
     
     pkg.AgentBtn = new JSClass('AgentBtn', M.View, {
         initNode: function(parent, attrs) {

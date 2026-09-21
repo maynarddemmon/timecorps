@@ -29,18 +29,6 @@
                 btnHeight:24,
                 rowHeight:26,
                 
-                colorMegaDark:'#310',
-                colorUltraDark:'#420',
-                colorDark:'#530',
-                colorMediumDark:'#770',
-                colorMedium:'#990',
-                colorMedLight:'#bb0',
-                colorLight:'#cc0',
-                colorExtraLight:'#dd0',
-                colorUltraLight:'#ff9',
-                colorBtn:'#a50',
-                colorBtnLight:'#f70',
-                
                 fontSizeMicro:'10px',
                 fontSizeSmall:'12px',
                 fontSizeMedium:'14px',
@@ -48,11 +36,25 @@
                 fontSizeVeryLarge:'20px',
                 fontFamilyMono:'SpaceMono',
                 
-                colorParadox:'#f69',
-                colorChronal:'#69f',
+                colorMegaDark:'#310',
+                colorUltraDark:'#420',
+                colorDark:'#530',
+                
+                colorMediumDark:'#770',
+                colorMedium:'#990',
+                colorMedLight:'#bb0',
+                colorLight:'#cc0',
+                colorExtraLight:'#dd0',
+                colorUltraLight:'#ff9',
+                
+                colorBtn:'#a70',
+                colorBtnLight:'#f70',
+                
+                colorParadox:'#f39',
+                colorChronal:'#39f',
                 colorHistoricity:'#da6',
                 colorAttestation:'#fc0',
-                colorAction:'#f96f',
+                colorAction:'#6f0',
             },
             
             // Game Config

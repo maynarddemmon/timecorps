@@ -16,13 +16,12 @@
 	:root{
 		--font:AdventPro, sans-serif;
 		--fontSize:12px;
-		--bgMegaDark:#310;
-		--bgUltraDark:#420;
-		--bgDark:#530;
-		--bgUltraLight:#ff9;
+		--colorMegaDark:#310;
+		--colorUltraLight:#ff9;
 		--fgBtn:#840;
 		--fgBtnBright:#a50;
 		--fgBtnSuperBright:#c60;
+		--colorAction:#6f0;
 	}
 	
 	html,body{height:100%;margin:0px;padding:0px;border:0px none;}
@@ -33,8 +32,8 @@
 	.mytUnselectable{user-select:none;}
 
 	body{
-		background:var(--bgMegaDark);
-		color:var(--bgUltraLight);
+		background:var(--colorMegaDark);
+		color:var(--colorUltraLight);
 		font-size:var(--fontSize);
 		font-weight:500;
 		font-family:var(--font);
@@ -146,6 +145,10 @@
 	}
 	.tc-Btn.underline:hover::after {width:100%;}
 	.tc-Btn.underline.disabled:hover::after {width:0%;}
+	
+	.tc-Btn.underline.action::after {
+		background-color:var(--colorAction);
+	}
 </style>
 <script>
 const getElem = id => document.getElementById(id),

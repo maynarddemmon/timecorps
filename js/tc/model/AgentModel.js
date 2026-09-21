@@ -13,7 +13,7 @@
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE
             },
-            theme:{colorBtn, fontFamilyMono},
+            theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
@@ -118,7 +118,7 @@
         getActionsRemaining: function() {return mathMax(0, this.getEventActionLimit() - this.getActionExecCount());},
         canAct: function() {return this.getActionsRemaining() > 0;},
         getActionsPhrase: function() {
-            return 'Actions: <span style="color:' + colorBtn + ';font-family:' + fontFamilyMono + ';">' + this.getActionsRemaining() + '</span>';
+            return 'Actions: <span style="color:' + colorAction + ';font-family:' + fontFamilyMono + ';">' + this.getActionsRemaining() + '</span>';
         },
         
         setEvent: function(event, logEntry) {
