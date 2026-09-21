@@ -176,7 +176,7 @@
             this.callSuper(parent, attrs);
         }
     });
-    pkg.ChronalBar = new JSClass('ParadoxBar', StatProgressBar, {
+    pkg.ChronalBar = new JSClass('ChronalBar', StatProgressBar, {
         initNode: function(parent, attrs) {
             attrs.valueColor ??= colorChronal;
             this.callSuper(parent, attrs);

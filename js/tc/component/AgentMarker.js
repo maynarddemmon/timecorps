@@ -4,15 +4,16 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, PlainText} = M,
+        {View, RadialGauge} = M,
         
         {
             theme:{
                 spacing, padding, btnHeight,
                 colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
                 fontSizeMicro, fontSizeMedium,
-                colorHistoricity, colorAttestation, colorParadox
-            }
+                colorHistoricity, colorAttestation, colorParadox, colorChronal, colorAction
+            },
+            STAT_ID_CHRONAL, STAT_ID_PARADOX
         } = pkg,
         
         /** A circular AgentMarker that shows a photo and the ID on mouseover. */
@@ -31,16 +32,16 @@
                 
                 attrs.bgColor ??= colorMegaDark;
                 attrs.photoBgColor ??= colorMedium;
-                
-                const photoInset = attrs.photoInset ??= 1,
+                const idFontSize = attrs.idFontSize ??= fontSizeMicro,
+                    photoInset = attrs.photoInset ??= 1,
                     size = attrs.size ??= btnHeight;
                 attrs.width = attrs.height = size;
                 
                 self.callSuper(parent, attrs);
                 
                 self._photo = new View(self, {imageSize:'contain'}, [M.ImageSupport]);
-                self._idTxt = new PlainText(self, {
-                    align:'center', valign:'middle', fontSize:fontSizeMicro, textColor:colorUltraLight,
+                self._idTxt = new M.PlainText(self, {
+                    align:'center', valign:'middle', fontSize:idFontSize, textColor:colorUltraLight,
                     visible:false
                 });
                 
@@ -53,7 +54,7 @@
             },
             
             _updateLook: function() {
-                const {_photo, size, photoInset, photoBgColor} = this;
+                const {_photo, _idTxt, idFontSize, size, photoInset, photoBgColor} = this;
                 
                 this.setWidth(size);
                 this.setHeight(size);
@@ -67,6 +68,8 @@
                 _photo.setHeight(photoSize);
                 _photo.setRoundedCorners(photoSize/2);
                 _photo.setBgColor(photoBgColor);
+                
+                _idTxt.setFontSize(idFontSize);
             },
             
             setModel: function(v) {
@@ -94,7 +97,74 @@
             doActivated: function() {
                 console.log('FIXME: open an agent dossier dialog.', this.model);
             }
+        }),
+    
+        StatusAgentMarker = pkg.StatusAgentMarker = new JSClass('StatusAgentMarker', SimpleAgentMarker, {
+            initNode: function(parent, attrs) {
+                const self = this,
+                    thickness = attrs.thickness ??= 1;
+                delete attrs.thickness;
+                
+                //attrs.photoInset ??= 3*thickness;
+                attrs.bgColor ??= '#000';
+                
+                self.callSuper(parent, attrs);
+                
+                let w = (self.width / 2) - thickness,
+                    inset = 0,
+                    bgColor = 'transparent',
+                    borderColor = '#0009';
+                self.chronalGauge = new RadialGauge(self, {
+                    x:inset, y:inset, radius:w, thickness, color:colorChronal, borderColor, bgColor
+                }, [{
+                    getTooltipByValue: value => '',
+                    getTextByValue: value => ''
+                }]);
+                w -= thickness;
+                inset += thickness;
+                self.paradoxGauge = new RadialGauge(self, {
+                    x:inset, y:inset, radius:w, thickness, color:colorParadox, borderColor, bgColor
+                }, [{
+                    getTooltipByValue: value => '',
+                    getTextByValue: value => ''
+                }]);
+                w -= thickness;
+                inset += thickness;
+                self.actionGauge = new RadialGauge(self, {
+                    x:inset, y:inset, radius:w, thickness, color:colorAction, borderColor, bgColor
+                }, [{
+                    getTooltipByValue: value => '',
+                    getTextByValue: value => ''
+                }]);
+            },
+            
+            _updateForAgentModel: function() {
+                const model = this.model;
+                if (model) {
+                    this.callSuper();
+                    
+                    const {chronalGauge, paradoxGauge, actionGauge} = this,
+                        statChronal = model[STAT_ID_CHRONAL],
+                        statParadox = model[STAT_ID_PARADOX];
+                    chronalGauge.setMinValue(statChronal.getMin());
+                    chronalGauge.setMaxValue(statChronal.getMax());
+                    chronalGauge.setValue(statChronal.getValue());
+                    paradoxGauge.setMinValue(statParadox.getMin());
+                    paradoxGauge.setMaxValue(statParadox.getMax());
+                    paradoxGauge.setValue(statParadox.getValue());
+                    // FIXME: actions
+                }
+            },
         });
+    
+    pkg.StatusAgentMarkerMedium = new JSClass('StatusAgentMarkerMedium', StatusAgentMarker, {
+        initNode: function(parent, attrs) {
+            attrs.thickness ??= 2;
+            attrs.size ??= 2*btnHeight;
+            attrs.idFontSize ??= fontSizeMedium;
+            this.callSuper(parent, attrs);
+        }
+    });
     
     pkg.SimpleAgentGridMarker = new JSClass('SimpleAgentGridMarker', SimpleAgentMarker, {
         include: [M.MouseEventsBubbleUp],

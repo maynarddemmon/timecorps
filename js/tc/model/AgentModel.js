@@ -1,7 +1,7 @@
 (pkg => {
     'use strict';
     
-    const mathMin = Math.min,
+    const {max:mathMax, min:mathMin} = Math,
         
         M = myt,
         {stableStringify, getRandomInt} = M,
@@ -77,7 +77,7 @@
         
         getAsObj: function(cfg) {
             const retval = this.callSuper(cfg);
-            for (const attrName of ['name','event']) retval[attrName] = this[attrName];
+            for (const attrName of ['name','event','actionExecCount']) retval[attrName] = this[attrName];
             for (const attrName of [STAT_ID_PARADOX,STAT_ID_CHRONAL]) {
                 // Use stableStringify since similarTo uses shallowEqual. If this gets 
                 // unwieldy change similarTo to use deepEqual and drop the stableStringify.
@@ -112,12 +112,13 @@
                 if (this.inited && !noEventUpdate) this.getEventModel()?.notifyCollectionOfUpdate();
             }
         },
+        getActionExecCount: function() {return this.actionExecCount;},
         incrementActionExecCount: function() {this.setActionExecCount(this.actionExecCount + 1);},
-        canAct: function() {return this.getEventModel()?.getActionLimit() > this.actionExecCount;},
-        getActionsRemainingPhrase: function() {
-            const eventActionLimit = this.getEventModel()?.getActionLimit() ?? 0,
-                actionExecCount = this.actionExecCount;
-            return 'Actions Remaining: <span style="color:' + colorBtn + ';font-family:' + fontFamilyMono + ';">' + (eventActionLimit - actionExecCount) + '/' + eventActionLimit + '</span>';
+        getEventActionLimit: function() {return this.getEventModel()?.getActionLimit() ?? 0;},
+        getActionsRemaining: function() {return mathMax(0, this.getEventActionLimit() - this.getActionExecCount());},
+        canAct: function() {return this.getActionsRemaining() > 0;},
+        getActionsPhrase: function() {
+            return 'Actions: <span style="color:' + colorBtn + ';font-family:' + fontFamilyMono + ';">' + this.getActionsRemaining() + '</span>';
         },
         
         setEvent: function(event, logEntry) {

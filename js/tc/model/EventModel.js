@@ -112,9 +112,9 @@
                 const toEvent = this.getToEventModel(),
                     toEventName = toEvent ? toEvent.name : this.to;
                 switch (this.mode) {
-                    case TRAVEL_MODE_WAIT: return 'Wait for "' + toEventName + '"';
-                    case TRAVEL_MODE_WALK: return 'Walk to "' + toEventName + '"';
-                    default: return 'To "' + toEventName + '"';
+                    case TRAVEL_MODE_WAIT: return 'Wait for ' + toEventName;
+                    case TRAVEL_MODE_WALK: return 'Walk to ' + toEventName;
+                    default: return 'To ' + toEventName;
                 }
             }
         }),

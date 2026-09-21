@@ -5,7 +5,7 @@
         
         M = myt,
         
-        {spacing, btnHeight, colorLight} = pkg.theme,
+        {spacing, btnHeight, colorLight, colorBtnLight} = pkg.theme,
         
         Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
             include: [M.Button],
@@ -50,6 +50,17 @@
                     if (this.disabled) this.addDomClass('disabled');
                 }
             }
+        }),
+        
+        UnderlineBtn = pkg.UnderlineBtn = new JSClass('UnderlineBtn', Btn, {
+            initNode: function(parent, attrs) {
+                attrs.buttonType ??= 'underline';
+                attrs.textColor ??= colorBtnLight;
+                attrs.paddingLeft ??= 0;
+                attrs.paddingRight ??= 0;
+                
+                this.callSuper(parent, attrs);
+            }
         });
     
     pkg.AgentBtn = new JSClass('AgentBtn', M.View, {
@@ -64,12 +75,11 @@
             
             self.callSuper(parent, attrs);
             
+            const connectorLine = 10;
+            self.btn = new UnderlineBtn(self, {paddingLeft:connectorLine, text, disabled}, [{doActivated: self.doActivated}]);
             self.agentIcon = new pkg.SimpleAgentMarker(self, {disabled, model:agentModel});
-            self.btn = new Btn(self, {
-                buttonType:'underline', textColor:colorLight, text, disabled
-            }, [{doActivated: self.doActivated}]);
             
-            new M.SpacedLayout(self, {spacing:-5, collapseParent:true});
+            new M.SpacedLayout(self, {spacing:2 - connectorLine, collapseParent:true, reverse:true});
         },
         
         doActivated: M.NOOP,

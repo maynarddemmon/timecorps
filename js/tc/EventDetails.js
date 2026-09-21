@@ -9,7 +9,7 @@
         } = myt,
         
         {
-            Btn, AgentBtn, SquareBtn, WideView, MiniPanel, SimpleAgentMarker, timeUtil:{format},
+            Btn, UnderlineBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
             },
@@ -80,10 +80,8 @@
                 });
                 
                 const valueX = LABEL_WIDTH + padding;
-                self._value = new PaddedText(self, {
-                    x:valueX, fontSize:fontSizeMedium,
-                    percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, whiteSpace:'normal',
-                    paddingTop:ROW_PADDING_TOP, text:ICON_NIL
+                self._value = new TextForFlow(self, {
+                    x:valueX, percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, text:ICON_NIL
                 }, [SizeToParent, {
                     sizeViewToDom: function() {
                         this.callSuper();
@@ -120,7 +118,7 @@
                             }
                         }
                     }]);
-                new WrappingLayout(contentView, {spacing:spacing, lineSpacing:spacing, collapseParent:true});
+                new WrappingLayout(contentView, {spacing:padding, lineSpacing:-5, collapseParent:true});
             },
             setLabel: function(v) {this._label.setText(v);},
             clearContent: function() {
@@ -135,12 +133,26 @@
                 this.callSuper(parent, attrs);
             }
         }),
-        NoValueText = new JSClass('NoValueText', PaddedPlainText, {
+        NoValueText = new JSClass('NoValueText', TextForFlow, {
             initNode: function(parent, attrs) {
-                attrs.paddingTop ??= ROW_PADDING_TOP;
-                attrs.fontSize ??= fontSizeMedium;
                 attrs.text ??= ICON_NIL;
                 this.callSuper(parent, attrs);
+            }
+        }),
+        
+        // Agent Row
+        MARKER_EXTENT = 2*btnHeight + spacing + padding,
+        AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
+            initNode: function(parent, attrs) {
+                attrs.x ??= MARKER_EXTENT;
+                attrs.percentOfParentWidthOffset ??= -attrs.x;
+                
+                this.callSuper(parent, attrs);
+                
+                new WrappingLayout(this, {spacing:padding, lineSpacing:-5, collapseParent:true});
+            },
+            clearContent: function() {
+                this.destroyAllSubviews();
             }
         }),
         AgentRow = new JSClass('AgentRow', WideView, {
@@ -153,18 +165,18 @@
                 
                 self.callSuper(parent, attrs);
                 
-                self.markerView = new SimpleAgentMarker(self, {x:spacing, y:spacing, ignoreLayout:true});
-                self.vitaeBtn = new Btn(self, {x:btnHeight + 2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true}, [{
+                self.markerView = new StatusAgentMarkerMedium(self, {x:spacing, y:spacing, ignoreLayout:true});
+                self.vitaeBtn = new UnderlineBtn(self, {x:MARKER_EXTENT, y:spacing, fontSize:fontSizeLarge, ignoreLayout:true}, [{
                     doActivated: () => pkg.app.getTeamView().selectAgent(self.agentModel.id)
                 }]);
-                self.recallBtn = new Btn(self, {align:'right', alignOffset:2*spacing, y:spacing, buttonType:'underline', textColor:colorLight, ignoreLayout:true, visible:false}, [{
+                self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
                     doActivated: () => {self.agentModel.doRecallToHQ();}
                 }]);
                 
-                self.actionView = new DetailRowFlow(self, {label:'Take Action'});
-                self.exitView = new DetailRowFlow(self, {label:'Exit'});
+                self.actionView = new AgentRowFlow(self);
+                self.exitView = new AgentRowFlow(self);
                 
-                new SpacedLayout(self, {axis:'y', inset:btnHeight + 2*spacing, spacing:spacing, outset:spacing, collapseParent:true});
+                new SpacedLayout(self, {axis:'y', inset:26, spacing:-5, outset:spacing, collapseParent:true});
                 
                 self.update();
             },
@@ -185,39 +197,40 @@
                     recallBtn.setVisible(false);
                 }
                 
-                new Btn(actionView, {buttonType:'solid', text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
+                new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
+                new UnderlineBtn(actionView, {text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
                 }]);
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
-                    
-                    if (actionModel.isHidden()) continue;
-                    
-                    new Btn(actionView, {buttonType:'solid', text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
-                        doActivated: () => {agentModel.doAction(actionModel);}
-                    }]);
+                    if (!actionModel.isHidden()) {
+                        new TextForFlow(actionView, {text:ICON_SEPARATOR});
+                        new UnderlineBtn(actionView, {text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
+                            doActivated: () => {agentModel.doAction(actionModel);}
+                        }]);
+                    }
                 }
-                new TextForFlow(actionView, {text:agentModel.getActionsRemainingPhrase()});
                 
+                new TextForFlow(exitView, {text:'Exits:'});
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
-                    if (exitModel.isHidden()) continue;
-                    
-                    const toEventModel = exitModel.getToEventModel();
-                    if (!toEventModel.isHidden()) {
-                        const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
-                        new Btn(exitView, {buttonType:'solid', text:ICON_VIEW, layoutHint:'break'}, [{
-                            doActivated: () => {pkg.app.getTimelineView().scrollToEventBox(toEventModel);}
-                        }]);
-                        new Btn(exitView, {
-                            buttonType:'solid', 
-                            text:ICON_TRAVEL + ' ' + exitModel.getBtnLabel() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : '')
-                        }, [{
-                            doActivated: () => {agentModel.doFollowExit(exitModel);}
-                        }]);
-                        addedCount++;
+                    if (!exitModel.isHidden()) {
+                        const toEventModel = exitModel.getToEventModel();
+                        if (!toEventModel.isHidden()) {
+                            const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
+                            if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
+                            new UnderlineBtn(exitView, {
+                                text:exitModel.getBtnLabel() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : '')
+                            }, [{
+                                doActivated: () => {agentModel.doFollowExit(exitModel);}
+                            }]);
+                            /*new UnderlineBtn(exitView, {text:'View ' + ICON_NAV_FORWARD}, [{
+                                doActivated: () => {pkg.app.getTimelineView().doSelectEvent(toEventModel);}
+                            }]);*/
+                            addedCount++;
+                        }
                     }
                 }
                 
@@ -378,7 +391,8 @@
                 if (precursors.size > 0) {
                     for (const precursorEvent of precursors) {
                         if (!precursorEvent.isHidden() && !eventModel.isAffectedByHidden(precursorEvent)) {
-                            new Btn(precursorsRow, {buttonType:'solid', text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                            if (addedCount > 0) new TextForFlow(precursorsRow, {text:ICON_SEPARATOR});
+                            new UnderlineBtn(precursorsRow, {text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
                                 }
@@ -397,7 +411,8 @@
                 if (descendants.size > 0) {
                     for (const descendantEvent of descendants) {
                         if (!descendantEvent.isHidden() && !descendantEvent.isAffectedByHidden(eventModel)) {
-                            new Btn(descendantsRow, {buttonType:'solid', text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                            if (addedCount > 0) new TextForFlow(descendantsRow, {text:ICON_SEPARATOR});
+                            new UnderlineBtn(descendantsRow, {text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 doActivated: () => {
                                     pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
                                 }

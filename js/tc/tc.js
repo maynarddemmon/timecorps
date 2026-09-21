@@ -37,8 +37,9 @@
                 colorMedLight:'#bb0',
                 colorLight:'#cc0',
                 colorExtraLight:'#dd0',
-                colorUltraLight:'#ff9', 
+                colorUltraLight:'#ff9',
                 colorBtn:'#a50',
+                colorBtnLight:'#f70',
                 
                 fontSizeMicro:'10px',
                 fontSizeSmall:'12px',
@@ -51,6 +52,7 @@
                 colorChronal:'#69f',
                 colorHistoricity:'#da6',
                 colorAttestation:'#fc0',
+                colorAction:'#f96f',
             },
             
             // Game Config
