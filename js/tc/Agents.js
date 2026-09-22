@@ -5,8 +5,7 @@
         
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
-            InfiniteGridWrapper, GridColHdr, GridCellBtn, 
-            SimpleAgentGridMarker,
+            GridColHdr, GridCellBtn, SimpleAgentGridMarker,
             timeUtil:{format},
             theme:{padding, colorParadox, colorChronal, fontFamilyMono, btnHeight},
             SCOPE_AGENTS,
@@ -21,20 +20,17 @@
             cell.setDisabled(!event);
         },
         
-        AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
+        AgentBar = new JS.Module('AgentBar', {
             initNode: function(parent, attrs) {
+                attrs.y = 10;
+                attrs.showLabel = false;
                 this.callSuper(parent, attrs);
-                
-                const cellParadox = this.getRef(STAT_ID_PARADOX),
-                    cellChronal = this.getRef(STAT_ID_CHRONAL);
-                cellParadox.setTextColor(colorParadox);
-                cellParadox.setFontFamily(fontFamilyMono);
-                cellParadox.setTextAlign('center');
-                cellChronal.setTextColor(colorChronal);
-                cellChronal.setFontFamily(fontFamilyMono);
-                cellChronal.setTextAlign('center');
-            },
-            
+            }
+        }),
+        AgentParadoxBar = new JSClass('AgentParadoxBar', pkg.ParadoxBar, {include: [AgentBar]}),
+        AgentChronalBar = new JSClass('AgentChronalBar', pkg.ChronalBar, {include: [AgentBar]}),
+        
+        AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
             getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
@@ -50,20 +46,9 @@
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
                     case STAT_ID_PARADOX:
-                        const statModel = this.model[colId];
-                        this.getRef(colId).setText(
-                            statModel.formatAsPercent(), 
-                            statModel.formatVerbose()
-                        );
+                    case STAT_ID_CHRONAL:
+                        this.getRef(colId).updateForStat(this.model[colId]);
                         return;
-                    case STAT_ID_CHRONAL: {
-                        const statModel = this.model[colId];
-                        this.getRef(colId).setText(
-                            statModel.formatAsBracketFraction(), 
-                            statModel.formatVerbose()
-                        );
-                        return;
-                    }
                 }
                 if (eventExistsTxtFunc) {
                     updateBtnCell(this, colId, eventExistsTxtFunc);
@@ -79,6 +64,10 @@
                     case 'where':
                     case 'when':
                         return GridCellBtn;
+                    case STAT_ID_PARADOX:
+                        return AgentParadoxBar;
+                    case STAT_ID_CHRONAL:
+                        return AgentChronalBar;
                     default:
                         return this.callSuper(colId);
                 }
@@ -120,19 +109,23 @@
                 valign:'middle', labelTemplate:'{label} Pool'
             }, [pkg.BigStatBar]);
             
-            self.gridWrapper = new InfiniteGridWrapper(self, {
+            self.gridWrapper = new pkg.InfiniteGridWrapper(self, {
                 selectable:true,
                 rowClasses:AgentRow,
                 initialSort:['id', SORT_ORDER_ASC]
             }, [{
                 makeGridHeaders: gridHeader => {
-                    new GridColHdr(gridHeader, {columnId:'id',            minValue:btnHeight + padding, maxValue:btnHeight + padding, cellXAdj:padding, cellWidthAdj:-padding, text:'ID'});
-                    new GridColHdr(gridHeader, {columnId:'name',          minValue:70, maxValue:2000, flex:1, text:'Name'});
-                    new GridColHdr(gridHeader, {columnId:'event',         minValue:70, maxValue:2000, flex:1, text:'Event'});
-                    new GridColHdr(gridHeader, {columnId:'where',         minValue:70, maxValue:2000, flex:1, text:'Where'});
-                    new GridColHdr(gridHeader, {columnId:'when',          minValue:70, maxValue:2000, flex:1, text:'When'});
-                    new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:70, maxValue:70, text:I18N_PARADOX});
-                    new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL, minValue:70, maxValue:70, text:I18N_CHRONAL});
+                    const WIDTH_ID = btnHeight + padding,
+                        WIDTH_MISC = 70,
+                        WIDTH_WHEN = 150,
+                        WIDTH_BAR = 65;
+                    new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:'ID',         cellXAdj:padding,   cellWidthAdj:-padding});
+                    new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:2000,       text:'Name',  flex:1});
+                    new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:2000,       text:'Event', flex:1});
+                    new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:2000,       text:'Where', flex:1});
+                    new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:'When'});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_PARADOX, cellXAdj:padding/2, cellWidthAdj:-padding});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_CHRONAL, cellXAdj:padding/2, cellWidthAdj:-padding});
                 },
                 doRowModelSelected: model => {
                     self.fireEvent('selectionChanged', model);

@@ -135,7 +135,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:475, limitToParent:275,
+                width:5, percentOfParentHeight:100, minValue:525, limitToParent:300,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {
@@ -168,7 +168,7 @@
         selectAgentRow: agentModelOrId => {
             teamView.selectAgent(typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id);
         },
-        selectEventBox: (eventModelOrId) => {
+        selectEventBox: eventModelOrId => {
             timelineView.doSelectEvent(eventModelOrId);
         },
         
