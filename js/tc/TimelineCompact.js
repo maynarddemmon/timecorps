@@ -589,6 +589,7 @@
             flowSVG.style.position = 'absolute';
             
             stickyView.getIDS().position = 'sticky';
+            scrollCaptureView.addDomClass('hideScrollbar');
             
             scrollCaptureView.getIDS().overscrollBehavior = 'none';
             self.scrollToken = new View(scrollCaptureView, {width:1, height:1});
@@ -675,6 +676,8 @@
             const selectedEvent = this.getSelectedEventBox();
             this.fireEvent('selectionChanged', selectedEvent);
             pushOntoHistory(this, selectedEvent.model.id);
+            
+            this.scrollToEventBox(selectedEvent);
         },
         
         /** @overrides SelectionManager */

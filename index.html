@@ -150,6 +150,15 @@
 	.tc-Btn.underline.action::after {
 		background-color:var(--colorAction);
 	}
+	
+	/* Scrollbars */
+	.hideScrollbar {
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+	.hideScrollbar::-webkit-scrollbar {
+		display: none;
+	}
 </style>
 <script>
 const getElem = id => document.getElementById(id),

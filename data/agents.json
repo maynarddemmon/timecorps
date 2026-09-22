@@ -23,6 +23,22 @@
 		"PI":{
 			"name":"Pierce",
 			"chronal":14
+		},
+		"AA":{
+			"name":"Alexander Aimes",
+			"chronal":15
+		},
+		"AB":{
+			"name":"Arthur Borne",
+			"chronal":15
+		},
+		"AC":{
+			"name":"Aaron Crown",
+			"chronal":15
+		},
+		"AD":{
+			"name":"Amon Duncan",
+			"chronal":15
 		}
 	}
 }

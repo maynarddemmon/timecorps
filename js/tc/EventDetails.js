@@ -232,7 +232,7 @@
                                 text:exitModel.getBtnLabel() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : '')
                             }, [{
                                 setMouseOver: function(v) {
-                                    if (this.mouseOver !== v) {
+                                    if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
                                             scrollToDebounced(toEventModel);
@@ -409,7 +409,7 @@
                             if (addedCount > 0) new TextForFlow(precursorsRow, {text:ICON_SEPARATOR});
                             new UnderlineBtn(precursorsRow, {text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 setMouseOver: function(v) {
-                                    if (this.mouseOver !== v) {
+                                    if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
                                             scrollToDebounced(precursorEvent);
@@ -437,7 +437,7 @@
                             if (addedCount > 0) new TextForFlow(descendantsRow, {text:ICON_SEPARATOR});
                             new UnderlineBtn(descendantsRow, {text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
                                 setMouseOver: function(v) {
-                                    if (this.mouseOver !== v) {
+                                    if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
                                             scrollToDebounced(descendantEvent);
