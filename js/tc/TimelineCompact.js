@@ -171,10 +171,12 @@
                 targetY += TL_EVENT_BOX_HEIGHT - AGENT_TOKEN_SIZE;
                 if (agentToken) {
                     if (isOffBoard) {
-                        // Leaving to HQ or The Void
-                        agentToken.setScaleX(1);
-                        agentToken.setScaleY(1);
-                        animateAttrs(agentToken, {opacity:0, scaleX:0, scaleY:0});
+                        if (!agentToken.offBoard) {
+                            // Leaving to HQ or The Void
+                            agentToken.setScaleX(1);
+                            agentToken.setScaleY(1);
+                            animateAttrs(agentToken, {opacity:0, scaleX:0, scaleY:0});
+                        }
                     } else if (agentToken.offBoard) {
                         // Entering from HQ or The Void
                         agentToken.setX(targetX);
@@ -715,12 +717,9 @@
             if (eventModelOrId) return this.boxesByEventId[typeof eventModelOrId === 'string' ? eventModelOrId : eventModelOrId.id];
         },
         
-        doSelectEvent: function(eventModelOrId, scrollTo, smoothly=true) {
+        doSelectEvent: function(eventModelOrId) {
             const eventBox = this.getEventBox(eventModelOrId);
-            if (eventBox) {
-                this.select(eventBox);
-                if (scrollTo) this.scrollToEventBox(eventBox, smoothly);
-            }
+            if (eventBox) this.select(eventBox);
         },
         
         getAgentToken: function(agentModelOrId) {
@@ -784,7 +783,7 @@
             updateTimelineLayout(this, true);
             this.timelineReady = true;
             
-            pkg.app.selectEventBox(model.getInitialSelection(), false);
+            pkg.app.selectEventBox(model.getInitialSelection());
         },
         
         notifyEventVisibilityChange: function(_eventModel) {

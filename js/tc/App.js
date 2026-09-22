@@ -168,8 +168,8 @@
         selectAgentRow: agentModelOrId => {
             teamView.selectAgent(typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id);
         },
-        selectEventBox: (eventModelOrId, scrollTo=true, smoothly=true) => {
-            timelineView.doSelectEvent(eventModelOrId, scrollTo, smoothly);
+        selectEventBox: (eventModelOrId) => {
+            timelineView.doSelectEvent(eventModelOrId);
         },
         
         // Event Dispatching
