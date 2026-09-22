@@ -164,6 +164,15 @@
         getTeamView: () => teamView,
         getEventDetailsView: () => eventDetailsView,
         
+        // Convienence Functions
+        selectAgentRow: agentModelOrId => {
+            teamView.selectAgent(typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id);
+        },
+        selectEventBox: (eventModelOrId, scrollTo=true, smoothly=true) => {
+            timelineView.doSelectEvent(eventModelOrId, scrollTo, smoothly);
+        },
+        
+        // Event Dispatching
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
         },

@@ -70,6 +70,7 @@
         
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),
         getAgentModels: () => model[SCOPE_AGENTS].getAll(),
+        getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
         getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsList(agent => agent.getEvent() === eventId),
         
         getLocation: id => model[SCOPE_LOCATIONS].getById(id),

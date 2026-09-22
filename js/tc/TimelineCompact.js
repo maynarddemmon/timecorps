@@ -17,7 +17,7 @@
                 TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT
             },
             theme:{
-                spacing, cornerRadius, rowHeight, 
+                spacing, cornerRadius, rowHeight, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn, colorParadox,
                 fontSizeLarge
@@ -32,10 +32,16 @@
         COL_WIDTH = TL_COL_WIDTH + 2*TL_EVENT_BOX_X_MARGIN,
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
         
+        AGENT_TOKEN_SIZE = btnHeight,
+        
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
         SPLINE_ID_PREFIX_EXIT = 'exit-',
+        
+        Z_IDX_EVENT = 1,
+        Z_IDX_AGENT = 2,
+        Z_IDX_FLOW = 3,
         
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
@@ -59,10 +65,14 @@
         ANIM_DURATION = 500,
         animateAttrs = (target, attrs) => {
             target.stopActiveAnimators();
+            let lastAnimator;
             for (const attrName in attrs) {
                 const newValue = attrs[attrName];
-                if (target[attrName] !== newValue) target.animate({attribute:attrName, to:newValue, duration:ANIM_DURATION})
+                if (target[attrName] !== newValue) {
+                    lastAnimator = target.animate({attribute:attrName, to:newValue, duration:ANIM_DURATION});
+                }
             }
+            return lastAnimator;
         },
         
         updateTimelineLayout = (timeline, isInitial) => {
@@ -79,14 +89,15 @@
                 timeline.colsByLocId = {};
                 timeline.boxesByEventId = {};
                 timeline.ticksByTime = {};
+                timeline.tokensByAgentId = {};
                 colHeaders.destroyAllSubviews();
                 rowHeaders.destroyAllSubviews();
                 flowLayer.destroyAllSubviews();
             }
             
-            const {colsByLocId, boxesByEventId, ticksByTime} = timeline;
+            const {colsByLocId, boxesByEventId, ticksByTime, tokensByAgentId} = timeline;
             
-            // Layout Events, Location Columns and Refresh Ticks
+            // Layout Location Columns
             let xExtent = 0;
             const locColTargetXById = {};
             for (let i = 0; i < locModelsLen; i++) {
@@ -107,18 +118,21 @@
                 }
             }
             
+            // Layout Events and Refresh Ticks
             if (isInitial) {
                 // Special Handling for HQ and The Void
                 orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             }
             
-            let selectedBoxAnimatingToBounds;
-            let targetY = 0;
+            let selectedBoxAnimatingToBounds,
+                targetY = 0;
+            const eventTargetXById = {},
+                eventTargetYById = {};
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
-                    targetX = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN;
-                targetY = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
+                    targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN;
+                targetY = eventTargetYById[eventId] = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:eventBox.height};
@@ -143,6 +157,47 @@
                         width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
                     });
                 }
+            }
+            
+            // Layout Agents
+            const agentCountsByEventId = {};
+            for (const agentModel of model.getAgentModelsAsList()) {
+                const agentId = agentModel.id,
+                    agentToken = tokensByAgentId[agentId],
+                    agentEventId = agentModel.getEvent();
+                let agentCountForEvent = agentCountsByEventId[agentEventId] ?? 1,
+                    targetX = eventTargetXById[agentEventId],
+                    targetY = eventTargetYById[agentEventId];
+                
+                if (isNaN(targetX) || isNaN(targetY)) {
+                    targetX = targetY = -1000;
+                }
+                
+                targetX += TL_COL_WIDTH - (agentCountForEvent * AGENT_TOKEN_SIZE);
+                targetY += TL_EVENT_BOX_HEIGHT - AGENT_TOKEN_SIZE;
+                if (agentToken) {
+                    if (agentToken.x < 0 || agentToken.y < 0) {
+                        // Entering from HQ or The Void
+                        agentToken.setX(targetX);
+                        agentToken.setY(targetY);
+                        agentToken.setOpacity(0);
+                        animateAttrs(agentToken, {opacity:1});
+                    } else if (targetX < 0 || targetY < 0) {
+                        // Leaving to HQ or The Void
+                        animateAttrs(agentToken, {opacity:0}).next(() => {
+                            agentToken.setX(targetX);
+                            agentToken.setY(targetY);
+                        });
+                    } else {
+                        animateAttrs(agentToken, {x:targetX, y:targetY});
+                    }
+//updateAgentToken(agentToken);
+                } else {
+                    tokensByAgentId[agentId] = new AgentToken(flowLayer, {
+                        x:targetX, y:targetY, timeline, model:agentModel
+                    });
+                }
+                agentCountsByEventId[agentEventId] = agentCountForEvent + 1;
             }
             
             // Update for new extents
@@ -299,7 +354,7 @@
                 self.timeline = attrs.timeline;
                 delete attrs.timeline;
                 
-                attrs.zIndex = 1;
+                attrs.zIndex = Z_IDX_EVENT;
                 
                 self.callSuper(parent, attrs);
                 
@@ -390,6 +445,42 @@
             }
         }),
         
+        // Agent //
+        AgentToken = new JSClass('AgentToken', pkg.StatusAgentMarker, {
+            initNode: function(parent, attrs) {
+                const self = this;
+                
+                self.timeline = attrs.timeline;
+                delete attrs.timeline;
+                
+                attrs.zIndex = Z_IDX_AGENT;
+                self.callSuper(parent, attrs);
+                
+                // Setup debounced revalidateForAgent so it is unique per instance.
+                self.revalidateForAgent = M.debounce(self._revalidateForAgent, STANDARD_DEBOUNCE_MILLIS);
+            },
+            
+            setModel: function(model) {
+                if (this.model !== model) {
+                    this.releaseConstraint('_updateForModelChanges');
+                    this.set('model', model, true);
+                    if (this.model) this.constrain('_updateForModelChanges', [this.model, 'updated']);
+                }
+            },
+            
+            _updateForModelChanges: function() {
+                if (this.inited) this.revalidateForAgent();
+            },
+            
+            _revalidateForAgent: function() {
+                this._updateForAgentModel();
+            },
+            
+            doActivated: function() {
+                this.callSuper();
+                pkg.app.selectEventBox(this.model.getEvent());
+            }
+        }),
         
         // Tick //
         Tick = new JSClass('Tick', View, {
@@ -456,6 +547,7 @@
             self.colsByLocId = {};
             self.boxesByEventId = {};
             self.ticksByTime = {};
+            self.tokensByAgentId = {};
             
             attrs.maxSelected = 1;
             attrs.itemSelectionId = 'eventId';
@@ -493,7 +585,7 @@
                 flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
                 flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}),
                 flowSVG = flowLayer.getSVG();
-            flowSVG.style.zIndex = 2;
+            flowSVG.style.zIndex = Z_IDX_FLOW;
             flowSVG.style.position = 'absolute';
             
             stickyView.getIDS().position = 'sticky';
@@ -618,13 +710,17 @@
             }
         },
         
+        getAgentToken: function(agentModelOrId) {
+            if (agentModelOrId) return this.tokensByAgentId[typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id];
+        },
+        
         // History //
         navigateHistory: function(adj) {
             const newIdx = this._histIdx + adj,
                 eventIdToSelect = this._hist[newIdx];
             if (eventIdToSelect) {
                 this._noHistUpdate = true;
-                this.doSelectEvent(eventIdToSelect,true, true);
+                pkg.app.selectEventBox(eventIdToSelect);
                 this._noHistUpdate = false;
                 this._histIdx = newIdx;
                 updateHistoryBtns(this);
@@ -675,11 +771,15 @@
             updateTimelineLayout(this, true);
             this.timelineReady = true;
             
-            this.doSelectEvent(model.getInitialSelection());
+            pkg.app.selectEventBox(model.getInitialSelection(), false);
         },
         
         notifyEventVisibilityChange: function(_eventModel) {
             if (this.timelineReady) updateTimelineLayout(this);
+        },
+        
+        notifyAgentLocOrVisChange: function(_agentModel) {
+            if (this.timelineReady) updateTimelineLayout(this); // FIXME: agent only update option?
         }
     });
 })(tc);

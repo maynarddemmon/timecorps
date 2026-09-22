@@ -95,7 +95,7 @@
             doCellBtnActivated: function(colId) {
                 switch (colId) {
                     case 'event':
-                        pkg.app.getTimelineView().doSelectEvent(this.model.getEventModel(), true);
+                        pkg.app.selectEventBox(this.model.getEventModel());
                         break;
                     case 'where':
                         pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel().getLocation());

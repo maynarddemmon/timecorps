@@ -5,7 +5,7 @@
         
         {
             View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            Layout, SpacedLayout, WrappingLayout, ResizeLayout
+            Layout, SpacedLayout, WrappingLayout, ResizeLayout, debounce
         } = myt,
         
         {
@@ -28,6 +28,13 @@
         
         LABEL_WIDTH = 75,
         ROW_PADDING_TOP = 3,
+        
+        scrollToEvent = (eventModel, clearDebounce) => {
+            if (eventModel) pkg.app.getTimelineView().scrollToEventBox(eventModel);
+            if (clearDebounce) scrollToDebounced();
+        },
+        scrollToDebounced = debounce(scrollToEvent, 1000),
+        
         GrandWidthMixin = new JS.Module('GrandWidthMixin', {
             initNode: function(parent, attrs) {
                 // Compensate for parents x position
@@ -167,7 +174,7 @@
                 
                 self.markerView = new StatusAgentMarkerMedium(self, {x:spacing, y:spacing, ignoreLayout:true});
                 self.vitaeBtn = new UnderlineBtn(self, {x:MARKER_EXTENT, y:spacing, fontSize:fontSizeLarge, ignoreLayout:true}, [{
-                    doActivated: () => pkg.app.getTeamView().selectAgent(self.agentModel.id)
+                    doActivated: () => pkg.app.selectAgentRow(self.agentModel)
                 }]);
                 self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
                     doActivated: () => {self.agentModel.doRecallToHQ();}
@@ -213,8 +220,7 @@
                 }
                 
                 new TextForFlow(exitView, {text:'Exits:'});
-                const exitModels = eventModel.getExitModels(),
-                    timelineView = pkg.app.getTimelineView();
+                const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
                     if (!exitModel.isHidden()) {
@@ -228,14 +234,15 @@
                                 setMouseOver: function(v) {
                                     if (this.mouseOver !== v) {
                                         this.callSuper(v);
-                                        timelineView.scrollToEventBox(this.mouseOver ? toEventModel : eventModel);
+                                        if (this.mouseOver) {
+                                            scrollToDebounced(toEventModel);
+                                        } else {
+                                            scrollToEvent(eventModel, true);
+                                        }
                                     }
                                 },
                                 doActivated: () => {agentModel.doFollowExit(exitModel);}
                             }]);
-                            /*new UnderlineBtn(exitView, {text:'View ' + ICON_NAV_FORWARD}, [{
-                                doActivated: () => {timelineView.doSelectEvent(toEventModel);}
-                            }]);*/
                             addedCount++;
                         }
                     }
@@ -258,10 +265,10 @@
             
             self.hqBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
-            }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getHQEventModel());}}]);
+            }, [{doActivated: () => {pkg.app.selectEventBox(pkg.model.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
-            }, [{doActivated: () => {timelineView.doSelectEvent(pkg.model.getTheVoidEventModel());}}]);
+            }, [{doActivated: () => {pkg.app.selectEventBox(pkg.model.getTheVoidEventModel());}}]);
             
             new View(header, {width:padding}); // Spacer
             
@@ -404,12 +411,14 @@
                                 setMouseOver: function(v) {
                                     if (this.mouseOver !== v) {
                                         this.callSuper(v);
-                                        timelineView.scrollToEventBox(this.mouseOver ? precursorEvent : eventModel);
+                                        if (this.mouseOver) {
+                                            scrollToDebounced(precursorEvent);
+                                        } else {
+                                            scrollToEvent(eventModel, true);
+                                        }
                                     }
                                 },
-                                doActivated: () => {
-                                    timelineView.doSelectEvent(precursorEvent, true);
-                                }
+                                doActivated: () => {pkg.app.selectEventBox(precursorEvent);}
                             }]);
                             addedCount++;
                         }
@@ -430,12 +439,14 @@
                                 setMouseOver: function(v) {
                                     if (this.mouseOver !== v) {
                                         this.callSuper(v);
-                                        timelineView.scrollToEventBox(this.mouseOver ? descendantEvent : eventModel);
+                                        if (this.mouseOver) {
+                                            scrollToDebounced(descendantEvent);
+                                        } else {
+                                            scrollToEvent(eventModel, true);
+                                        }
                                     }
                                 },
-                                doActivated: () => {
-                                    timelineView.doSelectEvent(descendantEvent, true);
-                                }
+                                doActivated: () => {pkg.app.selectEventBox(descendantEvent);}
                             }]);
                             addedCount++;
                         }

@@ -136,8 +136,10 @@
                 accrueEntryParadox(this, newEventModel);
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
+                pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
             }
         },
+        
         getEvent: function() {return this.event;},
         getEventModel: function() {return this._eventModel;},
         isAtEvent: function(eventModelOrId) {
@@ -156,6 +158,13 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        notifyCollectionOfUpdate: function() {
+            if (this.inited) {
+                this.callSuper();
+                this.fireEvent('updated');
+            }
+        },
+        
         /*notifyStatChanged: function(statModel) {
             if (this.inited) console.log('Stat Changed', statModel);
         },*/
@@ -210,7 +219,7 @@
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
                     this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
-                    pkg.app.getTimelineView().doSelectEvent(toEvent, true);
+                    pkg.app.selectEventBox(toEvent);
                 }
             } else {
                 console.warn('Agent not at event for exit:', exitModel, this);

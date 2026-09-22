@@ -10,8 +10,8 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
-    file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.BaseAgentMarker','tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
-    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn').requires('tc.BaseAgentMarker');
+    file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
+    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn').requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');

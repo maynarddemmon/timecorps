@@ -17,7 +17,7 @@
         } = pkg,
         
         /** A circular AgentMarker that shows a photo and the ID on mouseover. */
-        BaseAgentMarker = pkg.BaseAgentMarker = new JSClass('BaseAgentMarker', View, {
+        AbstractAgentMarker = new JSClass('AbstractAgentMarker', View, {
             include: [M.Button],
             
             initNode: function(parent, attrs) {
@@ -39,6 +39,8 @@
                 
                 self.callSuper(parent, attrs);
                 
+                self.attachDomObserver(self, '_doDblClick', 'dblclick');
+                
                 self._photo = new View(self, {imageSize:'contain'}, [M.ImageSupport]);
                 self._idTxt = new M.PlainText(self, {
                     align:'center', valign:'middle', fontSize:idFontSize, textColor:colorUltraLight,
@@ -46,6 +48,7 @@
                 });
                 
                 self._updateLook();
+                self._updateForAgentModel();
             },
             
             setSize: function(v) {
@@ -74,7 +77,7 @@
             
             setModel: function(v) {
                 this.set('model', v, true);
-                this._updateForAgentModel();
+                if (this.inited) this._updateForAgentModel();
             },
             
             _updateForAgentModel: function() {
@@ -90,22 +93,29 @@
                 this.callSuper();
                 this._idTxt?.setVisible(this.mouseOver);
                 this._photo?.setOpacity(this.mouseOver ? 0.25 : 1);
-            }
+            },
+            
+            _doDblClick: function(event) {
+                if (!this.disabled) this.doDoubleClick();
+            },
+            doDoubleClick: M.NOOP
         }),
         
-        SimpleAgentMarker = pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', BaseAgentMarker, {
+        SimpleAgentMarker = pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', AbstractAgentMarker, {
             doActivated: function() {
+                pkg.app.selectAgentRow(this.model);
+            },
+            doDoubleClick: function() {
                 console.log('FIXME: open an agent dossier dialog.', this.model);
             }
         }),
-    
+        
         StatusAgentMarker = pkg.StatusAgentMarker = new JSClass('StatusAgentMarker', SimpleAgentMarker, {
             initNode: function(parent, attrs) {
                 const self = this,
                     thickness = attrs.thickness ??= 1;
                 delete attrs.thickness;
                 
-                //attrs.photoInset ??= 3*thickness;
                 attrs.bgColor ??= '#000';
                 
                 self.callSuper(parent, attrs);
@@ -127,15 +137,16 @@
                     w -= thickness;
                     inset += thickness;
                 }
+                
+                self._updateForAgentModel();
             },
             
             _updateForAgentModel: function() {
-                const model = this.model;
-                if (model) {
+                const {model, chronalGauge, paradoxGauge, actionGauge} = this;
+                if (model && chronalGauge) {
                     this.callSuper();
                     
-                    const {chronalGauge, paradoxGauge, actionGauge} = this,
-                        statChronal = model[STAT_ID_CHRONAL],
+                    const statChronal = model[STAT_ID_CHRONAL],
                         statParadox = model[STAT_ID_PARADOX];
                     chronalGauge.setMinValue(statChronal.getMin());
                     chronalGauge.setMaxValue(statChronal.getMax());
@@ -143,10 +154,8 @@
                     paradoxGauge.setMinValue(statParadox.getMin());
                     paradoxGauge.setMaxValue(statParadox.getMax());
                     paradoxGauge.setValue(statParadox.getValue());
-                    //actionGauge.setMinValue(0);
                     actionGauge.setMaxValue(model.getEventActionLimit());
                     actionGauge.setValue(model.getActionsRemaining());
-// FIXME: actions
                 }
             },
         });
