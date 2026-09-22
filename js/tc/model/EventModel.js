@@ -14,7 +14,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
-            ICON_SEPARATOR
+            ICON_SEPARATOR, ICON_TRAVEL
         } = pkg,
         
         updateEndAttr = eventModel => {
@@ -112,8 +112,8 @@
                 const toEvent = this.getToEventModel(),
                     toEventName = toEvent ? toEvent.name : this.to;
                 switch (this.mode) {
-                    case TRAVEL_MODE_WAIT: return 'Wait for ' + toEventName;
-                    case TRAVEL_MODE_WALK: return 'Walk to ' + toEventName;
+                    case TRAVEL_MODE_WAIT: return 'Wait' + ICON_TRAVEL + toEventName;
+                    case TRAVEL_MODE_WALK: return 'Walk' + ICON_TRAVEL + toEventName;
                     default: return 'To ' + toEventName;
                 }
             }

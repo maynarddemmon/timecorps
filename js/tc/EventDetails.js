@@ -213,7 +213,8 @@
                 }
                 
                 new TextForFlow(exitView, {text:'Exits:'});
-                const exitModels = eventModel.getExitModels();
+                const exitModels = eventModel.getExitModels(),
+                    timelineView = pkg.app.getTimelineView();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
                     if (!exitModel.isHidden()) {
@@ -224,10 +225,16 @@
                             new UnderlineBtn(exitView, {
                                 text:exitModel.getBtnLabel() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : '')
                             }, [{
+                                setMouseOver: function(v) {
+                                    if (this.mouseOver !== v) {
+                                        this.callSuper(v);
+                                        timelineView.scrollToEventBox(this.mouseOver ? toEventModel : eventModel);
+                                    }
+                                },
                                 doActivated: () => {agentModel.doFollowExit(exitModel);}
                             }]);
                             /*new UnderlineBtn(exitView, {text:'View ' + ICON_NAV_FORWARD}, [{
-                                doActivated: () => {pkg.app.getTimelineView().doSelectEvent(toEventModel);}
+                                doActivated: () => {timelineView.doSelectEvent(toEventModel);}
                             }]);*/
                             addedCount++;
                         }
@@ -366,7 +373,8 @@
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
+                const timelineView = pkg.app.getTimelineView(),
+                    isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
                 self.hqBtn.setDisabled(isHQ);
                 self.theVoidBtn.setDisabled(eventModel.id === EVENT_ID_THE_VOID);
                 
@@ -393,8 +401,14 @@
                         if (!precursorEvent.isHidden() && !eventModel.isAffectedByHidden(precursorEvent)) {
                             if (addedCount > 0) new TextForFlow(precursorsRow, {text:ICON_SEPARATOR});
                             new UnderlineBtn(precursorsRow, {text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                                setMouseOver: function(v) {
+                                    if (this.mouseOver !== v) {
+                                        this.callSuper(v);
+                                        timelineView.scrollToEventBox(this.mouseOver ? precursorEvent : eventModel);
+                                    }
+                                },
                                 doActivated: () => {
-                                    pkg.app.getTimelineView().doSelectEvent(precursorEvent, true);
+                                    timelineView.doSelectEvent(precursorEvent, true);
                                 }
                             }]);
                             addedCount++;
@@ -413,8 +427,14 @@
                         if (!descendantEvent.isHidden() && !descendantEvent.isAffectedByHidden(eventModel)) {
                             if (addedCount > 0) new TextForFlow(descendantsRow, {text:ICON_SEPARATOR});
                             new UnderlineBtn(descendantsRow, {text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
+                                setMouseOver: function(v) {
+                                    if (this.mouseOver !== v) {
+                                        this.callSuper(v);
+                                        timelineView.scrollToEventBox(this.mouseOver ? descendantEvent : eventModel);
+                                    }
+                                },
                                 doActivated: () => {
-                                    pkg.app.getTimelineView().doSelectEvent(descendantEvent, true);
+                                    timelineView.doSelectEvent(descendantEvent, true);
                                 }
                             }]);
                             addedCount++;

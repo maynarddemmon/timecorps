@@ -632,6 +632,17 @@
         },
         
         // Scrolling //
+        getBoundingBoxForCurrentScrollPosition: function() {
+            const ide = this.scrollCaptureView.getIDE(),
+                flowContainer = this.flowContainer;
+            return {
+                x:ide.scrollLeft,
+                y:ide.scrollTop,
+                width:flowContainer.width,
+                height:flowContainer.height
+            };
+        },
+        
         scrollToEventBox: function(thingy, smoothly=true) {
             const eventBox = thingy?.isA?.(EventBox) ? thingy : this.getEventBox(thingy);
             if (eventBox?.visible) this.scrollToBoundingBox(eventBox, smoothly);
