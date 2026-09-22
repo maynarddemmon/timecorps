@@ -63,16 +63,15 @@
         },
         
         ANIM_DURATION = 500,
-        animateAttrs = (target, attrs) => {
-            let lastAnimator;
-            for (const attrName in attrs) {
-                const newValue = attrs[attrName];
-                if (target[attrName] !== newValue) {
-                    target.stopActiveAnimators(attrName);
-                    lastAnimator = target.animate({attribute:attrName, to:newValue, duration:ANIM_DURATION});
-                }
+        HALF_ANIM_DURATION = ANIM_DURATION/2,
+        animateAttr = (target, attrName, newValue, easingFunction='inOutQuad', duration=ANIM_DURATION) => {
+            if (target[attrName] !== newValue) {
+                target.stopActiveAnimators(attrName);
+                return target.animate({attribute:attrName, to:newValue, duration, easingFunction});
             }
-            return lastAnimator;
+        },
+        animateAttrs = (target, attrs) => {
+            for (const attrName in attrs) animateAttr(target, attrName, attrs[attrName]);
         },
         
         updateTimelineLayout = (timeline, isInitial) => {
@@ -93,6 +92,9 @@
                 colHeaders.destroyAllSubviews();
                 rowHeaders.destroyAllSubviews();
                 flowLayer.destroyAllSubviews();
+                
+                // Special Handling for HQ and The Void
+                orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             }
             
             const {colsByLocId, boxesByEventId, ticksByTime, tokensByAgentId} = timeline;
@@ -119,11 +121,6 @@
             }
             
             // Layout Events and Refresh Ticks
-            if (isInitial) {
-                // Special Handling for HQ and The Void
-                orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
-            }
-            
             let selectedBoxAnimatingToBounds,
                 targetY = 0;
             const eventTargetXById = {},
@@ -163,40 +160,51 @@
             const agentCountsByEventId = {};
             for (const agentModel of model.getAgentModelsAsList()) {
                 const agentId = agentModel.id,
-                    agentToken = tokensByAgentId[agentId],
                     agentEventId = agentModel.getEvent();
-                let agentCountForEvent = agentCountsByEventId[agentEventId] ?? 1,
+                let agentToken = tokensByAgentId[agentId],
+                    agentCountForEvent = agentCountsByEventId[agentEventId] ?? 1,
                     targetX = eventTargetXById[agentEventId],
-                    targetY = eventTargetYById[agentEventId];
-                
-                if (isNaN(targetX) || isNaN(targetY)) {
-                    targetX = targetY = -1000;
-                }
+                    targetY = eventTargetYById[agentEventId],
+                    isOffBoard = targetX === undefined || targetY === undefined;
                 
                 targetX += TL_COL_WIDTH - (agentCountForEvent * AGENT_TOKEN_SIZE);
                 targetY += TL_EVENT_BOX_HEIGHT - AGENT_TOKEN_SIZE;
                 if (agentToken) {
-                    if (agentToken.x < 0 || agentToken.y < 0) {
+                    if (isOffBoard) {
+                        // Leaving to HQ or The Void
+                        agentToken.setScaleX(1);
+                        agentToken.setScaleY(1);
+                        animateAttrs(agentToken, {opacity:0, scaleX:0, scaleY:0});
+                    } else if (agentToken.offBoard) {
                         // Entering from HQ or The Void
                         agentToken.setX(targetX);
                         agentToken.setY(targetY);
                         agentToken.setOpacity(0);
+                        agentToken.setScaleX(10);
+                        agentToken.setScaleY(10);
                         animateAttrs(agentToken, {opacity:1});
-                    } else if (targetX < 0 || targetY < 0) {
-                        // Leaving to HQ or The Void
-                        animateAttrs(agentToken, {opacity:0}).next(() => {
-                            agentToken.setX(targetX);
-                            agentToken.setY(targetY);
-                        });
+                        animateAttr(agentToken, 'scaleX', 1, 'outBounce');
+                        animateAttr(agentToken, 'scaleY', 1, 'outBounce');
                     } else {
+                        /*agentToken.setScaleX(1);
+                        agentToken.setScaleY(1);
+                        const distance = M.Geometry.measureDistance(agentToken.x, agentToken.y, targetX, targetY),
+                            scale = Math.max(1, Math.log10(distance));*/
                         animateAttrs(agentToken, {x:targetX, y:targetY});
+                        /*animateAttr(agentToken, 'scaleX', scale, 'inQuad', HALF_ANIM_DURATION)?.next(() => {
+                            animateAttr(agentToken, 'scaleX', 1, 'outQuad', HALF_ANIM_DURATION)
+                        });
+                        animateAttr(agentToken, 'scaleY', scale, 'inQuad', HALF_ANIM_DURATION)?.next(() => {
+                            animateAttr(agentToken, 'scaleY', 1, 'outQuad', HALF_ANIM_DURATION)
+                        });*/
                     }
-//updateAgentToken(agentToken);
                 } else {
-                    tokensByAgentId[agentId] = new AgentToken(flowLayer, {
+                    agentToken = tokensByAgentId[agentId] = new AgentToken(flowLayer, {
                         x:targetX, y:targetY, timeline, model:agentModel
                     });
+                    if (agentModel.getEventModel().isHidden()) isOffBoard = true;
                 }
+                agentToken.offBoard = isOffBoard;
                 agentCountsByEventId[agentEventId] = agentCountForEvent + 1;
             }
             
@@ -447,6 +455,8 @@
         
         // Agent //
         AgentToken = new JSClass('AgentToken', pkg.StatusAgentMarker, {
+            include: [M.TransformSupport],
+            
             initNode: function(parent, attrs) {
                 const self = this;
                 
