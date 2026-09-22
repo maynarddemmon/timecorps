@@ -109,7 +109,7 @@
                 SPLINE_CURVATURE:0.25,
                 
                 TL_ROW_HEADER_WIDTH:125,
-                TL_COL_WIDTH:110,
+                TL_COL_WIDTH:120,
                 TL_COL_HEADER_HEIGHT:26,
                 TL_COL_SPACING:1,
                 TL_EVENT_BOX_HEIGHT:75,

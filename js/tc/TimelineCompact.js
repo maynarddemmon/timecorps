@@ -40,8 +40,8 @@
         SPLINE_ID_PREFIX_EXIT = 'exit-',
         
         Z_IDX_EVENT = 1,
-        Z_IDX_AGENT = 2,
-        Z_IDX_FLOW = 3,
+        Z_IDX_AGENT = 3,
+        Z_IDX_FLOW = 2,
         
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
@@ -64,11 +64,11 @@
         
         ANIM_DURATION = 500,
         animateAttrs = (target, attrs) => {
-            target.stopActiveAnimators();
             let lastAnimator;
             for (const attrName in attrs) {
                 const newValue = attrs[attrName];
                 if (target[attrName] !== newValue) {
+                    target.stopActiveAnimators(attrName);
                     lastAnimator = target.animate({attribute:attrName, to:newValue, duration:ANIM_DURATION});
                 }
             }
