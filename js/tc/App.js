@@ -83,7 +83,7 @@
                     pkg.resumeConstraintBinding();
                     timelineView.setup(model);
                     teamView.setup(model);
-                    opsView.notifyOperationSelectedChanged(model.getInitialOperation());
+                    model.setCurrentOperation(model.getInitialOperation());
                 }
             };
             pkg.pauseConstraintBinding();
@@ -166,7 +166,7 @@
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
         getEventDetailsView: () => eventDetailsView,
-        getOperationDetailsView: () => opsView,
+        getOpsView: () => opsView,
         
         // Convienence Functions
         selectAgentRow: agentModelOrId => {

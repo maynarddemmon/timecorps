@@ -89,6 +89,12 @@
         setInitialOperation: operationId => model.initialOperation = operationId,
         getInitialOperation: () => model.getOperationModel(model.initialOperation),
         
+        setCurrentOperation: operationModel => {
+            model.currentOperationModel = operationModel;
+            pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
+        },
+        getCurrentOperation: () => model.currentOperationModel,
+        
         
         // Methods /////////////////////////////////////////////////////////////
         /*notifyStatChanged: function(statModel) {

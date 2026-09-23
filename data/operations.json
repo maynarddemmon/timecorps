@@ -35,7 +35,7 @@
 				},
 				"rescue":{
 					"name":"Rescue",
-					"description":"The passengers must be rescued.",
+					"description":"The passengers must survive.",
 					"success":"events.casualties.values.massLossOfLife.value === false"
 				}
 			},

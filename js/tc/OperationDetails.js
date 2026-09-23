@@ -83,7 +83,13 @@
                 text:'Next Mission ' + ICON_NEXT, visible:false
             }, [{
                 doActivated: function() {
-                    console.log('FIXME:proceed to next operation.');
+                    const operationModel = self.operationModel;
+                    if (operationModel.getProgress().completed) {
+                        const nextOperation = self.operationModel.getNextOperation();
+                        if (nextOperation) pkg.model.setCurrentOperation(nextOperation);
+                    } else {
+                        console.warn('Operation not completed', operationModel);
+                    }
                 }
             }]);
             

@@ -104,6 +104,18 @@
                 }
             },
             
+            // onSuccess Config
+            setNextOperation: function(nextOperation) {this.set('nextOperation', nextOperation, true);},
+            getNextOperation: function() {
+                return pkg.model.getOperationModel(this.nextOperation);
+            },
+            
+            setOnSuccess: function(onSuccessCfg) {
+                if (onSuccessCfg) {
+                    this.setNextOperation(onSuccessCfg.nextOperation);
+                }
+            },
+            
             
             // Methods /////////////////////////////////////////////////////////
             notifyCollectionOfUpdate: function() {
