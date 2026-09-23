@@ -228,10 +228,10 @@
         doAction: function(actionModel) {
             if (!this.canAct()) return;
             
-            if (actionModel.isDone()) {
+            /*if (actionModel.isDone()) {
                 console.warn('Attemp to do a done action.', actionModel, this);
                 return;
-            }
+            }*/
             
             const eventModel = this.getEventModel(),
                 {setObj, event} = actionModel;
@@ -250,7 +250,7 @@
                     console.warn('Missing Value in doIt:' + key);
                 }
             }
-            actionModel.setDone(true);
+            //actionModel.setDone(true);
             
             this.incrementActionExecCount();
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});

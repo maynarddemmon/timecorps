@@ -11,7 +11,7 @@ JS.Packages(file => {
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
     file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
-    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn').requires('tc.SimpleAgentMarker');
+    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn').requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
@@ -38,7 +38,7 @@ JS.Packages(file => {
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker'
     );
     file(TC_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',

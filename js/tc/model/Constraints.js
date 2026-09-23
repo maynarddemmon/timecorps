@@ -153,8 +153,10 @@
                     if (typeof scope.attachTo === 'function') {
                         // Lets also ensure the property we are going to observe exists on
                         // the scope object.
-                        if (Object.hasOwn(scope, observableVarName)) {
+                        if (Object.hasOwn(scope, observableVarName) || typeof scope[generateSetterName(observableVarName)] === 'function') {
                             observables.push(scope, observableVarName);
+                        } else {
+                            console.warn('Nothing to observe for: ' + observableVarName + ' on:', scope);
                         }
                     }
                 }

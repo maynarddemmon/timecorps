@@ -89,7 +89,10 @@
                     const actionModel = actionModels[actionId];
                     if (!actionModel.isHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                        new UnderlineActionBtn(actionView, {text:ICON_ACTION + ' ' + actionModel.label, disabled:agentCantActHere || actionModel.done}, [{
+                        new UnderlineActionBtn(actionView, {
+                            text:ICON_ACTION + ' ' + actionModel.label, 
+                            disabled:agentCantActHere /*|| actionModel.done*/
+                        }, [{
                             doActivated: () => {agentModel.doAction(actionModel);}
                         }]);
                     }

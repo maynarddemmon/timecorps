@@ -90,6 +90,10 @@
                 return {success, fail, total:success + fail, completed:fail === 0};
             },
             
+            canProceed: function() {
+                return this.getNextOperation() != null && this.getProgress().completed;
+            },
+            
             // Setup Config
             setInitialEventSelection: function(initialEventSelection) {this.set('initialEventSelection', initialEventSelection, true);},
             getInitialEventSelection: function() {return this.initialEventSelection;},

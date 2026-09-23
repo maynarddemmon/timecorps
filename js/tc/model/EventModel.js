@@ -25,7 +25,7 @@
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
             init: function(attrs) {
                 this.hidden = false;
-                this.done = false;
+                //this.done = false;
                 this.event = attrs.event;
                 delete attrs.event;
                 this.callSuper(attrs);
@@ -37,11 +37,11 @@
             
             setSet: function(set) {this.set('setObj', set, true);},
             
-            setDone: function(done) {
+            /*setDone: function(done) {
                 this.set('done', done, true);
                 this.event.notifyCollectionOfUpdate();
             },
-            isDone: function() {return this.done;},
+            isDone: function() {return this.done;},*/
             
             setHidden: function(value, isActual) {
                 if (isActual) {

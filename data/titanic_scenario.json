@@ -88,10 +88,15 @@
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 25",
 			"actions":{
-				"argue":{
+				"argueFor":{
 					"label":"Argue for Full Davits",
 					"set":{"fullDavits":"true"},
-					"hidden":"event.attestation.value < 25"
+					"hidden":"event.attestation.value < 25 || event.values.fullDavits.value"
+				},
+				"argueAgainst":{
+					"label":"Argue against Full Davits",
+					"set":{"fullDavits":"false"},
+					"hidden":"event.attestation.value < 25 || !event.values.fullDavits.value"
 				}
 			},
 			"exits":[
@@ -111,11 +116,18 @@
 			"actions":{
 				"prevent":{
 					"label":"Prevent Reshuffle",
-					"set":{"preventReshuffle":"true"}
+					"set":{"preventReshuffle":"true"},
+					"hidden":"event.values.preventReshuffle.value"
+				},
+				"allow":{
+					"label":"Allow Reshuffle",
+					"set":{"preventReshuffle":"false"},
+					"hidden":"!event.values.preventReshuffle.value"
 				},
 				"remind":{
 					"label":"Remind Blair",
-					"set":{"remindBlair":"true"}
+					"set":{"remindBlair":"true"},
+					"hidden":"event.values.remindBlair.value"
 				}
 			},
 			"exits":[
@@ -152,7 +164,13 @@
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
-					"set":{"relayToBridge":"true"}
+					"set":{"relayToBridge":"true"},
+					"hidden":"event.values.relayToBridge.value"
+				},
+				"noRelay":{
+					"label":"Don't relay to Bridge",
+					"set":{"relayToBridge":"false"},
+					"hidden":"!event.values.relayToBridge.value"
 				}
 			},
 			"exits":[
@@ -175,7 +193,13 @@
 			"actions":{
 				"recover":{
 					"label":"Spare Recovered",
-					"set":{"spareRecovered":"true"}
+					"set":{"spareRecovered":"true"},
+					"hidden":"event.values.spareRecovered.value"
+				},
+				"removeSpare":{
+					"label":"Spare Removed",
+					"set":{"spareRecovered":"false"},
+					"hidden":"!event.values.spareRecovered.value"
 				}
 			},
 			"exits":[
@@ -198,7 +222,13 @@
 			"actions":{
 				"clear":{
 					"label":"Clear Backlog Earlier",
-					"set":{"clearBacklogEarlier":"true"}
+					"set":{"clearBacklogEarlier":"true"},
+					"hidden":"event.values.clearBacklogEarlier.value"
+				},
+				"noClear":{
+					"label":"Delay Clearing Backlog",
+					"set":{"clearBacklogEarlier":"false"},
+					"hidden":"!event.values.clearBacklogEarlier.value"
 				}
 			},
 			"exits":[
@@ -218,11 +248,23 @@
 			"actions":{
 				"plant":{
 					"label":"Plant Key",
-					"set":{"plantKey":"true"}
+					"set":{"plantKey":"true"},
+					"hidden":"event.values.plantKey.value"
+				},
+				"unplant":{
+					"label":"Remove Key",
+					"set":{"plantKey":"false"},
+					"hidden":"!event.values.plantKey.value"
 				},
 				"pickTheLocker":{
 					"label":"Pick the Locker",
-					"set":{"pickTheLocker":"true"}
+					"set":{"pickTheLocker":"true"},
+					"hidden":"event.values.pickTheLocker.value"
+				},
+				"lockTheLocker":{
+					"label":"Lock the Locker",
+					"set":{"pickTheLocker":"false"},
+					"hidden":"!event.values.pickTheLocker.value"
 				}
 			},
 			"exits":[
@@ -244,7 +286,13 @@
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
-					"set":{"countermandAstern":"true"}
+					"set":{"countermandAstern":"true"},
+					"hidden":"event.values.countermandAstern.value"
+				},
+				"allow":{
+					"label":"Allow Astern Order",
+					"set":{"countermandAstern":"false"},
+					"hidden":"!event.values.countermandAstern.value"
 				}
 			},
 			"exits":[

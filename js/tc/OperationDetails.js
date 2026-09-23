@@ -44,13 +44,13 @@
                             this.setBgColor(colorSuccess);
                             this.setPaddingLeft(5);
                             this.setPaddingTop(3);
-                            this.setTooltip('Object met.');
+                            this.setTooltip('Objective met.');
                         } else {
                             this.setText('✗');
                             this.setBgColor(colorError);
                             this.setPaddingLeft(7);
                             this.setPaddingTop(2);
-                            this.setTooltip('Object not met.');
+                            this.setTooltip('Objective not met.');
                         }
                     }
                 }]);
@@ -84,12 +84,7 @@
             }, [{
                 doActivated: function() {
                     const operationModel = self.operationModel;
-                    if (operationModel.getProgress().completed) {
-                        const nextOperation = self.operationModel.getNextOperation();
-                        if (nextOperation) pkg.model.setCurrentOperation(nextOperation);
-                    } else {
-                        console.warn('Operation not completed', operationModel);
-                    }
+                    if (operationModel.canProceed()) pkg.model.setCurrentOperation(operationModel.getNextOperation());
                 }
             }]);
             
@@ -165,7 +160,7 @@
                     progressView = self.progressView;
                 progressView.setValue(success + '/' + total);
                 progressView.setValueTextColor(completed ? colorSuccess : colorError);
-                self.proceedBtn.setVisible(completed);
+                self.proceedBtn.setVisible(operationModel.canProceed());
                 
                 self.descriptionRow.setValue(operationModel.getDescription());
                 
