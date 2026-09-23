@@ -48,6 +48,8 @@
             attrs.minHeight = 600;
             
             appView.callSuper(parent, attrs);
+            
+            appView.scrollToDebounced = M.debounce(appView.scrollToEvent, 1000);
             appView.attachToDom(G.mouse, 'noop', 'contextmenu', true);
             
             globalThis.hideSpinner();
@@ -66,7 +68,7 @@
             dividerH.setValue(900);
             
             // Fetch Data
-            const filesToLoad = ['titanic_scenario','lusitania_scenario','agents'];
+            const filesToLoad = ['titanic_scenario','lusitania_scenario','agents','operations'];
             let idx = 0;
             const chainFunc = success => {
                 if (!success) {
@@ -81,6 +83,7 @@
                     pkg.resumeConstraintBinding();
                     timelineView.setup(model);
                     teamView.setup(model);
+                    opsView.notifyOperationSelectedChanged(model.getInitialOperation());
                 }
             };
             pkg.pauseConstraintBinding();
@@ -106,10 +109,11 @@
         
         buildMiddleView: middleView => {
             teamView = new pkg.Agents(middleView, {title:'Agents'});
-            appView.buildOpView(opsView = new pkg.Panel(middleView, {title:'Operation'}));
-            appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
+            opsView = new pkg.OperationDetails(middleView);
             timelineView = new pkg.TimelineCompact(middleView, {title:'Timeline'});
             eventDetailsView = new pkg.EventDetails(middleView);
+            
+            appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
@@ -157,12 +161,12 @@
             dividerH.syncTo(middleView, 'updateLayout', 'width');
         },
         
-        buildOpView: () => {},
         buildFooterView: footerView => {},
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
         getEventDetailsView: () => eventDetailsView,
+        getOperationDetailsView: () => opsView,
         
         // Convienence Functions
         selectAgentRow: agentModelOrId => {
@@ -171,6 +175,12 @@
         selectEventBox: eventModelOrId => {
             timelineView.doSelectEvent(eventModelOrId);
         },
+        
+        scrollToEvent: function(eventModel, clearDebounce) {
+            if (eventModel) timelineView.scrollToEventBox(eventModel);
+            if (clearDebounce) this.scrollToDebounced();
+        },
+        // scrollToDebounced: setup in initNode
         
         // Event Dispatching
         _onEventSelectionChanged: event => { // value is an EventBox
@@ -191,6 +201,10 @@
         
         notifyEventModelRemoved: eventModel => {
             //console.log('remove event', eventModel);
+        },
+        
+        notifyOperationModelUpdated: operationModel => {
+            opsView.notifyOperationModelChanged(operationModel);
         },
         
         notifyTimelineParadoxExceeded: () => {

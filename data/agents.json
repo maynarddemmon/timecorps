@@ -1,20 +1,18 @@
 {
-	"initialAgentSelection":"VQ",
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
 			"chronal":10,
-			"paradox":2,
-			"event":"casualties"
+			"event":"collision"
 		},
 		"OK":{
 			"name":"Okonjo",
-			"paradox":1,
-			"event":"casualties"
+			"paradox":1
 		},
 		"HW":{
 			"name":"Halloway",
-			"chronal":15
+			"chronal":15,
+			"paradox":2
 		},
 		"GO":{
 			"name":"Gordon",

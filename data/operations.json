@@ -1,0 +1,47 @@
+{
+	"initialOperation":"titanic_noCollision",
+	
+	"operations":{
+		"titanic_noCollision":{
+			"name":"Titanic - Avoid the Iceberg",
+			"description":"Prevent the Titanic from colliding with the iceberg.",
+			"setup":{
+				"initialEventSelection":"collision",
+				"initialAgentSelection":"VQ"
+			},
+			"objectives":{
+				"avoid":{
+					"name":"No Collision",
+					"description":"The Titanic must not hit the iceberg.",
+					"success":"events.collision.values.struck.value === false"
+				}
+			},
+			"onSuccess":{
+				"nextOperation":"titanic_rescued"
+			}
+		},
+		
+		"titanic_rescued":{
+			"name":"Titanic - Passengers Rescued",
+			"description":"It is essential that the Titanic sinks, but the massive loss of life must be prevented.",
+			"setup":{
+				"initialEventSelection":"casualties"
+			},
+			"objectives":{
+				"collision":{
+					"name":"Collision",
+					"description":"The Titanic must hit the iceberg.",
+					"success":"events.collision.values.struck.value === true"
+				},
+				"rescue":{
+					"name":"Rescue",
+					"description":"The passengers must be rescued.",
+					"success":"events.casualties.values.massLossOfLife.value === false"
+				}
+			},
+			"onSuccess":{
+				
+			}
+		}
+	}
+}

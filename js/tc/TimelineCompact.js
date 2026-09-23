@@ -782,8 +782,6 @@
             
             updateTimelineLayout(this, true);
             this.timelineReady = true;
-            
-            pkg.app.selectEventBox(model.getInitialSelection());
         },
         
         notifyEventVisibilityChange: function(_eventModel) {

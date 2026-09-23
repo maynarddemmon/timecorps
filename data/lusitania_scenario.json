@@ -62,8 +62,6 @@
 		}
 	},
 	
-	"initialSelection":"lusitania_sinks",
-	
 	"events":{
 		"solas_davits":{
 			"name":"Boats For All Signed",

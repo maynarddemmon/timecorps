@@ -64,8 +64,6 @@
 		}
 	},
 	
-	"initialSelection":"casualties",
-	
 	"events":{
 		"the_void":{
 			"name":"⦰ The Void",
@@ -308,7 +306,6 @@
 				"TEST_CHRONAL":{"value":"timeline.chronal.value + '/' + timeline.chronal.max"}
 			},
 			"hideAffectedBy":{
-				"collision":"event.attestation.value < 30",
 				"californian_nearby":"event.attestation.value < 40",
 				"lifeboat_capacity":"event.attestation.value < 50"
 			}

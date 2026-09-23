@@ -21,8 +21,11 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.setConstrainedValue','tc.NotifyingNumericStatModel'
     );
+    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires(
+        'tc.setConstrainedValue'
+    );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
-        'tc.LocationModel','tc.AgentModel','tc.EventModel'
+        'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
     
     file(TC_ROOT + 'Agents.js').provides('tc.Agents').requires(
@@ -34,9 +37,12 @@ JS.Packages(file => {
     file(TC_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker'
     );
+    file(TC_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel'
+    );
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
-        'tc.TimelineCompact','tc.EventDetails'
+        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails'
     );
     
     // Include Everything

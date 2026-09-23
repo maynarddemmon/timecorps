@@ -6,13 +6,13 @@
     const BaseModelCollection = myt.BaseModelCollection,
         
         {
-            NotifyingNumericStatModel, AgentModel, LocationModel, EventModel,
+            NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg;
     
@@ -55,6 +55,12 @@
             }]);
             model[SCOPE_AGENTS] = new BaseModelCollection({modelClass:AgentModel});
             model[SCOPE_LOCATIONS] = new BaseModelCollection({modelClass:LocationModel});
+            model[SCOPE_OPERATIONS] = new BaseModelCollection({modelClass:OperationModel}, [{
+                fireUpdatedEvent: function(model) {
+                    this.callSuper(model);
+                    pkg.app.notifyOperationModelUpdated(model);
+                }
+            }]);
             
             model.callSuper(parent, attrs);
             
@@ -77,11 +83,12 @@
         getLocations: () => model[SCOPE_LOCATIONS].getAll(),
         getLocationsInOrder: () => model[SCOPE_LOCATIONS].getAsSortedList((a, b) => a.order - b.order),
         
-        setInitialSelection: eventId => model.initialSelection = eventId,
-        getInitialSelection: () => model.getEventModel(model.initialSelection),
+        getOperationModel: id => model[SCOPE_OPERATIONS].getById(id),
+        getOperationModels: () => model[SCOPE_OPERATIONS].getAll(),
         
-        setInitialAgentSelection: agentId => model.initialAgentSelection = agentId,
-        getInitialAgentSelection: () => model.getAgentModel(model.initialAgentSelection),
+        setInitialOperation: operationId => model.initialOperation = operationId,
+        getInitialOperation: () => model.getOperationModel(model.initialOperation),
+        
         
         // Methods /////////////////////////////////////////////////////////////
         /*notifyStatChanged: function(statModel) {
@@ -120,7 +127,7 @@
         },
         
         processData: json => {
-            for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS]) {
+            for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
                     for (const id in data) {
@@ -131,11 +138,8 @@
                 }
             }
             
-            const initialSelection = json.initialSelection;
-            if (initialSelection !== undefined) model.setInitialSelection(initialSelection);
-            
-            const initialAgentSelection = json.initialAgentSelection;
-            if (initialAgentSelection !== undefined) model.setInitialAgentSelection(initialAgentSelection);
+            const initialOperation = json.initialOperation;
+            if (initialOperation !== undefined) model.setInitialOperation(initialOperation);
         }
     });
 })(tc);

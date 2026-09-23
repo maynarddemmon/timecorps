@@ -5,147 +5,23 @@
         
         {
             View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            Layout, SpacedLayout, WrappingLayout, ResizeLayout, debounce
+            Layout, SpacedLayout, WrappingLayout, ResizeLayout
         } = myt,
         
         {
             Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
-            cfg:{
-                EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID
-            },
+            GrandWidthMixin, Row, DividerRow, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
+            cfg:{EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID},
             theme:{
-                spacing, padding, cornerRadius, rowHeight, btnHeight,
-                colorUltraLight, colorLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
-                colorParadox, colorHistoricity, colorAttestation,
-                fontSizeMedium, fontSizeLarge,
-                fontFamilyMono
+                spacing, padding, rowHeight, btnHeight,
+                colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
+                fontSizeMedium, fontSizeLarge
             },
             formatChronalAndParadox,
             ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
-        
-        LABEL_WIDTH = 75,
-        ROW_PADDING_TOP = 3,
-        
-        scrollToEvent = (eventModel, clearDebounce) => {
-            if (eventModel) pkg.app.getTimelineView().scrollToEventBox(eventModel);
-            if (clearDebounce) scrollToDebounced();
-        },
-        scrollToDebounced = debounce(scrollToEvent, 1000),
-        
-        GrandWidthMixin = new JS.Module('GrandWidthMixin', {
-            initNode: function(parent, attrs) {
-                // Compensate for parents x position
-                attrs.x ??= -parent.x;
-                attrs.percentOfParentWidthOffset = 2*parent.x;
-                
-                this.callSuper(parent, attrs);
-            }
-        }),
-        Row = new JSClass('Row', WideView, {
-            include: [GrandWidthMixin],
-            
-            initNode: function(parent, attrs) {
-                attrs.height ??= rowHeight;
-                attrs.textColor ??= colorMedium;
-                
-                const inset = attrs.inset ?? parent.x;
-                delete attrs.inset;
-                
-                this.callSuper(parent, attrs);
-                
-                new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset})
-            }
-        }),
-        DividerRow = new JSClass('DividerRow', Row, {
-            initNode: function(parent, attrs) {
-                const self = this,
-                    label = attrs.label;
-                delete attrs.label;
-                
-                attrs.bgColor ??= colorDark;
-                
-                self.callSuper(parent, attrs);
-                
-                self._label = new PlainText(self, {valign:'middle', fontSize:fontSizeMedium, text:label});
-            },
-            setLabel: function(v) {this._label.setText(v);}
-        }),
-        DetailRow = new JSClass('DetailRow', WideView, {
-            initNode: function(parent, attrs) {
-                const self = this,
-                    label = attrs.label;
-                delete attrs.label;
-                
-                self.callSuper(parent, attrs);
-                
-                self._label = new PaddedPlainText(self, {
-                    width:LABEL_WIDTH, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:'right',
-                    paddingTop:ROW_PADDING_TOP, text:label
-                });
-                
-                const valueX = LABEL_WIDTH + padding;
-                self._value = new TextForFlow(self, {
-                    x:valueX, percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, text:ICON_NIL
-                }, [SizeToParent, {
-                    sizeViewToDom: function() {
-                        this.callSuper();
-                        if (self.height !== this.height) self.setHeight(this.height);
-                    }
-                }]);
-            },
-            setLabel: function(v) {this._label.setText(v);},
-            setValue: function(v) {this._value.setText(v || ICON_NIL);}
-        }),
-        DetailRowFlow = new JSClass('DetailRowFlow', WideView, {
-            initNode: function(parent, attrs) {
-                const self = this,
-                    label = attrs.label;
-                delete attrs.label;
-                attrs.defaultPlacement = '_content';
-                
-                self.callSuper(parent, attrs);
-                
-                const labelView = self._label = new PaddedPlainText(self, {
-                    width:LABEL_WIDTH, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:'right',
-                    paddingTop:ROW_PADDING_TOP, text:label
-                });
-                
-                const contentX = LABEL_WIDTH + padding,
-                    contentView = self._content = new View(self, {
-                        x:contentX, percentOfParentWidth:100, percentOfParentWidthOffset:-contentX
-                    }, [SizeToParent, {
-                        setHeight: function(v) {
-                            if (this.height !== v) {
-                                this.callSuper(v);
-                                const newHeight = Math.max(labelView.height, this.height);
-                                if (self.height !== newHeight) self.setHeight(newHeight);
-                            }
-                        }
-                    }]);
-                new WrappingLayout(contentView, {spacing:padding, lineSpacing:-5, collapseParent:true});
-            },
-            setLabel: function(v) {this._label.setText(v);},
-            clearContent: function() {
-                this._content.destroyAllSubviews();
-            }
-        }),
-        TextForFlow = new JSClass('TextForFlow', PaddedText, {
-            initNode: function(parent, attrs) {
-                attrs.paddingTop ??= 5;
-                attrs.paddingBottom ??= 5;
-                attrs.whiteSpace ??= 'normal';
-                this.callSuper(parent, attrs);
-            }
-        }),
-        NoValueText = new JSClass('NoValueText', TextForFlow, {
-            initNode: function(parent, attrs) {
-                attrs.text ??= ICON_NIL;
-                this.callSuper(parent, attrs);
-            }
-        }),
         
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
@@ -235,9 +111,9 @@
                                     if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
-                                            scrollToDebounced(toEventModel);
+                                            pkg.app.scrollToDebounced(toEventModel);
                                         } else {
-                                            scrollToEvent(eventModel, true);
+                                            pkg.app.scrollToEvent(eventModel, true);
                                         }
                                     }
                                 },
@@ -288,7 +164,7 @@
             
             
             self.noSelectionTxt = new PaddedPlainText(self, {
-                padding:padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
+                padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
             });
             
             const detailsContainer = self.detailsContainer = new WideView(self, {
@@ -347,14 +223,12 @@
         
         // Methods /////////////////////////////////////////////////////////////
         notifyEventSelectedChanged: function(eventBox) {
-            const newEventModel = this.eventModel = eventBox?.model ?? null;
+            this.eventModel = eventBox?.model ?? null;
             this.updateForEventModel();
         },
         
         notifyEventModelChanged: function(eventModel) {
-            if (eventModel && this.eventModel === eventModel) {
-                this.updateForEventModel();
-            }
+            if (eventModel && this.eventModel === eventModel) this.updateForEventModel();
         },
         
         notifyAgentSelectedChanged: function(agentModel) {
@@ -412,9 +286,9 @@
                                     if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
-                                            scrollToDebounced(precursorEvent);
+                                            pkg.app.scrollToDebounced(precursorEvent);
                                         } else {
-                                            scrollToEvent(eventModel, true);
+                                            pkg.app.scrollToEvent(eventModel, true);
                                         }
                                     }
                                 },
@@ -440,9 +314,9 @@
                                     if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
                                         if (this.mouseOver) {
-                                            scrollToDebounced(descendantEvent);
+                                            pkg.app.scrollToDebounced(descendantEvent);
                                         } else {
-                                            scrollToEvent(eventModel, true);
+                                            pkg.app.scrollToEvent(eventModel, true);
                                         }
                                     }
                                 },

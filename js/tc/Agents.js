@@ -205,9 +205,6 @@
                         default:
                             return this.callSuper(sortColumnId, ascending, tieBreakerSortFunc);
                     }
-                },
-                doOnFirstRefresh: () => {
-                    self.selectAgent(self.model.getInitialAgentSelection());
                 }
             }]);
             

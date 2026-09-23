@@ -55,6 +55,9 @@
                 colorHistoricity:'#da6',
                 colorAttestation:'#fc0',
                 colorAction:'#6f0',
+                
+                colorSuccess:'#0c0',
+                colorError:'#c00',
             },
             
             // Game Config
@@ -147,6 +150,7 @@
             },
             
             // Constraint Scopes
+            SCOPE_OPERATIONS:'operations',
             SCOPE_TIMELINE: 'timeline',
             SCOPE_AGENTS: 'agents',
             SCOPE_LOCATIONS: 'locations',
@@ -180,6 +184,7 @@
             ICON_HQ:'❉',
             ICON_SEARCH:'?',
             ICON_NIL:'–',
+            ICON_NEXT:'➜'
         };
     
     // Apply config overrides
