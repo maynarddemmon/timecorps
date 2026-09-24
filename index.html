@@ -184,7 +184,7 @@ writeScript('js/tc/manifest');
 		
 		DEFAULT_ACTION_LIMIT:3,
 	};
-	JS.require('tc.all', () => {
+	JS.require('tc.App', () => {
 		tc.IMAGE_ROOT = './img/';
 		new tc.App(getElem('appDiv'));
 	});
