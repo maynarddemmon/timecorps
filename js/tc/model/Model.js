@@ -169,10 +169,18 @@
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
+                    const modelCol = model[dataKey],
+                        isLocations = dataKey === SCOPE_LOCATIONS;
+                    
+                    // Makes it easy to shift the order of all locations in a file by a fixed amount.
+                    let baseOrder;
+                    if (isLocations) baseOrder = json.locationsBaseOrder ?? 0;
+                    
                     for (const id in data) {
                         const datum = data[id];
                         datum.id = id;
-                        model[dataKey].addModel(datum);
+                        if (isLocations) datum.order += baseOrder;
+                        modelCol.addModel(datum);
                     }
                 }
             }

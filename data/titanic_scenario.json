@@ -1,17 +1,5 @@
 {
 	"locations":{
-		"_nexus":{
-			"name":"The Nexus",
-			"color":"#fff",
-			"textColor":"#000",
-			"order":-2
-		},
-		"_nowhere":{
-			"name":"Nowhere",
-			"color":"#000",
-			"textColor":"#fff",
-			"order":-1
-		},
 		"southampton.harland_wolff":{
 			"name":"Harland & Wolff",
 			"color":"#fcc9",
@@ -65,21 +53,6 @@
 	},
 	
 	"events":{
-		"the_void":{
-			"name":"⦰ The Void",
-			"start":"0000-01-01T00:00:00",
-			"duration":{"s":0},
-			"location":"_nowhere",
-			"hidden":"true"
-		},
-		"time_corps_hq":{
-			"name":"❉ Time Corps Headquarters",
-			"start":"2174-10-14T00:00:00",
-			"duration":{"s":0},
-			"location":"_nexus",
-			"hidden":"true"
-		},
-		
 		"lifeboat_capacity":{
 			"name":"Davit Capacity Settled",
 			"start":"1912-03-01T10:00:00",

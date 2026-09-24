@@ -1,64 +1,65 @@
 {
+	"locationsBaseOrder":10,
 	"locations":{
 		"london.admiralty":{
 			"name":"The Admiralty",
 			"color":"#fdb9",
-			"order":11
+			"order":1
 		},
 		"london.westminster":{
 			"name":"Westminster",
 			"color":"#edc9",
-			"order":12
+			"order":2
 		},
 		"new_york.pier_54":{
 			"name":"Pier 54",
 			"color":"#cfc9",
-			"order":13
+			"order":3
 		},
 		"lusitania":{
 			"name":"Lusitania",
 			"color":"#cdf9",
-			"order":14
+			"order":4
 		},
 		"lusitania.boilers":{
 			"name":"Boiler room No. 4",
 			"color":"#cdf9",
-			"order":14.1
+			"order":4.1
 		},
 		"lusitania.holds":{
 			"name":"Forward hold",
 			"color":"#cdf9",
-			"order":14.2
+			"order":4.2
 		},
 		"lusitania.bridge":{
 			"name":"Bridge",
 			"color":"#cdf9",
-			"order":14.3
+			"order":4.3
 		},
 		"lusitania.wireless":{
 			"name":"Wireless room",
 			"color":"#cdf9",
-			"order":14.4
+			"order":4.4
 		},
 		"lusitania.boatdeck":{
 			"name":"Boat deck",
 			"color":"#cdf9",
-			"order":14.5
+			"order":4.5
 		},
 		"atlantic.u20":{
 			"name":"U-20",
 			"color":"#ccc9",
-			"order":15
+			"order":5
 		},
 		"atlantic.kinsale":{
 			"name":"Old Head of Kinsale",
 			"color":"#9cf9",
-			"order":16
+			"order":6
 		},
 		"queenstown":{
 			"name":"Queenstown",
 			"color":"#fcd9",
-			"order":17
+			"order":7
 		}
 	},
 	

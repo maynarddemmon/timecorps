@@ -68,7 +68,7 @@
             dividerH.setValue(900);
             
             // Fetch Data
-            const filesToLoad = ['titanic_scenario','lusitania_scenario','agents','operations'];
+            const filesToLoad = ['init','titanic_scenario','lusitania_scenario','agents','operations'];
             let idx = 0;
             const chainFunc = success => {
                 if (!success) {
