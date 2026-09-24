@@ -202,8 +202,8 @@
             setTimeOrdering: function(v) {this._tiOr = v;},
             getTimeOrdering: function() {return this._tiOr;},
             
-            isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ},
-            isTheVoid: function() {return this.id === EVENT_ID_THE_VOID},
+            isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ;},
+            isTheVoid: function() {return this.id === EVENT_ID_THE_VOID;},
             isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},
             isRegularEvent: function() {return !this.isNotRegularEvent();},
             

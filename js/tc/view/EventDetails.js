@@ -11,7 +11,6 @@
         {
             Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
             GrandWidthMixin, Row, DividerRow, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
-            cfg:{},
             theme:{
                 spacing, padding, rowHeight, btnHeight,
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,

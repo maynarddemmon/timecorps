@@ -150,7 +150,7 @@
             
             getChronalToRecall: agentModel => {
                 const agentEvent = agentModel.getEventModel(),
-                    cost = getChronalEfficiently(TC.model.getEventModel(TC.cfg.EVENT_ID_TIME_CORPS_HQ).getStart(), agentEvent.getEnd()) / 2;
+                    cost = getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2;
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
