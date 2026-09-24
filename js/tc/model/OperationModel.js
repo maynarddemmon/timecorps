@@ -41,14 +41,13 @@
                 
                 self.objectives = {};
                 
-                self.callSuper(attrs);
-                
                 // We need to give the Objectives a chance to settle since events must propogate
                 // to update success/failure.
                 self.determineSuccessfulCompletion = debounce(() => {
-                    const completed = self.getProgress().completed;
-                    if (completed) this.doCompletedSuccessfully();
+                    if (self.isCurrent() && self.getProgress().completed) this.doCompletedSuccessfully();
                 }, STANDARD_DEBOUNCE_MILLIS);
+                
+                self.callSuper(attrs);
             },
             
             getAsObj: function(cfg) {
@@ -64,6 +63,8 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
+            isCurrent: function() {return pkg.model.getCurrentOperation() === this;},
+            
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
             
@@ -139,6 +140,10 @@
             
             
             // Methods /////////////////////////////////////////////////////////
+            reset: function() {
+                this.awardScoreGranted = false;
+            },
+            
             doCompletedSuccessfully: function() {
                 this.grantScore();
             },

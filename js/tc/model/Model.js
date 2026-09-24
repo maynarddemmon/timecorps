@@ -66,7 +66,7 @@
             
             model.callSuper(parent, attrs);
             
-            model.reset();
+            model.reset(true);
         },
         
         
@@ -87,6 +87,7 @@
         
         getOperationModel: id => model[SCOPE_OPERATIONS].getById(id),
         getOperationModels: () => model[SCOPE_OPERATIONS].getAll(),
+        getOperationModelsAsList: filterFunc => model[SCOPE_OPERATIONS].getAsList(filterFunc),
         
         setInitialOperation: operationId => model.initialOperation = operationId,
         getInitialOperation: () => model.getOperationModel(model.initialOperation),
@@ -94,7 +95,13 @@
         setCurrentOperation: operationModel => {
             model.currentOperationModel = operationModel;
             pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
+            
+            // Objectives may already be satisfied on arrival (e.g. the player completed
+            // them while working an earlier op), so check now rather than waiting for
+            // the next objective change.
+            operationModel?.determineSuccessfulCompletion();
         },
+        
         getCurrentOperation: () => model.currentOperationModel,
         
         setScore: function(v) {this.set('score', v, true);},
@@ -139,6 +146,17 @@
             model.setScore(STARTING_SCORE);
             
             if (fullReset) model.setCurrentOperation(model.getInitialOperation());
+        },
+        
+        reset: isInit => {
+            model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
+            model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
+            model.setScore(STARTING_SCORE);
+            
+            if (!isInit) {
+                for (const operationModel of model.getOperationModelsAsList()) operationModel.reset();
+                model.setCurrentOperation(model.getInitialOperation());
+            }
         },
         
         processData: json => {

@@ -83,7 +83,7 @@
                     pkg.resumeConstraintBinding();
                     timelineView.setup(model);
                     teamView.setup(model);
-                    model.reset(true);
+                    model.reset();
                 }
             };
             pkg.pauseConstraintBinding();
@@ -101,7 +101,7 @@
             new pkg.Spacer(topView);
             
             new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
-                doActivated: () => {model.reset(true);}
+                doActivated: () => {model.reset();}
             }]);
             new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
