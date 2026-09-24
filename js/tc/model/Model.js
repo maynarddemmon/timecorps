@@ -140,14 +140,6 @@
             return {events:eventsAccum, locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)};
         },
         
-        reset: fullReset => {
-            model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
-            model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
-            model.setScore(STARTING_SCORE);
-            
-            if (fullReset) model.setCurrentOperation(model.getInitialOperation());
-        },
-        
         reset: isInit => {
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
