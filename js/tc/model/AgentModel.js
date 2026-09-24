@@ -177,7 +177,7 @@
         },*/
         
         getInfoForTimeTravel: function(eventModel) {
-            const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ,
+            const isHQ = eventModel.isHQ(),
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel),
                 chronalAvailable = -this[STAT_ID_CHRONAL].getValueToMin(),
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
@@ -290,13 +290,11 @@
         calculateParadoxForEntry: function(eventModelOrId, visitsAdj=0) {
             const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
             if (eventModel) {
-                // No paradox to enter "special" events.
-                if (eventModel.id !== EVENT_ID_THE_VOID && eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                // Paradox is only to enter regular events.
+                if (eventModel.isRegularEvent()) {
                     const visits = this.countVisitsToEvent(eventModel) + visitsAdj;
-                    if (visits > 0) {
-                        // More paradox the more times the Agent has already been to the Event.
-                        return visits;
-                    }
+                    // More paradox the more times the Agent has already been to the Event.
+                    if (visits > 0) return visits;
                 }
             }
             return 0;

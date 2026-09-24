@@ -11,7 +11,7 @@
         {
             Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
             GrandWidthMixin, Row, DividerRow, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
-            cfg:{EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID},
+            cfg:{},
             theme:{
                 spacing, padding, rowHeight, btnHeight,
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
@@ -71,13 +71,13 @@
                 markerView.setModel(agentModel);
                 vitaeBtn.setText(agentModel.name);
                 
-                if (eventModel.id !== EVENT_ID_TIME_CORPS_HQ) {
+                if (eventModel.isHQ()) {
+                    recallBtn.setVisible(false);
+                } else {
                     const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
                     recallBtn.setVisible(true);
                     recallBtn.setText(info.btnTxt);
                     recallBtn.setDisabled(info.disabled);
-                } else {
-                    recallBtn.setVisible(false);
                 }
                 
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
@@ -258,9 +258,9 @@
             
             if (hasModel) {
                 const timelineView = pkg.app.getTimelineView(),
-                    isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
+                    isHQ = eventModel.isHQ();
                 self.hqBtn.setDisabled(isHQ);
-                self.theVoidBtn.setDisabled(eventModel.id === EVENT_ID_THE_VOID);
+                self.theVoidBtn.setDisabled(eventModel.isTheVoid());
                 
                 Layout.incrementGlobalLock();
                 
@@ -361,7 +361,7 @@
                 hasAgentModel = selectedAgentModel != null;
             
             if (hasEventModel) {
-                const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
+                const isHQ = eventModel.isHQ();
                 recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
                 deployAgentBtn.setVisible(hasAgentModel && !eventModel.isHidden());
                 if (hasAgentModel) {

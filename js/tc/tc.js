@@ -143,7 +143,7 @@
             getChronalToDeploy: (agentModel, eventModel) => {
                 const eventTime = eventModel.getStart(),
                     agentEvent = agentModel.getEventModel(),
-                    getFunc = agentEvent.id === TC.cfg.EVENT_ID_TIME_CORPS_HQ ? getChronalEfficiently : getChronalByTimeDiff,
+                    getFunc = agentEvent.isHQ() ? getChronalEfficiently : getChronalByTimeDiff,
                     cost = getFunc(agentEvent.getEnd(), eventTime);
                 return mathMax(TC.cfg.MIN_DEPLOY_CHRONAL, cost);
             },
