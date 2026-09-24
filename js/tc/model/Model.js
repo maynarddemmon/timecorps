@@ -195,6 +195,15 @@
             
             const initialOperation = json.initialOperation;
             if (initialOperation !== undefined) model.setInitialOperation(initialOperation);
+        },
+        
+        validateAllEventDependencies: () => {
+            const eventModels = model.getEventModels();
+            let isValid = true;
+            for (const eventId in eventModels) {
+                if (!eventModels[eventId].validateEventDependencies()) isValid = false;
+            }
+            return isValid;
         }
     });
 })(tc);

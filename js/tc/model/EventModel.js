@@ -391,6 +391,21 @@
             
             formatAsTemporalExtent: function() {
                 return formatCompactRange(this.getStart(), this.getEnd()) + ICON_SEPARATOR + '(' + this.getDuration(true) + ')';
+            },
+            
+            validateEventDependencies: function() {
+                let isValid = true;
+                const start = this.getStart();
+                for (const precursorEventModel of this.getPrecursors()) {
+                    if (precursorEventModel.getStart() > start) {
+                        isValid = false;
+                        console.warn(
+                            'Event Ordering Issues: ' + precursorEventModel.id + ' : ' + precursorEventModel.getStart(true) +
+                            ' is not before ' + this.id + ' : ' + this.getStart(true)
+                        );
+                    }
+                }
+                return isValid;
             }
         });
 })(tc);

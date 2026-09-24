@@ -1,5 +1,5 @@
 {
-	"locationsBaseOrder":10,
+	"locationsBaseOrder":100,
 	"locations":{
 		"london.admiralty":{
 			"name":"The Admiralty",
@@ -338,7 +338,8 @@
 				{"mode":"walk", "to":"mersey_inquiry", "hidden":"event.attestation.value < 40"}
 			],
 			"values":{
-				"massLossOfLife":{"value":"events.torpedo_strike.values.struck.value && !(events.lifeboats_fail.values.boatsLaunched.value && events.rescue_delayed.values.rescueInTime.value)"},
+				"sinks":{"value":"events.torpedo_strike.values.struck.value"},
+				"massLossOfLife":{"value":"event.values.sinks.value && !(events.lifeboats_fail.values.boatsLaunched.value && events.rescue_delayed.values.rescueInTime.value)"},
 				"civilianCatastrophe":{"value":"event.values.massLossOfLife.value && !events.new_york_departure.values.reducedManifest.value"}
 			},
 			"hideAffectedBy":{

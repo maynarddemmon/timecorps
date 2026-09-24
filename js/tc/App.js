@@ -34,6 +34,36 @@
                     resultCallback?.(false);
                 }
             );
+        },
+        
+        getScenarioIDsToLoad = () => ['titanic_scenario','lusitania_scenario'],
+        
+        loadAllData = () => {
+            const filesToLoad = ['init', ...getScenarioIDsToLoad(), 'agents','operations'];
+            let idx = 0;
+            const chainFunc = success => {
+                if (success) {
+                    const namePart = filesToLoad[idx++];
+                    if (namePart) {
+                        loadDataIntoModel('./data/' + namePart + '.json', chainFunc);
+                    } else {
+                        pkg.resumeConstraintBinding();
+                        
+                        if (model.validateAllEventDependencies()) {
+                            timelineView.setup(model);
+                            teamView.setup(model);
+                            model.reset();
+                        } else {
+                            console.log('INVALID EVENT DEPENDENCIES: HALTING STARTUP!!!');
+                        }
+                    }
+                } else {
+                    console.error('Data load failed:', filesToLoad[idx - 1]);
+                    pkg.resumeConstraintBinding();
+                }
+            };
+            pkg.pauseConstraintBinding();
+            chainFunc(true);
         };
     
     pkg.App = new JSClass('App', View, {
@@ -67,27 +97,7 @@
             dividerV.setValue(187);
             dividerH.setValue(900);
             
-            // Fetch Data
-            const filesToLoad = ['init','titanic_scenario','lusitania_scenario','agents','operations'];
-            let idx = 0;
-            const chainFunc = success => {
-                if (!success) {
-                    console.error('Data load failed:', filesToLoad[idx - 1]);
-                    pkg.resumeConstraintBinding();
-                    return;
-                }
-                const namePart = filesToLoad[idx++];
-                if (namePart) {
-                    loadDataIntoModel('./data/' + namePart + '.json', chainFunc);
-                } else {
-                    pkg.resumeConstraintBinding();
-                    timelineView.setup(model);
-                    teamView.setup(model);
-                    model.reset();
-                }
-            };
-            pkg.pauseConstraintBinding();
-            chainFunc(true);
+            loadAllData();
         },
         
         

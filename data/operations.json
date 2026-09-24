@@ -17,7 +17,7 @@
 				"avoid":{
 					"name":"No Collision",
 					"description":"The Titanic must not hit the iceberg.",
-					"success":"events.collision.values.struck.value === false"
+					"success":"!events.collision.values.struck.value"
 				}
 			},
 			"onSuccess":{
@@ -39,12 +39,12 @@
 				"collision":{
 					"name":"Collision",
 					"description":"The Titanic must hit the iceberg.",
-					"success":"events.collision.values.struck.value === true"
+					"success":"events.collision.values.struck.value"
 				},
 				"rescue":{
 					"name":"Rescue",
 					"description":"The passengers must survive.",
-					"success":"events.casualties.values.massLossOfLife.value === false"
+					"success":"!events.casualties.values.massLossOfLife.value"
 				}
 			},
 			"onSuccess":{
@@ -64,6 +64,11 @@
 				}
 			},
 			"objectives":{
+				"afloat":{
+					"name":"Still Afloat",
+					"description":"The Lusitania must not be sunk.",
+					"success":"!events.lusitania_sinks.values.sinks.value"
+				}
 			},
 			"onSuccess":{
 				"awardScore":13000
