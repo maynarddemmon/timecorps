@@ -125,8 +125,11 @@
             return 'Actions: <span style="color:' + colorAction + ';font-family:' + fontFamilyMono + ';">' + this.getActionsRemaining() + '</span>';
         },
         
-        setEvent: function(event, logEntry) {
-            if (this.event !== event) {
+        setEvent_Hard: function(event, logEntry) {
+            this.setEvent(event, logEntry, true);
+        },
+        setEvent: function(event, logEntry, forceIt) {
+            if (this.event !== event || forceIt) {
                 const oldEventModel = this.getEventModel();
                 
                 this._eventModel = null;
@@ -185,8 +188,9 @@
                 disabled = !hasEnoughChronal;
                 btnTxt = ICON_HQ + ' Recall to HQ ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
+                const isAlreadyAtEvent = this.isAtEvent(eventModel);
                 disabled = !hasEnoughChronal;
-                btnTxt = (this.isAtHQ() ? 'Deploy' : 'Jump') + ' here ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = (this.isAtHQ() ? 'Deploy' : (isAlreadyAtEvent ? 'Loop' : 'Jump')) + ' Here ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             }
             return {disabled, btnTxt};
         },
@@ -196,7 +200,7 @@
                 const cost = pkg.getChronalToDeploy(this, eventModel);
                 if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
                     this[STAT_ID_CHRONAL].adjValue(-cost);
-                    this.setEvent(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
+                    this.setEvent_Hard(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
                 } else {
                     console.warn('insufficent chronal to deploy');
                 }

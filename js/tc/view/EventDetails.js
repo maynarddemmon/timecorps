@@ -363,17 +363,19 @@
             if (hasEventModel) {
                 const isHQ = eventModel.id === EVENT_ID_TIME_CORPS_HQ;
                 recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
-                deployAgentBtn.setVisible(hasAgentModel && !selectedAgentModel.isAtEvent(eventModel) && !eventModel.isHidden());
+                deployAgentBtn.setVisible(hasAgentModel && !eventModel.isHidden());
                 if (hasAgentModel) {
-                    deployAgentBtn.setBtnModel(selectedAgentModel);
-                    recallAgentBtn.setBtnModel(selectedAgentModel);
-                    const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
-                    if (isHQ) {
-                        recallAgentBtn.setDisabled(info.disabled);
-                        recallAgentBtn.setText(info.btnTxt);
-                    } else {
-                        deployAgentBtn.setDisabled(info.disabled);
-                        deployAgentBtn.setText(info.btnTxt);
+                    let btn;
+                    if (recallAgentBtn.visible) {
+                        btn = recallAgentBtn;
+                    } else if (deployAgentBtn.visible) {
+                        btn = deployAgentBtn;
+                    }
+                    if (btn) {
+                        btn.setBtnModel(selectedAgentModel);
+                        const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
+                        btn.setDisabled(info.disabled);
+                        btn.setText(info.btnTxt);
                     }
                 }
             }
