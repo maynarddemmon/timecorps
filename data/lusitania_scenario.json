@@ -252,8 +252,6 @@
 			"start":"1915-05-07T14:10:00",
 			"duration":{"m":1},
 			"location":"atlantic.kinsale",
-			"historicity":"75",
-			"attestation":"0",
 			"exits":[
 				{"mode":"walk", "to":"second_explosion"},
 				{"mode":"walk", "to":"lusitania_sinks", "hidden":"event.attestation.value < 20"}
@@ -334,8 +332,6 @@
 			"start":"1915-05-07T14:28:00",
 			"duration":{"m":1},
 			"location":"atlantic.kinsale",
-			"historicity":"75",
-			"attestation":"0",
 			"exits":[
 				{"mode":"walk", "to":"rescue_delayed"},
 				{"mode":"walk", "to":"mersey_inquiry", "hidden":"event.attestation.value < 40"}

@@ -13,7 +13,7 @@
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
         } = pkg,
         
         STARTING_SCORE = 0;
@@ -113,6 +113,19 @@
         /*notifyStatChanged: function(statModel) {
             if (this.inited) console.log('Stat Changed', statModel);
         },*/
+        
+        adjustHistoricity: function(adjObj) {
+            if (adjObj) {
+                for (const eventId in adjObj) {
+                    const eventModel = this.getEventModel(eventId);
+                    if (eventModel) {
+                        eventModel[STAT_ID_HISTORICITY].adjValue(adjObj[eventId]);
+                    } else {
+                        console.warn('No event for id', eventId);
+                    }
+                }
+            }
+        },
         
         getEventModelsInTimeOrder: () => model[SCOPE_EVENTS].getAsSortedList((a, b) => a.start - b.start),
         putEventModelsInTieredTimeOrder: () => {

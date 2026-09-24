@@ -104,14 +104,34 @@
             },
             
             // Setup Config
-            setInitialEventSelection: function(initialEventSelection) {this.set('initialEventSelection', initialEventSelection, true);},
+            setHistoricityAdjustments: function(adjObj) {
+                // Enforce numerical values for adjustments.
+                if (adjObj) {
+                    for (const eventId in adjObj) {
+                        const value = adjObj[eventId];
+                        if (typeof value !== 'number') {
+                            delete adjObj[eventId];
+                            console.warn('historicityAdjustment:', eventId, 'NaN', value, 'REMOVING.');
+                        }
+                    }
+                }
+                this.set('historicityAdjustments', adjObj, true);
+            },
+            getHistoricityAdjustments: function() {return this.historicityAdjustments;},
+            
+            setInitialEventSelection: function(initialEventSelection) {
+                this.set('initialEventSelection', initialEventSelection, true);
+            },
             getInitialEventSelection: function() {return this.initialEventSelection;},
             
-            setInitialAgentSelection: function(initialAgentSelection) {this.set('initialAgentSelection', initialAgentSelection, true);},
+            setInitialAgentSelection: function(initialAgentSelection) {
+                this.set('initialAgentSelection', initialAgentSelection, true);
+            },
             getInitialAgentSelection: function() {return this.initialAgentSelection;},
             
             setSetup: function(setupCfg) {
                 if (setupCfg) {
+                    this.setHistoricityAdjustments(setupCfg.historicityAdjustments);
                     this.setInitialEventSelection(setupCfg.initialEventSelection);
                     this.setInitialAgentSelection(setupCfg.initialAgentSelection);
                 }
