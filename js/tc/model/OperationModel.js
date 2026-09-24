@@ -44,7 +44,7 @@
                 // We need to give the Objectives a chance to settle since events must propogate
                 // to update success/failure.
                 self.determineSuccessfulCompletion = debounce(() => {
-                    if (self.isCurrent() && self.getProgress().completed) this.doCompletedSuccessfully();
+                    if (self.isCurrent() && self.getProgress().completed) self.doCompletedSuccessfully();
                 }, STANDARD_DEBOUNCE_MILLIS);
                 
                 self.callSuper(attrs);
