@@ -3,11 +3,11 @@
     
     const JSClass = JS.Class,
         
-        {BaseModel, BaseModelCollection} = myt,
+        {debounce, BaseModel, BaseModelCollection} = myt,
         
         {
             setConstrainedValue,
-            cfg:{}
+            cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER}
         } = pkg,
         
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
@@ -27,6 +27,7 @@
                 if (isActual) {
                     this.set('success', success, true);
                     this.operation.notifyCollectionOfUpdate();
+                    if (success) this.operation.determineSuccessfulCompletion();
                 } else {
                     setConstrainedValue(this.operation, this, 'success', success);
                 }
@@ -41,6 +42,13 @@
                 self.objectives = {};
                 
                 self.callSuper(attrs);
+                
+                // We need to give the Objectives a chance to settle since events must propogate
+                // to update success/failure.
+                self.determineSuccessfulCompletion = debounce(() => {
+                    const completed = self.getProgress().completed;
+                    if (completed) this.doCompletedSuccessfully();
+                }, STANDARD_DEBOUNCE_MILLIS);
             },
             
             getAsObj: function(cfg) {
@@ -114,14 +122,27 @@
                 return pkg.model.getOperationModel(this.nextOperation);
             },
             
+            setAwardScore: function(awardScore) {this.set('awardScore', awardScore, true);},
+            grantScore: function() {
+                if (!this.awardScoreGranted) {
+                    pkg.model.adjScore((this.awardScore ?? 0) * MISSION_SCORE_MULTIPLIER);
+                    this.awardScoreGranted = true;
+                }
+            },
+            
             setOnSuccess: function(onSuccessCfg) {
                 if (onSuccessCfg) {
                     this.setNextOperation(onSuccessCfg.nextOperation);
+                    this.setAwardScore(onSuccessCfg.awardScore);
                 }
             },
             
             
             // Methods /////////////////////////////////////////////////////////
+            doCompletedSuccessfully: function() {
+                this.grantScore();
+            },
+            
             notifyCollectionOfUpdate: function() {
                 if (this.inited) {
                     this.callSuper();

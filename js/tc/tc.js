@@ -119,7 +119,12 @@
                 TL_EVENT_BOX_Y_MARGIN:4,
                 TL_EVENT_BOX_X_MARGIN:4,
                 TL_TICK_LINE_HEIGHT:1,
-                TL_CLICK_TO_DESELECT:false
+                TL_CLICK_TO_DESELECT:false,
+                
+                // Scoring
+                SCORE_PER_ATTESTATION:3,
+                MISSION_SCORE_MULTIPLIER:1,
+                PARADOX_SCORE_MULTIPLIER:-500,
             },
             
             // Misc Formatters

@@ -11,7 +11,8 @@
             ICON_HQ, ICON_JUMP,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
-                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE
+                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
+                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER
             },
             theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
@@ -38,6 +39,9 @@
                 }
                 
                 agentModel[STAT_ID_PARADOX].adjValue(paradox);
+                
+                // Adjust score for paradox generated.
+                pkg.model.adjScore(paradox * PARADOX_SCORE_MULTIPLIER);
             }
         };
     
@@ -267,9 +271,10 @@
                             discovered = getRandomInt(discovered, discoverableAmt);
                         }
                         
-                        attestationStat.adjValue(discovered);
+                        const adj = attestationStat.adjValue(discovered);
+                        pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
                         this.incrementActionExecCount();
-                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:discovered});
+                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:adj});
                         
                         // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
                     }

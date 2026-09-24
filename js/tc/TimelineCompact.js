@@ -570,6 +570,12 @@
             
             // Build UI
             const header = self.getHeaderView();
+            
+            const scoreView = self.scoreView = new pkg.LabeledValue(header, {label:'Score', paddingRight:32}, [{
+                update: function(_event) {this.callSuper(pkg.model.score.toLocaleString());}
+            }]);
+            scoreView.attachTo(pkg.model, 'update', 'score');
+            
             self.timelineParadoxBar = new pkg.ParadoxBar(header, {
                 valign:'middle', labelTemplate:'Timeline {label}'
             }, [pkg.BigStatBar]);

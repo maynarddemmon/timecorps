@@ -17,7 +17,8 @@
 				}
 			},
 			"onSuccess":{
-				"nextOperation":"titanic_rescued"
+				"nextOperation":"titanic_rescued",
+				"awardScore":5000
 			}
 		},
 		
@@ -40,7 +41,7 @@
 				}
 			},
 			"onSuccess":{
-				
+				"awardScore":8000
 			}
 		}
 	}

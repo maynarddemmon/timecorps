@@ -14,7 +14,9 @@
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL
-        } = pkg;
+        } = pkg,
+        
+        STARTING_SCORE = 0;
     
     pkg.Model = new JS.Class('Model', myt.Node, {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -95,6 +97,10 @@
         },
         getCurrentOperation: () => model.currentOperationModel,
         
+        setScore: function(v) {this.set('score', v, true);},
+        adjScore: function(adj) {this.setScore(this.getScore() + adj);},
+        getScore: function() {return this.score;},
+        
         
         // Methods /////////////////////////////////////////////////////////////
         /*notifyStatChanged: function(statModel) {
@@ -127,9 +133,12 @@
             return {events:eventsAccum, locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)};
         },
         
-        reset: () => {
+        reset: fullReset => {
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
+            model.setScore(STARTING_SCORE);
+            
+            if (fullReset) model.setCurrentOperation(model.getInitialOperation());
         },
         
         processData: json => {
