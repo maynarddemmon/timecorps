@@ -101,7 +101,10 @@
             new pkg.Spacer(topView);
             
             new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
-                doActivated: () => {model.reset();}
+                doActivated: () => {
+                    location.reload(); // reload the browser.
+                    //model.reset(); // FIXME: eventually we will want a true reset but that gets wrapped up in save/load so we defer for now.
+                }
             }]);
             new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
