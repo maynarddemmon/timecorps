@@ -75,7 +75,7 @@
 				"drill":{
 					"label":"Order Full Boat Drill For The Crew",
 					"set":{"crewDrilled":"true"},
-					"hidden":"event.attestation.value < 20"
+					"hidden":"event.attestation.value < 20 || event.values.crewDrilled.value"
 				}
 			},
 			"exits":[
@@ -97,7 +97,7 @@
 				"offload":{
 					"label":"Have The Cartridge Cases Struck From The Cargo",
 					"set":{"cargoOffloaded":"true"},
-					"hidden":"event.attestation.value < 30"
+					"hidden":"event.attestation.value < 30 || event.values.cargoOffloaded.value"
 				}
 			},
 			"exits":[
@@ -116,7 +116,8 @@
 			"actions":{
 				"publish":{
 					"label":"Run The Notice Beside The Sailing Advertisement",
-					"set":{"warningHeeded":"true"}
+					"set":{"warningHeeded":"true"},
+					"hidden":"event.values.warningHeeded.value"
 				}
 			},
 			"exits":[
@@ -136,7 +137,7 @@
 				"hold":{
 					"label":"Hold The Sailing For Naval Escort",
 					"set":{"sailingHeld":"true"},
-					"hidden":"event.attestation.value < 35"
+					"hidden":"event.attestation.value < 35 || event.values.sailingHeld.value"
 				}
 			},
 			"exits":[
@@ -161,7 +162,7 @@
 				"relight":{
 					"label":"Relight No. 4 And Give Her All Twenty-Five Knots",
 					"set":{"boilerRoomLit":"true"},
-					"hidden":"event.attestation.value < 25"
+					"hidden":"event.attestation.value < 25 || event.values.boilerRoomLit.value"
 				}
 			},
 			"exits":[
@@ -183,12 +184,13 @@
 			"actions":{
 				"plot":{
 					"label":"Plot Every Sighting Onto One Chart",
-					"set":{"positionsPlotted":"true"}
+					"set":{"positionsPlotted":"true"},
+					"hidden":"event.values.positionsPlotted.value"
 				},
 				"escort":{
 					"label":"Detach Destroyers To Meet Her At The Fastnet",
 					"set":{"escortDispatched":"true"},
-					"hidden":"event.attestation.value < 40"
+					"hidden":"event.attestation.value < 40 || event.values.escortDispatched.value"
 				}
 			},
 			"exits":[
@@ -202,9 +204,9 @@
 			}
 		},
 		"u20_patrol":{
-			"name":"U-20 Takes Her Bearing",
-			"start":"1915-05-07T13:20:00",
-			"duration":{"h":1},
+			"name":"U-20 Lines Up The Shot",
+			"start":"1915-05-07T13:50:00",
+			"duration":{"m":20},
 			"location":"atlantic.u20",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 25",
 			"exits":[
@@ -230,12 +232,12 @@
 				"zigzag":{
 					"label":"Put Her On A Zigzag And Keep Her There",
 					"set":{"zigzagOrdered":"true"},
-					"hidden":"event.attestation.value < 20"
+					"hidden":"event.attestation.value < 20 || event.values.zigzagOrdered.value"
 				},
 				"abandon":{
 					"label":"Abandon The Bearing And Run For Queenstown",
 					"set":{"bearingAbandoned":"true"},
-					"hidden":"event.attestation.value < 45"
+					"hidden":"event.attestation.value < 45 || event.values.bearingAbandoned.value"
 				}
 			},
 			"exits":[
@@ -291,7 +293,7 @@
 				"rigPower":{
 					"label":"Rig The Emergency Battery To The Key",
 					"set":{"emergencyPower":"true"},
-					"hidden":"event.attestation.value < 25"
+					"hidden":"event.attestation.value < 25 || event.values.emergencyPower.value"
 				}
 			},
 			"exits":[
@@ -313,7 +315,7 @@
 				"trim":{
 					"label":"Counterflood To Port And Bring Her Upright",
 					"set":{"listCorrected":"true"},
-					"hidden":"event.attestation.value < 40"
+					"hidden":"event.attestation.value < 40 || event.values.listCorrected.value"
 				}
 			},
 			"exits":[
@@ -338,15 +340,10 @@
 				{"mode":"walk", "to":"mersey_inquiry", "hidden":"event.attestation.value < 40"}
 			],
 			"values":{
-				"sinks":{"value":"events.torpedo_strike.values.struck.value"},
-				"massLossOfLife":{"value":"event.values.sinks.value && !(events.lifeboats_fail.values.boatsLaunched.value && events.rescue_delayed.values.rescueInTime.value)"},
-				"civilianCatastrophe":{"value":"event.values.massLossOfLife.value && !events.new_york_departure.values.reducedManifest.value"}
+				"sinks":{"value":"events.torpedo_strike.values.struck.value"}
 			},
 			"hideAffectedBy":{
-				"torpedo_strike":"event.attestation.value < 30",
-				"lifeboats_fail":"event.attestation.value < 45",
-				"rescue_delayed":"event.attestation.value < 60",
-				"new_york_departure":"event.attestation.value < 70"
+				"torpedo_strike":"event.attestation.value < 30"
 			}
 		},
 		"rescue_delayed":{
@@ -359,11 +356,12 @@
 				"ready":{
 					"label":"Have Every Tender Under Steam Before Noon",
 					"set":{"tendersReadied":"true"},
-					"hidden":"event.attestation.value < 30"
+					"hidden":"event.attestation.value < 30 || event.values.tendersReadied.value"
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"mersey_inquiry"}
+				{"mode":"walk", "to":"mersey_inquiry"},
+				{"mode":"walk", "to":"death_toll"}
 			],
 			"values":{
 				"tendersReadied":{"value":"false"},
@@ -371,6 +369,25 @@
 			},
 			"hideAffectedBy":{
 				"wireless_sos":"event.attestation.value < 40"
+			}
+		},
+		"death_toll":{
+			"name":"The Dead Come Ashore",
+			"start":"1915-05-07T21:00:00",
+			"duration":{"h":12},
+			"location":"queenstown",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.rescue_delayed.attestation.value < 20",
+			"exits":[
+				{"mode":"walk", "to":"mersey_inquiry"}
+			],
+			"values":{
+				"massLossOfLife":{"value":"events.lusitania_sinks.values.sinks.value && !(events.lifeboats_fail.values.boatsLaunched.value && events.rescue_delayed.values.rescueInTime.value)"},
+				"civilianCatastrophe":{"value":"event.values.massLossOfLife.value && !events.new_york_departure.values.reducedManifest.value"}
+			},
+			"hideAffectedBy":{
+				"lifeboats_fail":"event.attestation.value < 45",
+				"rescue_delayed":"event.attestation.value < 60",
+				"new_york_departure":"event.attestation.value < 70"
 			}
 		},
 		"mersey_inquiry":{
@@ -383,7 +400,7 @@
 				"evidence":{
 					"label":"Put The Bridge Log Into The Record",
 					"set":{"evidenceSubmitted":"true"},
-					"hidden":"event.attestation.value < 30"
+					"hidden":"event.attestation.value < 30 || event.values.evidenceSubmitted.value"
 				}
 			},
 			"values":{
