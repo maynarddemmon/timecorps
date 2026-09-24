@@ -177,6 +177,10 @@
                     if (isLocations) baseOrder = json.locationsBaseOrder ?? 0;
                     
                     for (const id in data) {
+                        if (modelCol.getById(id)) {
+                            console.warn('Duplicate', dataKey, 'id:', id, '(merging onto existing)');
+                        }
+                        
                         const datum = data[id];
                         datum.id = id;
                         if (isLocations) datum.order += baseOrder;
