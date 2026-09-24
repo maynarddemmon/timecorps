@@ -119,7 +119,8 @@
                 for (const eventId in adjObj) {
                     const eventModel = this.getEventModel(eventId);
                     if (eventModel) {
-                        eventModel[STAT_ID_HISTORICITY].adjValue(adjObj[eventId]);
+                        const adjValue = adjObj[eventId];
+                        eventModel[STAT_ID_HISTORICITY].adjValueToNoMoreThan(adjValue, adjValue);
                     } else {
                         console.warn('No event for id', eventId);
                     }

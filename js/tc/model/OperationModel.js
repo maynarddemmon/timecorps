@@ -112,6 +112,9 @@
                         if (typeof value !== 'number') {
                             delete adjObj[eventId];
                             console.warn('historicityAdjustment:', eventId, 'NaN', value, 'REMOVING.');
+                        } else if (value < 0) {
+                            delete adjObj[eventId];
+                            console.warn('historicityAdjustment:', eventId, 'negative', value, 'REMOVING.');
                         }
                     }
                 }

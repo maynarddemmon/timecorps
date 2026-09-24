@@ -102,25 +102,39 @@
             
             
             // Methods /////////////////////////////////////////////////////////
+            adjValueToNoMoreThan: function(adj, upperLimit, cfg) {
+                if (upperLimit == null) {
+                    console.warn('No upperLimit provided to adjValueToNoMoreThan', this);
+                } else {
+                    // We don't want to modify the provided config
+                    cfg = cfg ? {...cfg} : {};
+                    cfg.upperLimit = upperLimit;
+                }
+                return this.adjValue(adj, cfg);
+            },
+            
             adjValue: function(adj, cfg) {
                 if (adj === 0) return 0;
                 
                 const curValue = this.getValue();
+                
                 if (adj > 0) {
-                    const max = this.getMax(),
-                        allowedAdj = max - curValue;
+                    const realMax = this.getMax(),
+                        upperLimit = cfg?.upperLimit,
+                        max = upperLimit != null ? mathMax(mathMin(realMax, upperLimit), this.getMin()) : realMax,
+                        allowedAdj = mathMax(0, max - curValue);
                     if (adj <= allowedAdj) {
                         this.setValue(curValue + adj);
                         return adj;
+                    } else if (cfg?.allOrNothing) {
+                        // Change would exceed max so do not change.
+                        return 0;
                     } else {
-                        if (cfg?.allOrNothing) {
-                            // Change would exceed max so do not change.
-                            return 0;
-                        } else {
-                            this.setValue(curValue + allowedAdj);
-                            this.triggerValueClampedToMax();
-                            return allowedAdj;
-                        }
+                        if (allowedAdj > 0) this.setValue(curValue + allowedAdj);
+                        // Only a true max clamp should trigger. Hitting a caller supplied 
+                        // upperLimit is not the stat reaching its max.
+                        if (max === realMax) this.triggerValueClampedToMax();
+                        return allowedAdj;
                     }
                 } else {
                     const min = this.getMin(),
