@@ -16,7 +16,7 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_NEXT
+            ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED
         } = pkg,
         
         ObjectiveRow = new JSClass('ObjectiveRow', WideView, {
@@ -40,13 +40,13 @@
                 }, [{
                     setSuccess: function(success) {
                         if (success) {
-                            this.setText('✓');
+                            this.setText(ICON_CHECKED);
                             this.setBgColor(colorSuccess);
                             this.setPaddingLeft(5);
                             this.setPaddingTop(3);
                             this.setTooltip('Objective met.');
                         } else {
-                            this.setText('✗');
+                            this.setText(ICON_UNCHECKED);
                             this.setBgColor(colorError);
                             this.setPaddingLeft(7);
                             this.setPaddingTop(2);

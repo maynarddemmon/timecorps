@@ -206,7 +206,9 @@
             ICON_HQ:'❉',
             ICON_SEARCH:'?',
             ICON_NIL:'–',
-            ICON_NEXT:'➜'
+            ICON_NEXT:'➜',
+            ICON_CHECKED:'✓',
+            ICON_UNCHECKED:'✗',
         };
     
     // Apply config overrides
