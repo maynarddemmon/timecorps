@@ -81,6 +81,7 @@
                 MIN_RECALL_CHRONAL:1,
                 
                 // The starting maximum chronal an Agent can have.
+                AGENT_DEFAULT_STARTING_CHRONAL:10,
                 AGENT_CHRONAL_LIMIT:15,
                 
                 // The starting maximum paradox an Agent can have.

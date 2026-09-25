@@ -20,7 +20,8 @@
         
         {
             WideView,
-            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeVeryLarge}
+            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeVeryLarge},
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS
         } = pkg,
         
         loadDataIntoModel = (url, resultCallback) => {
@@ -204,24 +205,21 @@
             eventDetailsView.notifyAgentSelectedChanged(event.value);
         },
         
-        notifyEventModelAdded: eventModel => {
-            //console.log('add event', eventModel);
-        },
-        
-        notifyEventModelUpdated: eventModel => {
-            eventDetailsView.notifyEventModelChanged(eventModel);
-        },
-        
-        notifyEventModelRemoved: eventModel => {
-            //console.log('remove event', eventModel);
-        },
-        
-        notifyAgentModelUpdated: agentModel => {
-            eventDetailsView.notifyEventModelChanged(agentModel.getEventModel());
-        },
-        
-        notifyOperationModelUpdated: operationModel => {
-            opsView.notifyOperationModelChanged(operationModel);
+        notifyModelUpdated: (instanceModel, scopeId) => {
+            switch (scopeId) {
+                case SCOPE_AGENTS:
+                    eventDetailsView.notifyEventModelChanged(instanceModel.getEventModel());
+                    break;
+                case SCOPE_EVENTS:
+                    eventDetailsView.notifyEventModelChanged(instanceModel);
+                    break;
+                case SCOPE_OPERATIONS:
+                    opsView.notifyOperationModelChanged(instanceModel);
+                    break;
+                case SCOPE_LOCATIONS:
+                    // Nothing needed yet.
+                    break;
+            }
         },
         
         notifyTimelineParadoxExceeded: () => {

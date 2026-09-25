@@ -1,24 +1,38 @@
 (pkg => {
     'use strict';
     
+    const JSClass = JS.Class;
+    
     let model;
     
-    const BaseModelCollection = myt.BaseModelCollection,
-        
-        {
+    const {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
-                TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT
+                TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT,
+                AGENT_DEFAULT_STARTING_CHRONAL
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
         } = pkg,
         
-        STARTING_SCORE = 0;
+        STARTING_SCORE = 0,
+        
+        TCModelCollection = pkg.TCModelCollection = new JSClass('TCModelCollection', myt.BaseModelCollection, {
+            setScopeId: function(scopeId) {this.scopeId = scopeId;},
+            
+            processDatum: function(datum, jsonContext) {
+                this.addModel(datum);
+            },
+            
+            fireUpdatedEvent: function(model) {
+                this.callSuper(model);
+                pkg.app.notifyModelUpdated(model, this.scopeId);
+            }
+        });
     
-    pkg.Model = new JS.Class('Model', myt.Node, {
+    pkg.Model = new JSClass('Model', myt.Node, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             model = this;
@@ -41,33 +55,28 @@
             }]);
             
             // Note: events, agents and locations are part of the external API.
-            model[SCOPE_EVENTS] = new BaseModelCollection({modelClass:EventModel}, [{
-                fireAddedEvent: function(model) {
-                    this.callSuper(model);
-                    pkg.app.notifyEventModelAdded(model);
-                },
-                fireUpdatedEvent: function(model) {
-                    this.callSuper(model);
-                    pkg.app.notifyEventModelUpdated(model);
-                },
-                fireRemovedEvent: function(model) {
-                    this.callSuper(model);
-                    pkg.app.notifyEventModelRemoved(model);
+            model[SCOPE_EVENTS]     = new TCModelCollection({modelClass:EventModel,     scopeId:SCOPE_EVENTS});
+            model[SCOPE_AGENTS]     = new TCModelCollection({modelClass:AgentModel,     scopeId:SCOPE_AGENTS}, [{
+                processDatum: function(datum, jsonContext) {
+                    if (typeof datum.chronal !== 'number') {
+                        datum.chronal = AGENT_DEFAULT_STARTING_CHRONAL;
+                    }
+                    this.callSuper(datum, jsonContext);
                 }
             }]);
-            model[SCOPE_AGENTS] = new BaseModelCollection({modelClass:AgentModel}, [{
-                fireUpdatedEvent: function(model) {
-                    this.callSuper(model);
-                    pkg.app.notifyAgentModelUpdated(model);
-                },
-            }]);
-            model[SCOPE_LOCATIONS] = new BaseModelCollection({modelClass:LocationModel});
-            model[SCOPE_OPERATIONS] = new BaseModelCollection({modelClass:OperationModel}, [{
-                fireUpdatedEvent: function(model) {
-                    this.callSuper(model);
-                    pkg.app.notifyOperationModelUpdated(model);
+            model[SCOPE_LOCATIONS]  = new TCModelCollection({modelClass:LocationModel,  scopeId:SCOPE_LOCATIONS}, [{
+                processDatum: function(datum, jsonContext) {
+                    if (typeof datum.order !== 'number') {
+                        console.warn(dataKey, id, 'has no numeric order, using 0');
+                        datum.order = 0;
+                    }
+                    
+                    // Makes it easy to shift the order of all locations in a file by a fixed amount.
+                    datum.order += jsonContext.locationsBaseOrder ?? 0;
+                    this.callSuper(datum, jsonContext);
                 }
             }]);
+            model[SCOPE_OPERATIONS] = new TCModelCollection({modelClass:OperationModel, scopeId:SCOPE_OPERATIONS});
             
             model.callSuper(parent, attrs);
             
@@ -174,26 +183,13 @@
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
-                    const modelCol = model[dataKey],
-                        isLocations = dataKey === SCOPE_LOCATIONS;
-                    
-                    // Makes it easy to shift the order of all locations in a file by a fixed amount.
-                    let baseOrder;
-                    if (isLocations) baseOrder = json.locationsBaseOrder ?? 0;
-                    
+                    const modelCol = model[dataKey];
                     for (const id in data) {
                         if (modelCol.getById(id)) console.warn('Duplicate', dataKey, 'id:', id, '(merging onto existing)');
                         
                         const datum = data[id];
                         datum.id = id;
-                        if (isLocations) {
-                            if (typeof datum.order !== 'number') {
-                                console.warn(dataKey, id, 'has no numeric order, using 0');
-                                datum.order = 0;
-                            }
-                            datum.order += baseOrder;
-                        }
-                        modelCol.addModel(datum);
+                        modelCol.processDatum(datum, json);
                     }
                 }
             }

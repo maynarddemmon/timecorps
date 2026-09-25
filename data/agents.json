@@ -2,41 +2,137 @@
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
-			"chronal":10,
 			"event":"collision"
 		},
 		"OK":{
 			"name":"Okonjo",
+			"chronal":0,
 			"paradox":1
 		},
 		"HW":{
 			"name":"Halloway",
-			"chronal":15,
 			"paradox":2
 		},
 		"GO":{
-			"name":"Gordon",
-			"chronal":14
+			"name":"Gordon"
 		},
 		"PI":{
-			"name":"Pierce",
-			"chronal":14
+			"name":"Pierce"
 		},
 		"AA":{
-			"name":"Alexander Aimes",
-			"chronal":15
+			"name":"Alexander Aimes"
 		},
 		"AB":{
-			"name":"Arthur Borne",
-			"chronal":15
+			"name":"Arthur Borne"
 		},
 		"AC":{
-			"name":"Aaron Crown",
-			"chronal":15
+			"name":"Aaron Crown"
 		},
 		"AD":{
-			"name":"Amon Duncan",
-			"chronal":15
+			"name":"Amon Duncan"
+		},
+		
+		"AE":{
+			"name":"Agent AE"
+		},
+		"AF":{
+			"name":"Agent AF"
+		},
+		"AG":{
+			"name":"Agent AG"
+		},
+		"AH":{
+			"name":"Agent AH"
+		},
+		"AI":{
+			"name":"Agent AI"
+		},
+		"AJ":{
+			"name":"Agent AJ"
+		},
+		"AK":{
+			"name":"Agent AK"
+		},
+		"AL":{
+			"name":"Agent AL"
+		},
+		"AM":{
+			"name":"Agent AM"
+		},
+		"AN":{
+			"name":"Agent AN"
+		},
+		"AO":{
+			"name":"Agent AO"
+		},
+		"AP":{
+			"name":"Agent AP"
+		},
+		"AQ":{
+			"name":"Agent AQ"
+		},
+		"AR":{
+			"name":"Agent AR"
+		},
+		"AS":{
+			"name":"Agent AS"
+		},
+		"AT":{
+			"name":"Agent AT"
+		},
+		"AU":{
+			"name":"Agent AU"
+		},
+		"AV":{
+			"name":"Agent AV"
+		},
+		"AW":{
+			"name":"Agent AW"
+		},
+		"AX":{
+			"name":"Agent AX"
+		},
+		"AY":{
+			"name":"Agent AY"
+		},
+		"AZ":{
+			"name":"Agent AZ"
+		},
+		"BA":{
+			"name":"Agent BA"
+		},
+		"BB":{
+			"name":"Agent BB"
+		},
+		"BC":{
+			"name":"Agent BC"
+		},
+		"BD":{
+			"name":"Agent BD"
+		},
+		"BE":{
+			"name":"Agent BE"
+		},
+		"BF":{
+			"name":"Agent BF"
+		},
+		"BG":{
+			"name":"Agent BG"
+		},
+		"BH":{
+			"name":"Agent BH"
+		},
+		"BI":{
+			"name":"Agent BI"
+		},
+		"BJ":{
+			"name":"Agent BJ"
+		},
+		"BK":{
+			"name":"Agent BK"
+		},
+		"BL":{
+			"name":"Agent BL"
 		}
 	}
 }

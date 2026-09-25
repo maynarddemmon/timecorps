@@ -84,7 +84,7 @@
                 const model = this.model;
                 if (model) {
                     const id = model.id;
-                    this._photo.setImageUrl(pkg.IMAGE_ROOT + id + '.jpg');
+                    this._photo.setImageUrl(pkg.IMAGE_ROOT + 'agent/' + id + '.jpg');
                     this._idTxt.setText(id);
                 }
             },
