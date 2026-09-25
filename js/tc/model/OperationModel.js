@@ -12,7 +12,10 @@
         } = pkg,
         
         validateAgentIdList = (list, label) => {
-            if (Array.isArray(list)) {
+            if (list) {
+                // Assume non-arrays are bare strings.
+                list = Array.isArray(list) ? list : [list];
+                
                 return list.filter(agentId => {
                     if (typeof agentId === 'string') return true;
                     console.warn(label, 'non-string agent id. REMOVING:', agentId);
@@ -176,18 +179,12 @@
             
             setAwardScore: function(awardScore) {this.set('awardScore', awardScore, true);},
             grantScore: function() {
-                if (!this.awardScoreGranted) {
-                    pkg.model.adjScore((this.awardScore ?? 0) * MISSION_SCORE_MULTIPLIER);
-                    this.awardScoreGranted = true;
-                }
+                pkg.model.adjScore((this.awardScore ?? 0) * MISSION_SCORE_MULTIPLIER);
             },
             
             setAwardHQChronal: function(awardHQChronal) {this.set('awardHQChronal', awardHQChronal, true);},
             grantHQChronal: function() {
-                if (!this.awardHQChronalGranted) {
-                    pkg.model[STAT_ID_CHRONAL].adjValue(this.awardHQChronal ?? 0);
-                    this.awardHQChronalGranted = true;
-                }
+                pkg.model[STAT_ID_CHRONAL].adjValue(this.awardHQChronal ?? 0);
             },
             
             // onSuccess

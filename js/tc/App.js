@@ -209,6 +209,9 @@
             switch (scopeId) {
                 case SCOPE_AGENTS:
                     eventDetailsView.notifyEventModelChanged(instanceModel.getEventModel());
+                    if (eventDetailsView.selectedAgentModel === instanceModel) {
+                        eventDetailsView.updateForSelectedAgent();
+                    }
                     break;
                 case SCOPE_EVENTS:
                     eventDetailsView.notifyEventModelChanged(instanceModel);

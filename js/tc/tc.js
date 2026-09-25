@@ -145,15 +145,23 @@
             // Chronal Util
             getChronalToDeploy: (agentModel, eventModel) => {
                 const eventTime = eventModel.getStart(),
-                    agentEvent = agentModel.getEventModel(),
-                    getFunc = agentEvent.isHQ() ? getChronalEfficiently : getChronalByTimeDiff,
+                    agentEvent = agentModel.getEventModel();
+                
+                // The Agent isn't anywhere which is odd.
+                if (!agentEvent) return Number.MAX_SAFE_INTEGER;
+                
+                const getFunc = agentEvent.isHQ() ? getChronalEfficiently : getChronalByTimeDiff,
                     cost = getFunc(agentEvent.getEnd(), eventTime);
                 return mathMax(TC.cfg.MIN_DEPLOY_CHRONAL, cost);
             },
             
             getChronalToRecall: agentModel => {
-                const agentEvent = agentModel.getEventModel(),
-                    cost = getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2;
+                const agentEvent = agentModel.getEventModel();
+                
+                // The Agent isn't anywhere which is odd.
+                if (!agentEvent) return Number.MAX_SAFE_INTEGER;
+                
+                const cost = getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2;
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             

@@ -52,7 +52,7 @@
             
             self.log = [];
             
-            // Visible and player controlled unless the data says otherwise.
+            // Hidden and NPC unless the data says otherwise.
             self.hidden = true;
             self.playerControlled = false;
             
