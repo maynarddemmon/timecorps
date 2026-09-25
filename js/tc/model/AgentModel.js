@@ -12,7 +12,7 @@
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
-                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER
+                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
@@ -285,13 +285,18 @@
                 }
             }
         },
-        doReloadChronal: function(requestedAmount) {
-            const hqChronalStat = pkg.model[STAT_ID_CHRONAL],
-                agentChronalStat = this[STAT_ID_CHRONAL],
-                availableAdjustment = mathMin(-hqChronalStat.getValueToMin(), agentChronalStat.getValueToMax());
-            if (availableAdjustment > 0) {
-                agentChronalStat.adjValue(-hqChronalStat.adjValue(-requestedAmount));
+        doReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
+            if (this.canReloadChronal(requestedAmount)) {
+                const amount = this.getReloadChronalAmount(requestedAmount);
+                pkg.model[STAT_ID_CHRONAL].adjValue(-amount);
+                this[STAT_ID_CHRONAL].adjValue(amount);
             }
+        },
+        getReloadChronalAmount: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
+            return mathMin(requestedAmount, -pkg.model[STAT_ID_CHRONAL].getValueToMin(), this[STAT_ID_CHRONAL].getValueToMax());
+        },
+        canReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
+            return this.getReloadChronalAmount(requestedAmount) > 0;
         },
         
         // Paradox

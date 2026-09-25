@@ -174,7 +174,7 @@
             
             // Methods /////////////////////////////////////////////////////////
             reset: function() {
-                this.awardScoreGranted = false;
+                this.awardScoreGranted = this.awardHQChronalGranted = false;
             },
             
             doCompletedSuccessfully: function() {

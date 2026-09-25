@@ -16,7 +16,6 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
-            cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
             ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
@@ -56,7 +55,7 @@
                     doActivated: () => {self.agentModel.doRecallToHQ();}
                 }]);
                 self.reloadChronalBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
-                    doActivated: () => {self.agentModel.doReloadChronal(RELOAD_CHRONAL_AMOUNT);}
+                    doActivated: () => {self.agentModel.doReloadChronal();}
                 }]);
                 
                 self.actionView = new AgentRowFlow(self);
@@ -81,11 +80,8 @@
                 reloadChronalBtn.setVisible(isHQ);
                 
                 if (isHQ) {
-                    reloadChronalBtn.setText('Reload Agent Chronal +' + RELOAD_CHRONAL_AMOUNT);
-                    reloadChronalBtn.setDisabled(
-                        pkg.model[STAT_ID_CHRONAL].getValue() === 0 ||
-                        agentModel[STAT_ID_CHRONAL].isAtMaxValue()
-                    );
+                    reloadChronalBtn.setText('Reload Agent Chronal +' + agentModel.getReloadChronalAmount());
+                    reloadChronalBtn.setDisabled(!agentModel.canReloadChronal());
                 } else {
                     const info = agentModel.getInfoForTimeTravel(rootModel.getHQEventModel());
                     recallBtn.setText(info.btnTxt);

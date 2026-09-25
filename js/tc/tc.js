@@ -95,10 +95,9 @@
                 // The default actions allowed by an Agent per visit within an Event.
                 DEFAULT_ACTION_LIMIT:1,
                 
-                // FIXME: I'm not sure we have a use for these two. Possibly this is the HQ limit 
-                // for resupply.
-                TIMELINE_STARTING_CHRONAL:16,
-                TIMELINE_CHRONAL_LIMIT:24,
+                // This is the HQ chronal used to resupply Agents.
+                TIMELINE_STARTING_CHRONAL:10,
+                TIMELINE_CHRONAL_LIMIT:25,
                 
                 // The amount of paradox the Timeline begins the game with.
                 TIMELINE_STARTING_PARADOX:0,
