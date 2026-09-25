@@ -22,6 +22,7 @@
 			},
 			"onSuccess":{
 				"nextOperation":"titanic_rescued",
+				"awardHQChronal":2,
 				"awardScore":5000
 			}
 		},
@@ -49,6 +50,7 @@
 			},
 			"onSuccess":{
 				"nextOperation":"lusitania_nosink",
+				"awardHQChronal":3,
 				"awardScore":8000
 			}
 		},
@@ -71,6 +73,7 @@
 				}
 			},
 			"onSuccess":{
+				"awardHQChronal":4,
 				"awardScore":13000
 			}
 		}

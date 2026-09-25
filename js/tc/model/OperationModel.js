@@ -7,7 +7,8 @@
         
         {
             setConstrainedValue,
-            cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER}
+            cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER},
+            STAT_ID_CHRONAL
         } = pkg,
         
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
@@ -154,10 +155,19 @@
                 }
             },
             
+            setAwardHQChronal: function(awardHQChronal) {this.set('awardHQChronal', awardHQChronal, true);},
+            grantHQChronal: function() {
+                if (!this.awardHQChronalGranted) {
+                    pkg.model[STAT_ID_CHRONAL].adjValue(this.awardHQChronal ?? 0);
+                    this.awardHQChronalGranted = true;
+                }
+            },
+            
             setOnSuccess: function(onSuccessCfg) {
                 if (onSuccessCfg) {
                     this.setNextOperation(onSuccessCfg.nextOperation);
                     this.setAwardScore(onSuccessCfg.awardScore);
+                    this.setAwardHQChronal(onSuccessCfg.awardHQChronal);
                 }
             },
             
@@ -169,6 +179,7 @@
             
             doCompletedSuccessfully: function() {
                 this.grantScore();
+                this.grantHQChronal();
             },
             
             notifyCollectionOfUpdate: function() {
