@@ -67,7 +67,7 @@
             model[SCOPE_LOCATIONS]  = new TCModelCollection({modelClass:LocationModel,  scopeId:SCOPE_LOCATIONS}, [{
                 processDatum: function(datum, jsonContext) {
                     if (typeof datum.order !== 'number') {
-                        console.warn(dataKey, id, 'has no numeric order, using 0');
+                        console.warn(this.scopeId, datum.id, 'has no numeric order (', typeof datum.order, datum.order, ') defaulting to 0');
                         datum.order = 0;
                     }
                     
