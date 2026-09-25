@@ -134,15 +134,14 @@
         setEvent_Hard: function(event, logEntry) {
             this.setEvent(event, logEntry, true);
         },
+        
         setEvent: function(event, logEntry, forceIt) {
             if (this.event !== event || forceIt) {
                 const oldEventModel = this.getEventModel();
                 
-                this._eventModel = null;
-                this.setActionExecCount(0, true);
-                
                 this.set('event', event, true);
                 const newEventModel = this._eventModel = pkg.model.getEventModel(this.event); // Populate immediately
+                this.setActionExecCount(0, true);
                 this.notifyCollectionOfUpdate();
                 
                 this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});

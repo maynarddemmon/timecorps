@@ -148,7 +148,10 @@
                     agentEvent = agentModel.getEventModel();
                 
                 // The Agent isn't anywhere which is odd.
-                if (!agentEvent) return Number.MAX_SAFE_INTEGER;
+                if (!agentEvent) {
+                    console.warn('getChronalToDeploy: no agent event', agentModel);
+                    return Number.MAX_SAFE_INTEGER;
+                }
                 
                 const getFunc = agentEvent.isHQ() ? getChronalEfficiently : getChronalByTimeDiff,
                     cost = getFunc(agentEvent.getEnd(), eventTime);
@@ -159,7 +162,10 @@
                 const agentEvent = agentModel.getEventModel();
                 
                 // The Agent isn't anywhere which is odd.
-                if (!agentEvent) return Number.MAX_SAFE_INTEGER;
+                if (!agentEvent) {
+                    console.warn('getChronalToRecall: no agent event', agentModel);
+                    return Number.MAX_SAFE_INTEGER;
+                }
                 
                 const cost = getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2;
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
