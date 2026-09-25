@@ -16,10 +16,11 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
+            cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
             ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
+            STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
         // Agent Row
@@ -80,7 +81,8 @@
                 reloadChronalBtn.setVisible(isHQ);
                 
                 if (isHQ) {
-                    reloadChronalBtn.setText('Reload Agent Chronal +' + agentModel.getReloadChronalAmount());
+                    const reloadAmount = agentModel.getReloadChronalAmount() || RELOAD_CHRONAL_AMOUNT;
+                    reloadChronalBtn.setText('Reload Agent Chronal +' + reloadAmount);
                     reloadChronalBtn.setDisabled(!agentModel.canReloadChronal());
                 } else {
                     const info = agentModel.getInfoForTimeTravel(rootModel.getHQEventModel());
