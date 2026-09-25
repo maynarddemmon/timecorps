@@ -106,7 +106,7 @@
             // Build UI
             const header = self.getHeaderView();
             self.chronalBar = new pkg.ChronalBar(header, {
-                valign:'middle', labelTemplate:'{label} Pool'
+                valign:'middle', labelTemplate:'HQ {label} Pool'
             }, [pkg.BigStatBar]);
             
             self.gridWrapper = new pkg.InfiniteGridWrapper(self, {

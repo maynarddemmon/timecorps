@@ -16,10 +16,11 @@
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
+            cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
             ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
-            STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
         // Agent Row
@@ -54,6 +55,9 @@
                 self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
                     doActivated: () => {self.agentModel.doRecallToHQ();}
                 }]);
+                self.reloadChronalBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
+                    doActivated: () => {self.agentModel.doReloadChronal(RELOAD_CHRONAL_AMOUNT);}
+                }]);
                 
                 self.actionView = new AgentRowFlow(self);
                 self.exitView = new AgentRowFlow(self);
@@ -64,17 +68,26 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionView, exitView} = self,
+                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, reloadChronalBtn, actionView, exitView} = self,
                     agentCantActHere = !agentModel.canAct();
                 
                 markerView.setModel(agentModel);
                 vitaeBtn.setText(agentModel.name);
                 
-                if (eventModel.isHQ()) {
-                    recallBtn.setVisible(false);
+                const rootModel = pkg.model,
+                    isHQ = eventModel.isHQ();
+                
+                recallBtn.setVisible(!isHQ);
+                reloadChronalBtn.setVisible(isHQ);
+                
+                if (isHQ) {
+                    reloadChronalBtn.setText('Reload Agent Chronal +' + RELOAD_CHRONAL_AMOUNT);
+                    reloadChronalBtn.setDisabled(
+                        pkg.model[STAT_ID_CHRONAL].getValue() === 0 ||
+                        agentModel[STAT_ID_CHRONAL].isAtMaxValue()
+                    );
                 } else {
-                    const info = agentModel.getInfoForTimeTravel(pkg.model.getHQEventModel());
-                    recallBtn.setVisible(true);
+                    const info = agentModel.getInfoForTimeTravel(rootModel.getHQEventModel());
                     recallBtn.setText(info.btnTxt);
                     recallBtn.setDisabled(info.disabled);
                 }

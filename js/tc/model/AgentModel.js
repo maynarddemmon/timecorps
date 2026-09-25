@@ -172,9 +172,9 @@
             }
         },
         
-        /*notifyStatChanged: function(statModel) {
-            if (this.inited) console.log('Stat Changed', statModel);
-        },*/
+        notifyStatChanged: function(statModel) {
+            if (this.inited) this.notifyCollectionOfUpdate();
+        },
         
         getInfoForTimeTravel: function(eventModel) {
             const isHQ = eventModel.isHQ(),
@@ -283,6 +283,14 @@
                         // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
                     }
                 }
+            }
+        },
+        doReloadChronal: function(requestedAmount) {
+            const hqChronalStat = pkg.model[STAT_ID_CHRONAL],
+                agentChronalStat = this[STAT_ID_CHRONAL],
+                availableAdjustment = mathMin(-hqChronalStat.getValueToMin(), agentChronalStat.getValueToMax());
+            if (availableAdjustment > 0) {
+                agentChronalStat.adjValue(-hqChronalStat.adjValue(-requestedAmount));
             }
         },
         

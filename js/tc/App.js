@@ -216,6 +216,10 @@
             //console.log('remove event', eventModel);
         },
         
+        notifyAgentModelUpdated: agentModel => {
+            eventDetailsView.notifyEventModelChanged(agentModel.getEventModel());
+        },
+        
         notifyOperationModelUpdated: operationModel => {
             opsView.notifyOperationModelChanged(operationModel);
         },

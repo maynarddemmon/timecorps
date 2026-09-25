@@ -55,7 +55,12 @@
                     pkg.app.notifyEventModelRemoved(model);
                 }
             }]);
-            model[SCOPE_AGENTS] = new BaseModelCollection({modelClass:AgentModel});
+            model[SCOPE_AGENTS] = new BaseModelCollection({modelClass:AgentModel}, [{
+                fireUpdatedEvent: function(model) {
+                    this.callSuper(model);
+                    pkg.app.notifyAgentModelUpdated(model);
+                },
+            }]);
             model[SCOPE_LOCATIONS] = new BaseModelCollection({modelClass:LocationModel});
             model[SCOPE_OPERATIONS] = new BaseModelCollection({modelClass:OperationModel}, [{
                 fireUpdatedEvent: function(model) {

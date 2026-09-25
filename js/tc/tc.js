@@ -70,6 +70,9 @@
                 TRAVEL_MODE_WAIT:'wait',
                 TRAVEL_MODE_WALK:'walk',
                 
+                // The amount of chronal granted when reloading at HQ.
+                RELOAD_CHRONAL_AMOUNT:1,
+                
                 // The absolute minimum chronal needed to deploy an Agent from HQ or jump from
                 // another Event.
                 MIN_DEPLOY_CHRONAL:1,
