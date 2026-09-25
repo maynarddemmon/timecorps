@@ -20,7 +20,10 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
     file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc');
-    file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires('tc.NotifyingNumericStatModel');
+    
+    file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
+        'tc.NotifyingNumericStatModel','tc.setConstrainedValue'
+    );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.setConstrainedValue','tc.NotifyingNumericStatModel'
     );

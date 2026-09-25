@@ -6,8 +6,10 @@
 			"name":"Titanic - Avoid the Iceberg",
 			"description":"Prevent the Titanic from colliding with the iceberg.",
 			"setup":{
-				"initialEventSelection":"collision",
+				"awardAgents":["VQ"],
+				"revealAgents":["VQ"],
 				"initialAgentSelection":"VQ",
+				"initialEventSelection":"collision",
 				"historicityAdjustments":{
 					"collision":75,
 					"casualties":65
@@ -51,7 +53,9 @@
 			"onSuccess":{
 				"nextOperation":"lusitania_nosink",
 				"awardHQChronal":3,
-				"awardScore":8000
+				"awardScore":8000,
+				"awardAgents":["GO"],
+				"revealAgents":["GO","PI"]
 			}
 		},
 		

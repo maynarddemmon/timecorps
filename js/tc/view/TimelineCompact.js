@@ -160,12 +160,17 @@
             const agentCountsByEventId = {};
             for (const agentModel of model.getAgentModelsAsList()) {
                 const agentId = agentModel.id,
-                    agentEventId = agentModel.getEvent();
-                let agentToken = tokensByAgentId[agentId],
-                    agentCountForEvent = agentCountsByEventId[agentEventId] ?? 1,
+                    agentEventId = agentModel.getEvent(),
+                    isHiddenAgent = agentModel.isHidden();
+                let agentToken = tokensByAgentId[agentId];
+                
+                // Hidden and never shown so there's no token to create or animate.
+                if (isHiddenAgent && !agentToken) continue;
+                
+                let agentCountForEvent = agentCountsByEventId[agentEventId] ?? 1,
                     targetX = eventTargetXById[agentEventId],
                     targetY = eventTargetYById[agentEventId],
-                    isOffBoard = targetX === undefined || targetY === undefined;
+                    isOffBoard = isHiddenAgent || targetX === undefined || targetY === undefined;
                 
                 targetX += TL_COL_WIDTH - (agentCountForEvent * AGENT_TOKEN_SIZE);
                 targetY += TL_EVENT_BOX_HEIGHT - AGENT_TOKEN_SIZE;
@@ -188,26 +193,25 @@
                         animateAttr(agentToken, 'scaleX', 1, 'outBounce');
                         animateAttr(agentToken, 'scaleY', 1, 'outBounce');
                     } else {
-                        /*agentToken.setScaleX(1);
-                        agentToken.setScaleY(1);
-                        const distance = M.Geometry.measureDistance(agentToken.x, agentToken.y, targetX, targetY),
-                            scale = Math.max(1, Math.log10(distance));*/
                         animateAttrs(agentToken, {x:targetX, y:targetY});
-                        /*animateAttr(agentToken, 'scaleX', scale, 'inQuad', HALF_ANIM_DURATION)?.next(() => {
-                            animateAttr(agentToken, 'scaleX', 1, 'outQuad', HALF_ANIM_DURATION)
-                        });
-                        animateAttr(agentToken, 'scaleY', scale, 'inQuad', HALF_ANIM_DURATION)?.next(() => {
-                            animateAttr(agentToken, 'scaleY', 1, 'outQuad', HALF_ANIM_DURATION)
-                        });*/
                     }
                 } else {
                     agentToken = tokensByAgentId[agentId] = new AgentToken(flowLayer, {
                         x:targetX, y:targetY, timeline, model:agentModel
                     });
-                    if (agentModel.getEventModel().isHidden()) isOffBoard = true;
+                    if (isOffBoard || agentModel.getEventModel().isHidden()) {
+                        isOffBoard = true;
+                        
+                        // Start in the same state as a token that has left the board, so it isn't 
+                        // drawn at a meaningless position and the "Entering" animation works when 
+                        // the Agent is deployed.
+                        agentToken.setOpacity(0);
+                        agentToken.setScaleX(0);
+                        agentToken.setScaleY(0);
+                    }
                 }
                 agentToken.offBoard = isOffBoard;
-                agentCountsByEventId[agentEventId] = agentCountForEvent + 1;
+                if (!isHiddenAgent) agentCountsByEventId[agentEventId] = agentCountForEvent + 1;
             }
             
             // Update for new extents

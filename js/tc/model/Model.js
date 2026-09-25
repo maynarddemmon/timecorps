@@ -84,63 +84,11 @@
         },
         
         
-        // Accessors ///////////////////////////////////////////////////////////
+        // Events:Accessors & Methods //////////////////////////////////////////
         getEventModel: id => model[SCOPE_EVENTS].getById(id),
         getHQEventModel: () => model.getEventModel(EVENT_ID_TIME_CORPS_HQ),
         getTheVoidEventModel: () => model.getEventModel(EVENT_ID_THE_VOID),
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
-        
-        getAgentModel: id => model[SCOPE_AGENTS].getById(id),
-        getAgentModels: () => model[SCOPE_AGENTS].getAll(),
-        getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
-        getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsList(agent => agent.getEvent() === eventId),
-        
-        getLocation: id => model[SCOPE_LOCATIONS].getById(id),
-        getLocations: () => model[SCOPE_LOCATIONS].getAll(),
-        getLocationsInOrder: () => model[SCOPE_LOCATIONS].getAsSortedList((a, b) => a.order - b.order),
-        
-        getOperationModel: id => model[SCOPE_OPERATIONS].getById(id),
-        getOperationModels: () => model[SCOPE_OPERATIONS].getAll(),
-        getOperationModelsAsList: filterFunc => model[SCOPE_OPERATIONS].getAsList(filterFunc),
-        
-        setInitialOperation: operationId => model.initialOperation = operationId,
-        getInitialOperation: () => model.getOperationModel(model.initialOperation),
-        
-        setCurrentOperation: operationModel => {
-            model.currentOperationModel = operationModel;
-            pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
-            
-            // Objectives may already be satisfied on arrival (e.g. the player completed
-            // them while working an earlier op), so check now rather than waiting for
-            // the next objective change.
-            operationModel?.determineSuccessfulCompletion();
-        },
-        
-        getCurrentOperation: () => model.currentOperationModel,
-        
-        setScore: function(v) {this.set('score', v, true);},
-        adjScore: function(adj) {this.setScore(this.getScore() + adj);},
-        getScore: function() {return this.score;},
-        
-        
-        // Methods /////////////////////////////////////////////////////////////
-        /*notifyStatChanged: function(statModel) {
-            if (this.inited) console.log('Stat Changed', statModel);
-        },*/
-        
-        adjustHistoricity: function(adjObj) {
-            if (adjObj) {
-                for (const eventId in adjObj) {
-                    const eventModel = this.getEventModel(eventId);
-                    if (eventModel) {
-                        const adjValue = adjObj[eventId];
-                        eventModel[STAT_ID_HISTORICITY].adjValueToNoMoreThan(adjValue, adjValue);
-                    } else {
-                        console.warn('No event for id', eventId);
-                    }
-                }
-            }
-        },
         
         getEventModelsInTimeOrder: () => model[SCOPE_EVENTS].getAsSortedList((a, b) => a.start - b.start),
         putEventModelsInTieredTimeOrder: () => {
@@ -167,6 +115,95 @@
             }
             return {events:eventsAccum, locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)};
         },
+        
+        
+        // Agents:Accessors & Methods //////////////////////////////////////////
+        getAgentModel: id => model[SCOPE_AGENTS].getById(id),
+        getAgentModels: () => model[SCOPE_AGENTS].getAll(),
+        getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
+        getAgentModelsForEvent: eventId => model.getAgentModelsAsList(agent => agent.getEvent() === eventId && !agent.isHidden()),
+        
+        revealAgents: agentIds => {
+            if (agentIds) {
+                for (const agentId of agentIds) {
+                    const agentModel = model.getAgentModel(agentId);
+                    if (agentModel) {
+                        agentModel.setHidden(false);
+                    } else {
+                        console.warn('No agent for id', agentId);
+                    }
+                }
+            }
+        },
+        
+        /*  Puts the Agents under player control. Does not change whether they are hidden. */
+        awardAgents: agentIds => {
+            if (agentIds) {
+                for (const agentId of agentIds) {
+                    const agentModel = model.getAgentModel(agentId);
+                    if (agentModel) {
+                        agentModel.setPlayerControlled(true);
+                    } else {
+                        console.warn('No agent for id', agentId);
+                    }
+                }
+            }
+        },
+        
+        
+        // Locations:Accessors & Methods ///////////////////////////////////////
+        getLocation: id => model[SCOPE_LOCATIONS].getById(id),
+        getLocations: () => model[SCOPE_LOCATIONS].getAll(),
+        getLocationsInOrder: () => model[SCOPE_LOCATIONS].getAsSortedList((a, b) => a.order - b.order),
+        
+        
+        // Operations:Accessors & Methods //////////////////////////////////////
+        getOperationModel: id => model[SCOPE_OPERATIONS].getById(id),
+        getOperationModels: () => model[SCOPE_OPERATIONS].getAll(),
+        getOperationModelsAsList: filterFunc => model[SCOPE_OPERATIONS].getAsList(filterFunc),
+        
+        setInitialOperation: operationId => model.initialOperation = operationId,
+        getInitialOperation: () => model.getOperationModel(model.initialOperation),
+        
+        setCurrentOperation: operationModel => {
+            model.currentOperationModel = operationModel;
+            operationModel?.doSetup();
+            pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
+            
+            // Objectives may already be satisfied on arrival (e.g. the player completed
+            // them while working an earlier op), so check now rather than waiting for
+            // the next objective change.
+            operationModel?.determineSuccessfulCompletion();
+        },
+        getCurrentOperation: () => model.currentOperationModel,
+        
+        
+        // Score:Accessors & Methods ///////////////////////////////////////////
+        setScore: function(v) {this.set('score', v, true);},
+        adjScore: function(adj) {this.setScore(this.getScore() + adj);},
+        getScore: function() {return this.score;},
+        
+        
+        // Historicity:Accessors & Methods /////////////////////////////////////
+        adjustHistoricity: function(adjObj) {
+            if (adjObj) {
+                for (const eventId in adjObj) {
+                    const eventModel = this.getEventModel(eventId);
+                    if (eventModel) {
+                        const adjValue = adjObj[eventId];
+                        eventModel[STAT_ID_HISTORICITY].adjValueToNoMoreThan(adjValue, adjValue);
+                    } else {
+                        console.warn('No event for id', eventId);
+                    }
+                }
+            }
+        },
+        
+        
+        // Methods /////////////////////////////////////////////////////////////
+        /*notifyStatChanged: function(statModel) {
+            if (this.inited) console.log('Stat Changed', statModel);
+        },*/
         
         reset: isInit => {
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);

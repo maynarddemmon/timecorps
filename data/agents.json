@@ -11,7 +11,10 @@
 		},
 		"HW":{
 			"name":"Halloway",
-			"paradox":2
+			"event":"lifeboat_capacity",
+			"paradox":2,
+			"playerControlled":true,
+			"hidden":"events.lifeboat_capacity.attestation.value < 5"
 		},
 		"GO":{
 			"name":"Gordon"

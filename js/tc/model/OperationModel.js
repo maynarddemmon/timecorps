@@ -11,6 +11,16 @@
             STAT_ID_CHRONAL
         } = pkg,
         
+        validateAgentIdList = (list, label) => {
+            if (Array.isArray(list)) {
+                return list.filter(agentId => {
+                    if (typeof agentId === 'string') return true;
+                    console.warn(label, 'non-string agent id. REMOVING:', agentId);
+                    return false;
+                });
+            }
+        },
+        
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
             init: function(attrs) {
                 this.operation = attrs.operation;
@@ -104,7 +114,8 @@
                 return this.getNextOperation() != null && this.getProgress().completed;
             },
             
-            // Setup Config
+            
+            // Setup Config ////////////////////////////////////////////////////
             setHistoricityAdjustments: function(adjObj) {
                 // Enforce numerical values for adjustments.
                 if (adjObj) {
@@ -133,15 +144,31 @@
             },
             getInitialAgentSelection: function() {return this.initialAgentSelection;},
             
+            setRevealAgentsOnSetup: function(agentIds) {this.set('revealAgentsOnSetup', validateAgentIdList(agentIds, 'setup.revealAgents'), true);},
+            setAwardAgentsOnSetup: function(agentIds) {this.set('awardAgentsOnSetup', validateAgentIdList(agentIds, 'setup.awardAgents'), true);},
+            
             setSetup: function(setupCfg) {
                 if (setupCfg) {
                     this.setHistoricityAdjustments(setupCfg.historicityAdjustments);
+                    this.setRevealAgentsOnSetup(setupCfg.revealAgents);
+                    this.setAwardAgentsOnSetup(setupCfg.awardAgents);
                     this.setInitialEventSelection(setupCfg.initialEventSelection);
                     this.setInitialAgentSelection(setupCfg.initialAgentSelection);
                 }
             },
             
-            // onSuccess Config
+            doSetup: function() {
+                if (!this.setupApplied) {
+                    const rootModel = pkg.model;
+                    rootModel.adjustHistoricity(this.getHistoricityAdjustments());
+                    rootModel.revealAgents(this.revealAgentsOnSetup);
+                    rootModel.awardAgents(this.awardAgentsOnSetup);
+                    this.setupApplied = true;
+                }
+            },
+            
+            
+            // onSuccess Config ////////////////////////////////////////////////
             setNextOperation: function(nextOperation) {this.set('nextOperation', nextOperation, true);},
             getNextOperation: function() {
                 return pkg.model.getOperationModel(this.nextOperation);
@@ -163,23 +190,35 @@
                 }
             },
             
+            // onSuccess
+            setRevealAgentsOnSuccess: function(agentIds) {this.set('revealAgentsOnSuccess', validateAgentIdList(agentIds, 'onSuccess.revealAgents'), true);},
+            setAwardAgentsOnSuccess: function(agentIds) {this.set('awardAgentsOnSuccess', validateAgentIdList(agentIds, 'onSuccess.awardAgents'), true);},
+            
             setOnSuccess: function(onSuccessCfg) {
                 if (onSuccessCfg) {
                     this.setNextOperation(onSuccessCfg.nextOperation);
                     this.setAwardScore(onSuccessCfg.awardScore);
                     this.setAwardHQChronal(onSuccessCfg.awardHQChronal);
+                    this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
+                    this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
+                }
+            },
+            
+            doCompletedSuccessfully: function() {
+                if (!this.successGranted) {
+                    const rootModel = pkg.model;
+                    this.grantScore();
+                    this.grantHQChronal();
+                    rootModel.revealAgents(this.revealAgentsOnSuccess);
+                    rootModel.awardAgents(this.awardAgentsOnSuccess);
+                    this.successGranted = true;
                 }
             },
             
             
             // Methods /////////////////////////////////////////////////////////
             reset: function() {
-                this.awardScoreGranted = this.awardHQChronalGranted = false;
-            },
-            
-            doCompletedSuccessfully: function() {
-                this.grantScore();
-                this.grantHQChronal();
+                this.setupApplied = this.successGranted = false;
             },
             
             notifyCollectionOfUpdate: function() {

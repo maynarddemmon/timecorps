@@ -134,6 +134,7 @@
                     const sortAsc = ascending ? 1 : -1;
                     return (a, b) => a.id.localeCompare(b.id) * sortAsc;
                 },
+                getFilterFunction: () => agentModel => !agentModel.isHidden(),
                 getSortFunction: function(sortColumnId, ascending, tieBreakerSortFunc) {
                     const sortAsc = ascending ? 1 : -1;
                     switch (sortColumnId) {

@@ -134,10 +134,8 @@
             
             if (operationModel) {
                 const app = pkg.app,
-                    historicityAdjustments = operationModel.getHistoricityAdjustments(),
                     initialEventId = operationModel.getInitialEventSelection(),
                     initialAgentId = operationModel.getInitialAgentSelection();
-                if (historicityAdjustments) pkg.model.adjustHistoricity(historicityAdjustments);
                 if (initialEventId) app.selectEventBox(initialEventId);
                 if (initialAgentId) app.selectAgentRow(initialAgentId);
             }

@@ -66,6 +66,10 @@
                 
                 self.update();
             },
+            setHeight: function(v) {
+                const markerView = this.markerView;
+                this.callSuper(Math.max(v, markerView.height + 2*markerView.y));
+            },
             update: function() {
                 const self = this,
                     {agentModel, eventModel, markerView, vitaeBtn, recallBtn, reloadChronalBtn, actionView, exitView} = self,
@@ -73,6 +77,13 @@
                 
                 markerView.setModel(agentModel);
                 vitaeBtn.setText(agentModel.name);
+                
+                if (!agentModel.isPlayerControlled()) {
+                    recallBtn.setVisible(false);
+                    reloadChronalBtn.setVisible(false);
+                    new TextForFlow(actionView, {paddingTop:3, text:'Not under Time Corps control'});
+                    return;
+                }
                 
                 const rootModel = pkg.model,
                     isHQ = eventModel.isHQ();
@@ -368,13 +379,14 @@
             const self = this,
                 {selectedAgentModel, eventModel, deployAgentBtn, recallAgentBtn} = self,
                 hasEventModel = eventModel != null,
-                hasAgentModel = selectedAgentModel != null;
+                hasAgentModel = selectedAgentModel != null,
+                canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled();
             
             if (hasEventModel) {
                 const isHQ = eventModel.isHQ();
-                recallAgentBtn.setVisible(hasAgentModel && isHQ && !selectedAgentModel.isAtEvent(eventModel));
-                deployAgentBtn.setVisible(hasAgentModel && !eventModel.isHidden());
-                if (hasAgentModel) {
+                recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
+                deployAgentBtn.setVisible(canDirectAgent && !eventModel.isHidden());
+                if (canDirectAgent) {
                     let btn;
                     if (recallAgentBtn.visible) {
                         btn = recallAgentBtn;

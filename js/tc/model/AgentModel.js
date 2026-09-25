@@ -7,7 +7,7 @@
         {stableStringify, getRandomInt} = M,
         
         {
-            NotifyingNumericStatModel,
+            NotifyingNumericStatModel, setConstrainedValue,
             ICON_HQ, ICON_JUMP,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
@@ -52,6 +52,10 @@
             
             self.log = [];
             
+            // Visible and player controlled unless the data says otherwise.
+            self.hidden = true;
+            self.playerControlled = false;
+            
             // The number of actions the Agent has executed in the EventModel they are currently in.
             self.actionExecCount = 0;
             
@@ -81,7 +85,9 @@
         
         getAsObj: function(cfg) {
             const retval = this.callSuper(cfg);
-            for (const attrName of ['name','event','actionExecCount']) retval[attrName] = this[attrName];
+            for (const attrName of ['name','event','actionExecCount','hidden','playerControlled']) {
+                retval[attrName] = this[attrName];
+            }
             for (const attrName of [STAT_ID_PARADOX,STAT_ID_CHRONAL]) {
                 // Use stableStringify since similarTo uses shallowEqual. If this gets 
                 // unwieldy change similarTo to use deepEqual and drop the stableStringify.
@@ -162,6 +168,38 @@
         },
         isAtHQ: function() {return this.event === EVENT_ID_TIME_CORPS_HQ;},
         isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
+        
+        /*  Hidden Agents are not yet part of the game (e.g. awaiting a mission reward). Accepts 
+            a boolean or a constraint expression. A new value replaces any existing constraint, 
+            so a reward's reveal overrides an expression from the data. Expressions resolve 
+            against the Agent, so use "events.<id>..." or "timeline..." but not "event...". */
+        // FIXME: support event... as the Event the agent is currently in?
+        setHidden: function(value, isActual) {
+            if (isActual) {
+                value = !!value;
+                if (this.hidden !== value) {
+                    this.set('hidden', value, true);
+                    if (this.inited) {
+                        this.notifyCollectionOfUpdate();
+                        pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
+                    }
+                }
+            } else {
+                setConstrainedValue(this, this, 'hidden', String(value));
+            }
+        },
+        isHidden: function() {return this.hidden;},
+        
+        /*  Player controlled Agents are directed by the player. Visible Agents that are not player 
+            controlled are NPCs. */
+        setPlayerControlled: function(value) {
+            value = !!value;
+            if (this.playerControlled !== value) {
+                this.set('playerControlled', value, true);
+                if (this.inited) this.notifyCollectionOfUpdate();
+            }
+        },
+        isPlayerControlled: function() {return this.playerControlled;},
         
         
         // Methods /////////////////////////////////////////////////////////////
