@@ -93,7 +93,6 @@
                 attrs.paddingBottom ??= 5;
                 attrs.whiteSpace ??= 'normal';
                 this.callSuper(parent, attrs);
-                this.sizeViewToDom(); // FIXME: investigate why this is needed.
             }
         }),
         
@@ -276,7 +275,7 @@
                         }
                     }
                 }]);
-            new WrappingLayout(contentView, {spacing:padding, lineSpacing:-5, collapseParent:true});
+            new WrappingLayout(contentView, {spacing, lineSpacing:-5, collapseParent:true});
         },
         setLabel: function(v) {this._label.setText(v);},
         clearContent: function() {

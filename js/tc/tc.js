@@ -208,7 +208,7 @@
             I18N_ATTESTATION:'Attestation',
             
             // Icons
-            ICON_SEPARATOR:' · ',
+            ICON_SEPARATOR:'\u00A0·\u00A0',
             ICON_ARROW:' → ',
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
