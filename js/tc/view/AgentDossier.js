@@ -18,14 +18,16 @@
         
         PHOTO_SIZE = 256,
         
-        loadTxtIntoElement = (url, targetView) => {
+        loadTxtIntoElement = (url, targetView, isStillWanted) => {
+            targetView.setValue('Retrieving…');
+            
             M.doFetch(url, {}, true,
                 response => {
-                    targetView.setValue(response);
+                    if (isStillWanted()) targetView.setValue(response);
                 },
                 err => {
                     console.error('err', err);
-                    targetView.setValue('MISSING / REDACTED: ' + err);
+                    if (isStillWanted()) targetView.setValue('MISSING / REDACTED: ' + err);
                 }
             );
         };
@@ -97,8 +99,7 @@
                 self._eventView.setValue(eventModel.name);
                 self._whereView.setValue(eventModel.getLocationModel()?.name);
                 self._whenView.setValue(format(eventModel.getStart()));
-                
-                loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView);
+                loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
             }
         },
         
