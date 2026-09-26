@@ -1,6 +1,9 @@
 (pkg => {
     'use strict';
     
+    // Monotonic counter used to order Agents by when they arrived at their current Event.
+    let arrivalCounter = 0;
+    
     const {max:mathMax, min:mathMin} = Math,
         
         M = myt,
@@ -142,6 +145,7 @@
                 this.set('event', event, true);
                 const newEventModel = this._eventModel = pkg.model.getEventModel(this.event); // Populate immediately
                 this.setActionExecCount(0, true);
+                this.stampArrival();
                 this.notifyCollectionOfUpdate();
                 
                 this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
@@ -179,6 +183,7 @@
                 if (this.hidden !== value) {
                     this.set('hidden', value, true);
                     if (this.inited) {
+                        if (!value) this.stampArrival();
                         this.notifyCollectionOfUpdate();
                         pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
                     }
@@ -200,6 +205,8 @@
         },
         isPlayerControlled: function() {return this.playerControlled;},
         
+        stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
+        getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
         
         // Methods /////////////////////////////////////////////////////////////
         notifyCollectionOfUpdate: function() {

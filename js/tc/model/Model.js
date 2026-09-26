@@ -121,7 +121,11 @@
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),
         getAgentModels: () => model[SCOPE_AGENTS].getAll(),
         getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
-        getAgentModelsForEvent: eventId => model.getAgentModelsAsList(agent => agent.getEvent() === eventId && !agent.isHidden()),
+        getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsSortedList(
+            (a, b) => b.getArrivalOrder() - a.getArrivalOrder(),
+            agent => agent.getEvent() === eventId && !agent.isHidden()
+        ),
+        
         
         revealAgents: agentIds => {
             if (agentIds) {
