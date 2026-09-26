@@ -209,7 +209,7 @@
             
             // Icons
             ICON_SEPARATOR:'\u00A0·\u00A0',
-            ICON_ARROW:' → ',
+            ICON_ARROW:'\u00A0→\u00A0',
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
             ICON_ACTION:'⎇', // ⎌ ⎇ ☟

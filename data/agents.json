@@ -16,15 +16,26 @@
 		"HW":{
 			"name":"Halloway",
 			"event":"lifeboat_capacity",
+			"skills":{
+				"chronogation":-50,
+				"investigation":100
+			},
 			"paradox":2,
 			"playerControlled":true,
 			"hidden":"events.lifeboat_capacity.attestation.value < 5"
 		},
 		"GO":{
-			"name":"Gordon"
+			"name":"Gordon",
+			"skills":{
+				"investigation":50
+			}
 		},
 		"PI":{
-			"name":"Pierce"
+			"name":"Pierce",
+			"skills":{
+				"chronogation":200,
+				"investigation":-50
+			}
 		},
 		"AA":{
 			"name":"Alexander Aimes"

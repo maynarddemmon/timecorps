@@ -33,7 +33,6 @@
 			"name":"Titanic - Passengers Rescued",
 			"description":"It is essential that the Titanic sinks, but the massive loss of life must be prevented.",
 			"setup":{
-				"initialEventSelection":"casualties",
 				"historicityAdjustments":{
 					"lifeboat_capacity":25
 				}
@@ -63,7 +62,6 @@
 			"name":"Lusitania - Doesn't Sink",
 			"description":"Prevent the sinking of the Lusitania.",
 			"setup":{
-				"initialEventSelection":"lusitania_sinks",
 				"historicityAdjustments":{
 					"torpedo_strike":75,
 					"lusitania_sinks":75
