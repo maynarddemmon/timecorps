@@ -25,6 +25,7 @@
                 },
                 err => {
                     console.error('err', err);
+                    targetView.setValue('MISSING / REDACTED: ' + err);
                 }
             );
         };
