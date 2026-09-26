@@ -10,8 +10,9 @@
         } = M,
         
         {
+            SquareBtn,
             theme:{
-                spacing, padding, layoutSpacing, btnHeight, rowHeight,
+                spacing, padding, layoutSpacing, btnHeight, rowHeight, cornerRadius,
                 colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark, colorBtn,
                 fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono,
                 colorHistoricity, colorAttestation, colorParadox, colorChronal
@@ -342,6 +343,56 @@
         },
         _update: function(v) {
             this.updateForStat(this.statModel);
+        }
+    });
+    
+    pkg.ModalDialog = new JSClass('ModalDialog', M.Dimmer, {
+        initNode: function(parent, attrs) {
+            const self = this;
+            
+            self.defaultPlacement = 'contentView._contentView';
+            const sizingStrategy = attrs.sizingStrategy ??= 'tall',
+                tallWidth = attrs.tallWidth ??= 550;
+            delete attrs.sizingStrategy;
+            delete attrs.tallWidth;
+            
+            self.callSuper(parent, attrs);
+            
+            let positionAttrs;
+            switch (sizingStrategy) {
+                case 'tall':
+                default:
+                    positionAttrs = {
+                        align:'center', y:padding, width:tallWidth,
+                        percentOfParentHeight:100,
+                        percentOfParentHeightOffset:-2*padding
+                    };
+                    break;
+            }
+            
+            const contentView = self.contentView = new Panel(self, {
+                    roundedCorners:cornerRadius, bgColor:colorMegaDark, overflow:'hidden',
+                    ...positionAttrs
+                }, [SizeToParent]),
+                header = contentView.getHeaderView();
+            self.closeBtn = new SquareBtn(header, {
+                y:1, buttonType:'underline', text:pkg.ICON_CANCEL, tooltip:'Close'
+            }, [{
+                doActivated: function() {self.hide();}
+            }]);
+            header.getFirstLayout().setOutset(1);
+            self.attachToDom(self, '_keyDown', 'keydown');
+        },
+        
+        getContentView: function() {return this.contentView;},
+        setTitle: function(v, tooltip) {this.getContentView().setTitle(v, tooltip);},
+        
+        _keyDown: function(event) {
+            switch (M.KeyObservable.getCodeFromEvent(event)) {
+                case M.global.keys.CODE_ESC:
+                    this.closeBtn.doActivated();
+                    break;
+            }
         }
     });
 })(tc);

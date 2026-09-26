@@ -102,12 +102,8 @@
         }),
         
         SimpleAgentMarker = pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', AbstractAgentMarker, {
-            doActivated: function() {
-                pkg.app.selectAgentRow(this.model);
-            },
-            doDoubleClick: function() {
-                console.log('FIXME: open an agent dossier dialog.', this.model);
-            }
+            doActivated: function() {pkg.app.selectAgentRow(this.model);},
+            doDoubleClick: function() {pkg.app.openAgentDossier(this.model);}
         }),
         
         StatusAgentMarker = pkg.StatusAgentMarker = new JSClass('StatusAgentMarker', SimpleAgentMarker, {

@@ -102,6 +102,7 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         setName: function(name) {this.setAndNotifyCollection('name', name, true);},
+        getName: function() {return this.name;},
         
         setParadox: function(v) { // Used by instantiation only.
             if (this.inited) {
@@ -207,6 +208,11 @@
         
         stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
         getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
+        
+        getRoleLabel: function() {
+            return this.isPlayerControlled() ? 'Agent' : 'Civilian';
+        },
+        
         
         // Methods /////////////////////////////////////////////////////////////
         notifyCollectionOfUpdate: function() {

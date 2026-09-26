@@ -11,7 +11,9 @@
         dividerH,
         
         opsView,
-        teamView;
+        teamView,
+        
+        agentDossier;
     
     const JSClass = JS.Class,
         
@@ -228,6 +230,11 @@
         notifyTimelineParadoxExceeded: () => {
             console.log('timeline max paradox EXCEEDED.');
             // FIXME: do end game.
+        },
+        
+        openAgentDossier: agentModel => {
+            agentDossier ??= new pkg.AgentDossier(appView);
+            agentDossier.show(agentModel);
         }
     });
 })(tc);

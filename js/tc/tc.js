@@ -209,6 +209,7 @@
             ICON_NEXT:'➜',
             ICON_CHECKED:'✓',
             ICON_UNCHECKED:'✗',
+            ICON_CANCEL:'X',
         };
     
     // Apply config overrides

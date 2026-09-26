@@ -20,8 +20,6 @@
             cell.setDisabled(!event);
         },
         
-        getRoleText = agentModel => agentModel.isPlayerControlled() ? 'Agent' : 'Civilian',
-        
         AgentBar = new JS.Module('AgentBar', {
             initNode: function(parent, attrs) {
                 attrs.y = 10;
@@ -45,7 +43,7 @@
                         this.getRef(colId).setModel(this.model);
                         return;
                     case 'role':
-                        this.getRef(colId).setText(getRoleText(this.model));
+                        this.getRef(colId).setText(this.model.getRoleLabel());
                         return;
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
@@ -146,8 +144,8 @@
                     switch (sortColumnId) {
                         case 'role':
                             return (a, b) => {
-                                const vA = getRoleText(a),
-                                    vB = getRoleText(b);
+                                const vA = a.getRoleLabel(),
+                                    vB = b.getRoleLabel();
                                 if (vA === vB) return tieBreakerSortFunc(a, b);
                                 return vA.localeCompare(vB) * sortAsc;
                             };
