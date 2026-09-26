@@ -153,7 +153,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:525, limitToParent:300,
+                width:5, percentOfParentHeight:100, minValue:600, limitToParent:300,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {

@@ -20,6 +20,8 @@
             cell.setDisabled(!event);
         },
         
+        getRoleText = agentModel => agentModel.isPlayerControlled() ? 'Agent' : 'Civilian',
+        
         AgentBar = new JS.Module('AgentBar', {
             initNode: function(parent, attrs) {
                 attrs.y = 10;
@@ -31,7 +33,7 @@
         AgentChronalBar = new JSClass('AgentChronalBar', pkg.ChronalBar, {include: [AgentBar]}),
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
-            getColIds: () => ['id','name','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
+            getColIds: () => ['id','name','role','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
                 this.doCellBtnActivated('event');
@@ -41,6 +43,9 @@
                 switch (colId) {
                     case 'id':
                         this.getRef(colId).setModel(this.model);
+                        return;
+                    case 'role':
+                        this.getRef(colId).setText(getRoleText(this.model));
                         return;
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
@@ -121,6 +126,7 @@
                         WIDTH_BAR = 65;
                     new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:'ID',         cellXAdj:padding,   cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:2000,       text:'Name',  flex:1});
+                    new GridColHdr(gridHeader, {columnId:'role',          minValue:WIDTH_MISC, maxValue:WIDTH_MISC, text:'Role'});
                     new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:2000,       text:'Event', flex:1});
                     new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:2000,       text:'Where', flex:1});
                     new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:'When'});
@@ -138,6 +144,13 @@
                 getSortFunction: function(sortColumnId, ascending, tieBreakerSortFunc) {
                     const sortAsc = ascending ? 1 : -1;
                     switch (sortColumnId) {
+                        case 'role':
+                            return (a, b) => {
+                                const vA = getRoleText(a),
+                                    vB = getRoleText(b);
+                                if (vA === vB) return tieBreakerSortFunc(a, b);
+                                return vA.localeCompare(vB) * sortAsc;
+                            };
                         case 'event':
                             return (a, b) => {
                                 const eventA = a.getEventModel(),
