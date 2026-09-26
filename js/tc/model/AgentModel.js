@@ -4,7 +4,7 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {max:mathMax, min:mathMin} = Math,
+    const {max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil} = Math,
         
         M = myt,
         {stableStringify, getRandomInt} = M,
@@ -20,7 +20,7 @@
             theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
-            SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION
+            SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION, AGENT_SKILL_IDS
         } = pkg,
         
         LOG_TYPE_ORIGIN = 'origin',
@@ -30,6 +30,29 @@
         LOG_TYPE_ACTION = 'action',
         LOG_TYPE_INVESTIGATE = 'investigate',
         LOG_TYPE_DEVOURED = 'devoured',
+        
+        adjustMinMaxForInvestigation = (agentModel, min, max) => {
+            const skillFactor = agentModel.getSkillInvestigation() / 25,
+                skillFactorLesser = skillFactor / 2;
+            
+            // Positive skill raises the minimum and slightly raises the maximum.
+            if (skillFactor > 0) {
+                min += mathCeil(skillFactor);
+                max += mathCeil(skillFactorLesser);
+                max = mathMin(100, max); // Max attestation
+                min = mathMin(min, max);
+            }
+            
+            // Negative skill lowers the maximum and slightly lowers the minimum (if possible).
+            if (skillFactor < 0) {
+                max -= mathFloor(skillFactor);
+                min -= mathFloor(skillFactorLesser);
+                min = mathMax(0, min); // Min attestation.
+                max = mathMax(min, max);
+            }
+            
+            return [min, max];
+        },
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
             const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, -1); // -1 because we will have just pushed an entry event of some kind onto the log.
@@ -228,15 +251,17 @@
             }
             this.skills = clean;
         },
+        getSkills: function() {return this.skills;},
+        getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
+        getSkillChronogation: function() {return this.getSkill(SKILL_ID_CHRONOGATION);},
+        getSkillInvestigation: function() {return this.getSkill(SKILL_ID_INVESTIGATION);},
         
-        getSkill: function(skillId) {return this.skills[skillId] ?? 0;},
-        
-        getSkillChronogation: function() {
-            return this.getSkill(SKILL_ID_CHRONOGATION);
-        },
-        
-        getSkillInvestigation: function() {
-            return this.getSkill(SKILL_ID_INVESTIGATION);
+        getSkillInfo: function() {
+            const accum = [];
+            for (const skillId of AGENT_SKILL_IDS) {
+                accum.push({id:skillId, value:this.getSkill(skillId)});
+            }
+            return accum;
         },
         
         
@@ -343,11 +368,12 @@
             if (this.canAct()) {
                 const eventModel = this.getEventModel();
                 if (eventModel) {
-                    const attestationStat = eventModel.attestation,
-                        discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
+                    const attestationStat = eventModel.attestation;
+                    let discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
                     if (discoverableAmt > 0) {
                         let discovered = 1;
                         if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
+                            [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
                             discovered = getRandomInt(discovered, discoverableAmt);
                         }
                         

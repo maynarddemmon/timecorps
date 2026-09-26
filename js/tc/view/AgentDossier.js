@@ -5,13 +5,14 @@
         {View, SpacedLayout} = M,
         
         {
-            WideView, DetailRow,
+            WideView, DetailRow, DetailRowFlow, TextForFlow,
             timeUtil:{format},
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
                 fontFamilyMono
-            }
+            },
+            ICON_SEPARATOR
         } = pkg,
         
         HALF_PADDING = padding / 2,
@@ -59,6 +60,7 @@
             self._eventView = new DetailRow(vitalsContainer, {label:'Event'});
             self._whereView = new DetailRow(vitalsContainer, {label:'Where'});
             self._whenView = new DetailRow(vitalsContainer, {label:'When'});
+            self._skills = new DetailRowFlow(vitalsContainer, {label:'Skills'});
             new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
             
             const profileY = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
@@ -99,6 +101,15 @@
                 self._eventView.setValue(eventModel.name);
                 self._whereView.setValue(eventModel.getLocationModel()?.name);
                 self._whenView.setValue(format(eventModel.getStart()));
+                
+                const skillsRow = self._skills;
+                let isNotFirst = false;
+                for (const skillInfo of agentModel.getSkillInfo()) {
+                    if (isNotFirst) new TextForFlow(skillsRow, {text:ICON_SEPARATOR});
+                    new TextForFlow(skillsRow, {text:skillInfo.id + ' (' + skillInfo.value + ')'});
+                    isNotFirst = true;
+                }
+                
                 loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
             }
         },

@@ -21,6 +21,9 @@
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
+        SKILL_ID_CHRONOGATION = 'chronogation',
+        SKILL_ID_INVESTIGATION = 'investigation',
+        
         TC = pkg.tc = {
             app:null, // Holds the App instance.
             model:null, // Holds the Model instance.
@@ -194,8 +197,9 @@
             STAT_ID_ATTESTATION:'attestation',
             
             // Skill IDS
-            SKILL_ID_CHRONOGATION:'chronogation',
-            SKILL_ID_INVESTIGATION:'investigation',
+            SKILL_ID_CHRONOGATION,
+            SKILL_ID_INVESTIGATION,
+            AGENT_SKILL_IDS:[SKILL_ID_CHRONOGATION, SKILL_ID_INVESTIGATION],
             
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
