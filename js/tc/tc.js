@@ -1,17 +1,17 @@
 (pkg => {
     'use strict';
     
-    const {max:mathMax, floor:mathFloor, log2:mathLog2, log10:mathLog10, abs:mathAbs} = Math,
+    const {max:mathMax, floor:mathFloor, ceil:mathCeil, log2:mathLog2, log10:mathLog10, abs:mathAbs} = Math,
         
         // Chronal Util
         getChronalByTimeDiff = (a, b) => {
             if (a === b) return 0;
-            return mathFloor(mathLog2(2 + 2* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_WEEK));
+            return mathFloor(mathLog2(2 + 2* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_DAY));
         },
         
         getChronalEfficiently = (a, b) => {
             if (a === b) return 0;
-            return mathFloor(mathLog10(2 + 2* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_YEAR));
+            return mathFloor(mathLog10(10 + 10* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_WEEK));
         },
         
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
@@ -71,18 +71,20 @@
                 TRAVEL_MODE_WALK:'walk',
                 
                 // The amount of chronal granted when reloading at HQ.
-                RELOAD_CHRONAL_AMOUNT:1,
+                RELOAD_CHRONAL_AMOUNT:5,
                 
-                // The absolute minimum chronal needed to deploy an Agent from HQ or jump from
-                // another Event.
-                MIN_DEPLOY_CHRONAL:1,
+                // The absolute minimum chronal needed to deploy an Agent from HQ to an Event.
+                MIN_DEPLOY_CHRONAL:5,
+                
+                // The absolute minimum chronal needed to jump from an Agent to another Event.
+                MIN_JUMP_CHRONAL:1,
                 
                 // The absolute minimum chronal needed to recall an Agent to HQ.
                 MIN_RECALL_CHRONAL:1,
                 
                 // The starting maximum chronal an Agent can have.
-                AGENT_DEFAULT_STARTING_CHRONAL:10,
-                AGENT_CHRONAL_LIMIT:15,
+                AGENT_DEFAULT_STARTING_CHRONAL:75,
+                AGENT_CHRONAL_LIMIT:100,
                 
                 // The starting maximum paradox an Agent can have.
                 AGENT_PARADOX_LIMIT:3,
@@ -98,7 +100,7 @@
                 
                 // This is the HQ chronal used to resupply Agents.
                 TIMELINE_STARTING_CHRONAL:10,
-                TIMELINE_CHRONAL_LIMIT:25,
+                TIMELINE_CHRONAL_LIMIT:100,
                 
                 // The amount of paradox the Timeline begins the game with.
                 TIMELINE_STARTING_PARADOX:0,
@@ -153,9 +155,11 @@
                     return Number.MAX_SAFE_INTEGER;
                 }
                 
-                const getFunc = agentEvent.isHQ() ? getChronalEfficiently : getChronalByTimeDiff,
+                const cfg = TC.cfg,
+                    isDeploy = agentEvent.isHQ(),
+                    getFunc = isDeploy ? getChronalEfficiently : getChronalByTimeDiff,
                     cost = getFunc(agentEvent.getEnd(), eventTime);
-                return mathMax(TC.cfg.MIN_DEPLOY_CHRONAL, cost);
+                return mathMax(isDeploy ? cfg.MIN_DEPLOY_CHRONAL : cfg.MIN_JUMP_CHRONAL, cost);
             },
             
             getChronalToRecall: agentModel => {
@@ -167,7 +171,7 @@
                     return Number.MAX_SAFE_INTEGER;
                 }
                 
-                const cost = getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2;
+                const cost = mathCeil(getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2);
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
