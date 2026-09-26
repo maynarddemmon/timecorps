@@ -45,9 +45,9 @@
             
             // Negative skill lowers the maximum and slightly lowers the minimum (if possible).
             if (skillFactor < 0) {
-                max -= mathFloor(skillFactor);
-                min -= mathFloor(skillFactorLesser);
-                min = mathMax(0, min); // Min attestation.
+                max += mathFloor(skillFactor);
+                min += mathFloor(skillFactorLesser);
+                min = mathMax(1, min); // Always make some progress.
                 max = mathMax(min, max);
             }
             

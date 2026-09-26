@@ -93,6 +93,7 @@
                 attrs.paddingBottom ??= 5;
                 attrs.whiteSpace ??= 'normal';
                 this.callSuper(parent, attrs);
+                this.sizeViewToDom(); // FIXME: investigate why this is needed.
             }
         }),
         

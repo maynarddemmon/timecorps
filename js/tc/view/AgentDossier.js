@@ -104,6 +104,7 @@
                 
                 const skillsRow = self._skills;
                 let isNotFirst = false;
+                skillsRow.clearContent();
                 for (const skillInfo of agentModel.getSkillInfo()) {
                     if (isNotFirst) new TextForFlow(skillsRow, {text:ICON_SEPARATOR});
                     new TextForFlow(skillsRow, {text:skillInfo.id + ' (' + skillInfo.value + ')'});
