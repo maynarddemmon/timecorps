@@ -1,18 +1,22 @@
 (pkg => {
     'use strict';
     
-    const {max:mathMax, floor:mathFloor, ceil:mathCeil, log2:mathLog2, log10:mathLog10, abs:mathAbs} = Math,
+    const {max:mathMax, floor:mathFloor, ceil:mathCeil, log2:mathLog2, log:mathLog, log10:mathLog10, abs:mathAbs, E:EULER} = Math,
         
         // Chronal Util
-        getChronalByTimeDiff = (a, b) => {
-            if (a === b) return 0;
-            return mathFloor(mathLog2(2 + 2* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_DAY));
+        calculateSkillFactor = agentModel => 2 ** (agentModel.getSkillChronogation() / 100),
+        
+        getChronalByTimeDiff = (a, b, scaleFunc, fixed, divisor) => {
+            return a === b ? 0 : mathFloor(scaleFunc(fixed + fixed*mathAbs(a - b) / divisor));
         },
         
-        getChronalEfficiently = (a, b) => {
-            if (a === b) return 0;
-            return mathFloor(mathLog10(10 + 10* mathAbs(a - b) / TC.timeUtil.MILLIS_PER_WEEK));
-        },
+        getChronalByTimeDiffOrdinary = (a, b, agentModel) => getChronalByTimeDiff(
+            a, b, mathLog2, 2, 3*TC.timeUtil.MILLIS_PER_HOUR * calculateSkillFactor(agentModel)
+        ),
+        
+        getChronalByTimeDiffEfficiently = (a, b, agentModel) => getChronalByTimeDiff(
+            a, b, mathLog, EULER, TC.timeUtil.MILLIS_PER_WEEK * calculateSkillFactor(agentModel)
+        ),
         
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
@@ -74,13 +78,13 @@
                 RELOAD_CHRONAL_AMOUNT:5,
                 
                 // The absolute minimum chronal needed to deploy an Agent from HQ to an Event.
-                MIN_DEPLOY_CHRONAL:5,
-                
-                // The absolute minimum chronal needed to jump from an Agent to another Event.
-                MIN_JUMP_CHRONAL:1,
+                MIN_DEPLOY_CHRONAL:2,
                 
                 // The absolute minimum chronal needed to recall an Agent to HQ.
                 MIN_RECALL_CHRONAL:1,
+                
+                // The absolute minimum chronal needed to jump from an Agent to another Event.
+                MIN_JUMP_CHRONAL:1,
                 
                 // The starting maximum chronal an Agent can have.
                 AGENT_DEFAULT_STARTING_CHRONAL:75,
@@ -99,7 +103,7 @@
                 DEFAULT_ACTION_LIMIT:1,
                 
                 // This is the HQ chronal used to resupply Agents.
-                TIMELINE_STARTING_CHRONAL:10,
+                TIMELINE_STARTING_CHRONAL:25,
                 TIMELINE_CHRONAL_LIMIT:100,
                 
                 // The amount of paradox the Timeline begins the game with.
@@ -157,8 +161,8 @@
                 
                 const cfg = TC.cfg,
                     isDeploy = agentEvent.isHQ(),
-                    getFunc = isDeploy ? getChronalEfficiently : getChronalByTimeDiff,
-                    cost = getFunc(agentEvent.getEnd(), eventTime);
+                    getFunc = isDeploy ? getChronalByTimeDiffEfficiently : getChronalByTimeDiffOrdinary,
+                    cost = getFunc(agentEvent.getEnd(), eventTime, agentModel);
                 return mathMax(isDeploy ? cfg.MIN_DEPLOY_CHRONAL : cfg.MIN_JUMP_CHRONAL, cost);
             },
             
@@ -171,7 +175,7 @@
                     return Number.MAX_SAFE_INTEGER;
                 }
                 
-                const cost = mathCeil(getChronalEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd()) / 2);
+                const cost = mathCeil(getChronalByTimeDiffEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd(), agentModel) / 2);
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
@@ -188,6 +192,10 @@
             STAT_ID_CHRONAL:'chronal',
             STAT_ID_HISTORICITY:'historicity',
             STAT_ID_ATTESTATION:'attestation',
+            
+            // Skill IDS
+            SKILL_ID_CHRONOGATION:'chronogation',
+            SKILL_ID_INVESTIGATION:'investigation',
             
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',

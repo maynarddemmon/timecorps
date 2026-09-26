@@ -2,7 +2,11 @@
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
-			"event":"collision"
+			"event":"collision",
+			"skills":{
+				"chronogation":-100,
+				"investigation":100
+			}
 		},
 		"OK":{
 			"name":"Okonjo",

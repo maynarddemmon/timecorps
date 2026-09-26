@@ -24,7 +24,7 @@
 			},
 			"onSuccess":{
 				"nextOperation":"titanic_rescued",
-				"awardHQChronal":2,
+				"awardHQChronal":15,
 				"awardScore":5000
 			}
 		},
@@ -52,7 +52,7 @@
 			},
 			"onSuccess":{
 				"nextOperation":"lusitania_nosink",
-				"awardHQChronal":3,
+				"awardHQChronal":25,
 				"awardScore":8000,
 				"awardAgents":["GO"],
 				"revealAgents":["GO","PI"]
@@ -78,7 +78,7 @@
 				}
 			},
 			"onSuccess":{
-				"awardHQChronal":4,
+				"awardHQChronal":30,
 				"awardScore":13000
 			}
 		}

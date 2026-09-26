@@ -19,7 +19,8 @@
             },
             theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL
+            STAT_ID_PARADOX, STAT_ID_CHRONAL,
+            SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION
         } = pkg,
         
         LOG_TYPE_ORIGIN = 'origin',
@@ -54,6 +55,7 @@
             const self = this;
             
             self.log = [];
+            self.skills = {};
             
             // Hidden and NPC unless the data says otherwise.
             self.hidden = true;
@@ -211,6 +213,30 @@
         
         getRoleLabel: function() {
             return this.isPlayerControlled() ? 'Agent' : 'Civilian';
+        },
+        
+        // Skills //
+        setSkills: function(skills) {
+            const clean = {};
+            for (const skillId in skills) {
+                const v = skills[skillId];
+                if (typeof v === 'number') {
+                    clean[skillId] = v;
+                } else {
+                    console.warn('Agent', this.id, 'skill', skillId, 'not numeric. IGNORING:', v);
+                }
+            }
+            this.skills = clean;
+        },
+        
+        getSkill: function(skillId) {return this.skills[skillId] ?? 0;},
+        
+        getSkillChronogation: function() {
+            return this.getSkill(SKILL_ID_CHRONOGATION);
+        },
+        
+        getSkillInvestigation: function() {
+            return this.getSkill(SKILL_ID_INVESTIGATION);
         },
         
         
