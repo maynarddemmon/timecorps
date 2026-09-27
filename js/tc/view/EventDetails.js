@@ -195,20 +195,42 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             
+            // Time & Place, Status Bars
             self.whereWhen = new PaddedPlainText(detailsContainer, {
                 percentOfParentWidth:100,
                 fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
             }, [GrandWidthMixin, SizeToParent]);
-             
+            new View(detailsContainer, {height:4}); // Spacer.
+            
             const row = new Row(detailsContainer, {height:18, inset:spacing});
             self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
             self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
             self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
+            new View(detailsContainer, {height:4}); // Spacer.
             
-            self.precursorsRow = new DetailRowFlow(detailsContainer, {label:'Precursors'});
-            self.descriptionRow = new DetailRow(detailsContainer, {label:'Description'});
-            self.descendantsRow = new DetailRowFlow(detailsContainer, {label:'Descendants'});
+            // Description
+            const descriptionRow = self.descriptionRow = new MiniPanel(detailsContainer, {
+                title:'Historical Account', percentOfParentWidth:100
+            }, [GrandWidthMixin, SizeToParent, {
+                clearContent: function() {
+                    this.getContentView().destroyAllSubviews();
+                }
+            }]);
+            self.descriptionTxt = new PaddedText(descriptionRow, {padding:padding, whiteSpace:'normal'});
+            new SpacedLayout(descriptionRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
+            // Values
+            const valuesRow = self.valuesRow = new MiniPanel(detailsContainer, {
+                title:'Values', percentOfParentWidth:100
+            }, [GrandWidthMixin, SizeToParent, {
+                clearContent: function() {
+                    this.getContentView().destroyAllSubviews();
+                }
+            }]);
+            self.valuesTxt = new PaddedText(valuesRow, {padding:padding, whiteSpace:'normal'});
+            new SpacedLayout(valuesRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            
+            // Agents
             const agentsRow = self.agentsRow = new MiniPanel(detailsContainer, {
                 title:'Agent Activity', percentOfParentWidth:100
             }, [GrandWidthMixin, SizeToParent, {
@@ -224,9 +246,12 @@
             }]);
             new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
-            self.valuesTxt = new PaddedText(detailsContainer, {padding:padding, whiteSpace:'normal'});
+            // Causal Chain
+            new DividerRow(detailsContainer, {label:'Causal Chain'});
+            self.precursorsRow = new DetailRowFlow(detailsContainer, {label:'Precursors'});
+            self.descendantsRow = new DetailRowFlow(detailsContainer, {label:'Descendants'});
             
-            new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:spacing, collapseParent:true});
+            new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:0, collapseParent:true});
             
             self.ready = true;
             
@@ -294,7 +319,7 @@
                     ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
                 );
                 
-                self.descriptionRow.setValue();
+                self.descriptionTxt.setText('FIXME:DESCRIPTION MISSING');
                 
                 // Precursor Nav Buttons //
                 const precursorsRow = self.precursorsRow,

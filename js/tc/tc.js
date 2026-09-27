@@ -47,6 +47,7 @@
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',
                 colorDark:'#530',
+                colorDarkMedium:'#750',
                 
                 colorMediumDark:'#770',
                 colorMedium:'#990',

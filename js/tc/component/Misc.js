@@ -13,7 +13,8 @@
             SquareBtn,
             theme:{
                 spacing, padding, layoutSpacing, btnHeight, rowHeight, cornerRadius,
-                colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark, colorBtn,
+                colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, 
+                colorMegaDark, colorBtn,
                 fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono,
                 colorHistoricity, colorAttestation, colorParadox, colorChronal
             },
@@ -38,7 +39,7 @@
                 
                 this.callSuper(parent, attrs);
                 
-                const headerView = this._headerView = new WideView(this, {ignorePlacement:true, height:rowHeight, bgColor:colorDark});
+                const headerView = this._headerView = new WideView(this, {ignorePlacement:true, height:rowHeight, bgColor:colorDarkMedium});
                 (this._titleView = new Text(headerView, {text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1})).enableEllipsis();
                 new M.ResizeLayout(headerView, {inset:padding/2, spacing:spacing, outset:padding/2});
                 
@@ -150,6 +151,7 @@
     pkg.MiniPanel = new JSClass('MiniPanel', Panel, {
         initNode: function(parent, attrs) {
             this.callSuper(parent, attrs);
+            this.getHeaderView().setBgColor(colorDark);
             this._titleView.setY(4);
             this._titleView.setFontSize(fontSizeMedium);
             this.syncTo(this._contentView, '_updateHeight', 'height');
@@ -376,7 +378,7 @@
                 }, [SizeToParent]),
                 header = contentView.getHeaderView();
             self.closeBtn = new SquareBtn(header, {
-                y:1, buttonType:'underline', text:pkg.ICON_CANCEL, tooltip:'Close'
+                y:1, text:pkg.ICON_CANCEL, tooltip:'Close'
             }, [{
                 doActivated: function() {self.hide();}
             }]);

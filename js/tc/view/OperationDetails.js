@@ -10,7 +10,7 @@
         
         {
             Btn, UnderlineBtn, UnderlineActionBtn, SquareBtn, WideView, MiniPanel,
-            GrandWidthMixin, Row, DividerRow, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
+            GrandWidthMixin, Row, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
             theme:{
                 spacing, padding, rowHeight, btnHeight,
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark, colorSuccess, colorError,
