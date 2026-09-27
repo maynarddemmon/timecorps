@@ -3,6 +3,8 @@
     
     const JSClass = JS.Class,
         
+        {min:mathMin, max:mathMax, floor:mathFloor} = Math,
+        
         M = myt,
         {View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
@@ -15,7 +17,8 @@
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
                 TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT, 
-                TL_GAP_ROW_HEIGHT, TL_GAP_MIN_MILLIS
+                TL_GAP_ROW_HEIGHT, TL_GAP_MIN_MILLIS,
+                TL_AGENT_TOKEN_SIZE, TL_AGENTS_PER_ROW
             },
             theme:{
                 spacing, cornerRadius, rowHeight, btnHeight, 
@@ -37,8 +40,6 @@
         
         COL_WIDTH = TL_COL_WIDTH + 2*TL_EVENT_BOX_X_MARGIN,
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
-        
-        AGENT_TOKEN_SIZE = btnHeight,
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
@@ -135,14 +136,14 @@
                 const ordering = eventModel.getTimeOrdering();
                 if (ordering >= 0) {
                     tierStarts[ordering] ??= eventModel.getStart();
-                    tierMaxEnds[ordering] = Math.max(tierMaxEnds[ordering] ?? -Infinity, eventModel.getEnd());
+                    tierMaxEnds[ordering] = mathMax(tierMaxEnds[ordering] ?? -Infinity, eventModel.getEnd());
                 }
             }
             
-            // Lay tiers out top to bottom. coveredUntil is the latest end of any Event so far, so an
-            // earlier long Event still in progress keeps a later stretch from counting as idle. When
-            // nothing is in progress for at least TL_GAP_MIN_MILLIS before the next tier, a compact
-            // gap row is inserted.
+            // Lay tiers out top to bottom. coveredUntil is the latest end of any Event so far, so 
+            // an earlier long Event still in progress keeps a later stretch from counting as idle. 
+            // When nothing is in progress for at least TL_GAP_MIN_MILLIS before the next tier, a 
+            // compact gap row is inserted.
             const tierCount = tierStarts.length,
                 tierYs = [],
                 tierActiveDurations = [],
@@ -154,7 +155,7 @@
                     nextStart = tierStarts[i + 1];
                 tierYs[i] = yCursor;
                 yCursor += EVENT_TIER_HEIGHT;
-                coveredUntil = Math.max(coveredUntil, tierMaxEnds[i]);
+                coveredUntil = mathMax(coveredUntil, tierMaxEnds[i]);
                 
                 if (nextStart === undefined) {
                     tierActiveDurations[i] = coveredUntil - start;
@@ -172,9 +173,9 @@
             }
             const yExtent = yCursor;
             
-            // The number of later tiers that start strictly before this Event ends. An Event ending
-            // exactly when the next tier starts does not extend into it. Events in the same Location
-            // never overlap (enforced at startup), so a tall box never covers another box.
+            // The number of later tiers that start strictly before this Event ends. An Event 
+            // ending exactly when the next tier starts does not extend into it. Events in the same 
+            // Location never overlap (enforced at startup), so a tall box never covers another box.
             const countSpannedTiers = (ordering, end) => {
                 let count = 0;
                 for (let i = ordering + 1; i < tierCount && tierStarts[i] < end; i++) count++;
@@ -195,20 +196,20 @@
                     
                     timelineOrdering = eventModel.getTimeOrdering(),
                     spannedTiers = timelineOrdering >= 0 ? countSpannedTiers(timelineOrdering, eventModel.getEnd()) : 0;
-
-                // A spanning Event covers its middle tiers fully and its last tier in proportion to the
-                // share of that tier's time it occupies. Tiers have a fixed height whatever their duration,
-                // so the proportion is within the last tier only.
+                
+                // A spanning Event covers its middle tiers fully and its last tier in proportion 
+                // to the share of that tier's time it occupies. Tiers have a fixed height whatever 
+                // their duration, so the proportion is within the last tier only.
                 let targetHeight = TL_EVENT_BOX_HEIGHT;
                 if (spannedTiers > 0) {
                     const boxTopOffset = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
                         lastTier = timelineOrdering + spannedTiers,
                         lastTierY = tierYs[lastTier],
                         lastTierSpan = tierActiveDurations[lastTier],
-                        fraction = lastTierSpan > 0 ? Math.min(1, (eventModel.getEnd() - tierStarts[lastTier]) / lastTierSpan) : 1,
-                        endY = Math.min(
+                        fraction = lastTierSpan > 0 ? mathMin(1, (eventModel.getEnd() - tierStarts[lastTier]) / lastTierSpan) : 1,
+                        endY = mathMin(
                             lastTierY + boxTopOffset + TL_EVENT_BOX_HEIGHT, // No lower than a normal box's bottom in that tier.
-                            Math.max(lastTierY + MIN_SPAN_INTO_TIER, lastTierY + fraction * EVENT_TIER_HEIGHT)
+                            mathMax(lastTierY + MIN_SPAN_INTO_TIER, lastTierY + fraction * EVENT_TIER_HEIGHT)
                         );
                     targetHeight = endY - (tierYs[timelineOrdering] + boxTopOffset);
                 }
@@ -278,8 +279,9 @@
                     targetY = eventTargetYById[agentEventId],
                     isOffBoard = isHiddenAgent || targetX === undefined || targetY === undefined;
                 
-                targetX += TL_COL_WIDTH - (agentCountForEvent * AGENT_TOKEN_SIZE);
-                targetY += TL_EVENT_BOX_HEIGHT - AGENT_TOKEN_SIZE;
+                const rowCount = mathFloor((agentCountForEvent - 1) / TL_AGENTS_PER_ROW); // zero based
+                targetX += ((agentCountForEvent - 1) % TL_AGENTS_PER_ROW) * TL_AGENT_TOKEN_SIZE;
+                targetY += 32 + rowCount * TL_AGENT_TOKEN_SIZE;
                 if (agentToken) {
                     if (isOffBoard) {
                         if (!agentToken.offBoard) {
@@ -571,6 +573,8 @@
             
             initNode: function(parent, attrs) {
                 const self = this;
+                
+                attrs.size ??= TL_AGENT_TOKEN_SIZE;
                 
                 self.timeline = attrs.timeline;
                 delete attrs.timeline;

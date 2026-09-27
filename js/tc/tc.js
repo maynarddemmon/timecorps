@@ -128,11 +128,14 @@
                 TL_COL_WIDTH:120,
                 TL_COL_HEADER_HEIGHT:26,
                 TL_COL_SPACING:1,
-                TL_EVENT_BOX_HEIGHT:75,
+                TL_EVENT_BOX_HEIGHT:80,
                 TL_EVENT_BOX_Y_MARGIN:4,
                 TL_EVENT_BOX_X_MARGIN:4,
                 TL_TICK_LINE_HEIGHT:1,
                 TL_CLICK_TO_DESELECT:false,
+                
+                TL_AGENT_TOKEN_SIZE:0, // Set programatically below
+                TL_AGENTS_PER_ROW:0, // Set programmatically below
                 
                 // Compact rows showing idle time between tiers when no Event is in progress.
                 TL_GAP_ROW_HEIGHT:20,
@@ -234,9 +237,13 @@
             ICON_APPROX:'~',
         };
     
-    // Apply config overrides
+    // Programatically set some of the default CFG
     const CFG = TC.cfg,
-        OVERRIDES = pkg.TC_CFG_OVERRIDES,
+        agentTokenSize = CFG.TL_AGENT_TOKEN_SIZE = TC.theme.btnHeight;
+    CFG.TL_AGENTS_PER_ROW = mathFloor(CFG.TL_COL_WIDTH / agentTokenSize);
+    
+    // Apply config overrides
+    const OVERRIDES = pkg.TC_CFG_OVERRIDES,
         VERBOSE_INFO = OVERRIDES?._TC_CFG_OVERRIDES_INFO ?? true,
         VERBOSE_WARN = OVERRIDES?._TC_CFG_OVERRIDES_WARN ?? true,
         VERBOSE_ERROR = OVERRIDES?._TC_CFG_OVERRIDES_ERROR ?? true;
