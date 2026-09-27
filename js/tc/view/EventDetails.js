@@ -221,7 +221,7 @@
             
             // Values
             const valuesRow = self.valuesRow = new MiniPanel(detailsContainer, {
-                title:'Values', percentOfParentWidth:100
+                title:'Causators', percentOfParentWidth:100
             }, [GrandWidthMixin, SizeToParent, {
                 clearContent: function() {
                     this.getContentView().destroyAllSubviews();
@@ -389,7 +389,9 @@
                 const valueModels = eventModel.getValueModels();
                 for (const valueId in valueModels) {
                     const valueModel = valueModels[valueId];
-                    txt += '<br>- ' + valueId + ': ' + valueModel.value;
+                    if (!valueModel.isHidden()) {
+                        txt += '<br>- ' + valueModel.getName() + ': ' + valueModel.value;
+                    }
                 }
                 self.valuesTxt.setText(txt ? 'Values' + txt : '');
                 

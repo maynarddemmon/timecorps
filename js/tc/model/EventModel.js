@@ -58,10 +58,14 @@
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
             init: function(attrs) {
+                this.hidden = false;
                 this.event = attrs.event;
                 delete attrs.event;
                 this.callSuper(attrs);
             },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
             setValue: function(value, isActual) {
                 if (isActual) {
                     this.set('value', value, true);
@@ -69,7 +73,26 @@
                 } else {
                     setConstrainedValue(this.event, this, 'value', value);
                 }
-            }
+            },
+            getValue: function() {return this.value;},
+            
+            /*  A player-facing name. Falls back to the id so unnamed Values still display. */
+            setName: function(name) {this.set('name', name, true);},
+            getName: function() {return this.name ?? this.id;},
+            
+            /*  Same semantics as Action and Exit hidden: a boolean or a constraint expression
+                resolved against the owning Event. */
+            setHidden: function(value, isActual) {
+                if (isActual) {
+                    if (this.hidden !== value) {
+                        this.set('hidden', value, true);
+                        this.event.notifyCollectionOfUpdate();
+                    }
+                } else {
+                    setConstrainedValue(this.event, this, 'hidden', value);
+                }
+            },
+            isHidden: function() {return this.hidden;}
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {

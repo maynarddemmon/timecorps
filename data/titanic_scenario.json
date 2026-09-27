@@ -298,7 +298,10 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"struck":{"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)"}
+				"struck":{
+					"name":"Struck the Iceberg",
+					"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)"
+				}
 			},
 			"hideAffectedBy":{
 				"lookout_sights_berg":"event.attestation.value < 15",
@@ -322,8 +325,11 @@
 			"location":"titanic.boatdeck",
 			"values":{
 				"massLossOfLife":{"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.fullDavits.value)"},
-				"TEST_PARADOX":{"value":"timeline.paradox.value"},
-				"TEST_CHRONAL":{"value":"timeline.chronal.value + '/' + timeline.chronal.max"}
+				"TEST_PARADOX":{
+					"name":"Timeline Paradox",
+					"value":"timeline.paradox.value > 0 ? 'Fractured' : 'Clean'",
+					"hidden":"event.attestation.value === 0"
+				}
 			},
 			"hideAffectedBy":{
 				"californian_nearby":"event.attestation.value < 40",
