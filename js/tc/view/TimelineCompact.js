@@ -4,7 +4,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, PaddedPlainText, PlainText, Selectable} = M,
+        {View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
         {
             SquareBtn, MiniStatBar,
@@ -319,36 +319,43 @@
             refreshConnectionsForSelection(eventBox);
         },
         
-        updateExits = eventBox => {
-            const {timeline, model, selected:show} = eventBox,
-                flowLayer = timeline.flowLayer,
-                exitsById = eventBox._exitsById ??= {};
+        /*  Shows the exit splines that touch the selected Event: its own exits and the exits from 
+            other Events that lead to it. Each route has a single spline id, exit-<from>-<to>, so a 
+            route is drawn once no matter which end is selected. Reconciles against what is 
+            currently drawn, so routes that become hidden are removed. */
+        refreshExitSplines = debounce(timeline => {
+            const flowLayer = timeline.flowLayer,
+                existing = timeline._exitSplinesById ?? {},
+                newExitSplinesById = {},
+                selectedModel = timeline.getSelectedEventBox()?.model;
             
-            // Update travel paths between boxes
-            if (show) {
-                const startId = model.id;
-                for (const exitModel of model.getExitModels()) {
-                    if (exitModel.isHidden()) continue;
+            if (selectedModel) {
+                const boxesByEventId = timeline.boxesByEventId;
+                for (const exitModel of selectedModel.getVisibleExitAndEntrances()) {
+                    const fromModel = exitModel.event,
+                        toModel = exitModel.getToEventModel(),
+                        splineId = SPLINE_ID_PREFIX_EXIT + fromModel.id + '-' + toModel.id;
                     
-                    const toBox = timeline.boxesByEventId[exitModel.getToEventModel()?.id];
-                    if (toBox && !toBox.model.isHidden()) {
-                        const splineId = SPLINE_ID_PREFIX_EXIT + startId + '-' + toBox.model.id,
-                            existingConnection = flowLayer.getSpline(splineId);
-                        if (!existingConnection) {
-                            exitsById[splineId] = flowLayer.connect({
-                                splineId,
-                                start:{view:eventBox, side:'bottom', position:'85%'},
-                                end:{view:toBox, side:'top', position:'35%'},
-                                style:EXIT_STYLE
-                            });
-                        }
-                    }
-                } 
-            } else {
-                for (const connectionId in exitsById) flowLayer.disconnect(connectionId);
-                eventBox._exitsById = {};
+                    if (newExitSplinesById[splineId]) continue; // e.g. both a walk and a wait exit between the same pair.
+                    
+                    const fromBox = boxesByEventId[fromModel.id],
+                        toBox = boxesByEventId[toModel.id];
+                    //if (!fromBox || !toBox) continue;
+                    
+                    newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
+                        splineId,
+                        start:{view:fromBox, side:'bottom', position:'85%'},
+                        end:{view:toBox, side:'top', position:'35%'},
+                        style:EXIT_STYLE
+                    });
+                }
             }
-        },
+            
+            for (const splineId in existing) {
+                if (!newExitSplinesById[splineId]) flowLayer.disconnect(splineId);
+            }
+            timeline._exitSplinesById = newExitSplinesById;
+        }, STANDARD_DEBOUNCE_MILLIS),
         
         EventBox = new JSClass('EventBox', M.SimpleButton, {
             include: [Selectable],
@@ -373,7 +380,7 @@
                 self.callSuper(parent, attrs);
                 
                 // Setup debounced revalidateForEvent so it is unique per instance.
-                self.revalidateForEvent = M.debounce(self._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
+                self.revalidateForEvent = debounce(self._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
                 
                 (self._label = new PaddedPlainText(self, {
                     y:spacing, width:width, paddingLeft:4, paddingRight:4
@@ -402,7 +409,6 @@
                 
                 this.bringToFront();
                 refreshConnectionsForSelection(this);
-                updateExits(this);
             },
             
             setAdjacentIsSelected: function(adjacentIsSelected) {
@@ -450,7 +456,7 @@
                 const {timeline, model:eventModel} = this;
                 
                 updateEventBox(this);
-                updateExits(this);
+                refreshExitSplines(timeline);
                 
                 for (const descEventModel of eventModel.getDescendants()) {
                     const descEventBox = timeline.getEventBox(descEventModel);
@@ -473,7 +479,7 @@
                 self.callSuper(parent, attrs);
                 
                 // Setup debounced revalidateForAgent so it is unique per instance.
-                self.revalidateForAgent = M.debounce(self._revalidateForAgent, STANDARD_DEBOUNCE_MILLIS);
+                self.revalidateForAgent = debounce(self._revalidateForAgent, STANDARD_DEBOUNCE_MILLIS);
             },
             
             setModel: function(model) {
@@ -696,6 +702,7 @@
         /** @overrides SelectionManager */
         doSelected: function() {
             const selectedEvent = this.getSelectedEventBox();
+            refreshExitSplines(this);
             this.fireEvent('selectionChanged', selectedEvent);
             pushOntoHistory(this, selectedEvent.model.id);
             
@@ -703,7 +710,10 @@
         },
         
         /** @overrides SelectionManager */
-        doDeselected: function() {this.fireEvent('selectionChanged', this.getSelectedEventBox());},
+        doDeselected: function() {
+            refreshExitSplines(this);
+            this.fireEvent('selectionChanged', this.getSelectedEventBox());
+        },
         
         getConnectionsForEventBox: function(eventBox, filter) {
             const retval = this.flowLayer.getConnections(eventBox);

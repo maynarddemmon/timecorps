@@ -323,6 +323,31 @@
             },
             getExitModels: function() {return this.exits;},
             
+            getVisibleExitAndEntrances: function() {
+                const accum = [];
+                if (!this.isHidden()) {
+                    const eventModels = pkg.model.getEventModels();
+                    for (const eventId in eventModels) {
+                        const eventModel = eventModels[eventId];
+                        if (eventModel === this) {
+                            for (const exitModel of eventModel.getExitModels()) {
+                                const toModel = exitModel.getToEventModel();
+                                if (toModel && toModel !== this && !toModel.isHidden() && !exitModel.isHidden()) {
+                                    accum.push(exitModel);
+                                }
+                            }
+                        } else if (!eventModel.isHidden()) {
+                            for (const exitModel of eventModel.getExitModels()) {
+                                if (exitModel.getToEventModel() === this) {
+                                    if (!exitModel.isHidden()) accum.push(exitModel);
+                                }
+                            }
+                        }
+                    }
+                }
+                return accum;
+            },
+            
             // Hide Affected By
             setHideAffectedBy: function(hideAffectedBy) {
                 for (const id in hideAffectedBy) {
