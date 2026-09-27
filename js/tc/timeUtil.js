@@ -6,7 +6,7 @@
             abs:mathAbs, trunc:mathTrunc
         } = Math,
         
-        {ICON_ARROW, ICON_SEPARATOR} = pkg,
+        {ICON_ARROW, ICON_SEPARATOR, ICON_APPROX} = pkg,
         
         // Time Parsing and Formatting /////////////////////////////////////////
         TO_SECOND = 'second',
@@ -48,6 +48,18 @@
         SCALE_YEARS = {
             [TO_YEAR]:1, [TO_DECADE]:10, [TO_CENTURY]:100, [TO_MILLENIUM]:1000
         },
+        
+        /*  Units for approximate durations, coarse to fine. The first unit the duration reaches 
+            is used, rounded, so the result is always a single "N unit" phrase. */
+        APPROX_UNITS = [
+            [MILLIS_PER_YEAR,   'year',  'years'],
+            [MILLIS_PER_MONTH,  'month', 'months'],
+            [MILLIS_PER_WEEK,   'week',  'weeks'],
+            [MILLIS_PER_DAY,    'day',   'days'],
+            [MILLIS_PER_HOUR,   'hour',  'hours'],
+            [MILLIS_PER_MINUTE, 'min',   'min'],
+            [MILLIS_PER_SECOND, 'sec',   'sec']
+        ],
         
         /*  A SHAPE GUARD, not a parser. Native Date already handles every
             well-formed case here, including expanded years and truncated forms.
@@ -240,6 +252,20 @@
                 if (abs < 30 * MILLIS_PER_DAY)  return unit(mathRound(millis / MILLIS_PER_DAY), 'day', 'days');
                 if (abs < 365 * MILLIS_PER_DAY) return unit(mathRound(millis / (30 * MILLIS_PER_DAY)), 'month', 'months');
                 return unit(+(millis / (365.2425 * MILLIS_PER_DAY)).toFixed(1), 'year', 'years');
+            },
+            
+            /*  A rough, single-unit duration for display: "2 min", "5 hours", "3 weeks", "846 years".
+                Unlike formatDuration this never combines units, since it is meant to be read at a glance. */
+            formatApproxDuration: millis => {
+                const abs = mathAbs(millis);
+                for (const [unitMillis, one, many] of APPROX_UNITS) {
+                    if (abs >= unitMillis) {
+                        const v = mathRound(abs / unitMillis),
+                            prefix = v * unitMillis === abs ? '' : ICON_APPROX;
+                        return prefix + (v >= 10000 ? v.toLocaleString('en-US') : v) + ' ' + (v === 1 ? one : many);
+                    }
+                }
+                return abs > 0 ? '< 1 sec' : '';
             },
             
             /*  Largest boundary at or before the given instant.

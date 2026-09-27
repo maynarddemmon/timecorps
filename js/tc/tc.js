@@ -41,6 +41,7 @@
                 fontSizeMedium:'14px',
                 fontSizeLarge:'16px',
                 fontSizeVeryLarge:'20px',
+                fontSizeHuge:'24px',
                 fontFamilyMono:'SpaceMono',
                 
                 colorMegaDark:'#310',
@@ -123,7 +124,7 @@
                 // The curvature value used by Splines within the Timeline.
                 SPLINE_CURVATURE:0.25,
                 
-                TL_ROW_HEADER_WIDTH:125,
+                TL_ROW_HEADER_WIDTH:123,
                 TL_COL_WIDTH:120,
                 TL_COL_HEADER_HEIGHT:26,
                 TL_COL_SPACING:1,
@@ -226,6 +227,7 @@
             ICON_CHECKED:'✓',
             ICON_UNCHECKED:'✗',
             ICON_CANCEL:'X',
+            ICON_APPROX:'~',
         };
     
     // Apply config overrides

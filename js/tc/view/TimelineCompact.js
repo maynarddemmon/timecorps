@@ -8,7 +8,7 @@
         
         {
             SquareBtn, MiniStatBar,
-            timeUtil:{format,},
+            timeUtil:{format,formatApproxDuration},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
                 MAX_HISTORY_LENGTH, 
@@ -20,7 +20,7 @@
                 spacing, cornerRadius, rowHeight, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn, colorParadox,
-                fontSizeLarge
+                fontSizeLarge, fontSizeHuge
             },
             I18N_PARADOX,
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
@@ -122,14 +122,17 @@
             
             // Layout Events and Refresh Ticks
             let selectedBoxAnimatingToBounds,
-                targetY = 0;
+                targetY = 0,
+                lastTick,
+                gapTickLongestDuration = 0;
             const eventTargetXById = {},
                 eventTargetYById = {};
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
-                    targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN;
-                targetY = eventTargetYById[eventId] = eventModel.getTimeOrdering() * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
+                    targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN,
+                    timelineOrdering = eventModel.getTimeOrdering();
+                targetY = eventTargetYById[eventId] = timelineOrdering * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:eventBox.height};
@@ -141,20 +144,32 @@
                     });
                 }
                 
-                const tick = ticksByTime[startTime],
-                    tickTargetY = targetY - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT;
+                const tickTargetY = targetY - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT;
+                let tick = ticksByTime[startTime];
                 if (tick) {
                     animateAttrs(tick, {y:tickTargetY});
-                    tick.setWidth(rowHeaderWidth);
-                    tick.setHeight(TL_TICK_LINE_HEIGHT);
                 } else {
-                    ticksByTime[startTime] = new Tick(rowHeaders, {
+                    tick = ticksByTime[startTime] = new Tick(rowHeaders, {
                         timeline, time:startTime,
                         y:tickTargetY, 
                         width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
                     });
                 }
+                
+                // Each tick shows the time until the next tick. HQ and The Void are prepended on initial
+                // layout with a time ordering of -1, so they're skipped.
+                if (timelineOrdering >= 0) {
+                    if (tick !== lastTick) {
+                        lastTick?.setGap(startTime - lastTick.time);
+                        lastTick = tick;
+                        gapTickLongestDuration = 0;
+                    }
+                    gapTickLongestDuration = Math.max(gapTickLongestDuration, eventModel.getDuration());
+                }
             }
+            
+            // The last tick has no next tick, so use the longest duration Event in its tier.
+            lastTick?.setGap(gapTickLongestDuration);
             
             // Layout Agents
             const agentCountsByEventId = {};
@@ -332,22 +347,17 @@
             if (selectedModel) {
                 const boxesByEventId = timeline.boxesByEventId;
                 for (const exitModel of selectedModel.getVisibleExitAndEntrances()) {
-                    const fromModel = exitModel.event,
-                        toModel = exitModel.getToEventModel(),
-                        splineId = SPLINE_ID_PREFIX_EXIT + fromModel.id + '-' + toModel.id;
-                    
-                    if (newExitSplinesById[splineId]) continue; // e.g. both a walk and a wait exit between the same pair.
-                    
-                    const fromBox = boxesByEventId[fromModel.id],
-                        toBox = boxesByEventId[toModel.id];
-                    //if (!fromBox || !toBox) continue;
-                    
-                    newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
-                        splineId,
-                        start:{view:fromBox, side:'bottom', position:'85%'},
-                        end:{view:toBox, side:'top', position:'35%'},
-                        style:EXIT_STYLE
-                    });
+                    const fromModelId = exitModel.event.id,
+                        toModelId = exitModel.getToEventModel().id,
+                        splineId = SPLINE_ID_PREFIX_EXIT + fromModelId + '-' + toModelId;
+                    if (!newExitSplinesById[splineId]) {
+                        newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
+                            splineId,
+                            start:{view:boxesByEventId[fromModelId], side:'bottom', position:'85%'},
+                            end:  {view:boxesByEventId[toModelId],   side:'top',    position:'35%'},
+                            style:EXIT_STYLE
+                        });
+                    }
                 }
             }
             
@@ -504,10 +514,11 @@
             }
         }),
         
+        
         // Tick //
         Tick = new JSClass('Tick', View, {
             initNode: function(parent, attrs) {
-                const time = attrs.time,
+                const time = this.time = attrs.time,
                     timeline = this.timeline = attrs.timeline;
                 delete attrs.time;
                 delete attrs.timeline;
@@ -516,10 +527,20 @@
                 
                 this.callSuper(parent, attrs);
                 
+                const labelWidth = TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ;
                 this._label = new PlainText(this, {
-                    y:TICK_LABEL_ADJ, width:TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ,
-                    textAlign:'right', text:format(time, timeline.scale)
+                    y:TICK_LABEL_ADJ, width:labelWidth, textAlign:'right', 
+                    text:format(time, timeline.scale)
                 });
+                this._gapLabel = new PlainText(this, {
+                    y:32, width:labelWidth, textAlign:'center', 
+                    fontSize:fontSizeHuge, textColor:colorMediumDark
+                });
+            },
+            
+            /*  The time elapsed since the previous visible tick. Zero or less hides the label. */
+            setGap: function(millis) {
+                this._gapLabel.setText(millis > 0 ? formatApproxDuration(millis) : '');
             }
         }),
         
