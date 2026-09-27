@@ -28,6 +28,11 @@
         } = pkg,
         
         EVENT_TIER_HEIGHT = TL_EVENT_BOX_HEIGHT + 2*TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+        
+        // A spanning Event always reaches at least this far past the next tier's tick line, so
+        // even a very small overlap is visibly a continuation rather than a near-miss.
+        MIN_SPAN_INTO_TIER = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT + 6,
+        
         TICK_LABEL_ADJ = TL_TICK_LINE_HEIGHT + spacing,
         
         COL_WIDTH = TL_COL_WIDTH + 2*TL_EVENT_BOX_X_MARGIN,
@@ -189,9 +194,26 @@
                     targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN,
                     
                     timelineOrdering = eventModel.getTimeOrdering(),
-                    spannedTiers = timelineOrdering >= 0 ? countSpannedTiers(timelineOrdering, eventModel.getEnd()) : 0,
-                    targetHeight = spannedTiers > 0 ? tierYs[timelineOrdering + spannedTiers] - tierYs[timelineOrdering] + TL_EVENT_BOX_HEIGHT : TL_EVENT_BOX_HEIGHT;
-                    targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
+                    spannedTiers = timelineOrdering >= 0 ? countSpannedTiers(timelineOrdering, eventModel.getEnd()) : 0;
+
+                // A spanning Event covers its middle tiers fully and its last tier in proportion to the
+                // share of that tier's time it occupies. Tiers have a fixed height whatever their duration,
+                // so the proportion is within the last tier only.
+                let targetHeight = TL_EVENT_BOX_HEIGHT;
+                if (spannedTiers > 0) {
+                    const boxTopOffset = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+                        lastTier = timelineOrdering + spannedTiers,
+                        lastTierY = tierYs[lastTier],
+                        lastTierSpan = tierActiveDurations[lastTier],
+                        fraction = lastTierSpan > 0 ? Math.min(1, (eventModel.getEnd() - tierStarts[lastTier]) / lastTierSpan) : 1,
+                        endY = Math.min(
+                            lastTierY + boxTopOffset + TL_EVENT_BOX_HEIGHT, // No lower than a normal box's bottom in that tier.
+                            Math.max(lastTierY + MIN_SPAN_INTO_TIER, lastTierY + fraction * EVENT_TIER_HEIGHT)
+                        );
+                    targetHeight = endY - (tierYs[timelineOrdering] + boxTopOffset);
+                }
+                
+                const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
