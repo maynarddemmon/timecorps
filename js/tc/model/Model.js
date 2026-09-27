@@ -246,6 +246,35 @@
                 if (!eventModels[eventId].validateEventDependencies()) isValid = false;
             }
             return isValid;
+        },
+        
+        /*  Events in the same Location must not overlap in time. The timeline relies on this so
+            an Event drawn across several tiers never covers another Event in its column. */
+        validateNoLocationOverlaps: () => {
+            const byLocation = {},
+                eventModels = model.getEventModels();
+            for (const eventId in eventModels) {
+                const eventModel = eventModels[eventId];
+                (byLocation[eventModel.getLocation()] ??= []).push(eventModel);
+            }
+            
+            let isValid = true;
+            for (const locationId in byLocation) {
+                const list = byLocation[locationId].sort((a, b) => a.getStart() - b.getStart());
+                for (let i = 1; i < list.length; i++) {
+                    const prev = list[i - 1],
+                        cur = list[i];
+                    if (cur.getStart() < prev.getEnd()) {
+                        isValid = false;
+                        console.warn(
+                            'Location Overlap: ' + locationId + ' : ' + prev.id + 
+                            ' (' + prev.getStart(true) + ' → ' + prev.getEnd(true) + 
+                            ') overlaps ' + cur.id + ' (' + cur.getStart(true) + ')'
+                        );
+                    }
+                }
+            }
+            return isValid;
         }
     });
 })(tc);

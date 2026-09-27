@@ -20,7 +20,7 @@
                 spacing, cornerRadius, rowHeight, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn, colorParadox,
-                fontSizeLarge, fontSizeHuge
+                fontSizeLarge, fontSizeVeryLarge
             },
             I18N_PARADOX,
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
@@ -533,8 +533,8 @@
                     text:format(time, timeline.scale)
                 });
                 this._gapLabel = new PlainText(this, {
-                    y:32, width:labelWidth, textAlign:'center', 
-                    fontSize:fontSizeHuge, textColor:colorMediumDark
+                    y:35, width:labelWidth, textAlign:'center', 
+                    fontSize:fontSizeVeryLarge, textColor:colorMediumDark
                 });
             },
             

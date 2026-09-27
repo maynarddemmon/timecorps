@@ -52,12 +52,13 @@
                     } else {
                         pkg.resumeConstraintBinding();
                         
-                        if (model.validateAllEventDependencies()) {
+                        const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
+                        if (eventsValid) {
                             timelineView.setup(model);
                             teamView.setup(model);
                             model.reset();
                         } else {
-                            console.log('INVALID EVENT DEPENDENCIES: HALTING STARTUP!!!');
+                            console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
                         }
                     }
                 } else {
