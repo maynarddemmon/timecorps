@@ -120,6 +120,23 @@
                 }
             }
             
+            // Start time of each visible tier, indexed by time ordering, so an Event can find the
+            // later tiers that begin before it ends.
+            const tierStarts = [];
+            for (const eventModel of orderedEvents) {
+                const ordering = eventModel.getTimeOrdering();
+                if (ordering >= 0) tierStarts[ordering] ??= eventModel.getStart();
+            }
+            
+            // The number of later tiers that start strictly before this Event ends. An Event ending
+            // exactly when the next tier starts does not extend into it. Events in the same Location
+            // never overlap (enforced at startup), so a tall box never covers another box.
+            const countSpannedTiers = (ordering, end) => {
+                let count = 0;
+                for (let i = ordering + 1; i < tierStarts.length && tierStarts[i] < end; i++) count++;
+                return count;
+            };
+            
             // Layout Events and Refresh Ticks
             let selectedBoxAnimatingToBounds,
                 targetY = 0,
@@ -131,16 +148,18 @@
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
                     targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN,
-                    timelineOrdering = eventModel.getTimeOrdering();
+                    timelineOrdering = eventModel.getTimeOrdering(),
+                    spannedTiers = timelineOrdering >= 0 ? countSpannedTiers(timelineOrdering, eventModel.getEnd()) : 0,
+                    targetHeight = TL_EVENT_BOX_HEIGHT + spannedTiers * EVENT_TIER_HEIGHT;
                 targetY = eventTargetYById[eventId] = timelineOrdering * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
-                    if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:eventBox.height};
-                    animateAttrs(eventBox, {x:targetX, y:targetY});
+                    if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
+                    animateAttrs(eventBox, {x:targetX, y:targetY, height:targetHeight});
                     updateEventBox(eventBox);
                 } else {
                     boxesByEventId[eventId] = new EventBox(flowLayer, {
-                        x:targetX, y:targetY, timeline, model:eventModel
+                        x:targetX, y:targetY, height:targetHeight, timeline, model:eventModel
                     });
                 }
                 

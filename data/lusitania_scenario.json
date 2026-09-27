@@ -224,7 +224,7 @@
 		"four_point_bearing":{
 			"name":"The Four-Point Bearing",
 			"start":"1915-05-07T13:40:00",
-			"duration":{"m":30},
+			"duration":{"m":10},
 			"location":"lusitania.bridge",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 15",

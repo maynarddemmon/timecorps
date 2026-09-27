@@ -422,11 +422,11 @@
                 let isValid = true;
                 const start = this.getStart();
                 for (const precursorEventModel of this.getPrecursors()) {
-                    if (precursorEventModel.getStart() > start) {
+                    if (precursorEventModel.getEnd() > start) {
                         isValid = false;
                         console.warn(
-                            'Event Ordering Issues: ' + precursorEventModel.id + ' : ' + precursorEventModel.getStart(true) +
-                            ' is not before ' + this.id + ' : ' + this.getStart(true)
+                            'Event Ordering Issues: ' + precursorEventModel.id + ' ends ' + precursorEventModel.getEnd(true) +
+                            ' after ' + this.id + ' starts ' + this.getStart(true)
                         );
                     }
                 }
