@@ -1,7 +1,7 @@
 (pkg => {
     'use strict';
     
-    const JSClass = JS.Class,
+    const {Class:JSClass, Module:JSModule} = JS,
         
         {stableStringify, BaseModel, BaseModelCollection} = myt,
         
@@ -22,12 +22,38 @@
             if (start != null && duration != null) eventModel.set('end', start + duration);
         },
         
-        EventActionModel = new JSClass('EventActionModel', BaseModel, {
+        ConstrainableToParentEvent = new JSModule('ConstrainableAttrSupport', {
+            include: [pkg.ConstrainableAttrSupport],
+            
             init: function(attrs) {
-                this.hidden = false;
-                //this.done = false;
                 this.event = attrs.event;
                 delete attrs.event;
+                this.callSuper(attrs);
+            },
+            
+            getConstraintScope: function() {return this.event;}
+        }),
+        
+        /*  For models owned by an Event (Actions, Values, Exits, HideAffectedBy). Takes the owning 
+            Event from attrs, scopes constraints to it, and tells it when anything visible changes. */
+        EventPart = new JSModule('EventPart', {
+            include: [pkg.Hideable],
+            
+            init: function(attrs) {
+                this.hidden = false;
+                this.callSuper(attrs);
+            },
+            
+            doHiddenChanged: function(_hidden) {this.event.notifyCollectionOfUpdate();}
+        }),
+        
+        EventActionModel = new JSClass('EventActionModel', BaseModel, {
+            include: [ConstrainableToParentEvent, EventPart],
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                //this.done = false;
                 this.callSuper(attrs);
             },
             
@@ -35,34 +61,17 @@
             // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
             
-            setSet: function(set) {this.set('setObj', set, true);},
+            setSet: function(set) {this.set('setObj', set, true);}
             
             /*setDone: function(done) {
                 this.set('done', done, true);
                 this.event.notifyCollectionOfUpdate();
             },
             isDone: function() {return this.done;},*/
-            
-            setHidden: function(value, isActual) {
-                if (isActual) {
-                    if (this.hidden !== value) {
-                        this.set('hidden', value, true);
-                        this.event.notifyCollectionOfUpdate();
-                    }
-                } else {
-                    setConstrainedValue(this.event, this, 'hidden', value);
-                }
-            },
-            isHidden: function() {return this.hidden;}
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
-            init: function(attrs) {
-                this.hidden = false;
-                this.event = attrs.event;
-                delete attrs.event;
-                this.callSuper(attrs);
-            },
+            include: [ConstrainableToParentEvent, EventPart],
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -78,30 +87,11 @@
             
             /*  A player-facing name. Falls back to the id so unnamed Values still display. */
             setName: function(name) {this.set('name', name, true);},
-            getName: function() {return this.name ?? this.id;},
-            
-            /*  Same semantics as Action and Exit hidden: a boolean or a constraint expression
-                resolved against the owning Event. */
-            setHidden: function(value, isActual) {
-                if (isActual) {
-                    if (this.hidden !== value) {
-                        this.set('hidden', value, true);
-                        this.event.notifyCollectionOfUpdate();
-                    }
-                } else {
-                    setConstrainedValue(this.event, this, 'hidden', value);
-                }
-            },
-            isHidden: function() {return this.hidden;}
+            getName: function() {return this.name ?? this.id;}
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            init: function(attrs) {
-                this.hidden = false;
-                this.event = attrs.event;
-                delete attrs.event;
-                this.callSuper(attrs);
-            },
+            include: [ConstrainableToParentEvent, EventPart],
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -117,18 +107,6 @@
                 return this._toEventModel ?? (this._toEventModel = pkg.model.getEventModel(this.to));
             },
             
-            setHidden: function(value, isActual) {
-                if (isActual) {
-                    if (this.hidden !== value) {
-                        this.set('hidden', value, true);
-                        this.event.notifyCollectionOfUpdate();
-                    }
-                } else {
-                    setConstrainedValue(this.event, this, 'hidden', value);
-                }
-            },
-            isHidden: function() {return this.hidden;},
-            
             
             // Methods /////////////////////////////////////////////////////////
             getBtnLabel: function() {
@@ -143,28 +121,14 @@
         }),
         
         HideAffectedByModel = new JSClass('HideAffectedByModel', BaseModel, {
-            init: function(attrs) {
-                this.event = attrs.event;
-                delete attrs.event;
-                this.callSuper(attrs);
-            },
-            
-            
-            // Accessors ///////////////////////////////////////////////////////
-            setHidden: function(value, isActual) {
-                if (isActual) {
-                    if (this.hidden !== value) {
-                        this.set('hidden', value, true);
-                        this.event.notifyCollectionOfUpdate();
-                    }
-                } else {
-                    setConstrainedValue(this.event, this, 'hidden', value);
-                }
-            },
-            isHidden: function() {return this.hidden;}
+            include: [ConstrainableToParentEvent, EventPart]
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
+            include: [pkg.ConstrainableAttrSupport, pkg.Hideable],
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
                 self.hidden = false;
@@ -250,18 +214,10 @@
             },
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
             
-            setHidden: function(value, isActual) {
-                if (isActual) {
-                    if (this.hidden !== value) {
-                        this.set('hidden', value, true);
-                        this.notifyCollectionOfUpdate();
-                        pkg.app.getTimelineView().notifyEventVisibilityChange(this);
-                    }
-                } else {
-                    setConstrainedValue(this, this, 'hidden', value);
-                }
+            doHiddenChanged: function(hidden) {
+                this.notifyCollectionOfUpdate();
+                pkg.app.getTimelineView().notifyEventVisibilityChange(this);
             },
-            isHidden: function() {return this.hidden;},
             
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
             getActionLimit: function() {return this.actionLimit;},

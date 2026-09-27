@@ -73,6 +73,9 @@
         };
     
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
+        include: [pkg.ConstrainableAttrSupport, pkg.Hideable],
+        
+        
         // Life Cycle //////////////////////////////////////////////////////////
         init: function(attrs) {
             const self = this;
@@ -198,27 +201,13 @@
         isAtHQ: function() {return this.event === EVENT_ID_TIME_CORPS_HQ;},
         isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
         
-        /*  Hidden Agents are not yet part of the game (e.g. awaiting a mission reward). Accepts 
-            a boolean or a constraint expression. A new value replaces any existing constraint, 
-            so a reward's reveal overrides an expression from the data. Expressions resolve 
-            against the Agent, so use "events.<id>..." or "timeline..." but not "event...". */
-        // FIXME: support event... as the Event the agent is currently in?
-        setHidden: function(value, isActual) {
-            if (isActual) {
-                value = !!value;
-                if (this.hidden !== value) {
-                    this.set('hidden', value, true);
-                    if (this.inited) {
-                        if (!value) this.stampArrival();
-                        this.notifyCollectionOfUpdate();
-                        pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
-                    }
-                }
-            } else {
-                setConstrainedValue(this, this, 'hidden', String(value));
+        doHiddenChanged: function(hidden) {
+            if (this.inited) {
+                if (!hidden) this.stampArrival();
+                this.notifyCollectionOfUpdate();
+                pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
             }
         },
-        isHidden: function() {return this.hidden;},
         
         /*  Player controlled Agents are directed by the player. Visible Agents that are not player 
             controlled are NPCs. */
