@@ -133,6 +133,7 @@
                 TL_EVENT_BOX_X_MARGIN:4,
                 TL_TICK_LINE_HEIGHT:1,
                 TL_CLICK_TO_DESELECT:false,
+                TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET:32, // A few pixels below the progess bars in an EventBox.
                 
                 TL_AGENT_TOKEN_SIZE:0, // Set programatically below
                 TL_AGENTS_PER_ROW:0, // Set programmatically below
@@ -237,13 +238,9 @@
             ICON_APPROX:'~',
         };
     
-    // Programatically set some of the default CFG
-    const CFG = TC.cfg,
-        agentTokenSize = CFG.TL_AGENT_TOKEN_SIZE = TC.theme.btnHeight;
-    CFG.TL_AGENTS_PER_ROW = mathFloor(CFG.TL_COL_WIDTH / agentTokenSize);
-    
     // Apply config overrides
-    const OVERRIDES = pkg.TC_CFG_OVERRIDES,
+    const CFG = TC.cfg,
+        OVERRIDES = pkg.TC_CFG_OVERRIDES,
         VERBOSE_INFO = OVERRIDES?._TC_CFG_OVERRIDES_INFO ?? true,
         VERBOSE_WARN = OVERRIDES?._TC_CFG_OVERRIDES_WARN ?? true,
         VERBOSE_ERROR = OVERRIDES?._TC_CFG_OVERRIDES_ERROR ?? true;
@@ -266,4 +263,8 @@
             if (VERBOSE_ERROR) console.error('Unknown cfg override:', key, OVERRIDES[key]);
         }
     }
+    
+    // Programatically set some of the default CFG
+    CFG.TL_AGENT_TOKEN_SIZE ||= TC.theme.btnHeight;
+    CFG.TL_AGENTS_PER_ROW ||= mathFloor(CFG.TL_COL_WIDTH / CFG.TL_AGENT_TOKEN_SIZE);
 })(window);

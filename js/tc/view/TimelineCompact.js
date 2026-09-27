@@ -18,7 +18,7 @@
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
                 TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT, 
                 TL_GAP_ROW_HEIGHT, TL_GAP_MIN_MILLIS,
-                TL_AGENT_TOKEN_SIZE, TL_AGENTS_PER_ROW
+                TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET, TL_AGENT_TOKEN_SIZE, TL_AGENTS_PER_ROW
             },
             theme:{
                 spacing, cornerRadius, rowHeight, btnHeight, 
@@ -281,7 +281,7 @@
                 
                 const rowCount = mathFloor((agentCountForEvent - 1) / TL_AGENTS_PER_ROW); // zero based
                 targetX += ((agentCountForEvent - 1) % TL_AGENTS_PER_ROW) * TL_AGENT_TOKEN_SIZE;
-                targetY += 32 + rowCount * TL_AGENT_TOKEN_SIZE;
+                targetY += TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET + rowCount * TL_AGENT_TOKEN_SIZE;
                 if (agentToken) {
                     if (isOffBoard) {
                         if (!agentToken.offBoard) {
