@@ -22,7 +22,7 @@
             if (start != null && duration != null) eventModel.set('end', start + duration);
         },
         
-        ConstrainableToParentEvent = new JSModule('ConstrainableAttrSupport', {
+        ConstrainableToParentEvent = new JSModule('ConstrainableToParentEvent', {
             include: [pkg.ConstrainableAttrSupport],
             
             init: function(attrs) {
@@ -34,8 +34,6 @@
             getConstraintScope: function() {return this.event;}
         }),
         
-        /*  For models owned by an Event (Actions, Values, Exits, HideAffectedBy). Takes the owning 
-            Event from attrs, scopes constraints to it, and tells it when anything visible changes. */
         EventPart = new JSModule('EventPart', {
             include: [pkg.Hideable],
             
@@ -80,7 +78,7 @@
                     this.set('value', value, true);
                     this.event.notifyCollectionOfUpdate();
                 } else {
-                    setConstrainedValue(this.event, this, 'value', value);
+                    setConstrainedValue(this.getConstraintScope(), this, 'value', value);
                 }
             },
             getValue: function() {return this.value;},

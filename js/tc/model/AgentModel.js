@@ -72,6 +72,11 @@
             }
         };
     
+    /*  Hidden Agents are not yet part of the game (e.g. awaiting a mission reward). Accepts 
+        a boolean or a constraint expression. A new value replaces any existing constraint, 
+        so a reward's reveal overrides an expression from the data. Expressions resolve 
+        against the Agent, so use "events.<id>..." or "timeline..." but not "event...". */
+    // FIXME: support event... as the Event the agent is currently in?
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
         include: [pkg.ConstrainableAttrSupport, pkg.Hideable],
         
