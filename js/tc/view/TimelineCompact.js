@@ -14,13 +14,14 @@
                 MAX_HISTORY_LENGTH, 
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
-                TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT
+                TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT, 
+                TL_GAP_ROW_HEIGHT, TL_GAP_MIN_MILLIS
             },
             theme:{
                 spacing, cornerRadius, rowHeight, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn, colorParadox,
-                fontSizeLarge, fontSizeVeryLarge
+                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
             I18N_PARADOX,
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
@@ -88,6 +89,7 @@
                 timeline.colsByLocId = {};
                 timeline.boxesByEventId = {};
                 timeline.ticksByTime = {};
+                timeline.gapRowsByTime = {};
                 timeline.tokensByAgentId = {};
                 colHeaders.destroyAllSubviews();
                 rowHeaders.destroyAllSubviews();
@@ -120,20 +122,57 @@
                 }
             }
             
-            // Start time of each visible tier, indexed by time ordering, so an Event can find the
-            // later tiers that begin before it ends.
-            const tierStarts = [];
+            // Tiers //
+            // Start time and latest end of each visible tier, indexed by time ordering.
+            const tierStarts = [],
+                tierMaxEnds = [];
             for (const eventModel of orderedEvents) {
                 const ordering = eventModel.getTimeOrdering();
-                if (ordering >= 0) tierStarts[ordering] ??= eventModel.getStart();
+                if (ordering >= 0) {
+                    tierStarts[ordering] ??= eventModel.getStart();
+                    tierMaxEnds[ordering] = Math.max(tierMaxEnds[ordering] ?? -Infinity, eventModel.getEnd());
+                }
             }
+            
+            // Lay tiers out top to bottom. coveredUntil is the latest end of any Event so far, so an
+            // earlier long Event still in progress keeps a later stretch from counting as idle. When
+            // nothing is in progress for at least TL_GAP_MIN_MILLIS before the next tier, a compact
+            // gap row is inserted.
+            const tierCount = tierStarts.length,
+                tierYs = [],
+                tierActiveDurations = [],
+                wantedGaps = [];
+            let yCursor = 0,
+                coveredUntil = -Infinity;
+            for (let i = 0; i < tierCount; i++) {
+                const start = tierStarts[i],
+                    nextStart = tierStarts[i + 1];
+                tierYs[i] = yCursor;
+                yCursor += EVENT_TIER_HEIGHT;
+                coveredUntil = Math.max(coveredUntil, tierMaxEnds[i]);
+                
+                if (nextStart === undefined) {
+                    tierActiveDurations[i] = coveredUntil - start;
+                } else {
+                    const gap = nextStart - coveredUntil;
+                    if (gap >= TL_GAP_MIN_MILLIS) {
+                        tierActiveDurations[i] = coveredUntil - start;
+                        wantedGaps.push({time:coveredUntil, duration:gap, y:yCursor});
+                        yCursor += TL_GAP_ROW_HEIGHT;
+                    } else {
+                        // Idle time too short for its own row is folded into this tier.
+                        tierActiveDurations[i] = nextStart - start;
+                    }
+                }
+            }
+            const yExtent = yCursor;
             
             // The number of later tiers that start strictly before this Event ends. An Event ending
             // exactly when the next tier starts does not extend into it. Events in the same Location
             // never overlap (enforced at startup), so a tall box never covers another box.
             const countSpannedTiers = (ordering, end) => {
                 let count = 0;
-                for (let i = ordering + 1; i < tierStarts.length && tierStarts[i] < end; i++) count++;
+                for (let i = ordering + 1; i < tierCount && tierStarts[i] < end; i++) count++;
                 return count;
             };
             
@@ -148,10 +187,11 @@
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
                     targetX = eventTargetXById[eventId] = (locColTargetXById[eventModel.getLocation()] ?? 0) + TL_EVENT_BOX_X_MARGIN,
+                    
                     timelineOrdering = eventModel.getTimeOrdering(),
                     spannedTiers = timelineOrdering >= 0 ? countSpannedTiers(timelineOrdering, eventModel.getEnd()) : 0,
-                    targetHeight = TL_EVENT_BOX_HEIGHT + spannedTiers * EVENT_TIER_HEIGHT;
-                targetY = eventTargetYById[eventId] = timelineOrdering * EVENT_TIER_HEIGHT + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
+                    targetHeight = spannedTiers > 0 ? tierYs[timelineOrdering + spannedTiers] - tierYs[timelineOrdering] + TL_EVENT_BOX_HEIGHT : TL_EVENT_BOX_HEIGHT;
+                    targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
                 const eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
@@ -175,16 +215,26 @@
                     });
                 }
                 
-                // Each tick shows the time until the next tick. HQ and The Void are prepended on initial
-                // layout with a time ordering of -1, so they're skipped.
-                if (timelineOrdering >= 0) {
-                    if (tick !== lastTick) {
-                        lastTick?.setGap(startTime - lastTick.time);
-                        lastTick = tick;
-                        gapTickLongestDuration = 0;
+                // Each tick shows how long something is in progress from its start.
+                for (let i = 0; i < tierCount; i++) ticksByTime[tierStarts[i]]?.setGap(tierActiveDurations[i]);
+                
+                // Gap Rows: create or move the ones still wanted, destroy the rest.
+                const gapRowsByTime = timeline.gapRowsByTime,
+                    nextGapRowsByTime = {};
+                for (const {time, duration, y} of wantedGaps) {
+                    let gapRow = gapRowsByTime[time];
+                    if (gapRow) {
+                        animateAttrs(gapRow, {y});
+                    } else {
+                        gapRow = new GapRow(rowHeaders, {y, width:rowHeaderWidth, height:TL_GAP_ROW_HEIGHT});
                     }
-                    gapTickLongestDuration = Math.max(gapTickLongestDuration, eventModel.getDuration());
+                    gapRow.setDuration(duration);
+                    nextGapRowsByTime[time] = gapRow;
                 }
+                for (const time in gapRowsByTime) {
+                    if (!nextGapRowsByTime[time]) gapRowsByTime[time].destroy();
+                }
+                timeline.gapRowsByTime = nextGapRowsByTime;
             }
             
             // The last tick has no next tick, so use the longest duration Event in its tier.
@@ -249,7 +299,6 @@
             }
             
             // Update for new extents
-            const yExtent = targetY ? targetY + EVENT_TIER_HEIGHT - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT : 0;
             scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
             scrollToken.setY(TL_COL_HEADER_HEIGHT + yExtent - scrollToken.height);
             colHeaders.setWidth(xExtent);
@@ -557,9 +606,28 @@
                 });
             },
             
-            /*  The time elapsed since the previous visible tick. Zero or less hides the label. */
+            /*  How long something is in progress from this tick: until the next tick, or until every
+                Event running at this point has ended when an idle gap row follows. */
             setGap: function(millis) {
                 this._gapLabel.setText(millis > 0 ? formatApproxDuration(millis) : '');
+            }
+        }),
+        
+        
+        // Gap Row //
+        GapRow = new JSClass('GapRow', View, {
+            initNode: function(parent, attrs) {
+                attrs.bgColor ??= '#fff3';
+                
+                this.callSuper(parent, attrs);
+                this._label = new PlainText(this, {
+                    y:2, width:TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ, textAlign:'center',
+                    textColor:colorMediumDark
+                });
+            },
+            
+            setDuration: function(millis) {
+                this._label.setText(formatApproxDuration(millis));
             }
         }),
         
@@ -609,6 +677,7 @@
             self.colsByLocId = {};
             self.boxesByEventId = {};
             self.ticksByTime = {};
+            self.gapRowsByTime = {};
             self.tokensByAgentId = {};
             
             attrs.maxSelected = 1;
