@@ -20,13 +20,14 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
     file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
     file(MODEL_ROOT + 'Hideable.js').provides('tc.Hideable','tc.ConstrainableAttrSupport').requires('tc.setConstrainedValue');
+    file(MODEL_ROOT + 'Describable.js').provides('tc.Describable','tc.DescriptionPhraseModel').requires('tc.Hideable');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc');
     
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
         'tc.NotifyingNumericStatModel','tc.Hideable'
     );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
-        'tc.timeUtil','tc.Hideable','tc.NotifyingNumericStatModel'
+        'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
     );
     file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.setConstrainedValue');
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(

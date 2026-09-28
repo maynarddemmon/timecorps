@@ -150,6 +150,28 @@
                 
                 if (addedCount === 0) new TextForFlow(exitView, {text:'No exits available.'});
             }
+        }),
+        CausatorRow = new JSClass('CausatorRow', WideView, {
+            initNode: function(parent, attrs) {
+                const self = this;
+                
+                self.quickSet(['valueModel'], attrs);
+                
+                attrs.bgColor ??= colorMegaDark;
+                
+                self.callSuper(parent, attrs);
+                
+                self.nameTxt = new PaddedText(self, {padding, fontSize:fontSizeMedium, whiteSpace:'normal'});
+                self.descriptionTxt = new PaddedText(self, {padding, whiteSpace:'normal'});
+                new SpacedLayout(self, {axis:'y', spacing:-2*padding, outset:spacing, collapseParent:true});
+                
+                self.update();
+            },
+            update: function() {
+                const valueModel = this.valueModel;
+                this.nameTxt.setText(valueModel.getName());
+                this.descriptionTxt.setText(valueModel.getDescription());
+            }
         });
     
     pkg.EventDetails = new JSClass('EventDetails', pkg.Panel, {
@@ -227,7 +249,6 @@
                     this.getContentView().destroyAllSubviews();
                 }
             }]);
-            self.valuesTxt = new PaddedText(valuesRow, {padding:padding, whiteSpace:'normal'});
             new SpacedLayout(valuesRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
             // Agents
@@ -319,7 +340,7 @@
                     ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
                 );
                 
-                self.descriptionTxt.setText('FIXME:DESCRIPTION MISSING');
+                self.descriptionTxt.setText(eventModel.getDescription() || 'The historical record is silent.');
                 
                 // Precursor Nav Buttons //
                 const precursorsRow = self.precursorsRow,
@@ -385,15 +406,11 @@
                 }
                 
                 // FIXME: this goes away or is controlled by knowledge/attestation.
-                let txt = '';
-                const valueModels = eventModel.getValueModels();
-                for (const valueId in valueModels) {
-                    const valueModel = valueModels[valueId];
-                    if (!valueModel.isHidden()) {
-                        txt += '<br>- ' + valueModel.getName() + ': ' + valueModel.value;
-                    }
+                const valuesRow = self.valuesRow;
+                valuesRow.clearContent();
+                for (const valueModel of Object.values(eventModel.getValueModels())) {
+                    if (!valueModel.isHidden()) new CausatorRow(valuesRow, {valueModel});
                 }
-                self.valuesTxt.setText(txt ? 'Values' + txt : '');
                 
                 Layout.decrementGlobalLock();
             }

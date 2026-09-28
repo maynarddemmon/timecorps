@@ -6,7 +6,7 @@
         {stableStringify, BaseModel, BaseModelCollection} = myt,
         
         {
-            NotifyingNumericStatModel, setConstrainedValue,
+            NotifyingNumericStatModel, setConstrainedValue, ConstrainableAttrSupport, Hideable, Describable,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             cfg:{
@@ -14,7 +14,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
-            ICON_SEPARATOR, ICON_TRAVEL
+            ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL
         } = pkg,
         
         updateEndAttr = eventModel => {
@@ -23,7 +23,7 @@
         },
         
         ConstrainableToParentEvent = new JSModule('ConstrainableToParentEvent', {
-            include: [pkg.ConstrainableAttrSupport],
+            include: [ConstrainableAttrSupport],
             
             init: function(attrs) {
                 this.event = attrs.event;
@@ -34,8 +34,8 @@
             getConstraintScope: function() {return this.event;}
         }),
         
-        EventPart = new JSModule('EventPart', {
-            include: [pkg.Hideable],
+        HideableEventPart = new JSModule('HideableEventPart', {
+            include: [Hideable],
             
             init: function(attrs) {
                 this.hidden = false;
@@ -45,8 +45,14 @@
             doHiddenChanged: function(_hidden) {this.event.notifyCollectionOfUpdate();}
         }),
         
+        DescribableEventPart = new JSModule('DescribableEventPart', {
+            include: [Describable],
+            
+            doDescriptionChanged: function() {this.event.notifyCollectionOfUpdate();}
+        }),
+        
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, EventPart],
+            include: [ConstrainableToParentEvent, HideableEventPart],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -69,7 +75,7 @@
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
-            include: [ConstrainableToParentEvent, EventPart],
+            include: [ConstrainableToParentEvent, HideableEventPart, DescribableEventPart],
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -85,11 +91,15 @@
             
             /*  A player-facing name. Falls back to the id so unnamed Values still display. */
             setName: function(name) {this.set('name', name, true);},
-            getName: function() {return this.name ?? this.id;}
+            getName: function() {return this.name ?? this.id;},
+            
+            getDescription: function(joiner) {
+                return this.callSuper(joiner) || String(this.getValue() ?? ICON_NIL);
+            }
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, EventPart],
+            include: [ConstrainableToParentEvent, HideableEventPart],
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -119,11 +129,11 @@
         }),
         
         HideAffectedByModel = new JSClass('HideAffectedByModel', BaseModel, {
-            include: [ConstrainableToParentEvent, EventPart]
+            include: [ConstrainableToParentEvent, HideableEventPart]
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
-            include: [pkg.ConstrainableAttrSupport, pkg.Hideable],
+            include: [ConstrainableAttrSupport, Hideable, Describable],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -216,6 +226,8 @@
                 this.notifyCollectionOfUpdate();
                 pkg.app.getTimelineView().notifyEventVisibilityChange(this);
             },
+            
+            doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
             
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
             getActionLimit: function() {return this.actionLimit;},

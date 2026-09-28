@@ -139,12 +139,12 @@
 				"relay":{
 					"label":"Relay to Bridge",
 					"set":{"relayToBridge":"true"},
-					"hidden":"event.values.relayToBridge.value"
+					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
 				"noRelay":{
 					"label":"Don't relay to Bridge",
 					"set":{"relayToBridge":"false"},
-					"hidden":"!event.values.relayToBridge.value"
+					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
 				}
 			},
 			"exits":[
@@ -155,8 +155,18 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"relayToBridge":{"value":"false"}
-			}
+				"relayToBridge":{
+					"name":"Warnings Relayed",
+					"value":"false",
+					"description": [
+						{"text":"Most warnings are logged and pinned up; few reach the bridge in time to be useful.", "hidden":"event.values.relayToBridge.value"},
+						{"text":"This time the warning is carried to the officer of the watch.", "hidden":"!event.values.relayToBridge.value"}
+					]
+				}
+			},
+			"description": [
+				"Throughout the day the Marconi “radio” operators receive ice warnings from ships ahead."
+			]
 		},
 		"purser_spare":{
 			"name":"The Purser’s Spare",
