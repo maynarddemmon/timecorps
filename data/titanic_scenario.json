@@ -88,9 +88,10 @@
 				}
 			},
 			"description": [
-				"In the drawing office at Harland & Wolff, the question of how many lifeboats Titanic will carry is settled for the last time.",
-				{"text":"Her Welin davits were designed to handle as many as 64 boats, but the Board of Trade requires only 16 for any ship over 10,000 tons.", "hidden":"event.attestation.value < 15"},
-				{"text":"Uncluttered promenade decks win the argument over boats that the rules do not require.", "hidden":"event.attestation.value < 30 || event.values.fullDavits.value"}
+				"In the drawing offices at Harland & Wolff, among the long tables and the smell of ink and linen, the matter of Titanic’s lifeboats comes up one last time. She is weeks from completion, the largest moving object ever built, and the fittings of her boat deck are all but settled.",
+				{"text":"<br><br>Her Welin quadrant davits were chosen because each can handle several boats in turn; fitted out fully, she could carry as many as 64. The law asks for far less. Board of Trade rules, unrevised since 1894, scale lifeboat capacity with a ship’s size only up to 10,000 tons, and require just 16 boats for anything larger. Titanic measures more than 46,000 gross tons.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Alexander Carlisle, who drew up the davit scheme, had argued for more boats and lost. Room on the boat deck is room for first-class passengers to promenade, and the White Star Line is not in the business of alarming them. She will sail with sixteen wooden boats and four collapsibles: 1,178 seats in all.", "hidden":"event.attestation.value < 30 || event.values.fullDavits.value"},
+				{"text":"<br><br>This time the argument goes the other way. The order goes out for enough boats to fill every davit, and the promenade will be a little more crowded for it.", "hidden":"!event.values.fullDavits.value"}
 			]
 		},
 		"roster_reshuffle":{
@@ -146,9 +147,9 @@
 				}
 			},
 			"description": [
-				"Days before sailing, White Star reshuffles Titanic’s senior officers, bringing Henry Wilde across from the Olympic as chief officer.",
-				{"text":"Second Officer David Blair is bumped from the voyage entirely. He goes ashore with the key to the crow’s nest locker still in his pocket.", "hidden":"event.attestation.value < 15"},
-				{"text":"The binoculars in that locker are meant for the lookouts.", "hidden":"event.attestation.value < 35"}
+				"At Berth 44 in Southampton, with the ship coaling and taking on stores for her maiden voyage, White Star reshuffles her senior officers. Henry Wilde, chief officer of the Olympic, is brought across for a single voyage to lend his experience of the new class of ship.",
+				{"text":"<br><br>The change ripples down the ranks. William Murdoch steps down from chief to first officer, Charles Lightoller from first to second, and Second Officer David Blair is left with no berth at all. He packs his things and goes ashore, taking with him, by oversight, the key to the locker in the crow’s nest.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>That locker holds the binoculars issued for the lookouts. Blair sends his sister-in-law a postcard saying how disappointed he is to miss the first voyage of so magnificent a ship. The key will outlive him, and one day sell at auction.", "hidden":"event.attestation.value < 35"}
 			]
 		},
 		"titanic_departs":{
@@ -167,10 +168,10 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"description": [
-				"Passengers and crew board at Southampton, and at noon Titanic slips her moorings for Cherbourg, Queenstown and New York.",
-				{"text":"As she passes, her wash snaps the mooring lines of the SS New York, which swings to within a few feet of Titanic’s stern.", "hidden":"event.attestation.value < 15"},
-				{"text":"She will carry more than 2,200 people, and lifeboat seats for barely half of them.", "hidden":"event.attestation.value < 30 || events.lifeboat_capacity.values.fullDavits.value"},
-				{"text":"She will carry more than 2,200 people, and a lifeboat seat for every one of them.", "hidden":"event.attestation.value < 30 || !events.lifeboat_capacity.values.fullDavits.value"}
+				"All morning the boat trains from London pull in beside the quay, and passengers stream aboard, each class by its own gangway. At noon her whistles sound, the tugs take up the strain, and Titanic moves out into the river, bound for Cherbourg, Queenstown and New York.",
+				{"text":"<br><br>She barely clears the dock before trouble. As she passes the liners laid up at their moorings, the suction of her hull drags the SS New York from her berth, snapping her mooring lines like thread. The New York’s stern swings to within a few feet of Titanic before a tug gets a line on her and Captain Smith stops his engines. The departure is delayed by an hour.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>By the time she clears Queenstown she will carry more than 2,200 people. There are lifeboat seats for barely half of them, and the boat drill planned for Sunday morning will be quietly cancelled.", "hidden":"event.attestation.value < 30 || events.lifeboat_capacity.values.fullDavits.value"},
+				{"text":"<br><br>By the time she clears Queenstown she will carry more than 2,200 people, and for every one of them there is a seat in a boat.", "hidden":"event.attestation.value < 30 || !events.lifeboat_capacity.values.fullDavits.value"}
 			]
 		},
 		"ice_warnings":{
@@ -209,9 +210,11 @@
 				}
 			},
 			"description": [
-				"Throughout the day the Marconi “radio” operators receive ice warnings from ships ahead.",
-				{"text":"Caronia, Baltic, Amerika and Californian all report ice across the ship’s track. Not every message is taken to the bridge.", "hidden":"event.attestation.value < 15"},
-				{"text":"At 21:40 the Mesaba reports heavy pack ice and great numbers of large icebergs directly in Titanic’s path.", "hidden":"event.attestation.value < 35"}
+				"All through Sunday the warnings come in. In the morning the Caronia reports “bergs, growlers and field ice.” In the early afternoon the Baltic passes on another, and Captain Smith hands it to Bruce Ismay, chairman of the White Star Line, who carries it in his pocket for most of the afternoon before returning it to the bridge.",
+				{"text":"<br><br>In the cramped Marconi cabin, Jack Phillips and Harold Bride work in turns, headphones on, taking down weather reports, ice warnings and gossip from the ships around them. They are employees of the Marconi Company, not the White Star Line, and their first duty is to paid traffic. Outside, the air grows colder by the hour; by evening the temperature on deck has fallen close to freezing.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>At 21:40 the Mesaba reports heavy pack ice and a “great number large icebergs” lying directly across Titanic’s track. Phillips, working alone and deep in a backlog of passengers’ messages, sets it beside his elbow.", "hidden":"event.attestation.value < 35"},
+				{"text":"It never leaves the room.", "hidden":"event.attestation.value < 35 || event.values.relayToBridge.value"},
+				{"text":"This time Bride carries it straight to the officer of the watch.", "hidden":"event.attestation.value < 35 || !event.values.relayToBridge.value"}
 			]
 		},
 		"purser_spare":{
@@ -250,9 +253,9 @@
 				}
 			},
 			"description": [
-				"In the purser’s office the evening passes with the ordinary business of a liner: valuables lodged, cabins changed, telegrams paid for.",
-				{"text":"The lookouts have asked for binoculars and been told there are none to be had.", "hidden":"event.attestation.value < 15"},
-				{"text":"A pair of glasses, left behind by a departing officer, sits unclaimed in a drawer of the office.", "hidden":"event.attestation.value < 30"}
+				"In the purser’s office, Hugh McElroy and his clerks keep the ordinary business of a great liner running: valuables lodged in the safe, cabin changes arranged, wireless messages paid for at twelve shillings and sixpence for the first ten words.",
+				{"text":"<br><br>Up in the crow’s nest, the lookouts had binoculars on the delivery trip from Belfast, but since Southampton they have had none. When they asked, they were told there were none to be had.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>That is not quite true. A pair of glasses, left behind in the shuffle of officers at Southampton, sits unclaimed in a drawer of this office. No one has thought to look for it.", "hidden":"event.attestation.value < 30"}
 			]
 		},
 		"wireless_priority":{
@@ -288,10 +291,10 @@
 				}
 			},
 			"description": [
-				"Having lost hours to a fault in the set, Jack Phillips and Harold Bride are far behind on passengers’ private telegrams.",
-				{"text":"Within range of the station at Cape Race at last, Phillips works through the backlog at full speed.", "hidden":"event.attestation.value < 15"},
-				{"text":"Near 23:00 the Californian breaks in to say she is stopped in ice. Phillips cuts her off: “Shut up, shut up, I am busy; I am working Cape Race.”", "hidden":"event.attestation.value < 35 || event.values.clearBacklogEarlier.value"},
-				{"text":"Soon after, the Californian’s only wireless operator switches off his set and turns in for the night.", "hidden":"event.attestation.value < 35 || event.values.clearBacklogEarlier.value"}
+				"The wireless set failed late on Friday night, and Jack Phillips and Harold Bride spent hours tracing the fault before they had it working again. They have been behind ever since, and tonight the pile of passengers’ private messages is taller than ever.",
+				{"text":"<br><br>Now the ship is within range of the relay station at Cape Race, Newfoundland, and Phillips, exhausted, sets about clearing the backlog at full speed: stock orders, hotel bookings, greetings to friends ashore. Bride has gone to bed so that he can relieve him at midnight.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Near 23:00 the Californian breaks in, her signal loud in Phillips’s headphones, to say she is stopped and surrounded by ice. Phillips cuts her off: “Shut up, shut up, I am busy; I am working Cape Race.” At 23:30 Cyril Evans, the Californian’s only operator, takes off his headphones, switches off his set and goes to bed.", "hidden":"event.attestation.value < 35 || event.values.clearBacklogEarlier.value"},
+				{"text":"<br><br>With the backlog cleared early, Phillips has time to take the Californian’s report when she calls near 23:00 to say she is stopped in ice. Across the water, Cyril Evans stays at his set, listening.", "hidden":"event.attestation.value < 35 || !event.values.clearBacklogEarlier.value"}
 			]
 		},
 		"missing_binoculars":{
@@ -353,9 +356,9 @@
 				}
 			},
 			"description": [
-				"Through the late watches, the lookouts in the crow’s nest search a moonless, flat-calm sea.",
-				{"text":"The glasses meant for them are in a locker in the nest itself, and the key left the ship at Southampton.", "hidden":"event.attestation.value < 15"},
-				{"text":"With no swell breaking at its base, an iceberg on such a night shows almost nothing until it is close.", "hidden":"event.attestation.value < 30"}
+				"The night is moonless, windless and bitterly cold, the sea so flat that the stars are reflected in it. At 22:00 Frederick Fleet and Reginald Lee climb to the crow’s nest to relieve the watch, and are passed the order to keep a sharp lookout for small ice and growlers. They stamp their feet against the cold and stare ahead into the dark with nothing but their eyes.",
+				{"text":"<br><br>The glasses meant for them are in a locker a few feet away, in the nest itself. The key left the ship at Southampton in David Blair’s pocket. Fleet will tell the American inquiry that with binoculars they could have seen the berg soon enough to get out of the way.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>On a night like this, the ice gives almost nothing away. With no swell to break into white foam at its base, and no moon to light its face, an iceberg is only a patch of deeper black against the stars until it is close.", "hidden":"event.attestation.value < 30"}
 			]
 		},
 		"engine_order":{
@@ -390,9 +393,9 @@
 				}
 			},
 			"description": [
-				"Far below the waterline, the engineers keep Titanic steaming at close to 22 knots through the dark.",
-				{"text":"At 23:40 the telegraph rings down to stop, then full astern.", "hidden":"event.attestation.value < 15"},
-				{"text":"With the engines reversing, the centre turbine stops, and the rudder loses the wash of the screw just ahead of it.", "hidden":"event.attestation.value < 40"}
+				"Deep in the ship, the engineers and firemen keep Titanic running at close to 22 knots, her best speed yet. In the boiler rooms the stokers feed the furnaces in heat and roar, a world away from the cold stillness on deck.",
+				{"text":"<br><br>At 23:40 the engine-room telegraphs ring. In Boiler Room 6, Leading Stoker Frederick Barrett sees the red light for stop come up and shouts to shut the dampers. The officers on the bridge will later say the order was full astern.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Whether reversing helped or hurt will be argued for a century. When the engines go astern, the central turbine, which cannot run in reverse, stops, and the rudder loses the wash from the propeller turning just ahead of it. A ship that turns best under power may have turned a little less well.", "hidden":"event.attestation.value < 40"}
 			]
 		},
 		"lookout_sights_berg":{
@@ -415,9 +418,9 @@
 				}
 			},
 			"description": [
-				"Lookout Frederick Fleet sees a dark mass dead ahead, strikes the bell three times and telephones the bridge: “Iceberg right ahead.”",
-				{"text":"First Officer William Murdoch orders her hard a-starboard. The berg is barely a quarter of a mile away.", "hidden":"event.attestation.value < 15 || event.values.earlySighting.value"},
-				{"text":"The berg is seen miles off, and the bridge has minutes, not seconds, to steer clear.", "hidden":"event.attestation.value < 15 || !event.values.earlySighting.value"}
+				"At 23:39 Frederick Fleet sees a dark mass rising out of the haze dead ahead. He strikes the bell three times, lifts the telephone to the bridge, and says the words that will follow him for the rest of his life: “Iceberg right ahead.” Sixth Officer James Moody answers: “Thank you.”",
+				{"text":"<br><br>First Officer William Murdoch orders the helm hard a-starboard, to swing the bow to port. For some thirty seconds nothing seems to happen. Then, slowly, the bow begins to swing.", "hidden":"event.attestation.value < 15 || event.values.earlySighting.value"},
+				{"text":"<br><br>This time the berg is seen far off, a pale shape against the stars, and reported in good time. Murdoch has minutes rather than seconds to act.", "hidden":"event.attestation.value < 15 || !event.values.earlySighting.value"}
 			]
 		},
 		"collision":{
@@ -443,10 +446,11 @@
 				"engine_order":"event.attestation.value < 40"
 			},
 			"description": [
-				{"text":"At 23:40 Titanic’s starboard bow scrapes along the iceberg. The contact lasts only seconds.", "hidden":"!event.values.struck.value"},
-				{"text":"At 23:40 Titanic swings clear of the iceberg and steams on through the ice field.", "hidden":"event.values.struck.value"},
-				{"text":"The ice opens her first five watertight compartments to the sea. She can float with no more than four flooded.", "hidden":"event.attestation.value < 15 || !event.values.struck.value"},
-				{"text":"Thomas Andrews, her designer, inspects the damage and gives her an hour, perhaps an hour and a half.", "hidden":"event.attestation.value < 30 || !event.values.struck.value"}
+				{"text":"At 23:40 the iceberg glides along Titanic’s starboard side. On deck it is felt as no more than a faint grinding shudder, and chunks of ice clatter onto the forward well deck, where passengers will soon kick them about in play. Below the waterline, the sea is already pouring in.", "hidden":"!event.values.struck.value"},
+				{"text":"At 23:40 the iceberg slides past Titanic’s starboard side, close enough for its chill to be felt on the bridge wing, and falls away astern. The ship steams on through the ice field, her officers wide awake.", "hidden":"event.values.struck.value"},
+				{"text":"<br><br>The contact lasts about ten seconds. It opens a series of narrow gashes along some three hundred feet of her hull, flooding the forepeak, three holds and Boiler Room 6. She was built to stay afloat with her first four compartments flooded. Five are open to the sea.", "hidden":"event.attestation.value < 15 || !event.values.struck.value"},
+				{"text":"<br><br>Thomas Andrews, her builder, walks the damage with Captain Smith. Within the hour he has done the arithmetic: the water will spill over the bulkheads one by one, and the ship will sink. He gives her an hour, perhaps an hour and a half.", "hidden":"event.attestation.value < 30 || !event.values.struck.value"},
+				{"text":"<br><br>Captain Smith, woken by the change in the engines, comes to the bridge and orders her slowed for the rest of the night. By morning the near miss will be a story told over breakfast.", "hidden":"event.attestation.value < 15 || event.values.struck.value"}
 			]
 		},
 		"californian_nearby":{
@@ -466,9 +470,10 @@
 				}
 			},
 			"description": [
-				"Stopped for the night at the edge of the ice field, the Leyland liner Californian lies close enough for her officers to see a ship’s lights to the south.",
-				{"text":"Her officers of the watch see white rockets burst above the stranger and report them below. No one wakes the wireless operator.", "hidden":"event.attestation.value < 15 || !events.collision.values.struck.value"},
-				{"text":"By the time she learns the truth the next morning, the Carpathia has already picked up the survivors.", "hidden":"event.attestation.value < 35 || !events.collision.values.struck.value"}
+				"Some miles to the north, the Leyland liner Californian lies stopped for the night, hemmed in by field ice. Her captain, Stanley Lord, is resting in the chart room fully dressed, and on the bridge Second Officer Herbert Stone keeps the middle watch.",
+				{"text":"<br><br>From the bridge Stone watches the lights of a ship to the south. Over the next hour and more he sees eight white rockets burst low above her, and sends word below to the captain. No one wakes Cyril Evans, asleep beside the wireless set that could have told them what the rockets meant.", "hidden":"event.attestation.value < 15 || !events.collision.values.struck.value"},
+				{"text":"<br><br>At dawn Evans switches on his set and learns the truth. The Californian works her way through the ice to the scene and arrives at about 08:30, by which time the Carpathia has taken every survivor aboard.", "hidden":"event.attestation.value < 35 || !events.collision.values.struck.value || event.values.rescueResponds.value"},
+				{"text":"<br><br>Tonight Evans is still at his set when the distress call comes. Captain Lord is woken, steam is raised, and the Californian begins to push south through the ice toward the rockets.", "hidden":"event.attestation.value < 35 || !events.collision.values.struck.value || !event.values.rescueResponds.value"}
 			]
 		},
 		"casualties":{
@@ -496,11 +501,11 @@
 				"lifeboat_capacity":"event.attestation.value < 50"
 			},
 			"description": [
-				{"text":"At 02:20 Titanic’s stern rises, hangs, and slides beneath the surface. More than 1,500 people are left in water below freezing.", "hidden":"!event.values.massLossOfLife.value"},
-				{"text":"Titanic founders at 02:20, but she goes down with a seat in a boat for everyone and the Californian standing by.", "hidden":"event.values.massLossOfLife.value || !events.collision.values.struck.value"},
-				{"text":"At 02:20 the boat deck is quiet: a late promenade on a cold, clear night aboard a ship bound for New York.", "hidden":"events.collision.values.struck.value"},
-				{"text":"Twenty boats leave the ship, many of them half full. The Carpathia, racing from 58 miles away, will not arrive until after 04:00.", "hidden":"event.attestation.value < 20 || !event.values.massLossOfLife.value"},
-				{"text":"In a single night, the lifeboat rules for every ship at sea are shown to be written for a world that no longer exists.", "hidden":"event.attestation.value < 40 || !event.values.massLossOfLife.value"}
+				{"text":"At 02:20 Titanic’s stern rises high into the air, hangs there, and slides beneath the surface. The lights, which burned almost to the end, are gone. More than 1,500 people are left in water at −2 °C, and their cries carry across the flat sea to the boats.", "hidden":"!event.values.massLossOfLife.value"},
+				{"text":"At 02:20 Titanic founders by the head, just as her builder said she would. But she goes down with her boats full, a seat for every soul aboard, and the Californian’s lights drawing closer through the ice. By the time her stern disappears, the rescue is already under way.", "hidden":"event.values.massLossOfLife.value || !events.collision.values.struck.value"},
+				{"text":"At 02:20 the boat deck is quiet: a few late passengers taking the air on a cold, clear night, the boats hanging untouched in their davits, and a great ship steaming on toward New York.", "hidden":"events.collision.values.struck.value"},
+				{"text":"<br><br>Twenty boats leave the ship, many of them half full; the first to go carries 28 people in space for 65. Only one boat goes back to search the water, and it finds only a few alive. The Carpathia, racing up from 58 miles away, arrives after 04:00 and takes aboard some 710 people.", "hidden":"event.attestation.value < 20 || !event.values.massLossOfLife.value"},
+				{"text":"<br><br>In a single night, the rules that governed lifeboats on every ship at sea are shown to have been written for a world that no longer exists. Within two years an international convention will demand a place in a boat for everyone aboard.", "hidden":"event.attestation.value < 40 || !event.values.massLossOfLife.value"}
 			]
 		}
 	}

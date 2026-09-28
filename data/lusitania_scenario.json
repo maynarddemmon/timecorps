@@ -101,9 +101,9 @@
 				}
 			},
 			"description": [
-				"In London the International Convention for the Safety of Life at Sea is signed. Born of the Titanic disaster, it requires a lifeboat place for everyone aboard.",
-				{"text":"Cunard adds collapsible boats to the Lusitania until she carries 48, enough for all.", "hidden":"event.attestation.value < 15"},
-				{"text":"No one requires her crew to practise launching them, and many of the deckhands taken on to replace men gone to war have never lowered a boat.", "hidden":"event.attestation.value < 35"}
+				"In London, delegates from thirteen nations sign the first International Convention for the Safety of Life at Sea. Born of the Titanic disaster, it requires lifeboat places for everyone aboard, a round-the-clock wireless watch, and an ice patrol in the North Atlantic.",
+				{"text":"<br><br>War will break out before the convention comes into force, but Cunard does not wait. The Lusitania is fitted with collapsible boats beneath her wooden ones until she carries 48 in all, room for more than 2,600 people.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>No one requires her crew to practise launching them. By 1915 many of her best seamen have been called up for the Royal Navy, and the deckhands who replace them have never lowered a boat. Her drills amount to a few men lowering a single boat, in harbour.", "hidden":"event.attestation.value < 35"}
 			]
 		},
 		"munitions_manifest":{
@@ -133,9 +133,9 @@
 				}
 			},
 			"description": [
-				"At Pier 54 the Lusitania loads cargo for Liverpool. A supplementary manifest will be filed only after she sails.",
-				{"text":"It lists some 4,200 cases of rifle cartridges and 1,250 cases of shrapnel shells, stowed in the forward holds.", "hidden":"event.attestation.value < 15"},
-				{"text":"Whether any of it could explode will be argued over for a century.", "hidden":"event.attestation.value < 35"}
+				"At Pier 54 on the Hudson, longshoremen swing cargo into the Lusitania’s holds for the voyage to Liverpool: copper, brass, cheese, furs, machinery. A supplementary manifest, listing what she carries forward, will be filed with customs only after she sails.",
+				{"text":"<br><br>It lists some 4,200 cases of rifle cartridges and 1,250 cases of shrapnel shells, stowed in the forward holds. The United States is neutral, but it is legal for American firms to sell munitions to the warring powers, and they do.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Germany will point to this cargo to justify what follows. Whether any of it could have exploded, and whether it caused the second explosion, will be argued over for a century.", "hidden":"event.attestation.value < 35"}
 			]
 		},
 		"embassy_warning":{
@@ -165,9 +165,10 @@
 				}
 			},
 			"description": [
-				"The Imperial German Embassy publishes a notice in the New York papers: travellers sailing in the war zone on British ships do so at their own risk.",
-				{"text":"In several papers it runs directly beside Cunard’s advertisement for the Lusitania’s sailing.", "hidden":"event.attestation.value < 15"},
-				{"text":"Most passengers laugh it off. The Lusitania, they are told, is too fast for any submarine.", "hidden":"event.attestation.value < 30 || event.values.warningHeeded.value"}
+				"On the morning of her sailing, the Imperial German Embassy runs a notice in the New York papers. Travellers intending to embark on the Atlantic voyage, it says, are reminded that a state of war exists, and that those sailing in the war zone on ships of Great Britain or her allies do so at their own risk.",
+				{"text":"<br><br>In several papers it is printed directly beside Cunard’s advertisement for the Lusitania’s sailing. Reporters crowd the pier asking passengers whether they are afraid, and a few passengers receive anonymous telegrams warning them not to go.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Almost no one cancels. Cunard’s staff assure the passengers that she is the fastest ship on the Atlantic and can outrun any submarine afloat.", "hidden":"event.attestation.value < 30 || event.values.warningHeeded.value"},
+				{"text":"<br><br>This time the notice is taken seriously. Bookings are cancelled and cabins go unclaimed, and the ship will sail with hundreds fewer aboard than expected.", "hidden":"event.attestation.value < 30 || !event.values.warningHeeded.value"}
 			]
 		},
 		"new_york_departure":{
@@ -209,9 +210,12 @@
 				"embassy_warning":"event.attestation.value < 25"
 			},
 			"description": [
-				"Delayed two hours to take on passengers from the requisitioned Cameronia, the Lusitania leaves New York at 12:20.",
-				{"text":"Among her passengers are the millionaire Alfred Vanderbilt and the theatre producer Charles Frohman.", "hidden":"event.attestation.value < 15"},
-				{"text":"No escort is asked for and none is offered. Her speed is thought protection enough.", "hidden":"event.attestation.value < 35 || event.values.sailingHeld.value"}
+				"The Lusitania is due to sail at 10:00, but at the last minute she takes on passengers and crew from the Cameronia, requisitioned by the Admiralty for war service. At 12:20 the tugs ease her away from Pier 54, and she heads down the Hudson for Liverpool.",
+				{"text":"<br><br>Aboard are 1,959 people, 129 of them children.", "hidden":"event.values.reducedManifest.value"},
+				{"text":"<br><br>Many of her cabins are empty. After the Embassy’s notice, hundreds of passengers have stayed ashore.", "hidden":"!event.values.reducedManifest.value || event.values.sailingHeld.value"},
+				{"text":"<br><br>Her sailing is held while the Admiralty arranges an escort, and many passengers, unwilling to wait, rebook on other ships.", "hidden":"!event.values.sailingHeld.value"},
+				{"text":"<br><br>Among her passengers are the millionaire sportsman Alfred Vanderbilt, the theatre producer Charles Frohman, and the writer Elbert Hubbard, travelling with his wife. Newsreel cameras film the crowds on the pier.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>No escort is asked for and none is offered. At her speed, the Admiralty reasons, she is safer on her own than waiting for warships that are needed elsewhere.", "hidden":"event.attestation.value < 35 || event.values.sailingHeld.value"}
 			]
 		},
 		"boiler_room_four":{
@@ -250,9 +254,9 @@
 				}
 			},
 			"description": [
-				"To save coal and men on the wartime run, one of her four boiler rooms has been shut down. Instead of 25 knots she makes 21.",
-				{"text":"Cunard, losing money on the Atlantic service, counts on the saving to keep her sailing at all.", "hidden":"event.attestation.value < 15"},
-				{"text":"She is still faster than any submarine, but with little margin to escape one waiting ahead of her.", "hidden":"event.attestation.value < 30"}
+				"Since the war began, Cunard has run the Lusitania with one of her four boiler rooms shut down to save coal and men. Boiler Room No. 4 lies dark and cold, and instead of the 25 knots that made her famous, her best speed is 21.",
+				{"text":"<br><br>Passenger numbers on the Atlantic have collapsed since the war began, and Cunard is losing money on every crossing. Coal is dear, stokers are scarce, and the saving from closing one boiler room is what keeps her in service at all.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>At 21 knots she is still faster than any U-boat, which can manage perhaps 15 on the surface and far less submerged. But speed only helps a ship that sees the danger coming. A submarine lying in wait ahead of her needs no speed at all.", "hidden":"event.attestation.value < 30"}
 			]
 		},
 		"admiralty_warnings":{
@@ -305,9 +309,9 @@
 				}
 			},
 			"description": [
-				"Through the night the Admiralty sends warnings by wireless: submarines are active off the south coast of Ireland.",
-				{"text":"A U-boat has sunk the Candidate and the Centurion off the Irish coast the day before. The warnings give Captain Turner no positions to steer around.", "hidden":"event.attestation.value < 15"},
-				{"text":"No warship is sent to meet her. The old cruiser Juno, the only ship on patrol nearby, has been recalled to Queenstown.", "hidden":"event.attestation.value < 40 || event.values.escortDispatched.value"}
+				"At 19:50 on 6 May the Admiralty sends a warning to all British ships: submarines are active off the south coast of Ireland. Through the night and into the next morning more follow, each one passed to Captain Turner on the Lusitania’s bridge.",
+				{"text":"<br><br>On 5 May U-20 sank the schooner Earl of Lathom off the Old Head of Kinsale, and today the steamers Candidate and Centurion. The warnings say none of this. They give no positions and no times, and no advice beyond what Turner has already been told: avoid headlands, keep to mid-channel, keep up speed, and zigzag.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>In Room 40 at the Admiralty, codebreakers have been following U-20 through her intercepted signals, and that knowledge is closely guarded. No warships are sent to meet the Lusitania, and the old cruiser Juno, the only vessel patrolling those waters, has been recalled to Queenstown.", "hidden":"event.attestation.value < 40 || event.values.escortDispatched.value"}
 			]
 		},
 		"u20_patrol":{
@@ -335,10 +339,10 @@
 				"admiralty_warnings":"event.attestation.value < 50"
 			},
 			"description": [
-				"Low on fuel and with few torpedoes left, Kapitänleutnant Walther Schwieger sees a large four-funnelled steamer come up over the horizon.",
-				{"text":"She turns across U-20’s bow toward the land, bringing herself within range of a submerged boat that could never have caught her.", "hidden":"event.attestation.value < 15 || !event.values.firingSolution.value"},
-				{"text":"At 14:10 he fires a single torpedo from about 700 metres.", "hidden":"event.attestation.value < 35 || !event.values.firingSolution.value"},
-				{"text":"She passes out of range, and U-20 turns for home with her torpedoes unspent.", "hidden":"event.values.firingSolution.value"}
+				"U-20 has been at sea for a week. Kapitänleutnant Walther Schwieger is running low on fuel, fog has spoiled his hunting, and he has three torpedoes left, two of which he means to keep for the voyage home. Early in the afternoon he sees smoke on the horizon, then four funnels.",
+				{"text":"<br><br>At first she is too far off and too fast to catch. Then, as he watches, the great steamer turns to starboard, toward the coast, onto a course that brings her straight across his bow.", "hidden":"event.attestation.value < 15 || !event.values.firingSolution.value"},
+				{"text":"<br><br>At 14:10, from about 700 metres, Schwieger fires a single torpedo and watches through his periscope as it runs true.", "hidden":"event.attestation.value < 35 || !event.values.firingSolution.value"},
+				{"text":"<br><br>The steamer holds her distance, and U-20, submerged and slow, cannot close with her. Schwieger watches her pass out of range, notes her in his war diary, and turns for home with his last torpedoes unspent.", "hidden":"event.values.firingSolution.value"}
 			]
 		},
 		"four_point_bearing":{
@@ -391,9 +395,10 @@
 				}
 			},
 			"description": [
-				"Close to the Old Head of Kinsale, Captain William Turner holds a steady course to take a four-point bearing and fix his position.",
-				{"text":"The Admiralty has advised masters to zigzag and to keep well offshore. Turner wants to know exactly where he is before he makes for Liverpool.", "hidden":"event.attestation.value < 15"},
-				{"text":"For some forty minutes she steers a straight line at 18 knots, the easiest target she has been all voyage.", "hidden":"event.attestation.value < 35 || event.values.evasiveCourse.value"}
+				"The Irish coast lies green and clear off the port bow, and after days of fog Captain William Turner wants to know exactly where his ship is. Off the Old Head of Kinsale he settles her on a steady course to take a four-point bearing, a fix that means holding a straight line for the better part of forty minutes.",
+				{"text":"<br><br>The Admiralty’s instructions tell masters to avoid headlands, to steer a mid-channel course, and to zigzag in waters where submarines have been seen. Turner, a master mariner of the old school, reads them as advice for when a submarine is actually in sight. He has also slowed to 18 knots, to reach the bar at Liverpool on the tide.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>For those minutes the Lusitania is the easiest target she has been all voyage: large, steady, predictable, and crossing the path of a U-boat whose captain can hardly believe his luck.", "hidden":"event.attestation.value < 35 || event.values.evasiveCourse.value"},
+				{"text":"<br><br>This time Turner puts the danger ahead of his position. The Lusitania swings away from her steady line, and no one watching from beneath the surface could say where she will be in ten minutes’ time.", "hidden":"!event.values.evasiveCourse.value"}
 			]
 		},
 		"torpedo_strike":{
@@ -419,9 +424,9 @@
 				"u20_patrol":"event.attestation.value < 35"
 			},
 			"description": [
-				{"text":"At 14:10 a lookout sees the wake of a torpedo racing in on the starboard bow. It strikes just behind the bridge.", "hidden":"!event.values.struck.value"},
-				{"text":"At 14:10 the Lusitania steams past the Old Head of Kinsale on a clear afternoon, unharmed.", "hidden":"event.values.struck.value"},
-				{"text":"Through his periscope, Schwieger notes an unusually heavy detonation.", "hidden":"event.attestation.value < 15 || !event.values.struck.value"}
+				{"text":"At 14:10, on a calm, bright afternoon, Leslie Morton, an eighteen-year-old lookout on the forecastle, sees a line of foam racing toward the ship on the starboard side. He shouts the warning through a megaphone, but there is no time. The torpedo strikes just behind the bridge, and a column of water and debris rises higher than the funnels.", "hidden":"!event.values.struck.value"},
+				{"text":"At 14:10 the Lusitania steams past the Old Head of Kinsale on a calm, bright afternoon. Passengers finishing lunch in the saloons can see the Irish coast from the windows, and talk turns to Liverpool, and home.", "hidden":"event.values.struck.value"},
+				{"text":"<br><br>In the dining saloons, passengers feel a heavy jolt, like a great door slamming somewhere below. Before anyone has left their seat, there comes a second.", "hidden":"event.attestation.value < 15 || !event.values.struck.value"}
 			]
 		},
 		"second_explosion":{
@@ -448,11 +453,11 @@
 				"munitions_manifest":"event.attestation.value < 30"
 			},
 			"description": [
-				{"text":"Moments after the torpedo, a second, larger explosion tears through her from deep inside the bow.", "hidden":"!event.values.catastrophicList.value"},
-				{"text":"The torpedo’s blast is the only one. Her forward holds stay intact and she settles slowly.", "hidden":"event.values.catastrophicList.value || !events.torpedo_strike.values.struck.value"},
-				{"text":"In the forward holds, crates, mail and cargo ride out a calm crossing.", "hidden":"events.torpedo_strike.values.struck.value"},
-				{"text":"She takes an immediate list to starboard, and her bow begins to go under.", "hidden":"event.attestation.value < 15 || !event.values.catastrophicList.value"},
-				{"text":"Its cause will be argued over for a century: the cartridges in the hold, coal dust, or a bursting boiler.", "hidden":"event.attestation.value < 35 || !event.values.catastrophicList.value"}
+				{"text":"Seconds after the torpedo, a second, far larger explosion tears through the ship from somewhere deep in the bow. It is heard by passengers, by the crew, and by Schwieger at his periscope, who records it with surprise in his war diary.", "hidden":"!event.values.catastrophicList.value"},
+				{"text":"The torpedo’s blast is the only one. With no munitions in her forward holds, the damage is grave but contained, and the Lusitania begins to settle slowly by the head.", "hidden":"event.values.catastrophicList.value || !events.torpedo_strike.values.struck.value"},
+				{"text":"In the forward holds, crates of cheese and copper, bales of furs and sacks of mail ride out a calm crossing in the dark.", "hidden":"events.torpedo_strike.values.struck.value"},
+				{"text":"<br><br>She takes an immediate list to starboard, and within minutes her bow is going under. The sea floods the long coal bunkers that run along her starboard side, and with them the ship’s balance is lost.", "hidden":"event.attestation.value < 15 || !event.values.catastrophicList.value"},
+				{"text":"<br><br>Its cause will be argued over for a century. Some will blame the cartridges in the hold. Others will point to coal dust ignited in the half-empty bunkers, or a main steam line bursting in the boiler rooms.", "hidden":"event.attestation.value < 35 || !event.values.catastrophicList.value"}
 			]
 		},
 		"wireless_sos":{
@@ -491,9 +496,10 @@
 				}
 			},
 			"description": [
-				"Wireless operator Robert Leith sends the distress call again and again: “Come at once, big list, 10 miles south Old Head Kinsale.”",
-				{"text":"Within minutes the ship’s main power fails, and with it the power to the set.", "hidden":"event.attestation.value < 15"},
-				{"text":"Rescue from Queenstown will come in time only if someone there hears her.", "hidden":"event.attestation.value < 30"}
+				"In the wireless room, operator Robert Leith taps out the distress call again and again: “Come at once, big list, 10 miles south Old Head Kinsale.” The list is already so steep that he has to brace himself to stay at the key.",
+				{"text":"<br><br>Within minutes the main dynamos fail as the water reaches the boiler rooms. The lights go out, the lifts stop between decks with passengers trapped inside, and the wireless set falls silent.", "hidden":"event.attestation.value < 15 || event.values.emergencyPower.value"},
+				{"text":"<br><br>Within minutes the main dynamos fail and the lights go out. But the emergency battery keeps the key alive, and Leith’s call goes out clearly, again and again, until the water reaches the wireless room.", "hidden":"event.attestation.value < 15 || !event.values.emergencyPower.value"},
+				{"text":"<br><br>Queenstown, more than twenty miles away, is where any rescue must come from. Unless someone there hears her, help will set out only when word arrives some other way.", "hidden":"event.attestation.value < 30 || event.values.emergencyPower.value"}
 			]
 		},
 		"lifeboats_fail":{
@@ -535,11 +541,11 @@
 				"solas_davits":"event.attestation.value < 50"
 			},
 			"description": [
-				{"text":"With the ship still making way and listing hard, the crew struggle to lower the boats. Only six of forty-eight get away safely.", "hidden":"event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
-				{"text":"The boats go down steadily, one after another, and they are full.", "hidden":"!event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
-				{"text":"Her forty-eight boats stay in their chocks, never needed.", "hidden":"events.torpedo_strike.values.struck.value"},
-				{"text":"To starboard the boats swing out far from the side. To port they swing in against the hull and snag on the rivets as they are lowered.", "hidden":"event.attestation.value < 15 || event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
-				{"text":"Several are tipped over by crewmen who have never handled a fall, spilling everyone in them into the sea.", "hidden":"event.attestation.value < 35 || event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"}
+				{"text":"With the ship still making way and listing hard to starboard, the crew struggle to lower the boats. Captain Turner orders that none be lowered while she is still moving, but in the confusion many are launched anyway. Of her 48 boats, only six get away safely.", "hidden":"event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
+				{"text":"The deck crew, drilled until the drill is second nature, work their way down the boat deck in order. The ship is nearly upright, and one after another the boats go down smoothly and full, pulling away from her side before she goes.", "hidden":"!event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
+				{"text":"Her forty-eight boats hang in their davits and lie in their chocks, never needed. A few passengers lean on them to watch the Irish coast go by.", "hidden":"events.torpedo_strike.values.struck.value"},
+				{"text":"<br><br>To starboard, the list swings the boats so far from the side that passengers must jump the gap. To port, they swing inward against the hull, and as the crew lower them they drag and snag on the rivets. Collapsibles stowed beneath the wooden boats cannot be freed in time.", "hidden":"event.attestation.value < 15 || event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"},
+				{"text":"<br><br>Crewmen who have never handled a fall let one end run faster than the other, and boats full of passengers tip and spill them into the sea. One boat swings back against the ship and is crushed; another comes down on top of those already in the water.", "hidden":"event.attestation.value < 35 || event.values.boatsLaunched.value || !events.torpedo_strike.values.struck.value"}
 			]
 		},
 		"lusitania_sinks":{
@@ -565,9 +571,10 @@
 				"torpedo_strike":"event.attestation.value < 30"
 			},
 			"description": [
-				{"text":"Eighteen minutes after the torpedo struck, the Lusitania goes down by the bow off the Old Head of Kinsale.", "hidden":"!event.values.sinks.value"},
-				{"text":"The Lusitania rounds the Old Head of Kinsale and sets course for Liverpool.", "hidden":"event.values.sinks.value"},
-				{"text":"She is longer than the sea there is deep, and her bow strikes the seabed while her stern is still in the air.", "hidden":"event.attestation.value < 15 || !event.values.sinks.value"}
+				{"text":"At 14:28, only eighteen minutes after the torpedo struck, the Lusitania goes down by the bow, eleven miles off the Old Head of Kinsale. She sinks so quickly that people are still on her decks when she goes, and the suction pulls some down with her.", "hidden":"!event.values.sinks.value || !events.second_explosion.values.catastrophicList.value"},
+				{"text":"Without the second explosion she lasts far longer than eighteen minutes. The Lusitania settles slowly by the head, and it is well over an hour before she goes down off the Old Head of Kinsale, time enough for every boat to get away.", "hidden":"!event.values.sinks.value || events.second_explosion.values.catastrophicList.value"},
+				{"text":"The Lusitania rounds the Old Head of Kinsale and sets her course east along the coast toward St George’s Channel and Liverpool, where she is due the next morning.", "hidden":"event.values.sinks.value"},
+				{"text":"<br><br>She is 787 feet long, and the sea there is little more than 300 feet deep. Her bow strikes the seabed while her stern is still high in the air, and for a moment she hangs there before settling on her side.", "hidden":"event.attestation.value < 15 || !event.values.sinks.value"}
 			]
 		},
 		"rescue_delayed":{
@@ -609,10 +616,10 @@
 				"wireless_sos":"event.attestation.value < 40"
 			},
 			"description": [
-				{"text":"From Queenstown a flotilla of tugs, trawlers and fishing boats sets out for the Old Head of Kinsale.", "hidden":"!events.lusitania_sinks.values.sinks.value"},
-				{"text":"No call comes, and the tugs and trawlers at Queenstown stay at their moorings.", "hidden":"events.lusitania_sinks.values.sinks.value"},
-				{"text":"Most arrive hours after the sinking. Many of those they reach have already died of cold in the water.", "hidden":"event.attestation.value < 15 || event.values.rescueInTime.value || !events.lusitania_sinks.values.sinks.value"},
-				{"text":"The rescue craft reach the survivors while most of them are still alive.", "hidden":"!event.values.rescueInTime.value || !events.lusitania_sinks.values.sinks.value"}
+				{"text":"When word reaches Queenstown, everything that can float is sent: tugs, trawlers, a paddle steamer, fishing boats and the harbour’s own tenders. The Old Head of Kinsale is more than twenty miles away, and most of the rescue fleet must raise steam before it can sail.", "hidden":"!events.lusitania_sinks.values.sinks.value"},
+				{"text":"No call comes. At Queenstown the tugs and trawlers lie at their moorings through a quiet afternoon, and the fishermen off Kinsale go about their work.", "hidden":"events.lusitania_sinks.values.sinks.value"},
+				{"text":"<br><br>The first help to arrive is the little fishing boat Wanderer, from Peel on the Isle of Man, which picks up some 160 survivors. The Queenstown flotilla arrives hours after the sinking. By then, many of those clinging to wreckage in the cold water have died of exposure.", "hidden":"event.attestation.value < 15 || event.values.rescueInTime.value || !events.lusitania_sinks.values.sinks.value"},
+				{"text":"<br><br>With the distress call heard and the tenders already under steam, the rescue fleet is at sea within minutes. It reaches the wreckage while most of those in the water are still alive, and boat by boat the survivors are hauled aboard.", "hidden":"!event.values.rescueInTime.value || !events.lusitania_sinks.values.sinks.value"}
 			]
 		},
 		"death_toll":{
@@ -648,11 +655,11 @@
 				"new_york_departure":"event.attestation.value < 70"
 			},
 			"description": [
-				{"text":"Through the night the boats bring the living and the dead into Queenstown. Of 1,959 aboard, 1,198 have died.", "hidden":"!event.values.civilianCatastrophe.value"},
-				{"text":"The boats bring the living and the dead into Queenstown. The loss is heavy, but with so many passengers having stayed home, far fewer have died than might have.", "hidden":"!event.values.massLossOfLife.value || event.values.civilianCatastrophe.value"},
-				{"text":"The survivors land at Queenstown cold, shaken and alive. Very few have been lost.", "hidden":"event.values.massLossOfLife.value || !events.lusitania_sinks.values.sinks.value"},
-				{"text":"The quays at Queenstown are quiet. There is no one to bring ashore.", "hidden":"events.lusitania_sinks.values.sinks.value"},
-				{"text":"Among the dead are 128 Americans. Across the Atlantic, the sinking hardens opinion against Germany.", "hidden":"event.attestation.value < 20 || !event.values.civilianCatastrophe.value"}
+				{"text":"Through the night the rescue boats come back into Queenstown, landing the living and the dead on the quays. Of the 1,959 people who sailed from New York, 1,198 have died, 94 of them children. The town’s makeshift mortuaries fill, and the dead are laid out in rows to be identified.", "hidden":"!event.values.civilianCatastrophe.value"},
+				{"text":"Through the night the rescue boats bring the living and the dead into Queenstown. The loss is heavy, but so many passengers stayed ashore that the ship sailed half empty, and far fewer have died than might have.", "hidden":"!event.values.massLossOfLife.value || event.values.civilianCatastrophe.value"},
+				{"text":"The survivors land at Queenstown cold, soaked and shaken, but alive. The townspeople meet them with blankets and hot tea, and the hotels open their doors. Very few have been lost.", "hidden":"event.values.massLossOfLife.value || !events.lusitania_sinks.values.sinks.value"},
+				{"text":"The quays at Queenstown are quiet tonight. There is no one to bring ashore, and no one to mourn.", "hidden":"events.lusitania_sinks.values.sinks.value"},
+				{"text":"<br><br>Among the dead are 128 Americans, Alfred Vanderbilt, Charles Frohman and Elbert Hubbard among them. In the United States the sinking hardens opinion against Germany, and the Lusitania’s name becomes a rallying cry that will still be heard when America enters the war two years later.", "hidden":"event.attestation.value < 20 || !event.values.civilianCatastrophe.value"}
 			]
 		},
 		"mersey_inquiry":{
@@ -690,10 +697,10 @@
 				"four_point_bearing":"event.attestation.value < 35"
 			},
 			"description": [
-				"Lord Mersey, who led the inquiry into the Titanic, opens the British inquiry into the loss of the Lusitania.",
-				{"text":"The Admiralty, anxious that its own warnings and instructions not become the story, presses the case that Captain Turner ignored them.", "hidden":"event.attestation.value < 15"},
-				{"text":"Mersey’s findings leave a shadow over Turner that follows him for the rest of his life.", "hidden":"event.attestation.value < 35 || !event.values.turnerBlamed.value"},
-				{"text":"Mersey clears Turner and lays the blame on the German government alone.", "hidden":"event.attestation.value < 35 || event.values.turnerBlamed.value"}
+				"In London, Lord Mersey, who led the British inquiry into the Titanic three years earlier, opens the formal investigation into the loss of the Lusitania. Some of the most sensitive evidence is heard behind closed doors.",
+				{"text":"<br><br>The Admiralty is anxious that its own warnings and instructions not become the story. Its counsel press the case that Captain Turner ignored the advice he was given: he kept too close to the land, he failed to zigzag, and he slowed down in dangerous waters.", "hidden":"event.attestation.value < 15"},
+				{"text":"<br><br>Mersey’s findings leave a shadow over Turner that never lifts. He will command again, and survive a second sinking before the war is out, but in the public mind he remains the captain who lost the Lusitania.", "hidden":"event.attestation.value < 35 || !event.values.turnerBlamed.value"},
+				{"text":"<br><br>The evidence does not bear out the Admiralty’s case. Mersey clears Turner of blame and lays responsibility for the disaster on the German government alone.", "hidden":"event.attestation.value < 35 || event.values.turnerBlamed.value"}
 			]
 		}
 	}
