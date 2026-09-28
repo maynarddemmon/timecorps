@@ -22,6 +22,7 @@
         
         {
             WideView,
+            dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
             theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeVeryLarge},
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS
         } = pkg,
@@ -116,8 +117,11 @@
             
             new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
                 doActivated: () => {
-                    location.reload(); // reload the browser.
-                    //model.reset(); // FIXME: eventually we will want a true reset but that gets wrapped up in save/load so we defer for now.
+                    openConfirmMsgDialog(
+                        'Restart Campaign',
+                        'Are you sure you want to start over with a new campaign?',
+                        appView.doReload
+                    );
                 }
             }]);
             new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
@@ -228,14 +232,26 @@
             }
         },
         
+        doReload: () => {
+            location.reload(); // reload the browser.
+            //model.reset(); // FIXME: eventually we will want a true reset but that gets wrapped up in save/load so we defer for now.
+        },
+        
         notifyTimelineParadoxExceeded: () => {
-            console.log('timeline max paradox EXCEEDED.');
-            // FIXME: do end game.
+            openAckMsgDialog(
+                'Timeline Destabilized',
+                'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.',
+                () => {
+                    // FIXME: do other housekeeping?
+                    appView.doReload();
+                }
+            );
         },
         
         openAgentDossier: agentModel => {
             agentDossier ??= new pkg.AgentDossier(appView);
             agentDossier.show(agentModel);
+            return agentDossier;
         }
     });
 })(tc);

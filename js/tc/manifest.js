@@ -18,7 +18,7 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
-    file(COMPONENT_ROOT + 'Dialogs.js').provides('tc.ModalDialog').requires('tc.SquareBtn','tc.Panel');
+    file(COMPONENT_ROOT + 'Dialogs.js').provides('tc.dialogUtil','tc.ModalDialog').requires('tc.SquareBtn','tc.WideView','tc.Panel');
     
     // Model //
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
@@ -55,7 +55,7 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
+        'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
         'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier'
     );
 });

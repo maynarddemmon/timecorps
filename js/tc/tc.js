@@ -147,6 +147,10 @@
                 SCORE_PER_ATTESTATION:3,
                 MISSION_SCORE_MULTIPLIER:1,
                 PARADOX_SCORE_MULTIPLIER:-500,
+                
+                // Dialogs
+                DEFAULT_TALL_DIALOG_WIDTH:550,
+                DIALOG_FOOTER_HEIGHT:0, // Set programmatically below
             },
             
             // Misc Formatters
@@ -266,6 +270,8 @@
     }
     
     // Programatically set some of the default CFG
-    CFG.TL_AGENT_TOKEN_SIZE ||= TC.theme.btnHeight;
+    const {padding, btnHeight} = TC.theme;
+    CFG.TL_AGENT_TOKEN_SIZE ||= btnHeight;
     CFG.TL_AGENTS_PER_ROW ||= mathFloor(CFG.TL_COL_WIDTH / CFG.TL_AGENT_TOKEN_SIZE);
+    CFG.DIALOG_FOOTER_HEIGHT ||= btnHeight + 2*padding;
 })(window);
