@@ -156,12 +156,12 @@
             },
             
             doConfirm: function() {
-                const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.();
+                const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
             },
             
             doCancel: function() {
-                const doNotClose = this.getRef(REF_ID_CANCEL_FUNC)?.();
+                const doNotClose = this.getRef(REF_ID_CANCEL_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
             }
         }),
@@ -200,23 +200,12 @@
             }
         }),
         
-        ConfirmMsgDialog = pkg.ConfirmMsgDialog = new JSClass('ConfirmMsgDialog', ConfirmDialog, {
-            include: [MsgDialog]
-        }),
-        
-        NotCancelable = new JSModule('NotCancelable', {
-            initNode: function(parent, attrs) {
-                attrs.cancelable ??= false;
-                
-                this.callSuper(parent, attrs);
-            }
-        }),
-        
         AckDialog = pkg.AckDialog = new JSClass('AckDialog', ModalDialog, {
-            include: [NotCancelable, ThreeColFooter],
+            include: [ThreeColFooter],
             
             initNode: function(parent, attrs) {
                 const self = this;
+                attrs.cancelable ??= false;
                 attrs.centerItemCfgs ??= [
                     {klass:UnderlineBtn, attrs:{
                         text:'Acknowledge', fontSize:fontSizeLarge, valign:'middle'
@@ -226,9 +215,13 @@
             },
             
             doConfirm: function() {
-                const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.();
+                const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
             }
+        }),
+        
+        ConfirmMsgDialog = pkg.ConfirmMsgDialog = new JSClass('ConfirmMsgDialog', ConfirmDialog, {
+            include: [MsgDialog]
         }),
         
         AckMsgDialog = pkg.AckMsgDialog = new JSClass('AckMsgDialog', AckDialog, {
