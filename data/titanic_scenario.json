@@ -78,8 +78,20 @@
 				{"mode":"walk", "to":"titanic_departs", "hidden":"event.attestation.value < 5"}
 			],
 			"values":{
-				"fullDavits":{"value":"false"}
-			}
+				"fullDavits":{
+					"name":"Davits Filled",
+					"value":"false",
+					"description": [
+						{"text":"Twenty boats: seats for barely half of those who will sail.", "hidden":"event.values.fullDavits.value"},
+						{"text":"A boat on every davit: seats for everyone aboard.", "hidden":"!event.values.fullDavits.value"}
+					]
+				}
+			},
+			"description": [
+				"In the drawing office at Harland & Wolff, the question of how many lifeboats Titanic will carry is settled for the last time.",
+				{"text":"Her Welin davits were designed to handle as many as 64 boats, but the Board of Trade requires only 16 for any ship over 10,000 tons.", "hidden":"event.attestation.value < 15"},
+				{"text":"Uncluttered promenade decks win the argument over boats that the rules do not require.", "hidden":"event.attestation.value < 30 || event.values.fullDavits.value"}
+			]
 		},
 		"roster_reshuffle":{
 			"name":"Roster Reshuffle",
@@ -108,10 +120,36 @@
 				{"mode":"wait", "to":"titanic_departs"}
 			],
 			"values":{
-				"preventReshuffle":{"value":"false"},
-				"remindBlair":{"value":"false"},
-				"keyOnShip":{"value":"event.values.preventReshuffle.value || event.values.remindBlair.value"}
-			}
+				"preventReshuffle":{
+					"name":"Reshuffle Prevented",
+					"value":"false",
+					"description": [
+						{"text":"Wilde takes over as chief officer and Blair leaves the ship.", "hidden":"event.values.preventReshuffle.value"},
+						{"text":"The officers sail as first appointed, and Blair stays aboard.", "hidden":"!event.values.preventReshuffle.value"}
+					]
+				},
+				"remindBlair":{
+					"name":"Blair Reminded",
+					"value":"false",
+					"description": [
+						{"text":"No one thinks to ask Blair for his keys.", "hidden":"event.values.remindBlair.value"},
+						{"text":"Before he goes ashore, Blair is reminded to hand over the crow’s nest key.", "hidden":"!event.values.remindBlair.value"}
+					]
+				},
+				"keyOnShip":{
+					"name":"Locker Key Aboard",
+					"value":"event.values.preventReshuffle.value || event.values.remindBlair.value",
+					"description": [
+						{"text":"The locker key stays ashore with Blair.", "hidden":"event.values.keyOnShip.value"},
+						{"text":"The locker key is aboard when she sails.", "hidden":"!event.values.keyOnShip.value"}
+					]
+				}
+			},
+			"description": [
+				"Days before sailing, White Star reshuffles Titanic’s senior officers, bringing Henry Wilde across from the Olympic as chief officer.",
+				{"text":"Second Officer David Blair is bumped from the voyage entirely. He goes ashore with the key to the crow’s nest locker still in his pocket.", "hidden":"event.attestation.value < 15"},
+				{"text":"The binoculars in that locker are meant for the lookouts.", "hidden":"event.attestation.value < 35"}
+			]
 		},
 		"titanic_departs":{
 			"name":"Boarding & Departure",
@@ -127,6 +165,12 @@
 				{"mode":"walk", "to":"engine_order"},
 				{"mode":"walk", "to":"collision"},
 				{"mode":"walk", "to":"casualties"}
+			],
+			"description": [
+				"Passengers and crew board at Southampton, and at noon Titanic slips her moorings for Cherbourg, Queenstown and New York.",
+				{"text":"As she passes, her wash snaps the mooring lines of the SS New York, which swings to within a few feet of Titanic’s stern.", "hidden":"event.attestation.value < 15"},
+				{"text":"She will carry more than 2,200 people, and lifeboat seats for barely half of them.", "hidden":"event.attestation.value < 30 || events.lifeboat_capacity.values.fullDavits.value"},
+				{"text":"She will carry more than 2,200 people, and a lifeboat seat for every one of them.", "hidden":"event.attestation.value < 30 || !events.lifeboat_capacity.values.fullDavits.value"}
 			]
 		},
 		"ice_warnings":{
@@ -165,7 +209,9 @@
 				}
 			},
 			"description": [
-				"Throughout the day the Marconi “radio” operators receive ice warnings from ships ahead."
+				"Throughout the day the Marconi “radio” operators receive ice warnings from ships ahead.",
+				{"text":"Caronia, Baltic, Amerika and Californian all report ice across the ship’s track. Not every message is taken to the bridge.", "hidden":"event.attestation.value < 15"},
+				{"text":"At 21:40 the Mesaba reports heavy pack ice and great numbers of large icebergs directly in Titanic’s path.", "hidden":"event.attestation.value < 35"}
 			]
 		},
 		"purser_spare":{
@@ -194,8 +240,20 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"spareRecovered":{"value":"false"}
-			}
+				"spareRecovered":{
+					"name":"Spare Glasses Recovered",
+					"value":"false",
+					"description": [
+						{"text":"The spare glasses stay in the drawer.", "hidden":"event.values.spareRecovered.value"},
+						{"text":"The spare glasses are found and sent up to the crow’s nest.", "hidden":"!event.values.spareRecovered.value"}
+					]
+				}
+			},
+			"description": [
+				"In the purser’s office the evening passes with the ordinary business of a liner: valuables lodged, cabins changed, telegrams paid for.",
+				{"text":"The lookouts have asked for binoculars and been told there are none to be had.", "hidden":"event.attestation.value < 15"},
+				{"text":"A pair of glasses, left behind by a departing officer, sits unclaimed in a drawer of the office.", "hidden":"event.attestation.value < 30"}
+			]
 		},
 		"wireless_priority":{
 			"name":"Marconi Traffic Backlog",
@@ -220,8 +278,21 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"clearBacklogEarlier":{"value":"false"}
-			}
+				"clearBacklogEarlier":{
+					"name":"Backlog Cleared Early",
+					"value":"false",
+					"description": [
+						{"text":"The traffic runs late, and the Californian’s operator goes to bed before Titanic calls for help.", "hidden":"event.values.clearBacklogEarlier.value"},
+						{"text":"The backlog is clear early, and the Californian’s operator is still listening when the call goes out.", "hidden":"!event.values.clearBacklogEarlier.value"}
+					]
+				}
+			},
+			"description": [
+				"Having lost hours to a fault in the set, Jack Phillips and Harold Bride are far behind on passengers’ private telegrams.",
+				{"text":"Within range of the station at Cape Race at last, Phillips works through the backlog at full speed.", "hidden":"event.attestation.value < 15"},
+				{"text":"Near 23:00 the Californian breaks in to say she is stopped in ice. Phillips cuts her off: “Shut up, shut up, I am busy; I am working Cape Race.”", "hidden":"event.attestation.value < 35 || event.values.clearBacklogEarlier.value"},
+				{"text":"Soon after, the Californian’s only wireless operator switches off his set and turns in for the night.", "hidden":"event.attestation.value < 35 || event.values.clearBacklogEarlier.value"}
+			]
 		},
 		"missing_binoculars":{
 			"name":"Missing Binoculars",
@@ -256,10 +327,36 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"plantKey":{"value":"false"},
-				"pickTheLocker":{"value":"false"},
-				"binocularsAccessible":{"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.values.plantKey.value || event.values.pickTheLocker.value"}
-			}
+				"plantKey":{
+					"name":"Key Planted",
+					"value":"false",
+					"description": [
+						{"text":"No key has been left in the nest.", "hidden":"event.values.plantKey.value"},
+						{"text":"A key to the locker is waiting in the nest when the watch begins.", "hidden":"!event.values.plantKey.value"}
+					]
+				},
+				"pickTheLocker":{
+					"name":"Locker Forced",
+					"value":"false",
+					"description": [
+						{"text":"The locker stays shut.", "hidden":"event.values.pickTheLocker.value"},
+						{"text":"The locker has been picked open.", "hidden":"!event.values.pickTheLocker.value"}
+					]
+				},
+				"binocularsAccessible":{
+					"name":"Glasses in the Nest",
+					"value":"events.roster_reshuffle.values.keyOnShip.value || events.purser_spare.values.spareRecovered.value || event.values.plantKey.value || event.values.pickTheLocker.value",
+					"description": [
+						{"text":"The lookouts search the dark with their naked eyes.", "hidden":"event.values.binocularsAccessible.value"},
+						{"text":"The lookouts have binoculars.", "hidden":"!event.values.binocularsAccessible.value"}
+					]
+				}
+			},
+			"description": [
+				"Through the late watches, the lookouts in the crow’s nest search a moonless, flat-calm sea.",
+				{"text":"The glasses meant for them are in a locker in the nest itself, and the key left the ship at Southampton.", "hidden":"event.attestation.value < 15"},
+				{"text":"With no swell breaking at its base, an iceberg on such a night shows almost nothing until it is close.", "hidden":"event.attestation.value < 30"}
+			]
 		},
 		"engine_order":{
 			"name":"Full Astern",
@@ -283,8 +380,20 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"countermandAstern":{"value":"false"}
-			}
+				"countermandAstern":{
+					"name":"Astern Countermanded",
+					"value":"false",
+					"description": [
+						{"text":"Her engines go astern, and she answers the helm sluggishly.", "hidden":"event.values.countermandAstern.value"},
+						{"text":"Her engines keep driving ahead, and she answers the helm hard.", "hidden":"!event.values.countermandAstern.value"}
+					]
+				}
+			},
+			"description": [
+				"Far below the waterline, the engineers keep Titanic steaming at close to 22 knots through the dark.",
+				{"text":"At 23:40 the telegraph rings down to stop, then full astern.", "hidden":"event.attestation.value < 15"},
+				{"text":"With the engines reversing, the centre turbine stops, and the rudder loses the wash of the screw just ahead of it.", "hidden":"event.attestation.value < 40"}
+			]
 		},
 		"lookout_sights_berg":{
 			"name":"Berg Sighted",
@@ -296,8 +405,20 @@
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
-				"earlySighting":{"value":"events.missing_binoculars.values.binocularsAccessible.value || events.ice_warnings.values.relayToBridge.value"}
-			}
+				"earlySighting":{
+					"name":"Early Sighting",
+					"value":"events.missing_binoculars.values.binocularsAccessible.value || events.ice_warnings.values.relayToBridge.value",
+					"description": [
+						{"text":"The berg is seen far too late to avoid.", "hidden":"event.values.earlySighting.value"},
+						{"text":"The berg is seen early, with time for the bridge to act.", "hidden":"!event.values.earlySighting.value"}
+					]
+				}
+			},
+			"description": [
+				"Lookout Frederick Fleet sees a dark mass dead ahead, strikes the bell three times and telephones the bridge: “Iceberg right ahead.”",
+				{"text":"First Officer William Murdoch orders her hard a-starboard. The berg is barely a quarter of a mile away.", "hidden":"event.attestation.value < 15 || event.values.earlySighting.value"},
+				{"text":"The berg is seen miles off, and the bridge has minutes, not seconds, to steer clear.", "hidden":"event.attestation.value < 15 || !event.values.earlySighting.value"}
+			]
 		},
 		"collision":{
 			"name":"The Collision",
@@ -310,13 +431,23 @@
 			"values":{
 				"struck":{
 					"name":"Struck the Iceberg",
-					"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)"
+					"value":"!(events.lookout_sights_berg.values.earlySighting.value && events.engine_order.values.countermandAstern.value)",
+					"description": [
+						{"text":"She clears the berg without a mark on her.", "hidden":"event.values.struck.value"},
+						{"text":"The iceberg tears open her starboard bow.", "hidden":"!event.values.struck.value"}
+					]
 				}
 			},
 			"hideAffectedBy":{
 				"lookout_sights_berg":"event.attestation.value < 15",
 				"engine_order":"event.attestation.value < 40"
-			}
+			},
+			"description": [
+				{"text":"At 23:40 Titanic’s starboard bow scrapes along the iceberg. The contact lasts only seconds.", "hidden":"!event.values.struck.value"},
+				{"text":"At 23:40 Titanic swings clear of the iceberg and steams on through the ice field.", "hidden":"event.values.struck.value"},
+				{"text":"The ice opens her first five watertight compartments to the sea. She can float with no more than four flooded.", "hidden":"event.attestation.value < 15 || !event.values.struck.value"},
+				{"text":"Thomas Andrews, her designer, inspects the damage and gives her an hour, perhaps an hour and a half.", "hidden":"event.attestation.value < 30 || !event.values.struck.value"}
+			]
 		},
 		"californian_nearby":{
 			"name":"The Californian Stands By",
@@ -325,8 +456,20 @@
 			"location":"atlantic.californian",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 20",
 			"values":{
-				"rescueResponds":{"value":"events.wireless_priority.values.clearBacklogEarlier.value"}
-			}
+				"rescueResponds":{
+					"name":"Californian Responds",
+					"value":"events.wireless_priority.values.clearBacklogEarlier.value",
+					"description": [
+						{"text":"Her operator is asleep, and the rockets go unexplained.", "hidden":"event.values.rescueResponds.value"},
+						{"text":"Her operator hears the distress call, and she raises steam for the rescue.", "hidden":"!event.values.rescueResponds.value"}
+					]
+				}
+			},
+			"description": [
+				"Stopped for the night at the edge of the ice field, the Leyland liner Californian lies close enough for her officers to see a ship’s lights to the south.",
+				{"text":"Her officers of the watch see white rockets burst above the stranger and report them below. No one wakes the wireless operator.", "hidden":"event.attestation.value < 15 || !events.collision.values.struck.value"},
+				{"text":"By the time she learns the truth the next morning, the Carpathia has already picked up the survivors.", "hidden":"event.attestation.value < 35 || !events.collision.values.struck.value"}
+			]
 		},
 		"casualties":{
 			"name":"Loss of Life",
@@ -334,7 +477,14 @@
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
 			"values":{
-				"massLossOfLife":{"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.fullDavits.value)"},
+				"massLossOfLife":{
+					"name":"Mass Loss of Life",
+					"value":"events.collision.values.struck.value && !(events.californian_nearby.values.rescueResponds.value && events.lifeboat_capacity.values.fullDavits.value)",
+					"description": [
+						{"text":"Almost everyone aboard survives the night.", "hidden":"event.values.massLossOfLife.value"},
+						{"text":"More than 1,500 lives are lost.", "hidden":"!event.values.massLossOfLife.value"}
+					]
+				},
 				"TEST_PARADOX":{
 					"name":"Timeline Paradox",
 					"value":"timeline.paradox.value > 0 ? 'Fractured' : 'Clean'",
@@ -344,7 +494,14 @@
 			"hideAffectedBy":{
 				"californian_nearby":"event.attestation.value < 40",
 				"lifeboat_capacity":"event.attestation.value < 50"
-			}
+			},
+			"description": [
+				{"text":"At 02:20 Titanic’s stern rises, hangs, and slides beneath the surface. More than 1,500 people are left in water below freezing.", "hidden":"!event.values.massLossOfLife.value"},
+				{"text":"Titanic founders at 02:20, but she goes down with a seat in a boat for everyone and the Californian standing by.", "hidden":"event.values.massLossOfLife.value || !events.collision.values.struck.value"},
+				{"text":"At 02:20 the boat deck is quiet: a late promenade on a cold, clear night aboard a ship bound for New York.", "hidden":"events.collision.values.struck.value"},
+				{"text":"Twenty boats leave the ship, many of them half full. The Carpathia, racing from 58 miles away, will not arrive until after 04:00.", "hidden":"event.attestation.value < 20 || !event.values.massLossOfLife.value"},
+				{"text":"In a single night, the lifeboat rules for every ship at sea are shown to be written for a world that no longer exists.", "hidden":"event.attestation.value < 40 || !event.values.massLossOfLife.value"}
+			]
 		}
 	}
 }
