@@ -4,19 +4,13 @@
     const {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
-        {
-            View, Text, PaddedText, PlainText, PaddedPlainText, 
-            ResizeLayout, WrappingLayout, SizeToParent, interpolateString
-        } = M,
+        {View, Text, PaddedText, PlainText, PaddedPlainText, ResizeLayout, SizeToParent} = M,
         
         {
-            SquareBtn,
             theme:{
-                spacing, padding, layoutSpacing, btnHeight, rowHeight, cornerRadius,
-                colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, 
-                colorMegaDark, colorBtn,
-                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono,
-                colorHistoricity, colorAttestation, colorParadox, colorChronal
+                spacing, padding, layoutSpacing, rowHeight,
+                colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, colorBtn,
+                fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono
             },
             ICON_NIL
         } = pkg,
@@ -39,9 +33,13 @@
                 
                 this.callSuper(parent, attrs);
                 
-                const headerView = this._headerView = new WideView(this, {ignorePlacement:true, height:rowHeight, bgColor:colorDarkMedium});
-                (this._titleView = new Text(headerView, {text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1})).enableEllipsis();
-                new M.ResizeLayout(headerView, {inset:padding/2, spacing:spacing, outset:padding/2});
+                const headerView = this._headerView = new WideView(this, {
+                    ignorePlacement:true, height:rowHeight, bgColor:colorDarkMedium
+                });
+                (this._titleView = new Text(headerView, {
+                    text:title, tooltip:title, textColor:colorMedium, fontSize:fontSizeVeryLarge, y:1, layoutHint:1
+                })).enableEllipsis();
+                new ResizeLayout(headerView, {inset:padding/2, spacing:spacing, outset:padding/2});
                 
                 const y = headerView.y + headerView.height + layoutSpacing;
                 this._contentView = new WideView(this, {
@@ -51,11 +49,13 @@
             },
             
             setTitle: function(v, tooltip) {
-                this._titleView.setText(v);
-                this._titleView.setTooltip(tooltip ?? v);
+                const titleView = this.getTitleView();
+                titleView.setText(v);
+                titleView.setTooltip(tooltip ?? v);
             },
             
             getHeaderView: function() {return this._headerView;},
+            getTitleView: function() {return this._titleView;},
             getContentView: function() {return this._contentView;}
         }),
         
@@ -95,50 +95,6 @@
                 attrs.whiteSpace ??= 'normal';
                 this.callSuper(parent, attrs);
             }
-        }),
-        
-        
-        // Progress Bar Classes
-        StatProgressBar = pkg.StatProgressBar = new JSClass('StatProgressBar', M.ProgressBar, {
-            initNode: function(parent, attrs) {
-                attrs.bgColor ??= colorMegaDark;
-                attrs.height ??= 6;
-                attrs.roundedCorners ??= 3;
-                attrs.trackOutset ??= 1;
-                attrs.trackInset ??= 1;
-                
-                attrs.labelTemplate ??= '{label}';
-                
-                const showLabel = attrs.showLabel ??= true,
-                    labelX = attrs.labelX ??= attrs.trackInset,
-                    labelY = attrs.labelY ??= -12,
-                    labelFontSize = attrs.labelFontSize ??= fontSizeMicro;
-                delete attrs.showLabel;
-                delete attrs.labelX;
-                delete attrs.labelY;
-                delete attrs.labelFontSize;
-                
-                this.callSuper(parent, attrs);
-                
-                if (showLabel) this.labelView = new PlainText(this, {x:labelX, y:labelY, fontSize:labelFontSize});
-            },
-            
-            setLabelTemplate: function(v) {
-                this.set('labelTemplate', v, true);
-            },
-            
-            updateForStat: function(statModel) {
-                const self = this,
-                    labelView = self.labelView,
-                    label = interpolateString(self.labelTemplate, {label:statModel.formatAsLabel()}),
-                    tooltip = label + statModel.formatAsTooltip('{ICON_SEPARATOR}{percent}{ICON_SEPARATOR}{fraction}');
-                labelView?.setText(label);
-                labelView?.setTooltip(tooltip);
-                self.setMinValue(statModel.getMin());
-                self.setMaxValue(statModel.getMax());
-                self.setValue(statModel.getValue());
-                self.setTooltip(tooltip);
-            }
         });
     
     pkg.Spacer = new JSClass('Spacer', View, {
@@ -152,8 +108,9 @@
         initNode: function(parent, attrs) {
             this.callSuper(parent, attrs);
             this.getHeaderView().setBgColor(colorDark);
-            this._titleView.setY(4);
-            this._titleView.setFontSize(fontSizeMedium);
+            const titleView = this.getTitleView();
+            titleView.setY(4);
+            titleView.setFontSize(fontSizeMedium);
             this.syncTo(this._contentView, '_updateHeight', 'height');
         },
         _updateHeight: function(_event) {
@@ -162,7 +119,7 @@
         }
     });
     
-    pkg.LabeledValue = new JSClass('LabeledValue', M.PaddedText, {
+    pkg.LabeledValue = new JSClass('LabeledValue', PaddedText, {
         initNode: function(parent, attrs) {
             attrs.paddingLeft ??= padding;
             attrs.paddingRight ??= spacing;
@@ -277,7 +234,7 @@
                         }
                     }
                 }]);
-            new WrappingLayout(contentView, {spacing, lineSpacing:-5, collapseParent:true});
+            new M.WrappingLayout(contentView, {spacing, lineSpacing:-5, collapseParent:true});
         },
         setLabel: function(v) {this._label.setText(v);},
         clearContent: function() {
@@ -289,112 +246,6 @@
         initNode: function(parent, attrs) {
             attrs.text ??= ICON_NIL;
             this.callSuper(parent, attrs);
-        }
-    });
-    
-    pkg.HistoricityBar = new JSClass('HistoricityBar', StatProgressBar, {
-        initNode: function(parent, attrs) {
-            attrs.valueColor ??= colorHistoricity;
-            this.callSuper(parent, attrs);
-        }
-    });
-    pkg.AttestationBar = new JSClass('AttestationBar', StatProgressBar, {
-        initNode: function(parent, attrs) {
-            attrs.valueColor ??= colorAttestation;
-            this.callSuper(parent, attrs);
-        }
-    });
-    pkg.ParadoxBar = new JSClass('ParadoxBar', StatProgressBar, {
-        initNode: function(parent, attrs) {
-            attrs.valueColor ??= colorParadox;
-            this.callSuper(parent, attrs);
-        }
-    });
-    pkg.ChronalBar = new JSClass('ChronalBar', StatProgressBar, {
-        initNode: function(parent, attrs) {
-            attrs.valueColor ??= colorChronal;
-            this.callSuper(parent, attrs);
-        }
-    });
-    pkg.MiniStatBar = new JSModule('MiniStatBar', {
-        initNode: function(parent, attrs) {
-            attrs.showLabel ??= false;
-            attrs.height ??= 5;
-            attrs.roundedCorners ??= 0;
-            //attrs.trackOutset ??= 0;
-            //attrs.trackInset ??= 0;
-            
-            this.callSuper(parent, attrs);
-        }
-    });
-    pkg.BigStatBar = new JSModule('BigStatBar', {
-        initNode: function(parent, attrs) {
-            attrs.showLabel ??= true;
-            attrs.width ??= 150;
-            attrs.height ??= 18;
-            attrs.roundedCorners ??= 9;
-            attrs.labelY ??= 3;
-            attrs.labelX ??= 8;
-            
-            this.callSuper(parent, attrs);
-        },
-        
-        watchStatModel: function(statModel) {
-            this.statModel = statModel;
-            this.constrain('_update', [statModel, 'value', statModel, 'max']);
-        },
-        _update: function(v) {
-            this.updateForStat(this.statModel);
-        }
-    });
-    
-    pkg.ModalDialog = new JSClass('ModalDialog', M.Dimmer, {
-        initNode: function(parent, attrs) {
-            const self = this;
-            
-            self.defaultPlacement = 'contentView._contentView';
-            const sizingStrategy = attrs.sizingStrategy ??= 'tall',
-                tallWidth = attrs.tallWidth ??= 550;
-            delete attrs.sizingStrategy;
-            delete attrs.tallWidth;
-            
-            self.callSuper(parent, attrs);
-            
-            let positionAttrs;
-            switch (sizingStrategy) {
-                case 'tall':
-                default:
-                    positionAttrs = {
-                        align:'center', y:padding, width:tallWidth,
-                        percentOfParentHeight:100,
-                        percentOfParentHeightOffset:-2*padding
-                    };
-                    break;
-            }
-            
-            const contentView = self.contentView = new Panel(self, {
-                    roundedCorners:cornerRadius, bgColor:colorMegaDark, overflow:'hidden',
-                    ...positionAttrs
-                }, [SizeToParent]),
-                header = contentView.getHeaderView();
-            self.closeBtn = new SquareBtn(header, {
-                y:1, text:pkg.ICON_CANCEL, tooltip:'Close'
-            }, [{
-                doActivated: function() {self.hide();}
-            }]);
-            header.getFirstLayout().setOutset(1);
-            self.attachToDom(self, '_keyDown', 'keydown');
-        },
-        
-        getContentView: function() {return this.contentView;},
-        setTitle: function(v, tooltip) {this.getContentView().setTitle(v, tooltip);},
-        
-        _keyDown: function(event) {
-            switch (M.KeyObservable.getCodeFromEvent(event)) {
-                case M.global.keys.CODE_ESC:
-                    this.closeBtn.doActivated();
-                    break;
-            }
         }
     });
 })(tc);

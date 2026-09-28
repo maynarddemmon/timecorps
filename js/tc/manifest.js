@@ -12,9 +12,13 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
     file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn').requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
+    file(COMPONENT_ROOT + 'ProgressBars.js').provides(
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar','tc.MiniStatBar','tc.BigStatBar'
+    ).requires('tc');
     file(COMPONENT_ROOT + 'Misc.js').provides(
-        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue','tc.ModalDialog'
-    ).requires('tc.SquareBtn');
+        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
+    ).requires('tc');
+    file(COMPONENT_ROOT + 'Dialogs.js').provides('tc.ModalDialog').requires('tc.SquareBtn','tc.Panel');
     
     // Model //
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
@@ -36,13 +40,13 @@ JS.Packages(file => {
     
     // View //
     file(VIEW_ROOT + 'Agents.js').provides('tc.Agents').requires(
-        'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker'
+        'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker','tc.ParadoxBar','tc.ChronalBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
-        'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker'
+        'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
