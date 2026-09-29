@@ -203,7 +203,8 @@
             }]);
         },
         setLabel: function(v) {this._label.setText(v);},
-        setValue: function(v) {this._value.setText(v || ICON_NIL);}
+        setValue: function(v) {this.getValueView().setText(v || ICON_NIL);},
+        getValueView: function() {return this._value;}
     });
     
     pkg.DetailRowFlow = new JSClass('DetailRowFlow', WideView, {

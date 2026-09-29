@@ -5,13 +5,12 @@
         {View, SpacedLayout} = M,
         
         {
-            WideView, DetailRow, DetailRowFlow, TextForFlow,
+            WideView, DetailRow,
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
                 fontFamilyMono
-            },
-            ICON_SEPARATOR
+            }
         } = pkg,
         
         HALF_PADDING = padding / 2,
@@ -41,7 +40,7 @@
                 }),
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
                 profileView = self._profileView = new DetailRow(profileContainer, {label:'Report'}),
-                profileViewValue = profileView._value;
+                profileViewValue = profileView.getValueView();
             profileViewValue.setWhiteSpace('pre-wrap');
             profileViewValue.setPaddingTop(3);
             profileViewValue.setFontFamily(fontFamilyMono);

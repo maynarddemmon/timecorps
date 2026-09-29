@@ -58,7 +58,7 @@
                 }),
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
                 profileView = self._profileView = new DetailRow(profileContainer, {label:'Profile'}),
-                profileViewValue = profileView._value;
+                profileViewValue = profileView.getValueView();
             profileViewValue.setWhiteSpace('pre-wrap');
             profileViewValue.setPaddingTop(3);
             profileViewValue.setFontFamily(fontFamilyMono);
