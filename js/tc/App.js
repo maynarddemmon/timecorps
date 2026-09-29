@@ -13,7 +13,8 @@
         opsView,
         teamView,
         
-        agentDossier;
+        agentDossier,
+        areaBrief;
     
     const JSClass = JS.Class,
         
@@ -252,6 +253,12 @@
             agentDossier ??= new pkg.AgentDossier(appView);
             agentDossier.show(agentModel);
             return agentDossier;
+        },
+        
+        openAreaBrief: locationModel => {
+            areaBrief ??= new pkg.AreaBrief(appView);
+            areaBrief.show(locationModel);
+            return areaBrief;
         }
     });
 })(tc);

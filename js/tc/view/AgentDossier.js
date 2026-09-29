@@ -17,21 +17,7 @@
         
         HALF_PADDING = padding / 2,
         
-        PHOTO_SIZE = 256,
-        
-        loadTxtIntoElement = (url, targetView, isStillWanted) => {
-            targetView.setValue('Retrieving…');
-            
-            M.doFetch(url, {}, true,
-                response => {
-                    if (isStillWanted()) targetView.setValue(response);
-                },
-                err => {
-                    console.error('err', err);
-                    if (isStillWanted()) targetView.setValue('MISSING / REDACTED: ' + err);
-                }
-            );
-        };
+        PHOTO_SIZE = 256;
     
     pkg.AgentDossier = new JS.Class('AgentDossier', pkg.ModalDialog, {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -111,7 +97,7 @@
                     isNotFirst = true;
                 }
                 
-                loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
+                pkg.loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
             }
         },
         

@@ -52,10 +52,11 @@ JS.Packages(file => {
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog');
+    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog');
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
-        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier'
+        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier','tc.AreaBrief'
     );
 });

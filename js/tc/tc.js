@@ -196,6 +196,20 @@
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
+            loadTxtIntoElement: (url, targetView, isStillWanted) => {
+                targetView.setValue('Retrieving…');
+                
+                myt.doFetch(url, {}, true,
+                    response => {
+                        if (isStillWanted()) targetView.setValue(response);
+                    },
+                    err => {
+                        console.error('err', err);
+                        if (isStillWanted()) targetView.setValue('MISSING / REDACTED: ' + err);
+                    }
+                );
+            },
+            
             // Constraint Scopes
             SCOPE_OPERATIONS:'operations',
             SCOPE_TIMELINE: 'timeline',

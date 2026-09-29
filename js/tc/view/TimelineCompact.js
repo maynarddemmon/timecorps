@@ -9,7 +9,7 @@
         {View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
         {
-            SquareBtn, MiniStatBar,
+            SquareBtn, Btn, MiniStatBar,
             timeUtil:{format,formatApproxDuration},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
@@ -40,6 +40,8 @@
         
         COL_WIDTH = TL_COL_WIDTH + 2*TL_EVENT_BOX_X_MARGIN,
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
+        
+        COL_HEADER_EXTENT = 3*TL_COL_HEADER_HEIGHT,
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
@@ -324,7 +326,7 @@
             
             // Update for new extents
             scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
-            scrollToken.setY(TL_COL_HEADER_HEIGHT + yExtent - scrollToken.height);
+            scrollToken.setY(COL_HEADER_EXTENT + yExtent - scrollToken.height);
             colHeaders.setWidth(xExtent);
             rowHeaders.setHeight(yExtent);
             flowLayer.setWidth(xExtent);
@@ -660,24 +662,31 @@
         
         // Location Column //
         updateLocationColumn = locationColumn => {
-            const {model, _label} = locationColumn;
+            const {model, _label, _photo} = locationColumn;
             locationColumn.setBgColor(model.color || 'transparent');
             locationColumn.setTextColor(model.textColor || null);
             _label.setText(model.name || '');
+            _photo.setImageUrl(pkg.IMAGE_ROOT + 'location/' + model.id + '.jpg');
         },
         
         LocationColumn = new JSClass('LocationColumn', View, {
             initNode: function(parent, attrs) {
-                const width = attrs.width ??= COL_WIDTH;
+                const self = this,
+                    width = attrs.width ??= COL_WIDTH;
+                self.callSuper(parent, attrs);
                 
-                this.callSuper(parent, attrs);
+                (self._label = new Btn(self, {
+                    width, height:TL_COL_HEADER_HEIGHT, buttonType:'locHdr',
+                    roundedCorners:0, paddingLeft:0, paddingRight:0
+                }, [{
+                    doActivated:() => pkg.app.openAreaBrief(self.model)
+                }])).enableEllipsis();
                 
-                (this._label = new PaddedPlainText(this, {
-                    width:width, height:TL_COL_HEADER_HEIGHT, bgColor:'#fff3', textAlign:'center',
-                    paddingTop:5, paddingLeft:4, paddingRight:4
-                })).enableEllipsis();
+                self._photo = new View(self, {
+                    y:TL_COL_HEADER_HEIGHT, width, height:2*TL_COL_HEADER_HEIGHT, imageSize:'contain'
+                }, [M.ImageSupport]);
                 
-                updateLocationColumn(this);
+                updateLocationColumn(self);
             },
             
             setModel: function(model) {
@@ -742,10 +751,10 @@
                 colHeadersContainer = self.colHeadersContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, overflow:'hidden'}),
                 colHeaders = self.colHeaders = new View(colHeadersContainer, {textColor:colorUltraDark}),
                 
-                rowHeadersContainer = self.rowHeadersContainer = new View(stickyView, {y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
+                rowHeadersContainer = self.rowHeadersContainer = new View(stickyView, {y:COL_HEADER_EXTENT, overflow:'hidden'}),
                 rowHeaders = self.rowHeaders = new View(rowHeadersContainer, {textColor:colorUltraDark}),
                 
-                flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
+                flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:COL_HEADER_EXTENT, overflow:'hidden'}),
                 flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}),
                 flowSVG = flowLayer.getSVG();
             flowSVG.style.zIndex = Z_IDX_FLOW;
@@ -758,19 +767,19 @@
             self.scrollToken = new View(scrollCaptureView, {width:1, height:1});
             scrollCaptureView.attachToDom(scrollCaptureView, '_handleScroll', 'scroll');
             
-            const hLine = self.hLine = new View(self, {y:TL_COL_HEADER_HEIGHT, height:1, bgColor:colorUltraDark}),
+            const hLine = self.hLine = new View(self, {y:COL_HEADER_EXTENT, height:1, bgColor:colorUltraDark}),
                 vLine = self.vLine = new View(self, {x:TL_ROW_HEADER_WIDTH - 1, width:1, bgColor:colorUltraDark});
             hLine.getIDS().pointerEvents = 'none';
             vLine.getIDS().pointerEvents = 'none';
             
             // Selected Event History Nav
             self.histPrevBtn = new SquareBtn(self, {
-                x:37, y:1, buttonType:'plain', disabled:true,
+                x:37, y:TL_COL_HEADER_HEIGHT, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge,
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
-                x:62, y:1, buttonType:'plain', disabled:true,
+                x:62, y:TL_COL_HEADER_HEIGHT, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge,
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
