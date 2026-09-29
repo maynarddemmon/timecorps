@@ -9,7 +9,7 @@
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
-                fontFamilyMono
+                fontSizeHandwritten, fontFamilyMono, fontFamilyHandwritten
             },
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH}
         } = pkg,
@@ -62,11 +62,19 @@
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
                 fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {label:'Field Notes'}),
                 profileView = self._profileView = new DetailRow(profileContainer, {label:'Report'}),
-                profileViewValue = profileView.getValueView();
-            fieldNotesView.getValueView().setWhiteSpace('normal');
+                profileViewValue = profileView.getValueView(),
+                fieldNotesValueView = fieldNotesView.getValueView();
+            
+            fieldNotesValueView.setWhiteSpace('normal');
+            fieldNotesValueView.setPaddingTop(2);
+            fieldNotesValueView.setLineHeight('1.75em');
+            fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
+            fieldNotesValueView.setFontSize(fontSizeHandwritten);
+            
             profileViewValue.setWhiteSpace('pre-wrap');
             profileViewValue.setPaddingTop(3);
             profileViewValue.setFontFamily(fontFamilyMono);
+            
             new SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },
         

@@ -42,7 +42,11 @@
                 fontSizeLarge:'16px',
                 fontSizeVeryLarge:'20px',
                 fontSizeHuge:'24px',
+                
                 fontFamilyMono:'SpaceMono',
+                
+                fontFamilyHandwritten:'RockSalt',
+                fontSizeHandwritten:'11px',
                 
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',
