@@ -10,18 +10,19 @@
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
                 fontFamilyMono
-            }
+            },
+            cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH}
         } = pkg,
         
         HALF_PADDING = padding / 2,
-        PHOTO_HEIGHT = 208,
+        PHOTO_HEIGHT = 4*TL_COL_HEADER_HEIGHT,
         PROFILE_Y = HALF_PADDING + PHOTO_HEIGHT + layoutSpacing;
     
     pkg.AreaBrief = new JS.Class('AreaBrief', pkg.ModalDialog, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             const self = this;
-            attrs.tallWidth ??= 520;
+            attrs.tallWidth ??= 4*(TL_COL_WIDTH + padding) + padding;
             
             self.callSuper(parent, attrs);
             
