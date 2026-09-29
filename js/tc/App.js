@@ -148,7 +148,7 @@
             }]);
             new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
             new pkg.SquareBtn(topView, {valign:'middle', text:'?', fontSize:fontSizeMedium, tooltip:'Help'}, [{
-                doActivated: appView.openHelp.bind(appView)
+                doActivated: appView.openHelp
             }]);
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },

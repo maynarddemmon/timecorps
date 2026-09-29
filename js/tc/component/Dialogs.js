@@ -234,7 +234,7 @@
             confirmMsgDialog.show(title, msg, confirmFunc, cancelFunc);
             return confirmMsgDialog;
         },
-        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel) => {
+        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel='Acknowledge') => {
             ackMsgDialog ??= new AckMsgDialog(pkg.app);
             ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
             if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
