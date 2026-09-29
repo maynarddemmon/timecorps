@@ -25,8 +25,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
     file(MODEL_ROOT + 'Hideable.js').provides('tc.Hideable','tc.ConstrainableAttrSupport').requires('tc.setConstrainedValue');
     file(MODEL_ROOT + 'Describable.js').provides('tc.Describable','tc.DescriptionPhraseModel').requires('tc.Hideable');
-    file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc');
-    
+    file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc.Describable');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
         'tc.NotifyingNumericStatModel','tc.Hideable'
     );

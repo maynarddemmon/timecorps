@@ -228,7 +228,7 @@
                     opsView.notifyOperationModelChanged(instanceModel);
                     break;
                 case SCOPE_LOCATIONS:
-                    // Nothing needed yet.
+                    areaBrief?.notifyLocationModelChanged(instanceModel);
                     break;
             }
         },

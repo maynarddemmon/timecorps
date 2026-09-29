@@ -127,7 +127,7 @@
                 
                 TL_ROW_HEADER_WIDTH:123,
                 TL_COL_WIDTH:120,
-                TL_COL_HEADER_HEIGHT:26,
+                TL_COL_HEADER_HEIGHT:52,
                 TL_COL_SPACING:1,
                 TL_EVENT_BOX_HEIGHT:80,
                 TL_EVENT_BOX_Y_MARGIN:4,

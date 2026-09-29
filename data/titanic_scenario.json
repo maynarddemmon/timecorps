@@ -24,7 +24,16 @@
 		"titanic.nest":{
 			"name":"Crow’s nest",
 			"color":"#ccf9",
-			"order":2.2
+			"order":2.2,
+			"description":[
+				{
+					"text":"The locker in the nest is shut and its key is ashore. The lookouts keep watch with their naked eyes.",
+					"hidden":"events.missing_binoculars.values.binocularsAccessible.value"
+				},{
+					"text":"A pair of binoculars hangs from a hook beside the bell, ready for the watch.",
+					"hidden":"!events.missing_binoculars.values.binocularsAccessible.value"
+				}
+			]
 		},
 		"titanic.engine":{
 			"name":"Engine room",
@@ -44,7 +53,16 @@
 		"titanic.boatdeck":{
 			"name":"Boat deck",
 			"color":"#ccf9",
-			"order":2.6
+			"order":2.6,
+			"description":[
+				{
+					"text":"Sixteen wooden boats and four collapsibles, with long stretches of empty davits between them: seats for 1,178 people.",
+					"hidden":"events.lifeboat_capacity.values.fullDavits.value"
+				},{
+					"text":"A boat under every davit, end to end along both sides of the deck: a seat for everyone aboard.",
+					"hidden":"!events.lifeboat_capacity.values.fullDavits.value"
+				}
+			]
 		},
 		"atlantic.californian":{
 			"name":"SS Californian",
