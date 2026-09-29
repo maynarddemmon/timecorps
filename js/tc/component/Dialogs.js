@@ -208,7 +208,7 @@
                 attrs.cancelable ??= false;
                 attrs.centerItemCfgs ??= [
                     {klass:UnderlineBtn, attrs:{
-                        text:'Acknowledge', fontSize:fontSizeLarge, valign:'middle'
+                        name:'ackBtn', text:'Acknowledge', fontSize:fontSizeLarge, valign:'middle'
                     }, mixins:[{doActivated:self.doConfirm.bind(self)}]}
                 ];
                 self.callSuper(parent, attrs);
@@ -234,9 +234,10 @@
             confirmMsgDialog.show(title, msg, confirmFunc, cancelFunc);
             return confirmMsgDialog;
         },
-        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc) => {
+        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel) => {
             ackMsgDialog ??= new AckMsgDialog(pkg.app);
             ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
+            if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
             return ackMsgDialog;
         }
     }

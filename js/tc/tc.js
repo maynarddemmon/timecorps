@@ -200,18 +200,30 @@
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
-            loadTxtIntoElement: (url, targetView, isStillWanted) => {
-                targetView.setValue('Retrieving…');
-                
+            loadTxt: (url, callback) => {
                 myt.doFetch(url, {}, true,
                     response => {
-                        if (isStillWanted()) targetView.setValue(response);
+                        callback?.(true, response);
                     },
                     err => {
                         console.error('err', err);
-                        if (isStillWanted()) targetView.setValue('MISSING / REDACTED: ' + err);
+                        callback?.(false, err);
                     }
                 );
+            },
+            
+            loadTxtIntoElement: (url, targetView, isStillWanted) => {
+                targetView.setValue('Retrieving…');
+                
+                TC.loadTxt(url, (success, txt) => {
+                    if (isStillWanted()) {
+                        if (success) {
+                            targetView.setValue(txt);
+                        } else {
+                            targetView.setValue('MISSING / REDACTED: ' + txt);
+                        }
+                    }
+                });
             },
             
             // Constraint Scopes

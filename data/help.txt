@@ -1,0 +1,20 @@
+History is no longer fixed. The Time Corps sends agents into the past to see what really happened, and to change it where it must be changed.
+
+<span style="font-size:16px;">THE MISSION</span>
+The Mission panel names the current operation and its objectives. Meet every objective to complete it and receive the next.
+
+<span style="font-size:16px;">THE TIMELINE</span>
+Each column is a location and each box is a historical event, with time running down the page. Select an event to read its Historical Account, its Causators (the facts that decide what happens), and the events that lead to it and follow from it. Select a location's header to read its Area Brief.
+
+<span style="font-size:16px;">YOUR AGENTS</span>
+Select an agent, select an event, then Deploy (from HQ) or Jump (from another event) to send them there. Time travel costs chronal energy. Recall agents to HQ to reload their chronal from the HQ Chronal Pool.
+
+<span style="font-size:16px;">AT AN EVENT</span>
+? Investigate raises the event's attestation: how much the Corps knows about it. Knowing more reveals more of its account, hidden events connected to it, and the actions an agent can take there.
+⎇ Actions change causators, and the change ripples forward through every event that depends on them.
+⎆ Walk and Wait move an agent to a connected event without spending chronal.
+
+<span style="font-size:16px;">PARADOX</span>
+Entering an event an agent has already visited creates paradox. It builds up in the agent, the event and the timeline. If the timeline's paradox passes the Otomo threshold, the campaign is lost.
+
+Hover over buttons and bars for details. Open this manual again with the ? button at the top right.

@@ -24,10 +24,29 @@
         {
             WideView,
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
-            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeVeryLarge},
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS
+            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeMedium, fontSizeVeryLarge},
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
+            ICON_CANCEL
         } = pkg,
         
+        // Help //
+        HELP_SEEN_KEY = 'tc.helpSeen',
+        hasSeenHelp = () => {
+            try {
+                return localStorage.getItem(HELP_SEEN_KEY) === 'true';
+            } catch (err) {
+                return false;
+            }
+        },
+        markHelpSeen = () => {
+            try {
+                localStorage.setItem(HELP_SEEN_KEY, 'true');
+            } catch (err) {
+                // Ignore.
+            }
+        },
+        
+        // Data Loading //
         loadDataIntoModel = (url, resultCallback) => {
             M.doFetch(url, {}, true,
                 response => {
@@ -59,6 +78,8 @@
                             timelineView.setup(model);
                             teamView.setup(model);
                             model.reset();
+                            
+                            if (!hasSeenHelp()) appView.openHelp();
                         } else {
                             console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
                         }
@@ -126,6 +147,9 @@
                 }
             }]);
             new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
+            new pkg.SquareBtn(topView, {valign:'middle', text:'?', fontSize:fontSizeMedium, tooltip:'Help'}, [{
+                doActivated: appView.openHelp.bind(appView)
+            }]);
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },
         
@@ -247,6 +271,19 @@
                     appView.doReload();
                 }
             );
+        },
+        
+        openHelp: () => {
+            pkg.loadTxt('./data/' + 'help.txt', (success, txt) => {
+                if (success) {
+                    markHelpSeen();
+                    openAckMsgDialog(
+                        'Time Corps Field Manual', 
+                        txt, 
+                        null, null, ICON_CANCEL + ' Close'
+                    );
+                }
+            });
         },
         
         openAgentDossier: agentModel => {
