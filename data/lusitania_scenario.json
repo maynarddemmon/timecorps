@@ -4,62 +4,182 @@
 		"london.admiralty":{
 			"name":"The Admiralty",
 			"color":"#fdb9",
-			"order":1
+			"order":1,
+			"description":[
+				{
+					"text":"Submarine sightings off the Irish coast are logged one by one and never put together on a single chart.",
+					"hidden":"events.admiralty_warnings.values.positionsPlotted.value"
+				},{
+					"text":"Every recent sighting is on one chart, and the danger around the Old Head of Kinsale is plain to see.",
+					"hidden":"!events.admiralty_warnings.values.positionsPlotted.value"
+				},{
+					"text":"No warships have been ordered to meet the Lusitania.",
+					"hidden":"events.admiralty_warnings.values.escortDispatched.value"
+				},{
+					"text":"Destroyers have been ordered out to meet the Lusitania at the Fastnet.",
+					"hidden":"!events.admiralty_warnings.values.escortDispatched.value"
+				}
+			]
 		},
 		"london.westminster":{
 			"name":"Westminster",
 			"color":"#edc9",
-			"order":2
+			"order":2,
+			"description":[
+				{
+					"text":"The Lusitania’s bridge log is not among the documents before the inquiry.",
+					"hidden":"events.mersey_inquiry.values.evidenceSubmitted.value"
+				},{
+					"text":"The Lusitania’s bridge log has been entered into the inquiry’s record.",
+					"hidden":"!events.mersey_inquiry.values.evidenceSubmitted.value"
+				}
+			]
 		},
 		"new_york.pier_54":{
 			"name":"Pier 54",
 			"color":"#cfc9",
-			"order":3
+			"order":3,
+			"description":[
+				{
+					"text":"The cartridge cases have gone into the Lusitania’s forward holds.",
+					"hidden":"events.munitions_manifest.values.cargoOffloaded.value"
+				},{
+					"text":"Crates of cartridges and shells stand stacked in the pier shed, struck from the Lusitania’s cargo.",
+					"hidden":"!events.munitions_manifest.values.cargoOffloaded.value"
+				},{
+					"text":"Passengers crowd the gangways, joking about the Embassy’s notice.",
+					"hidden":"events.embassy_warning.values.warningHeeded.value"
+				},{
+					"text":"The ticket office is busy with cancellations after the Embassy’s notice.",
+					"hidden":"!events.embassy_warning.values.warningHeeded.value"
+				}
+			]
 		},
 		"lusitania":{
 			"name":"Lusitania",
 			"color":"#cdf9",
-			"order":4
+			"order":4,
+			"description":[
+				{
+					"text":"She makes the crossing alone.",
+					"hidden":"events.admiralty_warnings.values.escortProvided.value"
+				},{
+					"text":"Destroyers are waiting to escort her through the Irish approaches.",
+					"hidden":"!events.admiralty_warnings.values.escortProvided.value"
+				}
+			]
 		},
 		"lusitania.boilers":{
 			"name":"Boiler room No. 4",
 			"color":"#cdf9",
-			"order":4.1
+			"order":4.1,
+			"description":[
+				{
+					"text":"Boiler Room No. 4 is dark and cold, its furnaces empty.",
+					"hidden":"events.boiler_room_four.values.boilerRoomLit.value"
+				},{
+					"text":"All four boiler rooms are fired, and she can make her full 25 knots.",
+					"hidden":"!events.boiler_room_four.values.boilerRoomLit.value"
+				}
+			]
 		},
 		"lusitania.holds":{
 			"name":"Forward hold",
 			"color":"#cdf9",
-			"order":4.2
+			"order":4.2,
+			"description":[
+				{
+					"text":"The cartridges and shells are stowed here among the general cargo.",
+					"hidden":"events.munitions_manifest.values.cargoOffloaded.value"
+				},{
+					"text":"The munitions were left behind in New York. The holds carry only general cargo and mail.",
+					"hidden":"!events.munitions_manifest.values.cargoOffloaded.value"
+				}
+			]
 		},
 		"lusitania.bridge":{
 			"name":"Bridge",
 			"color":"#cdf9",
-			"order":4.3
+			"order":4.3,
+			"description":[
+				{
+					"text":"Turner holds her on a steady course to take his bearing.",
+					"hidden":"events.four_point_bearing.values.evasiveCourse.value"
+				},{
+					"text":"Turner has put her on an evasive course, and holds it.",
+					"hidden":"!events.four_point_bearing.values.evasiveCourse.value"
+				}
+			]
 		},
 		"lusitania.wireless":{
 			"name":"Wireless room",
 			"color":"#cdf9",
-			"order":4.4
+			"order":4.4,
+			"description":[
+				{
+					"text":"Nothing has been prepared to keep the set running if the dynamos fail.",
+					"hidden":"events.wireless_sos.values.emergencyPower.value"
+				},{
+					"text":"An emergency battery is rigged to the key, ready if the dynamos fail.",
+					"hidden":"!events.wireless_sos.values.emergencyPower.value"
+				}
+			]
 		},
 		"lusitania.boatdeck":{
 			"name":"Boat deck",
 			"color":"#cdf9",
-			"order":4.5
+			"order":4.5,
+			"description":[
+				{
+					"text":"Most of the deck crew have never lowered a boat.",
+					"hidden":"events.solas_davits.values.crewDrilled.value"
+				},{
+					"text":"The deck crew have drilled on every boat, on both sides of the ship.",
+					"hidden":"!events.solas_davits.values.crewDrilled.value"
+				}
+			]
 		},
 		"atlantic.u20":{
 			"name":"U-20",
 			"color":"#ccc9",
-			"order":5
+			"order":5,
+			"description":[
+				{
+					"text":"The Lusitania never comes within range.",
+					"hidden":"events.u20_patrol.values.firingSolution.value"
+				},{
+					"text":"The Lusitania steams across U-20’s bow, well within range.",
+					"hidden":"!events.u20_patrol.values.firingSolution.value"
+				}
+			]
 		},
 		"atlantic.kinsale":{
 			"name":"Old Head of Kinsale",
 			"color":"#9cf9",
-			"order":6
+			"order":6,
+			"description":[
+				{
+					"text":"The sea south of the headland is empty. The Lusitania has passed on toward Liverpool.",
+					"hidden":"events.lusitania_sinks.values.sinks.value"
+				},{
+					"text":"Eleven miles to the south, the wreck of the Lusitania lies on her starboard side on the seabed.",
+					"hidden":"!events.lusitania_sinks.values.sinks.value"
+				}
+			]
 		},
 		"queenstown":{
 			"name":"Queenstown",
 			"color":"#fcd9",
-			"order":7
+			"order":7,
+			"description":[
+				{
+					"text":"The tugs and tenders lie at their moorings with their fires banked.",
+					"hidden":"events.rescue_delayed.values.tendersReadied.value"
+				},{
+					"text":"The tugs and tenders are under steam, ready to sail at a moment’s notice.",
+					"hidden":"!events.rescue_delayed.values.tendersReadied.value"
+				}
+			]
 		}
 	},
 	

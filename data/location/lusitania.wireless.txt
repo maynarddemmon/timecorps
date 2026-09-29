@@ -1,0 +1,9 @@
+MARCONI ROOM — Boat Deck, RMS Lusitania
+
+The Lusitania's wireless room stands on the boat deck. It is run by Marconi Company operators: on this crossing, Robert Leith, with a junior operator to share the watches. In wartime they listen for Admiralty warnings as well as passenger traffic, and pass them to the bridge.
+
+The set draws its power from the ship's dynamos, driven by steam from the boilers. When the boilers fail, the dynamos stop and the set goes dead with them. An emergency supply is fitted, but it must be switched in and kept going by hand, in a ship that may be listing steeply and losing her lights.
+
+A distress call from here is the only way to summon help quickly. Rescue craft stand at Queenstown, more than twenty miles away, and at the small harbours along the coast. They can only come if they know.
+
+OPERATIVE NOTES: The room is small and always manned at sea. An engineer or electrician has a plausible reason to be here to check the supply. The emergency battery and its connections are the key to keeping the set alive in a crisis.

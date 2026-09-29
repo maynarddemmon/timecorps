@@ -4,12 +4,30 @@
 		"southampton.harland_wolff":{
 			"name":"Harland & Wolff",
 			"color":"#fcc9",
-			"order":1
+			"order":1,
+			"description":[
+				{
+					"text":"On the boat-deck plan pinned to the board, twenty boats sit among long rows of empty davit positions.",
+					"hidden":"events.lifeboat_capacity.values.fullDavits.value"
+				},{
+					"text":"On the boat-deck plan pinned to the board, every davit position has been inked in with a boat.",
+					"hidden":"!events.lifeboat_capacity.values.fullDavits.value"
+				}
+			]
 		},
 		"southampton.quay.berth_44":{
 			"name":"Berth 44",
 			"color":"#fcc9",
-			"order":1.1
+			"order":1.1,
+			"description":[
+				{
+					"text":"David Blair’s kit has gone ashore, and the crow’s nest key with it.",
+					"hidden":"events.roster_reshuffle.values.keyOnShip.value"
+				},{
+					"text":"The crow’s nest key has stayed with the ship.",
+					"hidden":"!events.roster_reshuffle.values.keyOnShip.value"
+				}
+			]
 		},
 		"titanic":{
 			"name":"Titanic",
@@ -19,7 +37,16 @@
 		"titanic.pursers":{
 			"name":"Purser’s office",
 			"color":"#ccf9",
-			"order":2.1
+			"order":2.1,
+			"description":[
+				{
+					"text":"The spare glasses are still in the drawer, unclaimed.",
+					"hidden":"events.purser_spare.values.spareRecovered.value"
+				},{
+					"text":"The drawer is empty. The spare glasses have gone up to the crow’s nest.",
+					"hidden":"!events.purser_spare.values.spareRecovered.value"
+				}
+			]
 		},
 		"titanic.nest":{
 			"name":"Crow’s nest",
@@ -38,17 +65,50 @@
 		"titanic.engine":{
 			"name":"Engine room",
 			"color":"#ccf9",
-			"order":2.3
+			"order":2.3,
+			"description":[
+				{
+					"text":"The engineers will answer the telegraph as it rings. If the bridge calls for astern, the engines go astern.",
+					"hidden":"events.engine_order.values.countermandAstern.value"
+				},{
+					"text":"The engineers have been told to keep her driving ahead through any emergency turn, so the rudder keeps its grip.",
+					"hidden":"!events.engine_order.values.countermandAstern.value"
+				}
+			]
 		},
 		"titanic.bridge":{
 			"name":"Bridge",
 			"color":"#ccf9",
-			"order":2.4
+			"order":2.4,
+			"description":[
+				{
+					"text":"The Mesaba’s warning of ice directly across the ship’s track has not reached the chart room.",
+					"hidden":"events.ice_warnings.values.relayToBridge.value"
+				},{
+					"text":"The Mesaba’s warning is on the chart-room table: heavy pack ice and large icebergs directly across the ship’s track.",
+					"hidden":"!events.ice_warnings.values.relayToBridge.value"
+				}
+			]
 		},
 		"titanic.wireless":{
 			"name":"Wireless room",
 			"color":"#ccf9",
-			"order":2.5
+			"order":2.5,
+			"description":[
+				{
+					"text":"Passengers’ telegrams are still piling up beside the key.",
+					"hidden":"events.wireless_priority.values.clearBacklogEarlier.value"
+				},{
+					"text":"The passengers’ traffic is cleared, and the operator has time to listen to other ships.",
+					"hidden":"!events.wireless_priority.values.clearBacklogEarlier.value"
+				},{
+					"text":"The Mesaba’s ice warning lies beside the operator’s elbow.",
+					"hidden":"events.ice_warnings.values.relayToBridge.value"
+				},{
+					"text":"The Mesaba’s ice warning has been taken to the bridge.",
+					"hidden":"!events.ice_warnings.values.relayToBridge.value"
+				}
+			]
 		},
 		"titanic.boatdeck":{
 			"name":"Boat deck",
@@ -67,7 +127,16 @@
 		"atlantic.californian":{
 			"name":"SS Californian",
 			"color":"#fcf9",
-			"order":3
+			"order":3,
+			"description":[
+				{
+					"text":"Her wireless operator is asleep, and the set is silent.",
+					"hidden":"events.californian_nearby.values.rescueResponds.value"
+				},{
+					"text":"Her wireless operator is still at his set, listening.",
+					"hidden":"!events.californian_nearby.values.rescueResponds.value"
+				}
+			]
 		}
 	},
 	

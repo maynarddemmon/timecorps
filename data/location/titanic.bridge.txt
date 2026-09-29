@@ -1,3 +1,9 @@
-This is the bridge of the Titanic.
+BRIDGE — Boat Deck forward, RMS Titanic
 
-FIXME: this needs a real description.
+The navigating bridge spans the forward end of the boat deck, open to the weather, with wings that reach out over the ship's sides for docking. Behind it, the enclosed wheelhouse holds the ship's wheel, where a quartermaster steers by compass on the officer's orders. The engine-room telegraphs stand on the bridge itself, their brass handles ringing orders down to the engines far below. The chart room and the captain's quarters lie close behind.
+
+The officers keep watch in turns. On the night of 14 April, First Officer William Murdoch has the watch from 22:00, with Fourth Officer Joseph Boxhall and Sixth Officer James Moody under him and Quartermaster Robert Hichens at the wheel. Captain Smith has been on the bridge during the evening and has retired, leaving orders to be called if in any doubt.
+
+Ice warnings received by the wireless room reach the bridge only if the operators bring them up by hand. Those that arrive are posted in the chart room. Not all of them arrive.
+
+OPERATIVE NOTES: The bridge is the most closely watched place on the ship. Only officers, quartermasters and messengers belong here. A junior officer or a Marconi operator carrying a message has a reason to be on the bridge; almost no one else does.
