@@ -3,7 +3,7 @@
     
     const {Class:JSClass, Module:JSModule} = JS,
         
-        {stableStringify, BaseModel, BaseModelCollection} = myt,
+        {stableStringify, BaseModel} = myt,
         
         {
             NotifyingNumericStatModel, setConstrainedValue, ConstrainableAttrSupport, Hideable, Describable,
@@ -257,7 +257,7 @@
             },
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
             
-            doHiddenChanged: function(hidden) {
+            doHiddenChanged: function(_hidden) {
                 this.notifyCollectionOfUpdate();
                 pkg.app.getTimelineView().notifyEventVisibilityChange(this);
             },
@@ -399,7 +399,7 @@
                 }
             },
             
-            notifyStatChanged: function(statModel) {
+            notifyStatChanged: function(_statModel) {
                 if (this.inited) this.notifyCollectionOfUpdate();
             },
             

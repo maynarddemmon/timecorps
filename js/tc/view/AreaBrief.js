@@ -2,7 +2,6 @@
     'use strict';
     
     const M = myt,
-        {View, SpacedLayout} = M,
         
         {
             WideView, DetailRow,
@@ -75,7 +74,7 @@
             profileViewValue.setPaddingTop(3);
             profileViewValue.setFontFamily(fontFamilyMono);
             
-            new SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
+            new M.SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },
         
         

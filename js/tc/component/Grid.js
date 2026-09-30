@@ -4,7 +4,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, PaddedText, PlainText, NOOP} = M,
+        {View, NOOP} = M,
         
         {
             Btn,
@@ -15,22 +15,6 @@
             },
             cfg:{STANDARD_DEBOUNCE_MILLIS}
         } = pkg,
-        
-        GridColHdr = pkg.GridColHdr = new JSClass('GridColHdr', M.SimpleGridColHdr, {
-            initNode: function(parent, attrs) {
-                attrs.activeColor ??= colorMegaDark;
-                attrs.hoverColor ??= colorDark;
-                attrs.readyColor ??= colorUltraDark;
-                attrs.textColor ??= colorBtn;
-                attrs.height ??= rowHeight;
-                attrs.inset ??= 7;
-                
-                // Use the parent as the default GridController.
-                attrs.gridController ??= parent;
-                
-                this.callSuper(parent, attrs);
-            }
-        }),
         
         GridCell = pkg.GridCell = new JSClass('GridCell', M.GridCell, {
             /** @overrides */
@@ -108,6 +92,22 @@
                 this.getRef(colId).setText(this.model[colId]);
             }
         });
+    
+    pkg.GridColHdr = new JSClass('GridColHdr', M.SimpleGridColHdr, {
+        initNode: function(parent, attrs) {
+            attrs.activeColor ??= colorMegaDark;
+            attrs.hoverColor ??= colorDark;
+            attrs.readyColor ??= colorUltraDark;
+            attrs.textColor ??= colorBtn;
+            attrs.height ??= rowHeight;
+            attrs.inset ??= 7;
+            
+            // Use the parent as the default GridController.
+            attrs.gridController ??= parent;
+            
+            this.callSuper(parent, attrs);
+        }
+    });
     
     pkg.GridRow = new JSClass('GridRow', View, {
         include: [M.InfiniteGridRow, GridRowMixin]

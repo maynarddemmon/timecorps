@@ -10,8 +10,7 @@
         {stableStringify, getRandomInt} = M,
         
         {
-            NotifyingNumericStatModel, setConstrainedValue,
-            ICON_HQ, ICON_JUMP,
+            NotifyingNumericStatModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
@@ -19,6 +18,7 @@
             },
             theme:{colorAction, fontFamilyMono},
             formatChronalAndParadox,
+            ICON_HQ,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION, AGENT_SKILL_IDS,
             SCOPE_AGENT
@@ -272,7 +272,7 @@
             }
         },
         
-        notifyStatChanged: function(statModel) {
+        notifyStatChanged: function(_statModel) {
             if (this.inited) this.notifyCollectionOfUpdate();
         },
         

@@ -8,10 +8,10 @@
         
         {
             theme:{
-                spacing, padding, btnHeight,
-                colorUltraLight, colorMedium, colorDark, colorUltraDark, colorMegaDark,
+                btnHeight,
+                colorUltraLight, colorMedium, colorMegaDark,
                 fontSizeMicro, fontSizeMedium,
-                colorHistoricity, colorAttestation, colorParadox, colorChronal, colorAction
+                colorParadox, colorChronal, colorAction
             },
             STAT_ID_CHRONAL, STAT_ID_PARADOX
         } = pkg,
@@ -32,8 +32,8 @@
                 
                 attrs.bgColor ??= colorMegaDark;
                 attrs.photoBgColor ??= colorMedium;
+                attrs.photoInset ??= 1;
                 const idFontSize = attrs.idFontSize ??= fontSizeMicro,
-                    photoInset = attrs.photoInset ??= 1,
                     size = attrs.size ??= btnHeight;
                 attrs.width = attrs.height = size;
                 
@@ -95,7 +95,7 @@
                 this._photo?.setOpacity(this.mouseOver ? 0.25 : 1);
             },
             
-            _doDblClick: function(event) {
+            _doDblClick: function(_event) {
                 if (!this.disabled) this.doDoubleClick();
             },
             doDoubleClick: M.NOOP
@@ -127,8 +127,8 @@
                         x:inset, y:inset, radius:w, thickness, color,
                         borderColor:'#0009', bgColor:'transparent'
                     }, [{
-                        getTooltipByValue: value => '',
-                        getTextByValue: value => ''
+                        getTooltipByValue: _value => '',
+                        getTextByValue: _value => ''
                     }]);
                     w -= thickness;
                     inset += thickness;

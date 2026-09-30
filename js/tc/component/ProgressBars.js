@@ -106,7 +106,7 @@
             this.statModel = statModel;
             this.constrain('_update', [statModel, 'value', statModel, 'max']);
         },
-        _update: function(v) {
+        _update: function(_event) {
             this.updateForStat(this.statModel);
         }
     });

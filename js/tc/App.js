@@ -19,7 +19,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, ResizeLayout, SizeToParent, global:G} = M,
+        {View, ResizeLayout, SizeToParent, global:G, NOOP} = M,
         
         {
             WideView,
@@ -36,14 +36,14 @@
         hasSeenHelp = () => {
             try {
                 return localStorage.getItem(HELP_SEEN_KEY) === 'true';
-            } catch (err) {
+            } catch {
                 return false;
             }
         },
         markHelpSeen = () => {
             try {
                 localStorage.setItem(HELP_SEEN_KEY, 'true');
-            } catch (err) {
+            } catch {
                 // Ignore.
             }
         },
@@ -131,7 +131,7 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
-        noop: M.NOOP,
+        noop: NOOP,
         
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
@@ -209,7 +209,7 @@
             dividerH.syncTo(middleView, 'updateLayout', 'width');
         },
         
-        buildFooterView: footerView => {},
+        buildFooterView: NOOP, // footerView => {},
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,

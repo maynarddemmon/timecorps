@@ -3,22 +3,19 @@
     
     const JSClass = JS.Class,
         
-        {
-            View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            Layout, SpacedLayout, WrappingLayout, ResizeLayout
-        } = myt,
+        {View, PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout, WrappingLayout} = myt,
         
         {
-            Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
-            GrandWidthMixin, Row, DetailRow, TextForFlow,
+            UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium,
+            GrandWidthMixin, Row, TextForFlow,
             theme:{
-                spacing, padding, rowHeight, btnHeight,
-                colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
+                spacing, padding, btnHeight,
+                colorUltraLight, colorLight, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
             cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
-            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_TRAVEL, ICON_VIEW, ICON_HQ,
+            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
@@ -386,8 +383,7 @@
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                const timelineView = pkg.app.getTimelineView(),
-                    isHQ = eventModel.isHQ();
+                const isHQ = eventModel.isHQ();
                 self.hqBtn.setDisabled(isHQ);
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
                 

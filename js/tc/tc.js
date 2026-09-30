@@ -1,7 +1,10 @@
 (pkg => {
     'use strict';
     
-    const {max:mathMax, floor:mathFloor, ceil:mathCeil, log2:mathLog2, log:mathLog, log10:mathLog10, abs:mathAbs, E:EULER} = Math,
+    const {
+            max:mathMax, floor:mathFloor, ceil:mathCeil, 
+            log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER
+        } = Math,
         
         // Chronal Util
         calculateSkillFactor = agentModel => 2 ** (agentModel.getSkillChronogation() / 100),

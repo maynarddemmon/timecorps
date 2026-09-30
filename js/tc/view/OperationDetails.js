@@ -3,7 +3,7 @@
     
     const JSClass = JS.Class,
         
-        {View, PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
+        {PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
         {
             UnderlineBtn, WideView, MiniPanel, GrandWidthMixin, DetailRow,

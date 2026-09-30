@@ -22,7 +22,7 @@
         TCModelCollection = pkg.TCModelCollection = new JSClass('TCModelCollection', myt.BaseModelCollection, {
             setScopeId: function(scopeId) {this.scopeId = scopeId;},
             
-            processDatum: function(datum, jsonContext) {
+            processDatum: function(datum, _jsonContext) {
                 this.addModel(datum);
             },
             

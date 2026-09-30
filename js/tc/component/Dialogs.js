@@ -14,10 +14,9 @@
         {
             UnderlineBtn,
             theme:{
-                spacing, padding, cornerRadius, btnHeight,
+                spacing, padding, cornerRadius,
                 colorDark, colorMegaDark, colorSuccess, colorError,
-                fontSizeLarge,
-                fontFamilyMono
+                fontSizeLarge, fontFamilyMono
             },
             cfg:{DEFAULT_TALL_DIALOG_WIDTH, DIALOG_FOOTER_HEIGHT}
         } = pkg,

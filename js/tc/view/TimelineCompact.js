@@ -21,12 +21,11 @@
                 TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET, TL_AGENT_TOKEN_SIZE, TL_AGENTS_PER_ROW
             },
             theme:{
-                spacing, cornerRadius, rowHeight, btnHeight, 
+                spacing, cornerRadius, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
-                colorUltraDark, colorMegaDark, colorBtn, colorParadox,
-                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
+                colorUltraDark, colorMegaDark, colorBtn,
+                fontSizeLarge, fontSizeVeryLarge
             },
-            I18N_PARADOX,
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
         } = pkg,
         
@@ -70,7 +69,6 @@
         },
         
         ANIM_DURATION = 500,
-        HALF_ANIM_DURATION = ANIM_DURATION/2,
         animateAttr = (target, attrName, newValue, easingFunction='inOutQuad', duration=ANIM_DURATION) => {
             if (target[attrName] !== newValue) {
                 target.stopActiveAnimators(attrName);
@@ -183,10 +181,7 @@
             };
             
             // Layout Events and Refresh Ticks
-            let selectedBoxAnimatingToBounds,
-                targetY = 0,
-                lastTick,
-                gapTickLongestDuration = 0;
+            let selectedBoxAnimatingToBounds;
             const eventTargetXById = {},
                 eventTargetYById = {};
             for (const eventModel of orderedEvents) {
@@ -214,8 +209,8 @@
                     targetHeight = endY - (tierYs[timelineOrdering] + boxTopOffset);
                 }
                 
-                const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT;
-                const eventBox = boxesByEventId[eventId];
+                const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+                    eventBox = boxesByEventId[eventId];
                 if (eventBox) {
                     if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
                     animateAttrs(eventBox, {x:targetX, y:targetY, height:targetHeight});
@@ -226,12 +221,12 @@
                     });
                 }
                 
-                const tickTargetY = targetY - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT;
-                let tick = ticksByTime[startTime];
+                const tickTargetY = targetY - TL_EVENT_BOX_Y_MARGIN - TL_TICK_LINE_HEIGHT,
+                    tick = ticksByTime[startTime];
                 if (tick) {
                     animateAttrs(tick, {y:tickTargetY});
                 } else {
-                    tick = ticksByTime[startTime] = new Tick(rowHeaders, {
+                    ticksByTime[startTime] = new Tick(rowHeaders, {
                         timeline, time:startTime,
                         y:tickTargetY, 
                         width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
@@ -259,9 +254,6 @@
                 }
                 timeline.gapRowsByTime = nextGapRowsByTime;
             }
-            
-            // The last tick has no next tick, so use the longest duration Event in its tier.
-            lastTick?.setGap(gapTickLongestDuration);
             
             // Layout Agents
             const agentCountsByEventId = {};
@@ -384,9 +376,6 @@
         
         updateEventBox = eventBox => {
             const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar} = eventBox,
-                start = model.getStart(),
-                end = model.getEnd(),
-                locId = model.getLocation(),
                 hidden = model.isHidden();
             eventBox.eventId = model.id;
             

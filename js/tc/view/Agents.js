@@ -7,7 +7,7 @@
         {
             GridColHdr, GridCellBtn, SimpleAgentGridMarker,
             timeUtil:{format},
-            theme:{padding, colorParadox, colorChronal, fontFamilyMono, btnHeight},
+            theme:{padding, btnHeight},
             SCOPE_AGENTS,
             ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
             STAT_ID_CHRONAL, STAT_ID_PARADOX
