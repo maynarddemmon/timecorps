@@ -81,12 +81,7 @@
             const header = self.getHeaderView();
             self.proceedBtn = new UnderlineBtn(header, {
                 text:'Next Mission ' + ICON_NEXT, visible:false
-            }, [{
-                doActivated: function() {
-                    const operationModel = self.operationModel;
-                    if (operationModel.canProceed()) pkg.model.setCurrentOperation(operationModel.getNextOperation());
-                }
-            }]);
+            }, [{doActivated: function() {self.operationModel.proceed();}}]);
             
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding, whiteSpace:'normal', text:"Select an Operation to see more about it here."

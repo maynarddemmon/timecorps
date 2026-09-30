@@ -26,8 +26,10 @@
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
             theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeMedium, fontSizeVeryLarge},
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
-            ICON_CANCEL
+            ICON_NEXT
         } = pkg,
+        
+        I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
         
         // Help //
         HELP_SEEN_KEY = 'tc.helpSeen',
@@ -273,15 +275,27 @@
             );
         },
         
+        notifyOperationCompleted: operationModel => {
+            const title = 'Mission Complete',
+                debrief = operationModel.getDebrief() || 'All mission objectives have been achieved.';
+            if (operationModel.getNextOperation()) {
+                openConfirmMsgDialog(
+                    title, debrief,
+                    () => {operationModel.proceed();},
+                    null,
+                    'Next Mission ' + ICON_NEXT, I18N_CLOSE_BTN
+                );
+            } else {
+                // No next operation case.
+                openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
+            }
+        },
+        
         openHelp: () => {
             pkg.loadTxt('./data/' + 'help.txt', (success, txt) => {
                 if (success) {
                     markHelpSeen();
-                    openAckMsgDialog(
-                        'Time Corps Field Manual', 
-                        txt, 
-                        null, null, ICON_CANCEL + ' Close'
-                    );
+                    openAckMsgDialog('Time Corps Field Manual', txt, null, null, I18N_CLOSE_BTN);
                 }
             });
         },

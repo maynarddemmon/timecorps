@@ -33,7 +33,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
     );
-    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.setConstrainedValue');
+    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.Describable');
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
         'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );

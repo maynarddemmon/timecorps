@@ -4,7 +4,9 @@
 	"operations":{
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
-			"description":"Prevent the Titanic from colliding with the iceberg.",
+			"description":[
+				"Prevent the Titanic from colliding with the iceberg."
+			],
 			"setup":{
 				"awardAgents":"VQ",
 				"revealAgents":"VQ",
@@ -18,11 +20,42 @@
 			"objectives":{
 				"avoid":{
 					"name":"No Collision",
-					"description":"The Titanic must not hit the iceberg.",
+					"description":[
+						"The Titanic must not hit the iceberg."
+					],
 					"success":"!events.collision.values.struck.value"
 				}
 			},
 			"onSuccess":{
+				"debrief":[
+					"At 23:40 on 14 April 1912, the Titanic passed the iceberg that should have sunk her. The collision is gone from the record.",
+					"<br><br>In the crow’s nest and on the bridge, the Corps’ changes held.",
+					{
+						"text":"The locker key never left the ship at Southampton.",
+						"hidden":"!events.roster_reshuffle.values.keyOnShip.value"
+					},{
+						"text":"A forgotten pair of glasses found its way from the purser’s drawer to the crow’s nest.",
+						"hidden":"!events.purser_spare.values.spareRecovered.value"
+					},{
+						"text":"The locker in the crow’s nest was opened by a hand that history does not record.",
+						"hidden":"!(events.missing_binoculars.values.plantKey.value || events.missing_binoculars.values.pickTheLocker.value)"
+					},{
+						"text":"With binoculars at hand, Frederick Fleet saw the berg while there was still time to act.",
+						"hidden":"!events.missing_binoculars.values.binocularsAccessible.value"
+					},{
+						"text":"The Mesaba’s warning reached the bridge, and the officers were watching for ice dead ahead.",
+						"hidden":"!events.ice_warnings.values.relayToBridge.value"
+					},
+					"<br><br>When Murdoch put the helm over, the engines kept driving ahead, and the ship answered in time.",
+					"<br><br>More than 2,200 people will reach New York on Wednesday morning, and none of them will ever know how close they came. The Corps’ analysts, however, are uneasy. A history without the Titanic is a history without the lessons she taught.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"hidden":"timeline.paradox.value > 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"hidden":"timeline.paradox.value === 0"
+					}
+				],
 				"nextOperation":"titanic_rescued",
 				"awardHQChronal":15,
 				"awardScore":5000
@@ -31,7 +64,9 @@
 		
 		"titanic_rescued":{
 			"name":"Titanic - Passengers Rescued",
-			"description":"It is essential that the Titanic sinks, but the massive loss of life must be prevented.",
+			"description":[
+				"It is essential that the Titanic sinks, but the massive loss of life must be prevented."
+			],
 			"setup":{
 				"historicityAdjustments":{
 					"lifeboat_capacity":25
@@ -40,16 +75,32 @@
 			"objectives":{
 				"collision":{
 					"name":"Collision",
-					"description":"The Titanic must hit the iceberg.",
+					"description":[
+						"The Titanic must hit the iceberg."
+					],
 					"success":"events.collision.values.struck.value"
 				},
 				"rescue":{
 					"name":"Rescue",
-					"description":"The passengers must survive.",
+					"description":[
+						"The passengers must survive."
+					],
 					"success":"!events.casualties.values.massLossOfLife.value"
 				}
 			},
 			"onSuccess":{
+				"debrief":[
+					"At 02:20 on 15 April 1912 the Titanic went down, as history requires. This time, almost everyone she carried lived to see the morning.",
+					"<br><br>Every davit on her boat deck carried a boat, and there was a seat for every soul aboard. The Californian heard the call for help and steamed through the ice toward the rockets, and her boats were among the first on the scene.",
+					"<br><br>The disaster will still change the rules of the sea. In London, delegates from thirteen nations will write lifeboat rules for every ship, driven now by the story of a rescue rather than a massacre.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"hidden":"timeline.paradox.value > 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"hidden":"timeline.paradox.value === 0"
+					}
+				],
 				"nextOperation":"lusitania_nosink",
 				"awardHQChronal":25,
 				"awardScore":8000,
@@ -60,7 +111,9 @@
 		
 		"lusitania_nosink":{
 			"name":"Lusitania - Doesn't Sink",
-			"description":"Prevent the sinking of the Lusitania.",
+			"description":[
+				"Prevent the sinking of the Lusitania."
+			],
 			"setup":{
 				"historicityAdjustments":{
 					"torpedo_strike":75,
@@ -71,11 +124,35 @@
 			"objectives":{
 				"afloat":{
 					"name":"Still Afloat",
-					"description":"The Lusitania must not be sunk.",
+					"description":[
+						"The Lusitania must not be sunk."
+					],
 					"success":"!events.lusitania_sinks.values.sinks.value"
 				}
 			},
 			"onSuccess":{
+				"debrief":[
+					"On the afternoon of 7 May 1915 the Lusitania rounded the Old Head of Kinsale and steamed on toward Liverpool.",
+					{
+						"text":"<br><br>Destroyers met her at the Fastnet, and no U-boat commander would risk a shot with warships at her side.",
+						"hidden":"!events.admiralty_warnings.values.escortProvided.value"
+					},{
+						"text":"<br><br>Running at full speed on a course no one could predict, she never gave U-20 a firing solution.",
+						"hidden":"events.admiralty_warnings.values.escortProvided.value || !(events.four_point_bearing.values.evasiveCourse.value && events.boiler_room_four.values.fullSteamAvailable.value)"
+					},{
+						"text":"Kapitänleutnant Schwieger watched her pass out of range and turned for home with his last torpedoes unspent.",
+						"hidden":"events.admiralty_warnings.values.escortProvided.value"
+					},
+					"<br><br>The 1,198 people who died off Kinsale will live. The sinking that hardened American opinion against Germany never happens, and what that means for the war is not yet clear.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"hidden":"timeline.paradox.value > 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"hidden":"timeline.paradox.value === 0"
+					},
+					"<br><br>This concludes the current campaign."
+				],
 				"awardHQChronal":30,
 				"awardScore":13000
 			}

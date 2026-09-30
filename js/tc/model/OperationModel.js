@@ -6,7 +6,7 @@
         {debounce, BaseModel, BaseModelCollection} = myt,
         
         {
-            setConstrainedValue,
+            ConstrainableAttrSupport, Describable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER},
             STAT_ID_CHRONAL
         } = pkg,
@@ -24,7 +24,19 @@
             }
         },
         
+        /*  Currently just a holder for a Descibable desription, no ID is even provided. If this is
+            ever expanded we'll need to change OperationModel.setDebrief/getDebrief.
+            
+            The text shown when an Operation is completed. Constraints resolve against the 
+            debrief itself, so phrases use "events.<id>..." and "timeline..." to describe how 
+            the Operation was actually won. */
+        DebriefModel = new JSClass('DebriefModel', BaseModel, {
+            include: [ConstrainableAttrSupport, Describable]
+        }),
+        
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
+            include: [ConstrainableAttrSupport, Describable],
+            
             init: function(attrs) {
                 this.operation = attrs.operation;
                 delete attrs.operation;
@@ -33,9 +45,6 @@
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
-            
-            setDescription: function(description) {this.set('description', description, true);},
-            getDescription: function() {return this.description;},
             
             setSuccess: function(success, isActual) {
                 if (isActual) {
@@ -50,6 +59,8 @@
         }),
         
         OperationModel = pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
+            include: [ConstrainableAttrSupport, Describable],
+            
             init: function(attrs) {
                 const self = this;
                 
@@ -67,9 +78,7 @@
             getAsObj: function(cfg) {
                 // FIXME: this is not really correct.
                 const retval = this.callSuper(cfg);
-                for (const attrName of [
-                    'name','description'
-                ]) {
+                for (const attrName of ['name']) {
                     retval[attrName] = this[attrName];
                 }
                 return retval;
@@ -81,9 +90,6 @@
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
-            
-            setDescription: function(description) {this.set('description', description, true);},
-            getDescription: function() {return this.description;},
             
             // Objectives
             setObjectives: function(objectives) {
@@ -115,6 +121,10 @@
             
             canProceed: function() {
                 return this.getNextOperation() != null && this.getProgress().completed;
+            },
+            
+            proceed: function() {
+                if (this.canProceed()) pkg.model.setCurrentOperation(this.getNextOperation());
             },
             
             
@@ -191,8 +201,15 @@
             setRevealAgentsOnSuccess: function(agentIds) {this.set('revealAgentsOnSuccess', validateAgentIdList(agentIds, 'onSuccess.revealAgents'), true);},
             setAwardAgentsOnSuccess: function(agentIds) {this.set('awardAgentsOnSuccess', validateAgentIdList(agentIds, 'onSuccess.awardAgents'), true);},
             
+            setDebrief: function(debrief) {
+                this._debrief?.destroy();
+                this._debrief = debrief == null ? null : new DebriefModel({description:debrief});
+            },
+            getDebrief: function() {return this._debrief?.getDescription() ?? '';},
+            
             setOnSuccess: function(onSuccessCfg) {
                 if (onSuccessCfg) {
+                    this.setDebrief(onSuccessCfg.debrief);
                     this.setNextOperation(onSuccessCfg.nextOperation);
                     this.setAwardScore(onSuccessCfg.awardScore);
                     this.setAwardHQChronal(onSuccessCfg.awardHQChronal);
@@ -209,6 +226,7 @@
                     rootModel.revealAgents(this.revealAgentsOnSuccess);
                     rootModel.awardAgents(this.awardAgentsOnSuccess);
                     this.successGranted = true;
+                    pkg.app.notifyOperationCompleted(this);
                 }
             },
             

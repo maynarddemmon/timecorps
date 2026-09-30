@@ -27,6 +27,10 @@
         REF_ID_CANCEL_FUNC = 'cnclFunc',
         REF_ID_CONFIRM_FUNC = 'confFunc',
         
+        DEFAULT_CONFIRM_LABEL = pkg.ICON_CHECKED + ' Confirm',
+        DEFAULT_CANCEL_LABEL = pkg.ICON_UNCHECKED + ' Cancel',
+        DEFAULT_ACK_LABEL = 'Acknowledge',
+        
         ModalDialog = pkg.ModalDialog = new JSClass('ModalDialog', M.Dimmer, {
             initNode: function(parent, attrs) {
                 const self = this;
@@ -139,12 +143,12 @@
                 const self = this;
                 attrs.centerItemCfgs ??= [
                     {klass:UnderlineBtn, attrs:{
-                        text:pkg.ICON_UNCHECKED + ' Cancel', textColor:colorError, 
+                        name:'cancelBtn', text:DEFAULT_CANCEL_LABEL, textColor:colorError, 
                         fontSize:fontSizeLarge, valign:'middle'
                     }, mixins:[{doActivated:self.doCancel.bind(self)}]},
                     SPACER_CFG,
                     {klass:UnderlineBtn, attrs:{
-                        text:pkg.ICON_CHECKED + ' Confirm', textColor:colorSuccess, 
+                        name:'confirmBtn', text:DEFAULT_CONFIRM_LABEL, textColor:colorSuccess, 
                         fontSize:fontSizeLarge, valign:'middle'
                     }, mixins:[{doActivated:self.doConfirm.bind(self)}]}
                 ];
@@ -208,7 +212,7 @@
                 attrs.cancelable ??= false;
                 attrs.centerItemCfgs ??= [
                     {klass:UnderlineBtn, attrs:{
-                        name:'ackBtn', text:'Acknowledge', fontSize:fontSizeLarge, valign:'middle'
+                        name:'ackBtn', text:DEFAULT_ACK_LABEL, fontSize:fontSizeLarge, valign:'middle'
                     }, mixins:[{doActivated:self.doConfirm.bind(self)}]}
                 ];
                 self.callSuper(parent, attrs);
@@ -229,12 +233,16 @@
         });
     
     pkg.dialogUtil = {
-        openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc) => {
+        openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => {
             confirmMsgDialog ??= new ConfirmMsgDialog(pkg.app);
             confirmMsgDialog.show(title, msg, confirmFunc, cancelFunc);
+            // Always set both labels since the dialog is shared.
+            const footer = confirmMsgDialog.getFooterView();
+            footer.confirmBtn.setText(confirmLabel);
+            footer.cancelBtn.setText(cancelLabel);
             return confirmMsgDialog;
         },
-        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel='Acknowledge') => {
+        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
             ackMsgDialog ??= new AckMsgDialog(pkg.app);
             ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
             if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
