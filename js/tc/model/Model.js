@@ -61,6 +61,18 @@
                     if (typeof datum.chronal !== 'number') {
                         datum.chronal = AGENT_DEFAULT_STARTING_CHRONAL;
                     }
+                    
+                    // Every Agent gets the shared description phrases after their own. Cloned
+                    // so each Agent's phrase models are built from their own data.
+                    const defaultDescription = jsonContext.agentDefaults?.description;
+                    if (defaultDescription) {
+                        const ownDescription = datum.description ?? [];
+                        datum.description = [
+                            ...(Array.isArray(ownDescription) ? ownDescription : [ownDescription]),
+                            ...structuredClone(defaultDescription)
+                        ];
+                    }
+                    
                     this.callSuper(datum, jsonContext);
                 }
             }]);

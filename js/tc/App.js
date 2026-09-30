@@ -242,6 +242,7 @@
         notifyModelUpdated: (instanceModel, scopeId) => {
             switch (scopeId) {
                 case SCOPE_AGENTS:
+                    agentDossier?.notifyAgentModelChanged(instanceModel);
                     eventDetailsView.notifyEventModelChanged(instanceModel.getEventModel());
                     if (eventDetailsView.selectedAgentModel === instanceModel) {
                         eventDetailsView.updateForSelectedAgent();

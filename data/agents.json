@@ -1,4 +1,25 @@
 {
+	"agentDefaults":{
+		"description":[
+			{
+				"text":"Clean record. Has never crossed their own path.",
+				"hidden":"agent.paradox.value !== 0"
+			},{
+				"text":"Crossed their own timeline once. Reports déjà vu, sleeping badly.",
+				"hidden":"agent.paradox.value !== 1"
+			},{
+				"text":"Several self-encounters now. Remembers conversations that haven’t happened yet. Medical wants a word.",
+				"hidden":"agent.paradox.value < 2 || agent.paradox.value >= agent.paradox.max"
+			},{
+				"text":"Paradox saturated. Keep them out of any event they’ve already visited, or we lose them.",
+				"hidden":"agent.paradox.value < agent.paradox.max"
+			},{
+				"text":"Lost to the Chronovores. Last seen in The Void.",
+				"hidden":"agent.event !== 'the_void'"
+			}
+		]
+	},
+	
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
@@ -49,7 +70,6 @@
 		"AD":{
 			"name":"Amon Duncan"
 		},
-		
 		"AE":{
 			"name":"Agent AE"
 		},

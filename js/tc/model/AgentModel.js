@@ -80,7 +80,7 @@
         but not "event...". */
     // FIXME: support event... as the Event the agent is currently in?
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
-        include: [pkg.ConstrainableAttrSupport, pkg.Hideable],
+        include: [pkg.ConstrainableAttrSupport, pkg.Hideable, pkg.Describable],
         
         /** @overrides ConstrainableAttrSupport */
         getConstraintScopeName: () => SCOPE_AGENT,
@@ -273,6 +273,10 @@
         },
         
         notifyStatChanged: function(statModel) {
+            if (this.inited) this.notifyCollectionOfUpdate();
+        },
+        
+        doDescriptionChanged: function() {
             if (this.inited) this.notifyCollectionOfUpdate();
         },
         

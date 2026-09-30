@@ -28,7 +28,7 @@ JS.Packages(file => {
     
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires('tc.Describable');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
-        'tc.NotifyingNumericStatModel','tc.Hideable'
+        'tc.NotifyingNumericStatModel','tc.Describable'
     );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'

@@ -157,10 +157,14 @@
                         }
                         path.shift();
                     }
-                    scope = resolveName(path, resolveRoot);
+                    
+                    // An empty path means the attribute is directly on the scope itself,
+                    // e.g. "agent.event".
+                    scope = path.length > 0 ? resolveName(path, resolveRoot) : resolveRoot;
                 } else {
                     scope = resolveTarget;
                 }
+                
                 
                 if (!scope) {
                     console.warn('Could not resolve', path.join('.'), 'for', funcName, 'on', target);

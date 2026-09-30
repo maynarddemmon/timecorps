@@ -10,7 +10,7 @@
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
-                fontFamilyMono
+                fontFamilyMono, fontSizeHandwritten, fontFamilyHandwritten
             },
             ICON_SEPARATOR
         } = pkg,
@@ -57,11 +57,21 @@
                     overflow:'autoy'
                 }),
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
+                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {label:'Field Notes'}),
                 profileView = self._profileView = new DetailRow(profileContainer, {label:'Profile'}),
-                profileViewValue = profileView.getValueView();
+                profileViewValue = profileView.getValueView(),
+                fieldNotesValueView = fieldNotesView.getValueView();
+            
+            fieldNotesValueView.setWhiteSpace('normal');
+            fieldNotesValueView.setPaddingTop(2);
+            fieldNotesValueView.setLineHeight('1.75em');
+            fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
+            fieldNotesValueView.setFontSize(fontSizeHandwritten);
+            
             profileViewValue.setWhiteSpace('pre-wrap');
             profileViewValue.setPaddingTop(3);
             profileViewValue.setFontFamily(fontFamilyMono);
+            
             new SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },
         
@@ -97,12 +107,24 @@
                     isNotFirst = true;
                 }
                 
+                self.updateFieldNotes();
                 pkg.loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
             }
         },
         
         
         // Methods /////////////////////////////////////////////////////////////
+        updateFieldNotes: function() {
+            const fieldNotes = this.agentModel?.getDescription() ?? '',
+                fieldNotesView = this._fieldNotesView;
+            fieldNotesView.setVisible(fieldNotes !== '');
+            fieldNotesView.setValue(fieldNotes);
+        },
+        
+        notifyAgentModelChanged: function(agentModel) {
+            if (this.visible && this.agentModel === agentModel) this.updateFieldNotes();
+        },
+        
         show: function(agentModel) {
             this.callSuper();
             this.setAgentModel(agentModel);
