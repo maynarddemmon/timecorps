@@ -32,7 +32,11 @@
 		"OK":{
 			"name":"Okonjo",
 			"chronal":0,
-			"paradox":1
+			"paradox":1,
+			"skills":{
+				"chronogation":25,
+				"investigation":75
+			}
 		},
 		"HW":{
 			"name":"Halloway",
@@ -59,118 +63,280 @@
 			}
 		},
 		"AA":{
-			"name":"Alexander Aimes"
+			"name":"Alexander Aimes",
+			"skills":{
+				"chronogation":25,
+				"investigation":50
+			}
 		},
 		"AB":{
-			"name":"Arthur Borne"
+			"name":"Arthur Borne",
+			"paradox":1,
+			"skills":{
+				"chronogation":-25,
+				"investigation":75
+			}
 		},
 		"AC":{
-			"name":"Aaron Crown"
+			"name":"Aaron Crown",
+			"paradox":2,
+			"skills":{
+				"chronogation":50,
+				"investigation":50
+			}
 		},
 		"AD":{
-			"name":"Amon Duncan"
+			"name":"Amon Duncan",
+			"skills":{
+				"chronogation":100,
+				"investigation":-25
+			}
 		},
 		"AE":{
-			"name":"Agent AE"
+			"name":"Anton Eklund",
+			"skills":{
+				"chronogation":-50,
+				"investigation":150
+			}
 		},
 		"AF":{
-			"name":"Agent AF"
+			"name":"Ambrose Fenwick",
+			"skills":{
+				"chronogation":75,
+				"investigation":0
+			}
 		},
 		"AG":{
-			"name":"Agent AG"
+			"name":"Aurelio Garza",
+			"skills":{
+				"chronogation":150,
+				"investigation":-50
+			}
 		},
 		"AH":{
-			"name":"Agent AH"
+			"name":"Axel Harrow",
+			"paradox":1,
+			"skills":{
+				"chronogation":50,
+				"investigation":25
+			}
 		},
 		"AI":{
-			"name":"Agent AI"
+			"name":"Aldous Ingram",
+			"skills":{
+				"chronogation":-25,
+				"investigation":100
+			}
 		},
 		"AJ":{
-			"name":"Agent AJ"
+			"name":"Asher Jansen",
+			"skills":{
+				"chronogation":100,
+				"investigation":25
+			}
 		},
 		"AK":{
-			"name":"Agent AK"
+			"name":"Arjun Kasliwal",
+			"skills":{
+				"chronogation":0,
+				"investigation":75
+			}
 		},
 		"AL":{
-			"name":"Agent AL"
+			"name":"Abram Lowe",
+			"skills":{
+				"chronogation":50,
+				"investigation":0
+			}
 		},
 		"AM":{
-			"name":"Agent AM"
+			"name":"Amadou Mensah",
+			"skills":{
+				"chronogation":25,
+				"investigation":50
+			}
 		},
 		"AN":{
-			"name":"Agent AN"
+			"name":"Ansel Novak",
+			"paradox":2,
+			"skills":{
+				"chronogation":25,
+				"investigation":100
+			}
 		},
 		"AO":{
-			"name":"Agent AO"
+			"name":"Alden Orme",
+			"skills":{
+				"chronogation":-75,
+				"investigation":125
+			}
 		},
 		"AP":{
-			"name":"Agent AP"
+			"name":"Aurelien Pascal",
+			"skills":{
+				"chronogation":125,
+				"investigation":-25
+			}
 		},
 		"AQ":{
-			"name":"Agent AQ"
+			"name":"Anya Quill",
+			"skills":{
+				"chronogation":0,
+				"investigation":100
+			}
 		},
 		"AR":{
-			"name":"Agent AR"
+			"name":"Ayumi Reyes",
+			"skills":{
+				"chronogation":125,
+				"investigation":0
+			}
 		},
 		"AS":{
-			"name":"Agent AS"
+			"name":"Ava Sato",
+			"skills":{
+				"chronogation":25,
+				"investigation":75
+			}
 		},
 		"AT":{
-			"name":"Agent AT"
+			"name":"Amara Thorne",
+			"paradox":1,
+			"skills":{
+				"chronogation":-25,
+				"investigation":75
+			}
 		},
 		"AU":{
-			"name":"Agent AU"
+			"name":"Aurora Ueda",
+			"skills":{
+				"chronogation":75,
+				"investigation":25
+			}
 		},
 		"AV":{
-			"name":"Agent AV"
+			"name":"Asha Varga",
+			"skills":{
+				"chronogation":125,
+				"investigation":25
+			}
 		},
 		"AW":{
-			"name":"Agent AW"
+			"name":"Aislin Wren",
+			"skills":{
+				"chronogation":50,
+				"investigation":50
+			}
 		},
 		"AX":{
-			"name":"Agent AX"
+			"name":"Alina Xu",
+			"paradox":1,
+			"skills":{
+				"chronogation":150,
+				"investigation":-75
+			}
 		},
 		"AY":{
-			"name":"Agent AY"
+			"name":"Amaya Yoshida",
+			"paradox":2,
+			"skills":{
+				"chronogation":50,
+				"investigation":50
+			}
 		},
 		"AZ":{
-			"name":"Agent AZ"
+			"name":"Anika Zeller",
+			"skills":{
+				"chronogation":-50,
+				"investigation":125
+			}
 		},
 		"BA":{
-			"name":"Agent BA"
+			"name":"Blythe Asano",
+			"skills":{
+				"chronogation":100,
+				"investigation":25
+			}
 		},
 		"BB":{
-			"name":"Agent BB"
+			"name":"Bianca Brandt",
+			"skills":{
+				"chronogation":25,
+				"investigation":75
+			}
 		},
 		"BC":{
-			"name":"Agent BC"
+			"name":"Bree Castellanos",
+			"skills":{
+				"chronogation":50,
+				"investigation":50
+			}
 		},
 		"BD":{
-			"name":"Agent BD"
+			"name":"Brigid Dunne",
+			"skills":{
+				"chronogation":0,
+				"investigation":75
+			}
 		},
 		"BE":{
-			"name":"Agent BE"
+			"name":"Beatriz Esteves",
+			"skills":{
+				"chronogation":50,
+				"investigation":25
+			}
 		},
 		"BF":{
-			"name":"Agent BF"
+			"name":"Bodil Falk",
+			"skills":{
+				"chronogation":75,
+				"investigation":-25
+			}
 		},
 		"BG":{
-			"name":"Agent BG"
+			"name":"Bryony Gale",
+			"paradox":1,
+			"skills":{
+				"chronogation":50,
+				"investigation":100
+			}
 		},
 		"BH":{
-			"name":"Agent BH"
+			"name":"Beatrix Hsu",
+			"skills":{
+				"chronogation":-25,
+				"investigation":150
+			}
 		},
 		"BI":{
-			"name":"Agent BI"
+			"name":"Bella Ionescu",
+			"paradox":2,
+			"skills":{
+				"chronogation":100,
+				"investigation":50
+			}
 		},
 		"BJ":{
-			"name":"Agent BJ"
+			"name":"Brynn Jaeger",
+			"skills":{
+				"chronogation":200,
+				"investigation":-50
+			}
 		},
 		"BK":{
-			"name":"Agent BK"
+			"name":"Beatrice Kaur",
+			"skills":{
+				"chronogation":50,
+				"investigation":75
+			}
 		},
 		"BL":{
-			"name":"Agent BL"
+			"name":"Bo Lindqvist",
+			"paradox":3,
+			"skills":{
+				"chronogation":25,
+				"investigation":50
+			}
 		}
 	}
 }
