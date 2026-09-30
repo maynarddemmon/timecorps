@@ -103,7 +103,7 @@
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
         
         getEventModelsInTimeOrder: () => model[SCOPE_EVENTS].getAsSortedList((a, b) => a.start - b.start),
-        putEventModelsInTieredTimeOrder: () => {
+        getOrderedEventsAndLocationsForTimeline: () => {
             const eventsAccum = [],
                 locationsUsed = {},
                 orderedEventModels = model.getEventModelsInTimeOrder();
@@ -125,7 +125,10 @@
                     locationsUsed[locModel.id] = locModel;
                 }
             }
-            return {events:eventsAccum, locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)};
+            return {
+                events:eventsAccum, 
+                locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)
+            };
         },
         
         

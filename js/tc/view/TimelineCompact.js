@@ -29,11 +29,12 @@
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
         } = pkg,
         
-        EVENT_TIER_HEIGHT = TL_EVENT_BOX_HEIGHT + 2*TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+        BOX_TOP_OFFSET = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+        EVENT_TIER_HEIGHT = TL_EVENT_BOX_HEIGHT + BOX_TOP_OFFSET + TL_EVENT_BOX_Y_MARGIN,
         
         // A spanning Event always reaches at least this far past the next tier's tick line, so
         // even a very small overlap is visibly a continuation rather than a near-miss.
-        MIN_SPAN_INTO_TIER = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT + 6,
+        MIN_SPAN_INTO_TIER = BOX_TOP_OFFSET + 6,
         
         TICK_LABEL_ADJ = TL_TICK_LINE_HEIGHT + spacing,
         
@@ -80,12 +81,8 @@
         },
         
         updateTimelineLayout = (timeline, isInitial) => {
-            // Order the Events and Locations
-            const {model, colHeaders, scrollToken, rowHeaders, flowLayer} = timeline,
-                {events:orderedEvents, locations:locModels} = timeline.orderedEvents = model.putEventModelsInTieredTimeOrder(),
-                locModelsLen = locModels.length,
-                colHeadersHeight = colHeaders.height,
-                rowHeaderWidth = rowHeaders.width;
+            const {model, colHeaders, rowHeaders, flowLayer} = timeline,
+                {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
             
             if (isInitial) {
                 // Destroy and cleanup for a new timeline layout
@@ -103,11 +100,13 @@
                 orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             }
             
-            const {colsByLocId, boxesByEventId, ticksByTime, tokensByAgentId} = timeline;
             
-            // Layout Location Columns
+            // Location Columns //
             let xExtent = 0;
-            const locColTargetXById = {};
+            const colHeadersHeight = colHeaders.height,
+                colsByLocId = timeline.colsByLocId,
+                locModelsLen = locModels.length,
+                locColTargetXById = {};
             for (let i = 0; i < locModelsLen; i++) {
                 const locModel = locModels[i],
                     locId = locModel.id;
@@ -126,7 +125,9 @@
                 }
             }
             
+            
             // Tiers //
+            
             // Start time and latest end of each visible tier, indexed by time ordering.
             const tierStarts = [],
                 tierMaxEnds = [];
@@ -146,13 +147,13 @@
                 tierYs = [],
                 tierActiveDurations = [],
                 wantedGaps = [];
-            let yCursor = 0,
+            let yExtent = 0,
                 coveredUntil = -Infinity;
             for (let i = 0; i < tierCount; i++) {
                 const start = tierStarts[i],
                     nextStart = tierStarts[i + 1];
-                tierYs[i] = yCursor;
-                yCursor += EVENT_TIER_HEIGHT;
+                tierYs[i] = yExtent;
+                yExtent += EVENT_TIER_HEIGHT;
                 coveredUntil = mathMax(coveredUntil, tierMaxEnds[i]);
                 
                 if (nextStart === undefined) {
@@ -161,28 +162,32 @@
                     const gap = nextStart - coveredUntil;
                     if (gap >= TL_GAP_MIN_MILLIS) {
                         tierActiveDurations[i] = coveredUntil - start;
-                        wantedGaps.push({time:coveredUntil, duration:gap, y:yCursor});
-                        yCursor += TL_GAP_ROW_HEIGHT;
+                        wantedGaps.push({time:coveredUntil, duration:gap, y:yExtent});
+                        yExtent += TL_GAP_ROW_HEIGHT;
                     } else {
                         // Idle time too short for its own row is folded into this tier.
                         tierActiveDurations[i] = nextStart - start;
                     }
                 }
             }
-            const yExtent = yCursor;
+            
+            
+            // Events and Ticks //
             
             // The number of later tiers that start strictly before this Event ends. An Event 
             // ending exactly when the next tier starts does not extend into it. Events in the same 
             // Location never overlap (enforced at startup), so a tall box never covers another box.
             const countSpannedTiers = (ordering, end) => {
-                let count = 0;
-                for (let i = ordering + 1; i < tierCount && tierStarts[i] < end; i++) count++;
-                return count;
+                let i = ordering + 1;
+                while (i < tierCount && tierStarts[i] < end) i++;
+                return i - ordering - 1;
             };
             
-            // Layout Events and Refresh Ticks
-            let selectedBoxAnimatingToBounds;
-            const eventTargetXById = {},
+            let selectedBoxAnimatingToBounds; // Used to keep the selected EventBox in the viewport.
+            
+            const rowHeaderWidth = rowHeaders.width,
+                {boxesByEventId, ticksByTime} = timeline,
+                eventTargetXById = {},
                 eventTargetYById = {};
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
@@ -197,22 +202,23 @@
                 // their duration, so the proportion is within the last tier only.
                 let targetHeight = TL_EVENT_BOX_HEIGHT;
                 if (spannedTiers > 0) {
-                    const boxTopOffset = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
-                        lastTier = timelineOrdering + spannedTiers,
+                    const lastTier = timelineOrdering + spannedTiers,
                         lastTierY = tierYs[lastTier],
                         lastTierSpan = tierActiveDurations[lastTier],
                         fraction = lastTierSpan > 0 ? mathMin(1, (eventModel.getEnd() - tierStarts[lastTier]) / lastTierSpan) : 1,
                         endY = mathMin(
-                            lastTierY + boxTopOffset + TL_EVENT_BOX_HEIGHT, // No lower than a normal box's bottom in that tier.
+                            lastTierY + BOX_TOP_OFFSET + TL_EVENT_BOX_HEIGHT, // No lower than a normal box's bottom in that tier.
                             mathMax(lastTierY + MIN_SPAN_INTO_TIER, lastTierY + fraction * EVENT_TIER_HEIGHT)
                         );
-                    targetHeight = endY - (tierYs[timelineOrdering] + boxTopOffset);
+                    targetHeight = endY - (tierYs[timelineOrdering] + BOX_TOP_OFFSET);
                 }
                 
-                const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
+                const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + BOX_TOP_OFFSET,
                     eventBox = boxesByEventId[eventId];
                 if (eventBox) {
-                    if (eventBox.isSelected()) selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
+                    if (eventBox.isSelected()) {
+                        selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
+                    }
                     animateAttrs(eventBox, {x:targetX, y:targetY, height:targetHeight});
                     updateEventBox(eventBox);
                 } else {
@@ -232,31 +238,35 @@
                         width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
                     });
                 }
-                
-                // Each tick shows how long something is in progress from its start.
-                for (let i = 0; i < tierCount; i++) ticksByTime[tierStarts[i]]?.setGap(tierActiveDurations[i]);
-                
-                // Gap Rows: create or move the ones still wanted, destroy the rest.
-                const gapRowsByTime = timeline.gapRowsByTime,
-                    nextGapRowsByTime = {};
-                for (const {time, duration, y} of wantedGaps) {
-                    let gapRow = gapRowsByTime[time];
-                    if (gapRow) {
-                        animateAttrs(gapRow, {y});
-                    } else {
-                        gapRow = new GapRow(rowHeaders, {y, width:rowHeaderWidth, height:TL_GAP_ROW_HEIGHT});
-                    }
-                    gapRow.setDuration(duration);
-                    nextGapRowsByTime[time] = gapRow;
-                }
-                for (const time in gapRowsByTime) {
-                    if (!nextGapRowsByTime[time]) gapRowsByTime[time].destroy();
-                }
-                timeline.gapRowsByTime = nextGapRowsByTime;
             }
             
-            // Layout Agents
-            const agentCountsByEventId = {};
+            // Each tick shows how long something is in progress from its start.
+            for (let i = 0; i < tierCount; i++) {
+                ticksByTime[tierStarts[i]]?.setGap(tierActiveDurations[i]);
+            }
+            
+            // Gap Rows: create or move the ones still wanted, destroy the rest.
+            const gapRowsByTime = timeline.gapRowsByTime,
+                nextGapRowsByTime = {};
+            for (const {time, duration, y} of wantedGaps) {
+                let gapRow = gapRowsByTime[time];
+                if (gapRow) {
+                    animateAttrs(gapRow, {y});
+                } else {
+                    gapRow = new GapRow(rowHeaders, {y, width:rowHeaderWidth, height:TL_GAP_ROW_HEIGHT});
+                }
+                gapRow.setDuration(duration);
+                nextGapRowsByTime[time] = gapRow;
+            }
+            for (const time in gapRowsByTime) {
+                if (!nextGapRowsByTime[time]) gapRowsByTime[time].destroy();
+            }
+            timeline.gapRowsByTime = nextGapRowsByTime;
+            
+            
+            // Agents //
+            const tokensByAgentId = timeline.tokensByAgentId,
+                agentCountsByEventId = {};
             for (const agentModel of model.getAgentModelsAsList()) {
                 const agentId = agentModel.id,
                     agentEventId = agentModel.getEvent(),
@@ -314,7 +324,9 @@
                 if (!isHiddenAgent) agentCountsByEventId[agentEventId] = agentCountForEvent + 1;
             }
             
+            
             // Update for new extents
+            const scrollToken = timeline.scrollToken;
             scrollToken.setX(TL_ROW_HEADER_WIDTH + xExtent - scrollToken.width);
             scrollToken.setY(TL_COL_HEADER_HEIGHT + yExtent - scrollToken.height);
             colHeaders.setWidth(xExtent);

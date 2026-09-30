@@ -6,10 +6,9 @@ export default [
     {
         languageOptions: {
             ecmaVersion: 2021,
-            sourceType: 'commonjs',
+            sourceType: 'script',
             globals: {
                 ...globals.browser,
-                ...globals.node,
                 ...globals.es2021,
                 
                 JS: 'readonly',
@@ -22,7 +21,7 @@ export default [
                 argsIgnorePattern: '^_',
                 varsIgnorePattern: '^_'
             }],
-            'no-undef': 'warn',
+            'no-undef': 'error',
             'no-extra-boolean-cast': 'off', // if (!!someVar) {   // }
             'no-constant-condition': ['warn', {checkLoops: false}], // while (true) {}
             'no-useless-escape': 'off',
