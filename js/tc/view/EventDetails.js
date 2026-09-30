@@ -10,7 +10,7 @@
         
         {
             Btn, UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium, timeUtil:{format},
-            GrandWidthMixin, Row, DividerRow, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
+            GrandWidthMixin, Row, DetailRow, TextForFlow,
             theme:{
                 spacing, padding, rowHeight, btnHeight,
                 colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark,
@@ -25,6 +25,7 @@
         
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
+        
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
             initNode: function(parent, attrs) {
                 attrs.x ??= MARKER_EXTENT;
@@ -32,12 +33,13 @@
                 
                 this.callSuper(parent, attrs);
                 
-                new WrappingLayout(this, {spacing:padding, lineSpacing:-5, collapseParent:true});
+                new WrappingLayout(this, {spacing, lineSpacing:-5, collapseParent:true});
             },
             clearContent: function() {
                 this.destroyAllSubviews();
             }
         }),
+        
         AgentRow = new JSClass('AgentRow', WideView, {
             initNode: function(parent, attrs) {
                 const self = this;
@@ -102,6 +104,7 @@
                 }
                 
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
+                new TextForFlow(actionView, {text:ICON_SEPARATOR});
                 new UnderlineActionBtn(actionView, {text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
                 }]);
@@ -119,7 +122,7 @@
                     }
                 }
                 
-                new TextForFlow(exitView, {text:'Exits:'});
+                new TextForFlow(exitView, {text:'Exits:\u00A0'});
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
@@ -151,6 +154,47 @@
                 if (addedCount === 0) new TextForFlow(exitView, {text:'No exits available.'});
             }
         }),
+        
+        /*  A button that selects another Event, and scrolls the timeline to it on hover. */
+        makeEventNavBtn = (parent, toEventModel, fromEventModel) => new UnderlineBtn(parent, {
+            text:toEventModel.name + ' ' + ICON_NAV_FORWARD
+        }, [{
+            setMouseOver: function(v) {
+                if (this.inited && this.mouseOver !== v) {
+                    this.callSuper(v);
+                    if (this.mouseOver) {
+                        pkg.app.scrollToDebounced(toEventModel);
+                    } else {
+                        pkg.app.scrollToEvent(fromEventModel, true);
+                    }
+                }
+            },
+            doActivated: () => {pkg.app.selectEventBox(toEventModel);}
+        }]),
+        
+        CausatorLinkFlow = new JSClass('CausatorLinkFlow', WideView, {
+            initNode: function(parent, attrs) {
+                attrs.x ??= padding;
+                attrs.percentOfParentWidthOffset ??= -2*padding;
+                this.callSuper(parent, attrs);
+                new WrappingLayout(this, {spacing, lineSpacing:-5, collapseParent:true});
+            },
+            
+            /*  Shows the label and a nav button for each Event. Hides itself if there are none. */
+            update: function(label, eventModels, fromEventModel) {
+                const self = this;
+                self.destroyAllSubviews();
+                if (eventModels.length > 0) {
+                    new TextForFlow(self, {text:label});
+                    eventModels.forEach((eventModel, idx) => {
+                        if (idx > 0) new TextForFlow(self, {text:ICON_SEPARATOR});
+                        makeEventNavBtn(self, eventModel, fromEventModel);
+                    });
+                }
+                self.setVisible(eventModels.length > 0);
+            }
+        }),
+        
         CausatorRow = new JSClass('CausatorRow', WideView, {
             initNode: function(parent, attrs) {
                 const self = this;
@@ -163,14 +207,37 @@
                 
                 self.nameTxt = new PaddedText(self, {padding, fontSize:fontSizeMedium, whiteSpace:'normal'});
                 self.descriptionTxt = new PaddedText(self, {padding, whiteSpace:'normal'});
+                
+                // The links get their own container since the row's negative spacing, which
+                // tightens up the text, would make the two flows overlap.
+                const linksView = self.linksView = new WideView(self);
+                self.precursorsFlow = new CausatorLinkFlow(linksView);
+                self.descendantsFlow = new CausatorLinkFlow(linksView);
+                new SpacedLayout(linksView, {axis:'y', inset:padding, spacing:-6, collapseParent:true});
+                
                 new SpacedLayout(self, {axis:'y', spacing:-2*padding, outset:spacing, collapseParent:true});
                 
                 self.update();
             },
             update: function() {
-                const valueModel = this.valueModel;
-                this.nameTxt.setText(valueModel.getName());
-                this.descriptionTxt.setText(valueModel.getDescription());
+                const self = this,
+                    valueModel = self.valueModel,
+                    eventModel = valueModel.event;
+                self.nameTxt.setText(valueModel.getName());
+                self.descriptionTxt.setText(valueModel.getDescription());
+                
+                // Only show links the player is allowed to know about.
+                self.precursorsFlow.update(
+                    'Precursors:\u00A0',
+                    [...valueModel.getPrecursors()].filter(precursor => !precursor.isHidden() && !eventModel.isAffectedByHidden(precursor)),
+                    eventModel
+                );
+                self.descendantsFlow.update(
+                    'Descendants:\u00A0',
+                    [...valueModel.getDescendants()].filter(descendant => !descendant.isHidden() && !descendant.isAffectedByHidden(eventModel)),
+                    eventModel
+                );
+                self.linksView.setVisible(self.precursorsFlow.visible || self.descendantsFlow.visible);
             }
         });
     
@@ -267,11 +334,6 @@
             }]);
             new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
-            // Causal Chain
-            new DividerRow(detailsContainer, {label:'Causal Chain'});
-            self.precursorsRow = new DetailRowFlow(detailsContainer, {label:'Precursors'});
-            self.descendantsRow = new DetailRowFlow(detailsContainer, {label:'Descendants'});
-            
             new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:0, collapseParent:true});
             
             self.ready = true;
@@ -341,62 +403,6 @@
                 );
                 
                 self.descriptionTxt.setText(eventModel.getDescription() || 'The historical record is silent.');
-                
-                // Precursor Nav Buttons //
-                const precursorsRow = self.precursorsRow,
-                    precursors = eventModel.getPrecursors();
-                precursorsRow.clearContent();
-                let addedCount = 0;
-                if (precursors.size > 0) {
-                    for (const precursorEvent of precursors) {
-                        if (!precursorEvent.isHidden() && !eventModel.isAffectedByHidden(precursorEvent)) {
-                            if (addedCount > 0) new TextForFlow(precursorsRow, {text:ICON_SEPARATOR});
-                            new UnderlineBtn(precursorsRow, {text:precursorEvent.name + ' ' + ICON_NAV_FORWARD}, [{
-                                setMouseOver: function(v) {
-                                    if (this.inited && this.mouseOver !== v) {
-                                        this.callSuper(v);
-                                        if (this.mouseOver) {
-                                            pkg.app.scrollToDebounced(precursorEvent);
-                                        } else {
-                                            pkg.app.scrollToEvent(eventModel, true);
-                                        }
-                                    }
-                                },
-                                doActivated: () => {pkg.app.selectEventBox(precursorEvent);}
-                            }]);
-                            addedCount++;
-                        }
-                    }
-                }
-                if (addedCount === 0) new NoValueText(precursorsRow);
-                
-                // Descendant Nav Buttons //
-                const descendantsRow = self.descendantsRow,
-                    descendants = eventModel.getDescendants();
-                descendantsRow.clearContent();
-                addedCount = 0;
-                if (descendants.size > 0) {
-                    for (const descendantEvent of descendants) {
-                        if (!descendantEvent.isHidden() && !descendantEvent.isAffectedByHidden(eventModel)) {
-                            if (addedCount > 0) new TextForFlow(descendantsRow, {text:ICON_SEPARATOR});
-                            new UnderlineBtn(descendantsRow, {text:descendantEvent.name + ' ' + ICON_NAV_FORWARD}, [{
-                                setMouseOver: function(v) {
-                                    if (this.inited && this.mouseOver !== v) {
-                                        this.callSuper(v);
-                                        if (this.mouseOver) {
-                                            pkg.app.scrollToDebounced(descendantEvent);
-                                        } else {
-                                            pkg.app.scrollToEvent(eventModel, true);
-                                        }
-                                    }
-                                },
-                                doActivated: () => {pkg.app.selectEventBox(descendantEvent);}
-                            }]);
-                            addedCount++;
-                        }
-                    }
-                }
-                if (addedCount === 0) new NoValueText(descendantsRow);
                 
                 // Agent Information //
                 const agentsRow = self.agentsRow;

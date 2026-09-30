@@ -3,17 +3,13 @@
     
     const JSClass = JS.Class,
         
-        {
-            View, Text, PaddedText, PaddedPlainText, PlainText, SimpleButton, SizeToParent, 
-            Layout, SpacedLayout, WrappingLayout, ResizeLayout, debounce
-        } = myt,
+        {View, PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
         {
-            Btn, UnderlineBtn, UnderlineActionBtn, SquareBtn, WideView, MiniPanel,
-            GrandWidthMixin, Row, DetailRow, DetailRowFlow, TextForFlow, NoValueText,
+            UnderlineBtn, WideView, MiniPanel, GrandWidthMixin, DetailRow,
             theme:{
-                spacing, padding, rowHeight, btnHeight,
-                colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark, colorSuccess, colorError,
+                spacing, padding,
+                colorUltraLight, colorMegaDark, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge
             },
             ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED

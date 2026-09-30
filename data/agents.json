@@ -12,9 +12,9 @@
 				"hidden":"agent.paradox.value < 2 || agent.paradox.value >= agent.paradox.max"
 			},{
 				"text":"Paradox saturated. Keep them out of any event they’ve already visited, or we lose them.",
-				"hidden":"agent.paradox.value < agent.paradox.max"
+				"hidden":"agent.paradox.value < agent.paradox.max || agent.event === 'the_void'"
 			},{
-				"text":"Lost to the Chronovores. Last seen in The Void.",
+				"text":"Lost to the Chronovores. Last seen being pulled into The Void.",
 				"hidden":"agent.event !== 'the_void'"
 			}
 		]

@@ -229,6 +229,10 @@
         }
     };
     
+    /*  The observer method name used for a constrained attribute, so code can pick out
+        one constraint's dependencies in getAllObservables/getAllObservers. */
+    pkg.getConstraintFuncName = generateConstraintName;
+    
     pkg.setConstrainedValue = (resolveTarget, target, name, constraintValue) => {
         const cfgName = generateConfigAttrName(name);
         if (target[cfgName] !== constraintValue) {

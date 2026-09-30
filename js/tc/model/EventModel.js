@@ -18,6 +18,16 @@
             SCOPE_EVENT
         } = pkg,
         
+        /*  Reduces a set of observables or observers to the EventModels they belong to. */
+        toEventModels = (things, excludeEventModel) => {
+            const retval = new Set();
+            for (const thing of things) {
+                const eventModel = thing.isA(EventModel) ? thing : thing.event?.isA(EventModel) ? thing.event : null;
+                if (eventModel && eventModel !== excludeEventModel) retval.add(eventModel);
+            }
+            return retval;
+        },
+        
         updateEndAttr = eventModel => {
             const {start, duration} = eventModel;
             if (start != null && duration != null) eventModel.set('end', start + duration);
@@ -96,6 +106,27 @@
             
             getDescription: function(joiner) {
                 return this.callSuper(joiner) || String(this.getValue() ?? ICON_NIL);
+            },
+            
+            
+            // Methods /////////////////////////////////////////////////////////
+            /*  Other Events whose Causators this Causator's value is computed from. Only the
+                value constraint counts, not the hidden constraint. */
+            getPrecursors: function() {
+                const valueFuncName = pkg.getConstraintFuncName('value');
+                return toEventModels(
+                    this.getAllObservables((_observable, funcName) => funcName === valueFuncName),
+                    this.event
+                );
+            },
+            
+            /*  Other Events with anything (a Causator, Action, Exit, etc.) that depends on this
+                Causator's value. */
+            getDescendants: function() {
+                return toEventModels(
+                    this.getAllObservers((_observer, _funcName, type) => type === 'value'),
+                    this.event
+                );
             }
         }),
         
@@ -373,33 +404,15 @@
             },
             
             getPrecursors: function(noSelf=true) {
-                // Accumulate Observables
-                const self = this,
-                    accum = new Set();
-                for (const valueModel of Object.values(self.values)) valueModel.getAllObservables(null, accum);
-                
-                // Filter them down to EventModels
-                const filtered = new Set();
-                for (const obs of accum) {
-                    const event = obs.isA(EventModel) ? obs : obs.event?.isA(EventModel) ? obs.event : null;
-                    if (event && (!noSelf || event !== self)) filtered.add(event);
-                }
-                return filtered;
+                const accum = new Set();
+                for (const valueModel of Object.values(this.values)) valueModel.getAllObservables(null, accum);
+                return toEventModels(accum, noSelf ? this : null);
             },
             
             getDescendants: function(noSelf=true) {
-                // Accumulate Observables
-                const self = this,
-                    accum = new Set();
-                for (const valueModel of Object.values(self.values)) valueModel.getAllObservers(null, accum);
-                
-                // Filter them down to EventModels
-                const filtered = new Set();
-                for (const obs of accum) {
-                    const event = obs.isA(EventModel) ? obs : obs.event?.isA(EventModel) ? obs.event : null;
-                    if (event && (!noSelf || event !== self)) filtered.add(event);
-                }
-                return filtered;
+                const accum = new Set();
+                for (const valueModel of Object.values(this.values)) valueModel.getAllObservers(null, accum);
+                return toEventModels(accum, noSelf ? this : null);
             },
             
             doDevouredByChronovores: function() {
