@@ -55,7 +55,9 @@
                     setConstrainedValue(this.operation, this, 'success', success);
                 }
             },
-            isSuccess: function() {return this.success;}
+            isSuccess: function() {return this.success;},
+            
+            doDescriptionChanged: function() {this.operation.notifyCollectionOfUpdate();}
         }),
         
         OperationModel = pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
@@ -241,6 +243,8 @@
                     this.callSuper();
                     this.fireEvent('updated');
                 }
-            }
+            },
+            
+            doDescriptionChanged: function() {this.notifyCollectionOfUpdate();}
         });
 })(tc);
