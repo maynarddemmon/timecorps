@@ -29,6 +29,31 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000/>.
 
+## Linting and tests
+
+The linter and tests need Node.js. Install the dev dependencies once, plus the browser the tests drive:
+
+```
+npm install
+npx playwright install chromium
+```
+
+Then:
+
+```
+npm run lint    # ESLint over the game code and the tests
+npm test        # Playwright tests in a headless browser
+```
+
+The tests start their own static server, load the real `index.html`, and check that:
+
+- the game starts with no errors or warnings, and the scenario data passes its startup validation;
+- every constraint reference in the data resolves, and every location and agent has its image and text;
+- the whole campaign can be played through, with each mission completing and advancing;
+- the constraint scopes, Field Notes and causator links behave as intended.
+
+Requests to other sites are stubbed out, so the tests don't need a network connection. `npx playwright test --headed` shows the browser while they run, and `npx playwright test campaign` runs a single file.
+
 ## Project layout
 
 | Path | Contents |
@@ -41,6 +66,7 @@ Then open <http://localhost:8000/>.
 | `data/help.txt` | The in-game field manual |
 | `img/` | Agent portraits and location photographs |
 | `fonts/` | Fonts and their licenses |
+| `tests/` | Playwright tests (`npm test`) |
 
 ### Scenario data
 

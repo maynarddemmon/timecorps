@@ -27,5 +27,16 @@ export default [
             'no-useless-escape': 'off',
             'no-cond-assign': 'off' // if(a = b)
         }
+    },
+    {
+        // The test harness runs in Node as ES modules. Code passed to page.evaluate runs in
+        // the game page, so "tc" stays available as a global there.
+        files: ['tests/**/*.mjs', 'playwright.config.mjs'],
+        languageOptions: {
+            sourceType: 'module',
+            globals: {
+                ...globals.node
+            }
+        }
     }
 ];
