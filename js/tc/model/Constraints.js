@@ -6,7 +6,32 @@
     
     const {resolveName, ExpressionParser, AccessorSupport:{generateName, generateSetterName}} = myt,
         
-        {SCOPE_TIMELINE, SCOPE_EVENTS, SCOPE_EVENT} = pkg,
+        {
+            SCOPE_TIMELINE, 
+            SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS, 
+            SCOPE_EVENT,  SCOPE_AGENT,  SCOPE_OPERATION
+        } = pkg,
+        
+        /*  Scopes that name a collection. The next path segment is a model ID, e.g.
+            "agents.VQ.paradox.value". */
+        COLLECTION_SCOPE_NAMES = [SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS],
+        getCollectionScope = name => {
+            const rootModel = pkg.model;
+            switch (name) {
+                case SCOPE_EVENTS: return rootModel.getEventModels();
+                case SCOPE_AGENTS: return rootModel.getAgentModels();
+                case SCOPE_OPERATIONS: return rootModel.getOperationModels();
+            }
+        },
+        
+        /*  Scopes that name the model an expression belongs to, e.g. "agent.paradox.value".
+            Only the one matching the resolve target's getConstraintScopeName() is defined in
+            any given expression. */
+        SELF_SCOPE_NAMES = [SCOPE_EVENT, SCOPE_AGENT, SCOPE_OPERATION],
+        
+        ALL_SCOPE_NAMES = [SCOPE_TIMELINE, ...COLLECTION_SCOPE_NAMES, ...SELF_SCOPE_NAMES],
+        ALL_SCOPE_NAMES_SET = new Set(ALL_SCOPE_NAMES),
+        FUNC_PARAMS = ALL_SCOPE_NAMES.join(','),
         
         PROP_PATHS = new Map(),
         CONFIG_ATTR_NAMES = new Map(),
@@ -54,7 +79,7 @@
                                 // We constructed a stack to a "this" reference so save off the 
                                 // current stack state as a property path
                                 propPaths.push(stack.slice().reverse());
-                            } else if (nodeType === 'Variable' && (nodeName === SCOPE_TIMELINE || nodeName === SCOPE_EVENTS || nodeName === SCOPE_EVENT)) {
+                            } else if (nodeType === 'Variable' && ALL_SCOPE_NAMES_SET.has(nodeName)) {
                                 propPaths.push(stack.concat([nodeName]).reverse());
                             } else if (nodeType === 'PropertyAccess') {
                                 if (parentNode?.type === 'FunctionCall') {
@@ -90,8 +115,8 @@
             target[funcName] = CONSTRAINT_FUNCTIONS.get(funcCacheKey) ?? (CONSTRAINT_FUNCTIONS.set(
                 funcCacheKey, 
                 new Function(
-                    [SCOPE_TIMELINE, SCOPE_EVENTS, SCOPE_EVENT].join(','),
-                    'try{this.' + generateSetterName(name) + '(' + constraintTxt + ', true);' + '}catch(e){console.warn(e);}'
+                    FUNC_PARAMS,
+                    'try{this.' + generateSetterName(name) + '(' + constraintTxt + ',true);' + '}catch(e){console.warn(e);}'
                 )
             ),/* comma operator */ CONSTRAINT_FUNCTIONS.get(funcCacheKey));
             
@@ -110,7 +135,7 @@
         bindConstraint = (resolveTarget, target, funcName, propPaths) => {
             if (target.destroyed || resolveTarget.destroyed) return;
             
-            const eventsById = pkg.model.getEventModels(),
+            const selfScopeName = resolveTarget.getConstraintScopeName?.(),
                 observables = [];
             let i = propPaths.length;
             while (i) {
@@ -118,25 +143,29 @@
                     observableVarName = path.pop();
                 let scope;
                 if (path.length > 0) {
+                    const scopeName = path[0];
                     let resolveRoot = resolveTarget;
-                    switch (path[0]) {
-                        case SCOPE_TIMELINE:
-                            resolveRoot = {[SCOPE_TIMELINE]:pkg.model};
-                            break;
-                        case SCOPE_EVENTS:
-                            resolveRoot = eventsById
-                            path.shift();
-                            break;
-                        case SCOPE_EVENT:
-                            path.shift();
-                            break;
+                    if (scopeName === SCOPE_TIMELINE) {
+                        resolveRoot = {[SCOPE_TIMELINE]:pkg.model};
+                    } else if (COLLECTION_SCOPE_NAMES.includes(scopeName)) {
+                        resolveRoot = getCollectionScope(scopeName);
+                        path.shift();
+                    } else if (SELF_SCOPE_NAMES.includes(scopeName)) {
+                        if (scopeName !== selfScopeName) {
+                            console.warn('Scope "' + scopeName + '" is not available here. Use "' + (selfScopeName ?? 'events/agents/operations') + '" instead:', funcName, resolveTarget);
+                            return;
+                        }
+                        path.shift();
                     }
                     scope = resolveName(path, resolveRoot);
                 } else {
                     scope = resolveTarget;
                 }
                 
-                if (!scope) return;
+                if (!scope) {
+                    console.warn('Could not resolve', path.join('.'), 'for', funcName, 'on', target);
+                    return;
+                }
                 
                 // Prevent duplicate binding for the same constraint
                 let j = observables.length,
@@ -162,9 +191,14 @@
                 }
             }
             
-            // Wrap the function so we can provide common context
+            // Wrap the function so we can provide common context. Params are in ALL_SCOPE_NAMES
+            // order with only the matching self scope defined.
             const existingFunc = target[funcName],
-                funcParams = [pkg.model, eventsById, resolveTarget];
+                funcParams = ALL_SCOPE_NAMES.map(name => {
+                    if (name === SCOPE_TIMELINE) return pkg.model;
+                    if (COLLECTION_SCOPE_NAMES.includes(name)) return getCollectionScope(name);
+                    return name === selfScopeName ? resolveTarget : undefined;
+                });
             target[funcName] = _event => {existingFunc.apply(target, funcParams);};
             
             if (observables.length > 0) {

@@ -14,7 +14,8 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
-            ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL
+            ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
+            SCOPE_EVENT
         } = pkg,
         
         updateEndAttr = eventModel => {
@@ -134,6 +135,9 @@
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
             include: [ConstrainableAttrSupport, Hideable, Describable],
+            
+            /** @overrides ConstrainableAttrSupport */
+            getConstraintScopeName: () => SCOPE_EVENT,
             
             
             // Life Cycle //////////////////////////////////////////////////////

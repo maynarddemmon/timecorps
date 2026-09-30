@@ -7,6 +7,13 @@
         
         {setConstrainedValue} = pkg;
     
+    /*  Hooks:
+            getConstraintScope() - The model that expressions on this model resolve against.
+                Defaults to the model itself.
+            getConstraintScopeName() - Implemented by models that can BE a constraint scope.
+                Names the variable ("event", "agent", "operation") that refers to the scope
+                in expressions. Without one, only "timeline", "events", "agents" and
+                "operations" are available. */
     pkg.ConstrainableAttrSupport = new JSModule('ConstrainableAttrSupport', {
         getConstraintScope: function() {return this;}
     });
@@ -18,8 +25,7 @@
         Requires: ConstrainableAttrSupport as a sibling mixin.
         
         Hooks:
-            getConstraintScope() - What "event..." resolves to in expressions. Defaults to the
-                model itself.
+            getConstraintScope() - See ConstrainableAttrSupport.
             doHiddenChanged(hidden) - Called after the value actually changes. */
     pkg.Hideable = new JSModule('Hideable', {
         setHidden: function(value, isActual) {

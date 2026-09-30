@@ -8,8 +8,25 @@
         {
             ConstrainableAttrSupport, Describable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER},
-            STAT_ID_CHRONAL
+            STAT_ID_CHRONAL, SCOPE_OPERATION
         } = pkg,
+        
+        /*  For models owned by an Operation. Expressions on them resolve against the
+            Operation, so "operation..." refers to it. */
+        ConstrainableToParentOperation = new JS.Module('ConstrainableToParentOperation', {
+            include: [ConstrainableAttrSupport],
+            
+            /** @overrides ConstrainableAttrSupport */
+            getConstraintScope: function() {return this.operation;},
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                this.operation = attrs.operation;
+                delete attrs.operation;
+                this.callSuper(attrs);
+            }
+        }),
         
         validateAgentIdList = (list, label) => {
             if (list) {
@@ -28,20 +45,14 @@
             ever expanded we'll need to change OperationModel.setDebrief/getDebrief.
             
             The text shown when an Operation is completed. Constraints resolve against the 
-            debrief itself, so phrases use "events.<id>..." and "timeline..." to describe how 
-            the Operation was actually won. */
+            owning Operation, so phrases use "operation...", "events.<id>..." and "timeline..."
+            to describe how the Operation was actually won. */
         DebriefModel = new JSClass('DebriefModel', BaseModel, {
-            include: [ConstrainableAttrSupport, Describable]
+            include: [ConstrainableToParentOperation, Describable]
         }),
         
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
-            include: [ConstrainableAttrSupport, Describable],
-            
-            init: function(attrs) {
-                this.operation = attrs.operation;
-                delete attrs.operation;
-                this.callSuper(attrs);
-            },
+            include: [ConstrainableToParentOperation, Describable],
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
@@ -52,7 +63,7 @@
                     this.operation.notifyCollectionOfUpdate();
                     if (success) this.operation.determineSuccessfulCompletion();
                 } else {
-                    setConstrainedValue(this.operation, this, 'success', success);
+                    setConstrainedValue(this.getConstraintScope(), this, 'success', success);
                 }
             },
             isSuccess: function() {return this.success;},
@@ -63,6 +74,11 @@
         OperationModel = pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
             include: [ConstrainableAttrSupport, Describable],
             
+            /** @overrides ConstrainableAttrSupport */
+            getConstraintScopeName: () => SCOPE_OPERATION,
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
                 
@@ -205,7 +221,7 @@
             
             setDebrief: function(debrief) {
                 this._debrief?.destroy();
-                this._debrief = debrief == null ? null : new DebriefModel({description:debrief});
+                this._debrief = debrief == null ? null : new DebriefModel({operation:this, description:debrief});
             },
             getDebrief: function() {return this._debrief?.getDescription() ?? '';},
             

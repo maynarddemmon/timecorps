@@ -227,12 +227,14 @@
             },
             
             // Constraint Scopes
+            SCOPE_TIMELINE:'timeline',
+            SCOPE_LOCATIONS:'locations',
             SCOPE_OPERATIONS:'operations',
-            SCOPE_TIMELINE: 'timeline',
-            SCOPE_AGENTS: 'agents',
-            SCOPE_LOCATIONS: 'locations',
-            SCOPE_EVENTS: 'events',
-            SCOPE_EVENT: 'event',
+            SCOPE_OPERATION:'operation',
+            SCOPE_AGENTS:'agents',
+            SCOPE_AGENT:'agent',
+            SCOPE_EVENTS:'events',
+            SCOPE_EVENT:'event',
             
             // Stat IDs
             STAT_ID_PARADOX:'paradox',
