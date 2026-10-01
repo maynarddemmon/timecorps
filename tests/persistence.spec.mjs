@@ -281,6 +281,10 @@ test('a selection matching the fresh campaign is restored on a later mission', a
     
     await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
     await setCausatorCfg(page, 'engine_order', 'countermandAstern', 'true');
+    
+    // Wait for the dialog, otherwise last() can match the Mission panel's own Next Mission
+    // link, which the dialog's dimmer then covers.
+    await expect(page.getByText('Mission Complete', {exact:true}).filter({visible:true})).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
     

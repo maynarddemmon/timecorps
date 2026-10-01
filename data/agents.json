@@ -23,6 +23,7 @@
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
+			"video":true,
 			"event":"collision",
 			"skills":{
 				"chronogation":-100,

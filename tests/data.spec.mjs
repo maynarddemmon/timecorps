@@ -106,8 +106,11 @@ test('every location has an image and an area brief', () => {
 
 test('every agent has a portrait and a dossier', () => {
     const missing = [];
-    for (const agentId of Object.keys(agents)) {
-        for (const file of ['img/agent/' + agentId + '.jpg', 'data/dossiers/' + agentId + '.txt']) {
+    for (const [agentId, agent] of Object.entries(agents)) {
+        // The .jpg is required even with a video portrait since it's the fallback.
+        const files = ['img/agent/' + agentId + '.jpg', 'data/dossiers/' + agentId + '.txt'];
+        if (agent.video) files.push('img/agent/' + agentId + '.webm');
+        for (const file of files) {
             if (!fileExists(file)) missing.push(file);
         }
     }

@@ -10,7 +10,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
     TYPES = {
         '.html':'text/html', '.js':'text/javascript', '.mjs':'text/javascript', '.css':'text/css',
         '.json':'application/json', '.txt':'text/plain; charset=utf-8', '.map':'application/json',
-        '.jpg':'image/jpeg', '.png':'image/png', '.svg':'image/svg+xml',
+        '.jpg':'image/jpeg', '.png':'image/png', '.svg':'image/svg+xml', '.webm':'video/webm',
         '.ttf':'font/ttf', '.woff':'font/woff', '.woff2':'font/woff2'
     };
 
