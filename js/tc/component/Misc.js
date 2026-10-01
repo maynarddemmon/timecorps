@@ -182,7 +182,11 @@
                 label = attrs.label;
             delete attrs.label;
             
+            
+            self.layoutWeight = attrs.layoutHint ??= 1;
             attrs.defaultPlacement = '_contentView';
+            
+            attrs.expanded ??= true;
             
             self.callSuper(parent, attrs);
             
@@ -190,6 +194,11 @@
                 wrapper = self._wrapperView = new WideView(self, {y:header.height, overflow:'autoy'}),
                 content = self._contentView = new WideView(wrapper);
             new SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            
+            wrapper.addDomClass('hideScrollbar');
+            wrapper.getIDS().overscrollBehavior = 'none';
+            
+            header.attachDomObserver(self, '_doClick', 'click');
         },
         setHeight: function(v) {
             this.callSuper(v);
@@ -201,7 +210,25 @@
         setLabel: function(v) {this.getHeaderView().setLabel(v);},
         getHeaderView: function() {return this._headerView;},
         getWrapperView: function() {return this._wrapperView;},
-        getContentView: function() {return this._contentView;}
+        getContentView: function() {return this._contentView;},
+        
+        _doClick: function(_event) {
+            this.setExpanded(!this.expanded);
+        },
+        setExpanded: function(expanded) {
+            this.set('expanded', expanded, true);
+            if (this.inited) {
+                if (this.expanded) {
+                    this.setLayoutHint(this.layoutWeight);
+                    this.getWrapperView().setVisible(true);
+                } else {
+                    this.setLayoutHint(null);
+                    this.setHeight(this.getHeaderView().height);
+                    this.getWrapperView().setVisible(false);
+                }
+                this.parent.getFirstLayout().update();
+            }
+        }
     });
     
     pkg.DetailRow = new JSClass('DetailRow', WideView, {

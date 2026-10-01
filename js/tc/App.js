@@ -134,7 +134,7 @@
             appView = pkg.app = this;
             
             attrs.minWidth = 1200;
-            attrs.minHeight = 600;
+            attrs.minHeight = 750;
             
             appView.callSuper(parent, attrs);
             
@@ -150,7 +150,7 @@
             // Build UI
             appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:40}));
             appView.buildMiddleView(new WideView(appView, {layoutHint:1}));
-            appView.buildFooterView(new WideView(appView, {bgColor:colorMedium, height:40}));
+            //appView.buildFooterView(new WideView(appView, {bgColor:colorMedium, height:40}));
             
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
@@ -286,7 +286,7 @@
             dividerH.syncTo(middleView, 'updateLayout', 'width');
         },
         
-        buildFooterView: NOOP, // footerView => {},
+        //buildFooterView: NOOP, // footerView => {},
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,

@@ -289,23 +289,15 @@
                 percentOfParentWidth:100,
                 fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
             }, [SizeToParent]);
-            new View(detailsContainer, {height:4}); // Spacer.
+            new View(detailsContainer, {height:2}); // Spacer.
             let row = new Row(detailsContainer, {height:18, inset:spacing});
             self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
             self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
             self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
-            new View(detailsContainer, {height:4}); // Spacer.
-            
-            // Description
-            row = new ContainerRow(detailsContainer, {label:'Historical Account', layoutHint:1});
-            self.descriptionTxt = new PaddedText(row, {padding:padding, whiteSpace:'normal'});
-            
-            // Causators
-            self.causatorsRow = new ContainerRow(detailsContainer, {label:'Causators', layoutHint:1});
+            new View(detailsContainer, {height:2}); // Spacer.
             
             // Agents
-            row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity', layoutHint:1});
-            
+            row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
@@ -315,7 +307,14 @@
                 doActivated: () => {self.selectedAgentModel.doRecallToHQ();}
             }]);
             
-            new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:0});
+            // Causators
+            self.causatorsRow = new ContainerRow(detailsContainer, {label:'Causators'});
+            
+            // Description
+            row = new ContainerRow(detailsContainer, {label:'Historical Account', layoutHint:2});
+            self.descriptionTxt = new PaddedText(row, {padding, whiteSpace:'normal'});
+            
+            new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:1});
             
             self.ready = true;
             
@@ -386,14 +385,30 @@
                 
                 const causatorsRow = self.causatorsRow;
                 causatorsRow.getContentView().destroyAllSubviews();
+                let addedCount = 0;
                 for (const valueModel of Object.values(eventModel.getValueModels())) {
-                    if (!valueModel.isHidden()) new CausatorRow(causatorsRow, {valueModel});
+                    if (!valueModel.isHidden()) {
+                        new CausatorRow(causatorsRow, {valueModel});
+                        addedCount++;
+                    }
+                }
+                if (addedCount === 0) {
+                    new PaddedPlainText(causatorsRow, {
+                        padding, whiteSpace:'normal', fontStyle:'italic', text:'No known causators for this event.'
+                    });
                 }
                 
                 const agentsRow = self.agentsRow;
                 agentsRow.getContentView().destroyAllSubviews();
+                addedCount = 0;
                 for (const agentModel of eventModel.getAgentModels()) {
                     new AgentRow(agentsRow, {agentModel, eventModel});
+                    addedCount++;
+                }
+                if (addedCount === 0) {
+                    new PaddedPlainText(agentsRow, {
+                        padding, whiteSpace:'normal', fontStyle:'italic', text:'No agents at this event.'
+                    });
                 }
                 
                 Layout.decrementGlobalLock();
