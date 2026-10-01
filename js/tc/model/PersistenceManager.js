@@ -39,8 +39,17 @@
                 savedAt:new Date().toISOString(),
                 data:persistanceManager.exportDiff()
             };
-        };
+        },
         
+        /*  Returns why a record can't be used as a save, or null if it can. Only checks the
+            outline. Problems deeper in the data are caught when it is restored. */
+        validateRecord = record => {
+            if (!isObj(record)) return 'it is not a Time Corps save file';
+            if (record.version !== SAVE_FORMAT_VERSION) return 'it is from an unsupported version (' + record.version + ')';
+            if (!isObj(record.data)) return 'it has no save data';
+            return null;
+        };
+    
     /*  Saves and restores a campaign to localStorage. Only what differs from a baseline is
         saved, where the baseline is the model's export taken right after a fresh campaign
         starts. A save is later applied on top of that same fresh campaign.
@@ -74,31 +83,42 @@
             return diff(this.baseline, this.model.exportToObj()) ?? {};
         },
         
-        /*  Returns the save's Date on success, otherwise null. */
-        save: function(jsonData) {
+        save: function(record=prepareData(this)) {
             try {
-                const dataToSave = jsonData ?? prepareData(this);
-                localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
-                return dataToSave.savedAt;
+                localStorage.setItem(this.storageKey, JSON.stringify(record));
+                return true;
             } catch (err) {
                 console.error('Save failed', err);
-                return null;
+                return false;
             }
         },
         
-        /*  Applies the stored save, if any, on top of the current (freshly reset) campaign.
-            Returns true if a save was restored. */
+        /*  Returns null on success, otherwise the reason it failed. Nothing is written on failure,
+            so the existing save is untouched. */
+        importRecord: function(record) {
+            const problem = validateRecord(record);
+            if (problem) return problem;
+            return this.save({...record, savedAt:record.savedAt ?? new Date().toISOString()}) ? null : 'the browser blocked storage for this site';
+        },
+        
+        /*  Returns null if a save was restored or there was none, otherwise the reason it failed. 
+            A failed restore may have partly changed the model, so the save is cleared and the 
+            caller should reload. */
         restore: function() {
             const record = readStorage(this.storageKey);
-            if (!record) return false;
+            if (!record) return null;
             
-            if (record.version !== SAVE_FORMAT_VERSION) {
-                console.warn('Ignoring save with unsupported version', record.version);
-                return false;
+            let problem = validateRecord(record);
+            if (!problem) {
+                try {
+                    this.importDiff(record.data);
+                } catch (err) {
+                    console.error('Restore failed', err);
+                    problem = 'it could not be applied';
+                }
             }
-            
-            this.importDiff(record.data ?? {});
-            return true;
+            if (problem) this.clear();
+            return problem;
         },
         
         export: function() {

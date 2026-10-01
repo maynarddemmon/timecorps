@@ -4,7 +4,7 @@
     let appView,
         model,
         persistence,
-        hiddenJSONImporter,
+        hiddenSaveFileImporter,
         
         saveBtn,
         
@@ -103,10 +103,14 @@
                             
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistence.captureBaseline();
-                            persistence.restore();
+                            const restoreProblem = persistence.restore();
                             updateLastSaved();
                             
-                            if (!hasSeenHelp()) appView.openHelp();
+                            if (restoreProblem) {
+                                openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
+                            } else if (!hasSeenHelp()) {
+                                appView.openHelp();
+                            }
                         } else {
                             console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
                         }
@@ -206,12 +210,12 @@
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Import Save File',
-                        'Are you sure you want to import a “save” file and start from there? Any currently saved progress will be overwritten.',
+                        'Are you sure you want to import a “save” file and continue from there? Any currently saved progress will be overwritten.',
                         appView.doImport
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file.'}, [{
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file of your current progress.'}, [{
                 doActivated: persistence.export.bind(persistence)
             }]);
             
@@ -342,27 +346,24 @@
         },
         
         doImport: () => {
-            hiddenJSONImporter ??= new M.HiddenJSONImporter(appView);
-            hiddenJSONImporter.processJSON = json => {
-                if (json) {
-                    let title,
-                        msg;
-                    if (persistence.save(json)) {
-                        updateLastSaved();
-                        title = 'Import Succeeded';
-                        msg = 'Your data has been imported.';
-                    } else {
-                        persistence.clear();
-                        title = 'Import Failed';
-                        msg = 'Something went wrong during import and things are now mangled so all saved data has been cleared.';
+            if (!hiddenSaveFileImporter) {
+                hiddenSaveFileImporter = new M.HiddenJSONImporter(appView, null, [{
+                    processJSON: json => {
+                        const problem = persistence.importRecord(json);
+                        if (problem) {
+                            openAckMsgDialog('Import Failed', 'That file could not be imported because ' + problem + '. Your current progress is unchanged.');
+                        } else {
+                            updateLastSaved();
+                            openAckMsgDialog('Import Succeeded', 'Your data has been imported.', appView.doReload, null, 'Continue');
+                        }
+                    },
+                    handleJSONParsingError: function(err) {
+                        this.callSuper(err);
+                        openAckMsgDialog('Import Failed', 'That file is not a Time Corps save file. Your current progress is unchanged.');
                     }
-                    
-                    // Use a timeout so the confirm dialog can close, focus restores, then
-                    // open the ack dialog which then pulls focus again.
-                    setTimeout(() => openAckMsgDialog(title, msg, appView.doReload, null, 'Continue'), 0);
-                }
-            };
-            hiddenJSONImporter.promptForFile();
+                }]);
+            }
+            hiddenSaveFileImporter.promptForFile();
         },
         
         notifyTimelineParadoxExceeded: () => {
