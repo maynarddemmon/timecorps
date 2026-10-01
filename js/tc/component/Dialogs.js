@@ -9,7 +9,7 @@
         {min:mathMin, max:mathMax, floor:mathFloor} = Math,
         
         M = myt,
-        PaddedText = M.PaddedText,
+        {PaddedText, KeyObservable:{getCodeFromEvent}, global:{keys:{CODE_ESC, CODE_ENTER}}} = M,
         
         {
             UnderlineBtn,
@@ -98,8 +98,8 @@
             getFooterView: function() {return this._footerView;},
             
             _keyDown: function(event) {
-                switch (M.KeyObservable.getCodeFromEvent(event)) {
-                    case M.global.keys.CODE_ESC:
+                switch (getCodeFromEvent(event)) {
+                    case CODE_ESC:
                         this.getCloseBtn()?.doActivated();
                         break;
                 }
@@ -152,6 +152,18 @@
                     }, mixins:[{doActivated:self.doConfirm.bind(self)}]}
                 ];
                 self.callSuper(parent, attrs);
+            },
+            
+            getConfirmBtn: function() {return this.getFooterView().confirmBtn;},
+            
+            _keyDown: function(event) {
+                switch (getCodeFromEvent(event)) {
+                    case CODE_ENTER:
+                        this.getConfirmBtn()?.doActivated();
+                        break;
+                    default:
+                        this.callSuper(event);
+                }
             },
             
             doClose: function() {
@@ -215,6 +227,18 @@
                     }, mixins:[{doActivated:self.doConfirm.bind(self)}]}
                 ];
                 self.callSuper(parent, attrs);
+            },
+            
+            getAckBtn: function() {return this.getFooterView().ackBtn;},
+            
+            _keyDown: function(event) {
+                switch (getCodeFromEvent(event)) {
+                    case CODE_ENTER:
+                        this.getAckBtn()?.doActivated();
+                        break;
+                    default:
+                        this.callSuper(event);
+                }
             },
             
             doConfirm: function() {

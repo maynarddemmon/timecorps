@@ -165,9 +165,30 @@
             new pkg.Spacer(topView);
             
             saveBtn = new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
-                doActivated: appView.doSave
+                doActivated: () => {
+                    openConfirmMsgDialog(
+                        'Save Campaign',
+                        'Save your progress? This will overwrite any existing save data.',
+                        () => {
+                            let title,
+                                msg;
+                            if (persistence.save()) {
+                                updateLastSaved();
+                                title = 'Save Succeeded';
+                                msg = 'Your progress has been saved.';
+                            } else {
+                                title = 'Save Failed';
+                                msg = 'Your progress could not be saved. The browser may be blocking storage for this site.';
+                            }
+                            
+                            // Use a timeout so the confirm dialog can close, focus restores, then
+                            // open the ack dialog which then pulls focus again.
+                            setTimeout(() => openAckMsgDialog(title, msg), 0);
+                        }
+                    );
+                }
             }]);
-            new pkg.SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Restart Campaign',
@@ -297,14 +318,6 @@
         doRestartCampaign: () => {
             persistence.clear();
             appView.doReload();
-        },
-        
-        doSave: () => {
-            if (persistence.save()) {
-                updateLastSaved();
-            } else {
-                openAckMsgDialog('Save Failed', 'Your progress could not be saved. The browser may be blocking storage for this site.');
-            }
         },
         
         notifyTimelineParadoxExceeded: () => {
