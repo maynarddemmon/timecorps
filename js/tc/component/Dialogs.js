@@ -75,6 +75,7 @@
                     }]);
                     header.getFirstLayout().setOutset(1);
                 }
+                self.attachToDom(self, '_keyDownCapture', 'keydown', true);
                 self.attachToDom(self, '_keyDown', 'keydown');
                 
                 if (hasFooter) {
@@ -98,14 +99,23 @@
             getDefaultBtn: M.NOOP,
             getFooterView: function() {return this._footerView;},
             
+            /*  Esc is handled in the capture phase because myt buttons (and checkboxes) stop 
+                keydown from bubbling, so a focused one would otherwise swallow it. Returning 
+                true lets every other key carry on to its target. */
+            _keyDownCapture: function(event) {
+                if (M.KeyObservable.getCodeFromEvent(event) === globalKeys.CODE_ESC) {
+                    this.getCloseBtn()?.doActivated();
+                    return false;
+                }
+                return true;
+            },
+            
+            /*  Enter is handled in the bubble phase so a focused button gets it first and 
+                activates itself, e.g. Enter on a focused Cancel cancels. This only runs when 
+                nothing focused inside the dialog handled it. */
             _keyDown: function(event) {
-                switch (M.KeyObservable.getCodeFromEvent(event)) {
-                    case globalKeys.CODE_ESC:
-                        this.getCloseBtn()?.doActivated();
-                        break;
-                    case globalKeys.CODE_ENTER:
-                        this.getDefaultBtn()?.doActivated();
-                        break;
+                if (M.KeyObservable.getCodeFromEvent(event) === globalKeys.CODE_ENTER) {
+                    this.getDefaultBtn()?.doActivated();
                 }
             },
             

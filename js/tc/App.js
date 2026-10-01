@@ -18,7 +18,8 @@
         teamView,
         
         agentDossier,
-        areaBrief;
+        areaBrief,
+        settingsDialog;
     
     const JSClass = JS.Class,
         
@@ -202,7 +203,6 @@
                     );
                 }
             }]);
-            //new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'});
             
             new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
             
@@ -221,10 +221,13 @@
             
             new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
             
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'}, [{
+                doActivated: appView.openSettings
+            }]);
+            
             new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
                 doActivated: appView.openHelp
             }]);
-            
             
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },
@@ -378,8 +381,18 @@
         },
         
         notifyOperationCompleted: operationModel => {
+            let saveNote = '';
+            if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistence.hasBaseline()) {
+                if (persistence.save()) {
+                    updateLastSaved();
+                    saveNote = '<br><br><i>Your progress has been saved.</i>';
+                } else {
+                    saveNote = '<br><br><i>Your progress could not be saved automatically.</i>';
+                }
+            }
+            
             const title = 'Mission Complete',
-                debrief = operationModel.getDebrief() || 'All mission objectives have been achieved.';
+                debrief = (operationModel.getDebrief() || 'All mission objectives have been achieved.') + saveNote;
             if (operationModel.getNextOperation()) {
                 openConfirmMsgDialog(
                     title, debrief,
@@ -391,6 +404,12 @@
                 // No next operation case.
                 openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
             }
+        },
+        
+        openSettings: () => {
+            settingsDialog ??= new pkg.SettingsDialog(appView);
+            settingsDialog.show();
+            return settingsDialog;
         },
         
         openHelp: () => {

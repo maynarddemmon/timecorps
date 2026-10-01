@@ -276,4 +276,4 @@
         
         doDescriptionChanged: function() {this.notifyCollectionOfUpdate();}
     });
-})(tc);
+})(tc);

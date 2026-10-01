@@ -64,7 +64,10 @@
         
         
         // Accessors ///////////////////////////////////////////////////////////
-        /*  The Date of the last save, or null if there is no save. */
+        /*  The Date of the last save, or null if there is no save.
+            False until captureBaseline is called, which happens once startup finishes. */
+        hasBaseline: function() {return this.baseline != null;},
+        
         getLastSavedDate: function() {
             const savedAt = readStorage(this.storageKey)?.savedAt;
             return savedAt ? new Date(savedAt) : null;

@@ -38,6 +38,7 @@ JS.Packages(file => {
         'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
+    file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');
     
     // View //
     file(VIEW_ROOT + 'Agents.js').provides('tc.Agents').requires(
@@ -54,10 +55,11 @@ JS.Packages(file => {
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog');
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog');
+    file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
-        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier','tc.AreaBrief'
+        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog'
     );
 });
