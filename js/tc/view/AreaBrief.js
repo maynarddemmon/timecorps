@@ -8,7 +8,7 @@
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
-                fontSizeHandwritten, fontFamilyMono, fontFamilyHandwritten
+                fontSizeMedium, fontSizeHandwritten, fontFamilyMono, fontFamilyHandwritten
             },
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH}
         } = pkg,
@@ -65,14 +65,15 @@
                 fieldNotesValueView = fieldNotesView.getValueView();
             
             fieldNotesValueView.setWhiteSpace('normal');
-            fieldNotesValueView.setPaddingTop(2);
+            fieldNotesValueView.setPaddingTop(0);
             fieldNotesValueView.setLineHeight('1.75em');
             fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
             fieldNotesValueView.setFontSize(fontSizeHandwritten);
             
             profileViewValue.setWhiteSpace('pre-wrap');
-            profileViewValue.setPaddingTop(3);
+            profileViewValue.setPaddingTop(1);
             profileViewValue.setFontFamily(fontFamilyMono);
+            profileViewValue.setFontSize(fontSizeMedium);
             
             new M.SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },

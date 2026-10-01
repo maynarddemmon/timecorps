@@ -49,7 +49,7 @@
                 fontFamilyMono:'SpaceMono',
                 
                 fontFamilyHandwritten:'RockSalt',
-                fontSizeHandwritten:'11px',
+                fontSizeHandwritten:'13px',
                 
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',

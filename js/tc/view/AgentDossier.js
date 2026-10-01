@@ -10,7 +10,7 @@
             theme:{
                 layoutSpacing, spacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
-                fontFamilyMono, fontSizeHandwritten, fontFamilyHandwritten
+                fontSizeMedium, fontFamilyMono, fontSizeHandwritten, fontFamilyHandwritten
             },
             ICON_SEPARATOR
         } = pkg,
@@ -63,14 +63,15 @@
                 fieldNotesValueView = fieldNotesView.getValueView();
             
             fieldNotesValueView.setWhiteSpace('normal');
-            fieldNotesValueView.setPaddingTop(2);
+            fieldNotesValueView.setPaddingTop(0);
             fieldNotesValueView.setLineHeight('1.75em');
             fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
             fieldNotesValueView.setFontSize(fontSizeHandwritten);
             
             profileViewValue.setWhiteSpace('pre-wrap');
-            profileViewValue.setPaddingTop(3);
+            profileViewValue.setPaddingTop(1);
             profileViewValue.setFontFamily(fontFamilyMono);
+            profileViewValue.setFontSize(fontSizeMedium);
             
             new SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },
