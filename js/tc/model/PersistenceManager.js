@@ -131,7 +131,14 @@
         /*  Constraint binding is paused so restored constraints bind in one pass once
             everything is in place. Some state can only be applied after that. */
         importDiff: function(data) {
-            const model = this.model;
+            const model = this.model,
+                baselineSelection = this.baseline?.selection;
+            
+            // Setting the current Operation during the restore changes the selection, so it
+            // no longer matches the baseline. Fill in whatever the diff left out so the whole
+            // saved selection is restored.
+            if (baselineSelection) data = {...data, selection:{...baselineSelection, ...data.selection}};
+            
             pkg.pauseConstraintBinding();
             try {
                 model.importFromObj(data);

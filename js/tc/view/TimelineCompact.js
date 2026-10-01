@@ -897,6 +897,14 @@
             this.callSuper();
         },
         
+        /*  The id of the selected Event, or of the one waiting for its EventBox to exist so it 
+            can be selected, since that is what will be selected. Null if neither. */
+        getSelectedEventId: function() {
+            const pending = this._eventModelOrIdToSelect;
+            if (pending) return typeof pending === 'string' ? pending : pending.id;
+            return this.getSelectedEventBox()?.model.id ?? null;
+        },
+        
         doSelectEvent: function(eventModelOrId) {
             const eventBox = this.getEventBox(eventModelOrId);
             if (eventBox) {

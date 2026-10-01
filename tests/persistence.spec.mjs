@@ -244,3 +244,74 @@ test('a restored save still selects the operation\'s initial event', async ({pag
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+const getSelection = page => page.evaluate(() => tc.app.getSelectionForSave()),
+    
+    // Waits for the debounced timeline layout to settle the event selection.
+    expectSelection = (page, selection) => expect.poll(() => page.evaluate(() => ({
+        event:tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null,
+        agent:tc.app.getTeamView().getSelectedAgentId()
+    }))).toEqual(selection);
+
+test('a restored save keeps the selected event and agent', async ({page}) => {
+    const problems = await startGame(page);
+    await expectSelection(page, {event:'collision', agent:'VQ'});
+    
+    await page.evaluate(() => {
+        tc.model.getAgentModel('OK').setHidden(false);
+        tc.app.selectAgentRow('OK');
+        tc.app.selectEventBox('casualties');
+    });
+    await expectSelection(page, {event:'casualties', agent:'OK'});
+    await saveGame(page);
+    expect((await readSave(page)).data.selection).toEqual({event:'casualties', agent:'OK'});
+    
+    await reloadGame(page);
+    await expectSelection(page, {event:'casualties', agent:'OK'});
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});
+
+/*  The second mission has no initial selection, and the selection here matches the baseline 
+    so it isn't in the save. It must still be restored rather than lost when the restore 
+    switches to the second mission. */
+test('a selection matching the fresh campaign is restored on a later mission', async ({page}) => {
+    const problems = await startGame(page);
+    
+    await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
+    await setCausatorCfg(page, 'engine_order', 'countermandAstern', 'true');
+    await visibleButton(page, 'Next Mission ➜').last().click();
+    await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
+    
+    await page.evaluate(() => {
+        tc.app.selectEventBox('collision');
+        tc.app.selectAgentRow('VQ');
+    });
+    await expectSelection(page, {event:'collision', agent:'VQ'});
+    await saveGame(page);
+    expect((await readSave(page)).data.selection).toBeUndefined();
+    
+    await reloadGame(page);
+    expect(await getCurrentOperationId(page)).toBe('titanic_rescued');
+    await expectSelection(page, {event:'collision', agent:'VQ'});
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a cleared selection stays cleared after a reload', async ({page}) => {
+    const problems = await startGame(page);
+    await expectSelection(page, {event:'collision', agent:'VQ'});
+    
+    await page.evaluate(() => {
+        tc.app.getTimelineView().deselectAll();
+        tc.app.getTeamView().selectAgent(null);
+    });
+    expect(await getSelection(page)).toEqual({event:null, agent:null});
+    await saveGame(page);
+    
+    await reloadGame(page);
+    await expectSelection(page, {event:null, agent:null});
+    
+    expect(problems.pageErrors).toEqual([]);
+});

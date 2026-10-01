@@ -241,8 +241,20 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /*  Selects the Agent's row, or clears the selection when given nothing. */
         selectAgent: function(agentModelOrId) {
-            this.gridWrapper.selectRowForModelOrId(agentModelOrId);
+            const gridWrapper = this.gridWrapper;
+            if (agentModelOrId) {
+                gridWrapper.selectRowForModelOrId(agentModelOrId);
+            } else {
+                const grid = gridWrapper.getGrid();
+                grid.setSelectedRowModel(null);
+                grid.refreshListUI();
+            }
+        },
+        
+        getSelectedAgentId: function() {
+            return this.gridWrapper.getGrid().selectedRowModel?.id ?? null;
         },
         
         setup: function(model) {

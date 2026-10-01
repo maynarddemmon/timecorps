@@ -294,6 +294,22 @@
         getOpsView: () => opsView,
         
         // Convienence Functions
+        /*  The selected Event and Agent by id, or null, for saving. */
+        getSelectionForSave: () => ({
+            event:timelineView.getSelectedEventId(),
+            agent:teamView.getSelectedAgentId()
+        }),
+        restoreSelectionForLoad: selection => {
+            if ('event' in selection) {
+                if (selection.event) {
+                    timelineView.doSelectEvent(selection.event);
+                } else {
+                    timelineView.deselectAll();
+                }
+            }
+            if ('agent' in selection) teamView.selectAgent(selection.agent);
+        },
+        
         selectAgentRow: agentModelOrId => {
             teamView.selectAgent(typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id);
         },

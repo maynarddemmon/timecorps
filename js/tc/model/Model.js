@@ -254,7 +254,8 @@
         exportToObj: () => {
             const retval = {
                 score:model.score,
-                currentOperation:model.getCurrentOperation()?.id ?? null
+                currentOperation:model.getCurrentOperation()?.id ?? null,
+                selection:pkg.app.getSelectionForSave()
             };
             for (const statId of TIMELINE_STAT_IDS) retval[statId] = model[statId].exportToObj();
             for (const scope of PERSISTED_COLLECTION_SCOPES) retval[scope] = model[scope].exportToObj();
@@ -290,7 +291,9 @@
                 }
             }
             
-            // FIXME: restore selection. Requires it to first be in the save file of course.
+            // After the current Operation since setting it applies the Operation's initial
+            // selection, which the saved selection should override.
+            if (obj.selection) pkg.app.restoreSelectionForLoad(obj.selection);
             
             timelineView.notifyAgentLocOrVisChange();
         },
