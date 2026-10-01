@@ -1,4 +1,5 @@
 import {test, expect} from '@playwright/test';
+import fs from 'node:fs';
 import {startGame, getCurrentOperationId} from './helpers.mjs';
 
 /*  Save/load round trips. localStorage survives a page reload within a test, so a reload
@@ -130,4 +131,101 @@ test('restart campaign erases the save', async ({page}) => {
 
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
+});
+
+/*  Picks a file in the import file chooser. contents is an object (saved as JSON) or raw text.
+    Returns the title of the dialog that follows. */
+const importFile = async (page, contents) => {
+        await visibleButton(page, '↥').click();
+        const [chooser] = await Promise.all([
+            page.waitForEvent('filechooser'),
+            visibleButton(page, /Confirm/).click()
+        ]);
+        await chooser.setFiles({
+            name:'timecorps-save.json',
+            mimeType:'application/json',
+            buffer:Buffer.from(typeof contents === 'string' ? contents : JSON.stringify(contents))
+        });
+        const title = page.getByText(/^Import (Succeeded|Failed)$/).filter({visible:true});
+        await expect(title).toBeVisible();
+        return title.textContent();
+    },
+    
+    // Clicking a button that reloads the page, then waiting for the game to be ready again.
+    clickAndReload = async (page, name) => {
+        await Promise.all([page.waitForEvent('load'), visibleButton(page, name).click()]);
+        await page.waitForFunction(() =>
+            window.tc?.model?.getCurrentOperation?.() != null &&
+            window.tc?.app?.getTimelineView?.()?.timelineReady === true
+        );
+    };
+
+test('an exported file imports back to the same campaign', async ({page}) => {
+    const problems = await startGame(page);
+    
+    await page.evaluate(() => {
+        const m = tc.model,
+            vq = m.getAgentModel('VQ'),
+            roster = m.getEventModel('roster_reshuffle');
+        vq.doDeployToEvent(roster);
+        vq.doAction(roster.getActionModels().prevent);
+        vq.doInvestigate();
+    });
+    const before = await exportModel(page);
+    
+    const [download] = await Promise.all([page.waitForEvent('download'), visibleButton(page, '↧').click()]);
+    expect(download.suggestedFilename()).toBe('timecorps-save.json');
+    const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+    expect(exported.version).toBe(1);
+    expect(exported.data.agents.VQ.event).toBe('roster_reshuffle');
+    
+    // Start over, which also proves the import doesn't depend on the old save.
+    await visibleButton(page, '⌫').click();
+    await clickAndReload(page, /Confirm/);
+    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    
+    expect(await importFile(page, exported)).toBe('Import Succeeded');
+    await clickAndReload(page, 'Continue');
+    expect(await exportModel(page)).toEqual(before);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+for (const [label, contents] of [
+    ['a file that is not JSON', 'this is not json'],
+    ['JSON that is not a save', {hello:'world'}],
+    ['a save from another version', {version:999, savedAt:'2026-01-01T00:00:00.000Z', data:{}}],
+    ['a save with no data', {version:1, savedAt:'2026-01-01T00:00:00.000Z'}]
+]) {
+    test('importing ' + label + ' fails and leaves the save alone', async ({page}) => {
+        const problems = await startGame(page);
+        
+        await setCausatorCfg(page, 'roster_reshuffle', 'remindBlair', 'true');
+        await saveGame(page);
+        const saveBefore = await readSave(page);
+        
+        expect(await importFile(page, contents)).toBe('Import Failed');
+        expect(await readSave(page)).toEqual(saveBefore);
+        
+        expect(problems.pageErrors).toEqual([]);
+    });
+}
+
+test('a stored save that cannot be applied is cleared at startup', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // The right outline but the wrong contents, so it only fails partway through restoring.
+    await page.evaluate(() => localStorage.setItem('tc.save', JSON.stringify({
+        version:1, savedAt:'2026-01-01T00:00:00.000Z', data:{paradox:5}
+    })));
+    await page.reload();
+    await expect(page.getByText('Save Could Not Be Loaded', {exact:true}).filter({visible:true})).toBeVisible();
+    expect(await readSave(page)).toBeNull();
+    
+    // Starting over gives a clean campaign with no dialog.
+    await clickAndReload(page, 'Start Over');
+    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    await expect(page.getByText('Save Could Not Be Loaded', {exact:true}).filter({visible:true})).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
 });
