@@ -29,3 +29,11 @@ test('shows the Field Manual on the first visit only', async ({page}) => {
     await page.waitForTimeout(500);
     await expect(page.getByText('Time Corps Field Manual')).toBeHidden();
 });
+
+/*  The timeline lays out on a debounce, so the operation's initial selection can be requested 
+    before its EventBox exists. It must still end up selected. */
+test('selects the initial operation event', async ({page}) => {
+    const problems = await startGame(page);
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('collision');
+    expect(problems.pageErrors).toEqual([]);
+});

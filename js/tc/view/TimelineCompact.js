@@ -855,6 +855,7 @@
         
         /** @overrides SelectionManager */
         doSelected: function() {
+            this._eventModelOrIdToSelect = null;
             const selectedEvent = this.getSelectedEventBox();
             refreshExitSplines(this);
             this.fireEvent('selectionChanged', selectedEvent);
@@ -891,10 +892,14 @@
             if (eventModelOrId) return this.boxesByEventId[typeof eventModelOrId === 'string' ? eventModelOrId : eventModelOrId.id];
         },
         
+        deselectAll: function() {
+            this._eventModelOrIdToSelect = null;
+            this.callSuper();
+        },
+        
         doSelectEvent: function(eventModelOrId) {
             const eventBox = this.getEventBox(eventModelOrId);
             if (eventBox) {
-                this._eventModelOrIdToSelect = null;
                 this.select(eventBox);
             } else {
                 this._eventModelOrIdToSelect = eventModelOrId;

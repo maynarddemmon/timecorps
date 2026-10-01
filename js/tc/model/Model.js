@@ -279,19 +279,20 @@
                 if (obj[scope]) model[scope].completeImportFromObj(obj[scope]);
             }
             
+            const timelineView = pkg.app.getTimelineView();
             if ('currentOperation' in obj) {
                 const operationModel = model.getOperationModel(obj.currentOperation);
                 if (operationModel) {
-                    pkg.app.getTimelineView().doSelectEvent(); // Clear any lingering event selection.
+                    timelineView.deselectAll();
                     model.setCurrentOperation(operationModel);
                 } else {
                     console.warn('Save has unknown current operation', obj.currentOperation, '(keeping', model.getCurrentOperation()?.id, ')');
                 }
             }
             
-            // FIXME: restore selection.
+            // FIXME: restore selection. Requires it to first be in the save file of course.
             
-            pkg.app.getTimelineView().notifyAgentLocOrVisChange();
+            timelineView.notifyAgentLocOrVisChange();
         },
         
         

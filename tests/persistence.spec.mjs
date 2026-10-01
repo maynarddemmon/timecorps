@@ -229,3 +229,18 @@ test('a stored save that cannot be applied is cleared at startup', async ({page}
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('a restored save still selects the operation\'s initial event', async ({page}) => {
+    const problems = await startGame(page);
+    
+    await page.evaluate(() => {
+        const m = tc.model;
+        m.getAgentModel('VQ').doDeployToEvent(m.getEventModel('roster_reshuffle'));
+    });
+    await saveGame(page);
+    
+    await reloadGame(page);
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('collision');
+    
+    expect(problems.pageErrors).toEqual([]);
+});
