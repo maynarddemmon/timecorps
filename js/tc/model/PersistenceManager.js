@@ -1,7 +1,7 @@
 (pkg => {
     'use strict';
     
-    const {stableStringify} = myt,
+    const {stableStringify, downloadObjectAsJSON} = myt,
         
         SAVE_FORMAT_VERSION = 1,
         DEFAULT_STORAGE_KEY = 'tc.save',
@@ -31,6 +31,14 @@
                 console.warn('Unable to read save', key, err);
                 return null;
             }
+        },
+        
+        prepareData = persistanceManager => {
+            return {
+                version:SAVE_FORMAT_VERSION,
+                savedAt:new Date().toISOString(),
+                data:persistanceManager.exportDiff()
+            };
         };
         
     /*  Saves and restores a campaign to localStorage. Only what differs from a baseline is
@@ -67,15 +75,11 @@
         },
         
         /*  Returns the save's Date on success, otherwise null. */
-        save: function() {
-            const savedAt = new Date();
+        save: function(jsonData) {
             try {
-                localStorage.setItem(this.storageKey, JSON.stringify({
-                    version:SAVE_FORMAT_VERSION,
-                    savedAt:savedAt.toISOString(),
-                    data:this.exportDiff()
-                }));
-                return savedAt;
+                const dataToSave = jsonData ?? prepareData(this);
+                localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+                return dataToSave.savedAt;
             } catch (err) {
                 console.error('Save failed', err);
                 return null;
@@ -95,6 +99,10 @@
             
             this.importDiff(record.data ?? {});
             return true;
+        },
+        
+        export: function() {
+            downloadObjectAsJSON(prepareData(this), 'timecorps-save');
         },
         
         /*  Constraint binding is paused so restored constraints bind in one pass once

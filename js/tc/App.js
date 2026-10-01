@@ -4,6 +4,7 @@
     let appView,
         model,
         persistence,
+        hiddenJSONImporter,
         
         saveBtn,
         
@@ -22,7 +23,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, ResizeLayout, SizeToParent, global:G, NOOP} = M,
+        {View, PlainText, ResizeLayout, SizeToParent, global:G, NOOP} = M,
         
         {
             SquareBtn, WideView,
@@ -30,10 +31,10 @@
             theme:{
                 layoutSpacing, spacing, padding, 
                 colorUltraDark, colorMedium, colorLight,
-                fontSizeMedium, fontSizeVeryLarge
+                fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
-            ICON_NEXT
+            ICON_SEPARATOR
         } = pkg,
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
@@ -161,7 +162,7 @@
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
             
-            new M.PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            new PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
             new pkg.Spacer(topView);
             
             saveBtn = new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
@@ -192,15 +193,35 @@
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Restart Campaign',
-                        'Are you sure you want to start over with a new campaign? Your saved progress will be discarded.',
+                        'Are you sure you want to start over with a new campaign? Any currently saved progress will be discarded.',
                         appView.doRestartCampaign
                     );
                 }
             }]);
             //new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'});
+            
+            new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
+            
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_IMPORT, fontSize:fontSizeLarge, tooltip:'Import a “save” file.'}, [{
+                doActivated: () => {
+                    openConfirmMsgDialog(
+                        'Import Save File',
+                        'Are you sure you want to import a “save” file and start from there? Any currently saved progress will be overwritten.',
+                        appView.doImport
+                    );
+                }
+            }]);
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file.'}, [{
+                doActivated: persistence.export.bind(persistence)
+            }]);
+            
+            new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
+            
             new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
                 doActivated: appView.openHelp
             }]);
+            
+            
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
         },
         
@@ -320,6 +341,30 @@
             appView.doReload();
         },
         
+        doImport: () => {
+            hiddenJSONImporter ??= new M.HiddenJSONImporter(appView);
+            hiddenJSONImporter.processJSON = json => {
+                if (json) {
+                    let title,
+                        msg;
+                    if (persistence.save(json)) {
+                        updateLastSaved();
+                        title = 'Import Succeeded';
+                        msg = 'Your data has been imported.';
+                    } else {
+                        persistence.clear();
+                        title = 'Import Failed';
+                        msg = 'Something went wrong during import and things are now mangled so all saved data has been cleared.';
+                    }
+                    
+                    // Use a timeout so the confirm dialog can close, focus restores, then
+                    // open the ack dialog which then pulls focus again.
+                    setTimeout(() => openAckMsgDialog(title, msg, appView.doReload, null, 'Continue'), 0);
+                }
+            };
+            hiddenJSONImporter.promptForFile();
+        },
+        
         notifyTimelineParadoxExceeded: () => {
             openAckMsgDialog(
                 'Timeline Destabilized',
@@ -339,7 +384,7 @@
                     title, debrief,
                     () => {operationModel.proceed();},
                     null,
-                    'Next Mission ' + ICON_NEXT, I18N_CLOSE_BTN
+                    'Next Mission ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
                 );
             } else {
                 // No next operation case.

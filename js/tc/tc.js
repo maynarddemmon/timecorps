@@ -279,7 +279,9 @@
             ICON_APPROX:'~',
             ICON_SAVE:'✇',
             ICON_SETTINGS:'⚙',
-            ICON_RESTART:'⌫'
+            ICON_RESTART:'⌫',
+            ICON_IMPORT:'↥',
+            ICON_EXPORT:'↧'
         };
     
     // Apply config overrides
