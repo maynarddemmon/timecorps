@@ -3,11 +3,14 @@
     
     const JSClass = JS.Class,
         
-        {View, PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout, WrappingLayout} = myt,
+        {
+            View, PaddedText, PaddedPlainText, SizeToParent, 
+            Layout, SpacedLayout, ResizeLayout, WrappingLayout
+        } = myt,
         
         {
             UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium,
-            GrandWidthMixin, Row, TextForFlow,
+            ContainerRow, Row, TextForFlow,
             theme:{
                 spacing, padding, btnHeight,
                 colorUltraLight, colorLight, colorMegaDark,
@@ -278,60 +281,41 @@
             });
             
             const detailsContainer = self.detailsContainer = new WideView(self, {
-                x:padding, percentOfParentWidthOffset:-2*padding, visible:false
+                percentOfParentHeight:100, visible:false
             });
             
             // Time & Place, Status Bars
             self.whereWhen = new PaddedPlainText(detailsContainer, {
                 percentOfParentWidth:100,
                 fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
-            }, [GrandWidthMixin, SizeToParent]);
+            }, [SizeToParent]);
             new View(detailsContainer, {height:4}); // Spacer.
-            
-            const row = new Row(detailsContainer, {height:18, inset:spacing});
+            let row = new Row(detailsContainer, {height:18, inset:spacing});
             self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
             self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
             self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
             new View(detailsContainer, {height:4}); // Spacer.
             
             // Description
-            const descriptionRow = self.descriptionRow = new MiniPanel(detailsContainer, {
-                title:'Historical Account', percentOfParentWidth:100
-            }, [GrandWidthMixin, SizeToParent, {
-                clearContent: function() {
-                    this.getContentView().destroyAllSubviews();
-                }
-            }]);
-            self.descriptionTxt = new PaddedText(descriptionRow, {padding:padding, whiteSpace:'normal'});
-            new SpacedLayout(descriptionRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            row = new ContainerRow(detailsContainer, {label:'Historical Account', layoutHint:1});
+            self.descriptionTxt = new PaddedText(row, {padding:padding, whiteSpace:'normal'});
             
-            // Values
-            const valuesRow = self.valuesRow = new MiniPanel(detailsContainer, {
-                title:'Causators', percentOfParentWidth:100
-            }, [GrandWidthMixin, SizeToParent, {
-                clearContent: function() {
-                    this.getContentView().destroyAllSubviews();
-                }
-            }]);
-            new SpacedLayout(valuesRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            // Causators
+            self.causatorsRow = new ContainerRow(detailsContainer, {label:'Causators', layoutHint:1});
             
             // Agents
-            const agentsRow = self.agentsRow = new MiniPanel(detailsContainer, {
-                title:'Agent Activity', percentOfParentWidth:100
-            }, [GrandWidthMixin, SizeToParent, {
-                clearContent: function() {
-                    this.getContentView().destroyAllSubviews();
-                }
-            }]);
-            self.deployAgentBtn = new AgentBtn(agentsRow.getHeaderView(), {y:1}, [{
+            row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity', layoutHint:1});
+            
+            const headerView = row.getHeaderView();
+            new View(headerView, {layoutHint:1}); // Spacer
+            self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
             }]);
-            self.recallAgentBtn = new AgentBtn(agentsRow.getHeaderView(), {y:1}, [{
+            self.recallAgentBtn = new AgentBtn(headerView, {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doRecallToHQ();}
             }]);
-            new SpacedLayout(agentsRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
-            new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:0, collapseParent:true});
+            new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:0});
             
             self.ready = true;
             
@@ -400,18 +384,16 @@
                 
                 self.descriptionTxt.setText(eventModel.getDescription() || 'The historical record is silent.');
                 
-                // Agent Information //
-                const agentsRow = self.agentsRow;
-                agentsRow.clearContent();
-                for (const agentModel of eventModel.getAgentModels()) {
-                    new AgentRow(agentsRow, {agentModel, eventModel});
+                const causatorsRow = self.causatorsRow;
+                causatorsRow.getContentView().destroyAllSubviews();
+                for (const valueModel of Object.values(eventModel.getValueModels())) {
+                    if (!valueModel.isHidden()) new CausatorRow(causatorsRow, {valueModel});
                 }
                 
-                // FIXME: this goes away or is controlled by knowledge/attestation.
-                const valuesRow = self.valuesRow;
-                valuesRow.clearContent();
-                for (const valueModel of Object.values(eventModel.getValueModels())) {
-                    if (!valueModel.isHidden()) new CausatorRow(valuesRow, {valueModel});
+                const agentsRow = self.agentsRow;
+                agentsRow.getContentView().destroyAllSubviews();
+                for (const agentModel of eventModel.getAgentModels()) {
+                    new AgentRow(agentsRow, {agentModel, eventModel});
                 }
                 
                 Layout.decrementGlobalLock();

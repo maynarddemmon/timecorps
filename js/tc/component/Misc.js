@@ -4,7 +4,7 @@
     const {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
-        {View, Text, PaddedText, PlainText, PaddedPlainText, ResizeLayout, SizeToParent} = M,
+        {View, Text, PaddedText, PlainText, PaddedPlainText, SpacedLayout, ResizeLayout, SizeToParent} = M,
         
         {
             theme:{
@@ -88,6 +88,20 @@
                 new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset})
             }
         }),
+        DividerRow = pkg.DividerRow = new JSClass('DividerRow', Row, {
+            initNode: function(parent, attrs) {
+                const self = this,
+                    label = attrs.label;
+                delete attrs.label;
+                
+                attrs.bgColor ??= colorDark;
+                
+                self.callSuper(parent, attrs);
+                
+                self._label = new PlainText(self, {y:4, fontSize:fontSizeMedium, text:label});
+            },
+            setLabel: function(v) {this._label.setText(v);}
+        }),
         TextForFlow = pkg.TextForFlow = new JSClass('TextForFlow', PaddedText, {
             initNode: function(parent, attrs) {
                 attrs.paddingTop ??= 5;
@@ -162,19 +176,32 @@
         }
     });
     
-    pkg.DividerRow = new JSClass('DividerRow', Row, {
+    pkg.ContainerRow = new JSClass('ContainerRow', WideView, {
         initNode: function(parent, attrs) {
             const self = this,
                 label = attrs.label;
             delete attrs.label;
             
-            attrs.bgColor ??= colorDark;
+            attrs.defaultPlacement = '_contentView';
             
             self.callSuper(parent, attrs);
             
-            self._label = new PlainText(self, {valign:'middle', fontSize:fontSizeMedium, text:label});
+            const header = self._headerView = new DividerRow(self, {inset:padding, label}),
+                wrapper = self._wrapperView = new WideView(self, {y:header.height, overflow:'autoy'}),
+                content = self._contentView = new WideView(wrapper);
+            new SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
         },
-        setLabel: function(v) {this._label.setText(v);}
+        setHeight: function(v) {
+            this.callSuper(v);
+            if (this.inited) {
+                const wrapper = this.getWrapperView();
+                wrapper.setHeight(this.height - wrapper.y);
+            }
+        },
+        setLabel: function(v) {this.getHeaderView().setLabel(v);},
+        getHeaderView: function() {return this._headerView;},
+        getWrapperView: function() {return this._wrapperView;},
+        getContentView: function() {return this._contentView;}
     });
     
     pkg.DetailRow = new JSClass('DetailRow', WideView, {
