@@ -83,7 +83,7 @@
                     title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
                 self.setTitle(title, prefix + name);
                 
-                self._photo.setMedia(pkg.IMAGE_ROOT + 'location/' + id + '.jpg');
+                self._photo.setMedia(...locationModel.getMediaUrls());
                 self.updateFieldNotes();
                 pkg.loadTxtIntoElement('./data/location/' + id + '.txt', self._profileView, () => self.locationModel === locationModel);
             } else {

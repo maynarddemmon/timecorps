@@ -112,6 +112,7 @@
 		},
 		"titanic.boatdeck":{
 			"name":"Boat deck",
+			"video":true,
 			"color":"#ccf9",
 			"order":2.6,
 			"description":[

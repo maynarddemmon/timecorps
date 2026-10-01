@@ -7,6 +7,9 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
     PORT = 8765,
     BASE_URL = 'http://localhost:' + PORT;
 
+/*  The data files that hold Events and Locations, in load order. */
+export const SCENARIO_FILES = ['data/init.json', 'data/titanic_scenario.json', 'data/lusitania_scenario.json'];
+
 export const readJson = relPath => JSON.parse(fs.readFileSync(path.join(ROOT, relPath), 'utf8'));
 export const fileExists = relPath => fs.existsSync(path.join(ROOT, relPath));
 

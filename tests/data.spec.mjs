@@ -1,9 +1,8 @@
 // Checks the game data on disk. These tests don't need a browser.
 import {test, expect} from '@playwright/test';
-import {readJson, fileExists} from './helpers.mjs';
+import {readJson, fileExists, SCENARIO_FILES} from './helpers.mjs';
 
-const SCENARIO_FILES = ['data/init.json', 'data/titanic_scenario.json', 'data/lusitania_scenario.json'],
-    scenarios = SCENARIO_FILES.map(readJson),
+const scenarios = SCENARIO_FILES.map(readJson),
     agentsJson = readJson('data/agents.json'),
     operationsJson = readJson('data/operations.json'),
     
@@ -97,7 +96,10 @@ test('every location has an image and an area brief', () => {
     const missing = [];
     for (const locationId of Object.keys(locations)) {
         if (locationId.startsWith('_')) continue; // The Nexus and Nowhere are never shown.
-        for (const file of ['img/location/' + locationId + '.jpg', 'data/location/' + locationId + '.txt']) {
+        // The .jpg is required even with a video since it's the fallback and the timeline header.
+        const files = ['img/location/' + locationId + '.jpg', 'data/location/' + locationId + '.txt'];
+        if (locations[locationId].video) files.push('img/location/' + locationId + '.webm');
+        for (const file of files) {
             if (!fileExists(file)) missing.push(file);
         }
     }

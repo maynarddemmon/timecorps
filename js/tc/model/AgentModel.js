@@ -108,7 +108,7 @@
         but not "event...". */
     // FIXME: support event... as the Event the agent is currently in?
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
-        include: [pkg.ConstrainableAttrSupport, pkg.Hideable, pkg.Describable],
+        include: [pkg.ConstrainableAttrSupport, pkg.Hideable, pkg.Describable, pkg.MediaSupport],
         
         /** @overrides ConstrainableAttrSupport */
         getConstraintScopeName: () => SCOPE_AGENT,
@@ -261,11 +261,8 @@
         stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
         getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
         
-        /*  True when the Agent's portrait is a video (img/agent/<id>.webm) rather than just 
-            the .jpg. The .jpg is still required since it's the fallback if the video can't 
-            play. */
-        setVideo: function(v) {this.video = v === true;},
-        hasVideoPortrait: function() {return this.video === true;},
+        /** @overrides MediaSupport */
+        getMediaFolder: () => 'agent',
         
         getRoleLabel: function() {
             return this.isPlayerControlled() ? 'Agent' : 'Civilian';

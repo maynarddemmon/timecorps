@@ -675,7 +675,7 @@
             locationColumn.setTextColor(model.textColor || null);
             _label.setText(label);
             _label.setTooltip(label);
-            _photo.setImageUrl(pkg.IMAGE_ROOT + 'location/' + model.id + '.jpg');
+            _photo.setImageUrl(model.getImageUrl());
         },
         
         LocationColumn = new JSClass('LocationColumn', View, {

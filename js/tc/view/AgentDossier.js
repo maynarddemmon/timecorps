@@ -89,8 +89,7 @@
                     title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
                 self.setTitle(title, prefix + name);
                 
-                const portraitUrl = pkg.IMAGE_ROOT + 'agent/' + id;
-                self._portrait.setMedia(portraitUrl + '.jpg', agentModel.hasVideoPortrait() ? portraitUrl + '.webm' : null);
+                self._portrait.setMedia(...agentModel.getMediaUrls());
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
                 self._roleView.setValue(agentModel.getRoleLabel());

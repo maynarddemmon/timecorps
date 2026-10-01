@@ -1,9 +1,14 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson} from './helpers.mjs';
+import {startGame, readJson, SCENARIO_FILES} from './helpers.mjs';
 
-const videoAgentIds = Object.entries(readJson('data/agents.json').agents)
-        .filter(([, agent]) => agent.video)
-        .map(([agentId]) => agentId),
+const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
+    
+    videoAgentIds = idsWithVideo(readJson('data/agents.json').agents),
+    locations = Object.assign({}, ...SCENARIO_FILES.map(file => readJson(file).locations ?? {})),
+    videoLocationIds = idsWithVideo(locations),
+    
+    // A shown location (not _nexus or _nowhere) with just a photo.
+    photoOnlyLocationId = Object.keys(locations).find(id => !id.startsWith('_') && !locations[id].video),
 
     // The state of a dialog's MediaView, found by its name on the dialog.
     mediaState = (page, getterSrc) => page.evaluate(getterSrc => {
@@ -61,13 +66,42 @@ const openBrief = (page, locationId) => page.evaluate(locationId => {
 test('an area brief shows its location photo, or hides it when there is none', async ({page}) => {
     const problems = await startGame(page);
     
-    await openBrief(page, 'titanic.bridge');
+    await openBrief(page, photoOnlyLocationId);
     await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:true, showingVideo:false, imageVisible:true, playing:false});
     await page.keyboard.press('Escape');
     
     // The special _nexus location has no photo, so the report takes the whole dialog.
     await openBrief(page, '_nexus');
     await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:false, showingVideo:false, imageVisible:false, playing:false});
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+/*  Opens the area brief for each Location with a video and checks the video actually plays,
+    then that closing the brief stops it. */
+test('location videos play in the area brief', async ({page}) => {
+    test.skip(videoLocationIds.length === 0, 'No locations have a video.');
+    const problems = await startGame(page);
+    
+    for (const locationId of videoLocationIds) {
+        await openBrief(page, locationId);
+        await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:true, showingVideo:true, imageVisible:false, playing:true});
+        
+        await page.keyboard.press('Escape');
+        await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:true, showingVideo:false, imageVisible:false, playing:false});
+    }
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.errors).toEqual([]);
+});
+
+test('a location video that can\'t load falls back to the photo', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Claiming a video for a location without a .webm makes the video fail to load.
+    await page.evaluate(locationId => tc.model.getLocation(locationId).setVideo(true), photoOnlyLocationId);
+    await openBrief(page, photoOnlyLocationId);
+    await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:true, showingVideo:false, imageVisible:true, playing:false});
     
     expect(problems.pageErrors).toEqual([]);
 });

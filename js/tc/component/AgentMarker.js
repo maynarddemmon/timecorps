@@ -83,9 +83,8 @@
             _updateForAgentModel: function() {
                 const model = this.model;
                 if (model) {
-                    const id = model.id;
-                    this._photo.setImageUrl(pkg.IMAGE_ROOT + 'agent/' + id + '.jpg');
-                    this._idTxt.setText(id);
+                    this._photo.setImageUrl(model.getImageUrl());
+                    this._idTxt.setText(model.id);
                 }
             },
             
