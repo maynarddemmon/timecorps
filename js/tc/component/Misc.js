@@ -212,8 +212,14 @@
         getWrapperView: function() {return this._wrapperView;},
         getContentView: function() {return this._contentView;},
         
-        _doClick: function(_event) {
-            this.setExpanded(!this.expanded);
+        /*  Only clicks on the header itself or its label toggle, so buttons placed in the
+            header (e.g. Deploy/Recall) don't also collapse the row. */
+        _doClick: function(event) {
+            const header = this.getHeaderView(),
+                target = event.value.target;
+            if (target === header.getIDE() || target === header._label.getIDE()) {
+                this.setExpanded(!this.expanded);
+            }
         },
         setExpanded: function(expanded) {
             this.set('expanded', expanded, true);

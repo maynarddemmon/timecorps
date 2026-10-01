@@ -9,7 +9,7 @@
         } = myt,
         
         {
-            UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, MiniPanel, StatusAgentMarkerMedium,
+            UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, StatusAgentMarkerMedium,
             ContainerRow, Row, TextForFlow,
             theme:{
                 spacing, padding, btnHeight,
