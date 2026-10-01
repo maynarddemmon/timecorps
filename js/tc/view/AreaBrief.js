@@ -26,29 +26,20 @@
             self.callSuper(parent, attrs);
             
             // Build UI
-            self._photo = new WideView(self, {
-                x:HALF_PADDING, y:HALF_PADDING, percentOfParentWidthOffset:-padding,
-                roundedCorners:cornerRadius, height:PHOTO_HEIGHT, imageSize:'contain',
-                visible:false,
-                calculateNaturalSize:true // Used so that setImageLoadingError/setNaturalWidth fires.
-            }, [M.ImageSupport, {
-                setImageLoadingError: function(v) {
-                    this.callSuper(v);
-                    if (v) {
-                        // This is the image loading failure case.
-                        this.setVisible(false);
-                        profile.setY(HALF_PADDING);
-                        profile.setPercentOfParentHeightOffset(-padding);
-                    }
+            // Hidden until the photo loads. Without one the report fills the whole dialog.
+            self._photo = new pkg.MediaView(self, {
+                x:HALF_PADDING, y:HALF_PADDING, percentOfParentWidth:100, percentOfParentWidthOffset:-padding,
+                height:PHOTO_HEIGHT, visible:false
+            }, [M.SizeToParent, {
+                doMediaReady: function() {
+                    this.setVisible(true);
+                    profile.setY(PROFILE_Y);
+                    profile.setPercentOfParentHeightOffset(-(PROFILE_Y + HALF_PADDING));
                 },
-                setNaturalWidth: function(v) {
-                    this.callSuper(v);
-                    if (v > 0) {
-                        // This is the image loading success case.
-                        this.setVisible(true);
-                        profile.setY(PROFILE_Y);
-                        profile.setPercentOfParentHeightOffset(-(PROFILE_Y + HALF_PADDING));
-                    }
+                doMediaFailed: function() {
+                    this.setVisible(false);
+                    profile.setY(HALF_PADDING);
+                    profile.setPercentOfParentHeightOffset(-padding);
                 }
             }]);
             
@@ -92,9 +83,11 @@
                     title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
                 self.setTitle(title, prefix + name);
                 
-                self._photo.setImageUrl(pkg.IMAGE_ROOT + 'location/' + id + '.jpg');
+                self._photo.setMedia(pkg.IMAGE_ROOT + 'location/' + id + '.jpg');
                 self.updateFieldNotes();
                 pkg.loadTxtIntoElement('./data/location/' + id + '.txt', self._profileView, () => self.locationModel === locationModel);
+            } else {
+                self._photo.clearMedia();
             }
         },
         

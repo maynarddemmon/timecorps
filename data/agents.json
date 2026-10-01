@@ -58,6 +58,7 @@
 		},
 		"PI":{
 			"name":"Pierce",
+			"video":true,
 			"skills":{
 				"chronogation":200,
 				"investigation":-50

@@ -1,8 +1,7 @@
 (pkg => {
     'use strict';
     
-    const M = myt,
-        {View, SpacedLayout} = M,
+    const {SpacedLayout} = myt,
         
         {
             WideView, DetailRow, DetailRowFlow, TextForFlow,
@@ -27,22 +26,8 @@
             self.callSuper(parent, attrs);
             
             // Build UI
-            const photoAttrs = {
-                x:HALF_PADDING, y:HALF_PADDING, roundedCorners:cornerRadius,
-                width:PHOTO_SIZE, height:PHOTO_SIZE
-            };
-            self._photo = new View(self, {...photoAttrs, imageSize:'contain'}, [M.ImageSupport]);
-            
-            // Muted so browsers allow it to autoplay. Inline so iOS doesn't go fullscreen.
-            const video = self._video = new View(self, {...photoAttrs, tagName:'video', visible:false}),
-                videoElem = video.getIDE();
-            videoElem.muted = videoElem.loop = videoElem.autoplay = videoElem.playsInline = true;
-            videoElem.style.objectFit = 'contain';
-            
-            // Fall back to the still if the video is missing or the browser can't play it.
-            videoElem.addEventListener('error', () => {
-                const agentModel = self.agentModel;
-                if (agentModel && video.visible) self.showPhoto(agentModel.id);
+            self._portrait = new pkg.MediaView(self, {
+                x:HALF_PADDING, y:HALF_PADDING, width:PHOTO_SIZE, height:PHOTO_SIZE
             });
             
             const vitalsX = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
@@ -104,11 +89,8 @@
                     title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
                 self.setTitle(title, prefix + name);
                 
-                if (agentModel.hasVideoPortrait()) {
-                    self.showVideo(id);
-                } else {
-                    self.showPhoto(id);
-                }
+                const portraitUrl = pkg.IMAGE_ROOT + 'agent/' + id;
+                self._portrait.setMedia(portraitUrl + '.jpg', agentModel.hasVideoPortrait() ? portraitUrl + '.webm' : null);
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
                 self._roleView.setValue(agentModel.getRoleLabel());
@@ -128,43 +110,12 @@
                 self.updateFieldNotes();
                 pkg.loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
             } else {
-                self.stopVideo();
+                self._portrait.clearMedia();
             }
         },
         
         
         // Methods /////////////////////////////////////////////////////////////
-        showPhoto: function(id) {
-            this.stopVideo();
-            const photo = this._photo;
-            photo.setImageUrl(pkg.IMAGE_ROOT + 'agent/' + id + '.jpg');
-            photo.setVisible(true);
-        },
-        
-        showVideo: function(id) {
-            const video = this._video,
-                videoElem = video.getIDE();
-            this._photo.setVisible(false);
-            video.setVisible(true);
-            videoElem.src = pkg.IMAGE_ROOT + 'agent/' + id + '.webm';
-            
-            // play() rejects if playback is interrupted, e.g. the dossier closes first, which
-            // is fine to ignore. A real load failure goes to the error listener.
-            videoElem.play()?.catch(() => {});
-        },
-        
-        /*  Stops playback and releases the file so a hidden dossier isn't decoding video. */
-        stopVideo: function() {
-            const video = this._video,
-                videoElem = video.getIDE();
-            video.setVisible(false);
-            if (videoElem.getAttribute('src')) {
-                videoElem.pause();
-                videoElem.removeAttribute('src');
-                videoElem.load();
-            }
-        },
-        
         updateFieldNotes: function() {
             const fieldNotes = this.agentModel?.getDescription() ?? '',
                 fieldNotesView = this._fieldNotesView;

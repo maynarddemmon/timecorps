@@ -18,6 +18,7 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
+    file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
     file(COMPONENT_ROOT + 'Dialogs.js').provides('tc.dialogUtil','tc.ModalDialog').requires('tc.SquareBtn','tc.WideView','tc.Panel');
     
     // Model //
@@ -53,8 +54,8 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
-    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog');
-    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog');
+    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog','tc.MediaView');
+    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.MediaView');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
     // Include Everything
