@@ -37,6 +37,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
         'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
+    file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     
     // View //
     file(VIEW_ROOT + 'Agents.js').provides('tc.Agents').requires(
@@ -56,7 +57,7 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'tc.Model','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
+        'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
         'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier','tc.AreaBrief'
     );
 });

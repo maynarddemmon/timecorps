@@ -3,6 +3,9 @@
     
     let appView,
         model,
+        persistence,
+        
+        saveBtn,
         
         timelineView,
         eventDetailsView,
@@ -22,9 +25,13 @@
         {View, ResizeLayout, SizeToParent, global:G, NOOP} = M,
         
         {
-            WideView,
+            SquareBtn, WideView,
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
-            theme:{layoutSpacing, spacing, padding, colorUltraDark, colorMedium, fontSizeMedium, fontSizeVeryLarge},
+            theme:{
+                layoutSpacing, spacing, padding, 
+                colorUltraDark, colorMedium, colorLight,
+                fontSizeMedium, fontSizeVeryLarge
+            },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             ICON_NEXT
         } = pkg,
@@ -45,6 +52,18 @@
                 localStorage.setItem(HELP_SEEN_KEY, 'true');
             } catch {
                 // Ignore.
+            }
+        },
+        
+        // Save //
+        updateLastSaved = () => {
+            const lastSavedDate = persistence.getLastSavedDate();
+            if (lastSavedDate) {
+                saveBtn?.setTextColor(colorLight);
+                saveBtn?.setTooltip('Last saved ' + lastSavedDate.toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}));
+            } else {
+                saveBtn?.setTextColor();
+                saveBtn?.setTooltip('Not saved');
             }
         },
         
@@ -81,6 +100,11 @@
                             teamView.setup(model);
                             model.reset();
                             
+                            // The baseline is the fresh campaign a save gets applied on top of.
+                            persistence.captureBaseline();
+                            persistence.restore();
+                            updateLastSaved();
+                            
                             if (!hasSeenHelp()) appView.openHelp();
                         } else {
                             console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
@@ -115,6 +139,7 @@
             
             // Build Model
             model = pkg.model = new pkg.Model(appView);
+            persistence = pkg.persistence = new pkg.PersistenceManager(model);
             
             // Build UI
             appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:40}));
@@ -139,17 +164,20 @@
             new M.PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
             new pkg.Spacer(topView);
             
-            new pkg.Btn(topView, {valign:'middle', text:'Restart Campaign'}, [{
+            saveBtn = new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
+                doActivated: appView.doSave
+            }]);
+            new pkg.SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Restart Campaign',
-                        'Are you sure you want to start over with a new campaign?',
-                        appView.doReload
+                        'Are you sure you want to start over with a new campaign? Your saved progress will be discarded.',
+                        appView.doRestartCampaign
                     );
                 }
             }]);
-            new pkg.SquareBtn(topView, {valign:'middle', text:'⚙', fontSize:fontSizeVeryLarge, tooltip:'Settings'});
-            new pkg.SquareBtn(topView, {valign:'middle', text:'?', fontSize:fontSizeMedium, tooltip:'Help'}, [{
+            //new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'});
+            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
                 doActivated: appView.openHelp
             }]);
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
@@ -265,13 +293,27 @@
             //model.reset(); // FIXME: eventually we will want a true reset but that gets wrapped up in save/load so we defer for now.
         },
         
+        /*  Clears the save first since a reload would otherwise restore it. */
+        doRestartCampaign: () => {
+            persistence.clear();
+            appView.doReload();
+        },
+        
+        doSave: () => {
+            if (persistence.save()) {
+                updateLastSaved();
+            } else {
+                openAckMsgDialog('Save Failed', 'Your progress could not be saved. The browser may be blocking storage for this site.');
+            }
+        },
+        
         notifyTimelineParadoxExceeded: () => {
             openAckMsgDialog(
                 'Timeline Destabilized',
                 'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.',
                 () => {
                     // FIXME: do other housekeeping?
-                    appView.doReload();
+                    appView.doRestartCampaign();
                 }
             );
         },

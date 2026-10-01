@@ -249,6 +249,19 @@
         },
         
         
+        // Persistence /////////////////////////////////////////////////
+        exportToObj: function() {
+            return {setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
+        },
+        
+        /*  Restoring these before the current Operation is set keeps doSetup and the success
+            rewards from being applied a second time. */
+        importFromObj: function(obj) {
+            if ('setupApplied' in obj) this.setupApplied = obj.setupApplied;
+            if ('successGranted' in obj) this.successGranted = obj.successGranted;
+        },
+        
+        
         // Methods /////////////////////////////////////////////////////////
         reset: function() {
             this.setupApplied = this.successGranted = false;
@@ -263,4 +276,4 @@
         
         doDescriptionChanged: function() {this.notifyCollectionOfUpdate();}
     });
-})(tc);
+})(tc);

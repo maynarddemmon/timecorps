@@ -6,7 +6,7 @@
         {stableStringify, BaseModel} = myt,
         
         {
-            NotifyingNumericStatModel, setConstrainedValue, ConstrainableAttrSupport, Hideable, Describable,
+            NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg, ConstrainableAttrSupport, Hideable, Describable,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             cfg:{
@@ -27,6 +27,8 @@
             }
             return retval;
         },
+        
+        EVENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
         
         updateEndAttr = eventModel => {
             const {start, duration} = eventModel;
@@ -127,6 +129,17 @@
                     this.getAllObservers((_observer, _funcName, type) => type === 'value'),
                     this.event
                 );
+            },
+            
+            
+            // Persistence /////////////////////////////////////////////////////
+            /*  Saves the literal or expression last given to setValue rather than the actual 
+                value, since an Action may have replaced a literal with an expression. */
+            exportToObj: function() {
+                return {value:getConstrainedValueCfg(this, 'value')};
+            },
+            importFromObj: function(obj) {
+                if ('value' in obj) this.setValue(obj.value, false);
             }
         }),
         
@@ -219,7 +232,7 @@
                 ]) {
                     retval[attrName] = this[attrName];
                 }
-                for (const attrName of [STAT_ID_PARADOX,STAT_ID_HISTORICITY,STAT_ID_ATTESTATION]) {
+                for (const attrName of EVENT_STAT_IDS) {
                     // Use stableStringify since similarTo uses shallowEqual. If this gets 
                     // unwieldy change similarTo to use deepEqual and drop the stableStringify.
                     retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
@@ -413,6 +426,36 @@
                 const accum = new Set();
                 for (const valueModel of Object.values(this.values)) valueModel.getAllObservers(null, accum);
                 return toEventModels(accum, noSelf ? this : null);
+            },
+            
+            // Persistence /////////////////////////////////////////////////////
+            exportToObj: function() {
+                const retval = {},
+                    valuesObj = retval.values = {},
+                    values = this.values;
+                for (const statId of EVENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
+                for (const id in values) valuesObj[id] = values[id].exportToObj();
+                return retval;
+            },
+            
+            /*  Update only. Keys that are absent are left alone and unknown Values are skipped. */
+            importFromObj: function(obj) {
+                for (const statId of EVENT_STAT_IDS) {
+                    if (obj[statId]) this[statId].importFromObj(obj[statId]);
+                }
+                
+                const valuesObj = obj.values;
+                if (valuesObj) {
+                    const values = this.values;
+                    for (const id in valuesObj) {
+                        const valueModel = values[id];
+                        if (valueModel) {
+                            valueModel.importFromObj(valuesObj[id]);
+                        } else {
+                            console.warn('Save has unknown Value', id, 'for Event', this.id, '(skipping)');
+                        }
+                    }
+                }
             },
             
             doDevouredByChronovores: function() {

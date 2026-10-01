@@ -270,12 +270,16 @@
             ICON_THE_VOID:'⦰',
             ICON_HQ:'❉',
             ICON_SEARCH:'?',
+            ICON_HELP:'?',
             ICON_NIL:'–',
             ICON_NEXT:'➜',
             ICON_CHECKED:'✓',
             ICON_UNCHECKED:'✗',
             ICON_CANCEL:'X',
             ICON_APPROX:'~',
+            ICON_SAVE:'✇',
+            ICON_SETTINGS:'⚙',
+            ICON_RESTART:'⌫'
         };
     
     // Apply config overrides

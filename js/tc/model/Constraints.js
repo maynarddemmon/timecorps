@@ -232,7 +232,11 @@
     /*  The observer method name used for a constrained attribute, so code can pick out
         one constraint's dependencies in getAllObservables/getAllObservers. */
     pkg.getConstraintFuncName = generateConstraintName;
-    
+
+    /*  The value or expression last given to setConstrainedValue for an attribute. This is
+        what gets saved, since re-applying it restores both literals and expressions. */
+    pkg.getConstrainedValueCfg = (target, name) => target[generateConfigAttrName(name)];
+
     pkg.setConstrainedValue = (resolveTarget, target, name, constraintValue) => {
         const cfgName = generateConfigAttrName(name);
         if (target[cfgName] !== constraintValue) {

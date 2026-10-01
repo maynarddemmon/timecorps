@@ -340,6 +340,8 @@
             }
         },
         
+        updateTimeLineLayoutDebounced = debounce(updateTimelineLayout, STANDARD_DEBOUNCE_MILLIS),
+        
         // History //
         pushOntoHistory = (timeline, eventId) => {
             if (eventId && !timeline._noHistUpdate) {
@@ -951,11 +953,11 @@
         },
         
         notifyEventVisibilityChange: function(_eventModel) {
-            if (this.timelineReady) updateTimelineLayout(this);
+            if (this.timelineReady) updateTimeLineLayoutDebounced(this);
         },
         
         notifyAgentLocOrVisChange: function(_agentModel) {
-            if (this.timelineReady) updateTimelineLayout(this); // FIXME: agent only update option?
+            if (this.timelineReady) updateTimeLineLayoutDebounced(this); // FIXME: agent only update option?
         }
     });
 })(tc);

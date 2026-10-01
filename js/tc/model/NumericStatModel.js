@@ -219,6 +219,21 @@
                     retval[key] = self[key];
                 }
                 return retval;
+            },
+            
+            // Persistence /////////////////////////////////////////////////////
+            /*  absMin and absMax never change after init so they are not saved. */
+            exportToObj: function() {
+                return {min:this.min, max:this.max, value:this.value};
+            },
+            
+            /*  Restores bounds before the value so the value isn't clamped by stale bounds. Uses
+                setValue rather than adjValue so nothing is forwarded (e.g. Event paradox to the
+                timeline). */
+            importFromObj: function(obj) {
+                if ('min' in obj) this.setMin(obj.min);
+                if ('max' in obj) this.setMax(obj.max);
+                if ('value' in obj) this.setValue(obj.value);
             }
         }),
         
@@ -245,27 +260,4 @@
     pkg.NotifyingNumericStatModel = new JS.Class('NotifyingNumericStatModel', NumericStatModel, {
         include: [NotifyingStatModelMixin]
     });
-    
-    /** A stat that gets its value from other StatModels. */
-    /*DerivedStatModelMixin = pkg.DerivedStatModelMixin = new JS.Module('DerivedStatModelMixin', {
-        init: function(attrs) {
-            const watch = attrs.watch;
-            delete attrs.watch;
-            
-            this.callSuper(attrs);
-            
-            this.setValuesToWatch(watch);
-        },
-        
-        setValuesToWatch: function(observables) {
-            this.releaseConstraint('updateValue');
-            this.constrain('updateValue', observables);
-        },
-        
-        updateValue: function(ignoreEvent) {
-            this.setValue(this.calculateValue());
-        },
-        
-        calculateValue: () => {},
-    }),*/
 })(tc);

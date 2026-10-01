@@ -29,8 +29,37 @@
             fireUpdatedEvent: function(model) {
                 this.callSuper(model);
                 pkg.app.notifyModelUpdated(model, this.scopeId);
+            },
+            
+            // Persistence //
+            exportToObj: function() {
+                const retval = {},
+                    models = this.getAll();
+                for (const id in models) retval[id] = models[id].exportToObj();
+                return retval;
+            },
+            
+            /*  Update only. Models are never added or removed, and unknown IDs are skipped. */
+            importFromObj: function(obj) {
+                for (const id in obj) {
+                    const model = this.getById(id);
+                    if (model) {
+                        model.importFromObj(obj[id]);
+                    } else {
+                        console.warn('Save has unknown', this.scopeId, 'id:', id, '(skipping)');
+                    }
+                }
+            },
+            
+            /*  A second pass for models that must finish restoring after constraint binding
+                resumes. */
+            completeImportFromObj: function(obj) {
+                for (const id in obj) this.getById(id)?.completeImportFromObj?.(obj[id]);
             }
-        });
+        }),
+        
+        PERSISTED_COLLECTION_SCOPES = [SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS],
+        TIMELINE_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL];
     
     pkg.Model = new JSClass('Model', myt.Node, {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -216,6 +245,50 @@
                     }
                 }
             }
+        },
+        
+        
+        // Persistence //////////////////////////////////////////////////////////
+        /*  The full saveable state. Locations are pure data so they are not included. The 
+            PersistenceManager diffs this against a baseline so only changes get saved. */
+        exportToObj: () => {
+            const retval = {
+                score:model.score,
+                currentOperation:model.getCurrentOperation()?.id ?? null
+            };
+            for (const statId of TIMELINE_STAT_IDS) retval[statId] = model[statId].exportToObj();
+            for (const scope of PERSISTED_COLLECTION_SCOPES) retval[scope] = model[scope].exportToObj();
+            return retval;
+        },
+        
+        /*  First pass. Must run while constraint binding is paused (see PersistenceManager). */
+        importFromObj: obj => {
+            if ('score' in obj) model.setScore(obj.score);
+            for (const statId of TIMELINE_STAT_IDS) {
+                if (obj[statId]) model[statId].importFromObj(obj[statId]);
+            }
+            for (const scope of PERSISTED_COLLECTION_SCOPES) {
+                if (obj[scope]) model[scope].importFromObj(obj[scope]);
+            }
+        },
+        
+        /*  Second pass. Runs after constraint binding resumes so restored constraints have 
+            their values before the current Operation checks its objectives. */
+        completeImportFromObj: obj => {
+            for (const scope of PERSISTED_COLLECTION_SCOPES) {
+                if (obj[scope]) model[scope].completeImportFromObj(obj[scope]);
+            }
+            
+            if ('currentOperation' in obj) {
+                const operationModel = model.getOperationModel(obj.currentOperation);
+                if (operationModel) {
+                    model.setCurrentOperation(operationModel);
+                } else {
+                    console.warn('Save has unknown current operation', obj.currentOperation, '(keeping', model.getCurrentOperation()?.id, ')');
+                }
+            }
+            
+            pkg.app.getTimelineView().notifyAgentLocOrVisChange();
         },
         
         

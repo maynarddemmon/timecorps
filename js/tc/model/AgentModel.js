@@ -10,7 +10,7 @@
         {stableStringify, getRandomInt} = M,
         
         {
-            NotifyingNumericStatModel,
+            NotifyingNumericStatModel, getConstrainedValueCfg,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
@@ -23,6 +23,8 @@
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION, AGENT_SKILL_IDS,
             SCOPE_AGENT
         } = pkg,
+        
+        AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL],
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -53,6 +55,32 @@
             }
             
             return [min, max];
+        },
+        
+        /*  Log entries hold model references which are saved as IDs. Exits have no ID so they 
+            are saved as [eventId, index]. Actions are saved as [eventId, actionId]. */
+        exportLogEntry = entry => {
+            const {event, exit, action, ...retval} = entry;
+            if (event) retval.event = event.id;
+            if (exit) retval.exit = [exit.event.id, exit.event.getExitModels().indexOf(exit)];
+            if (action) retval.action = [action.event.id, action.id];
+            return retval;
+        },
+        
+        /*  Returns null if a referenced model no longer exists. */
+        importLogEntry = obj => {
+            const {event, exit, action, ...retval} = obj,
+                rootModel = pkg.model;
+            if (event != null) {
+                if (!(retval.event = rootModel.getEventModel(event))) return null;
+            }
+            if (exit) {
+                if (!(retval.exit = rootModel.getEventModel(exit[0])?.getExitModels()[exit[1]])) return null;
+            }
+            if (action) {
+                if (!(retval.action = rootModel.getEventModel(action[0])?.getActionModels()[action[1]])) return null;
+            }
+            return retval;
         },
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
@@ -129,7 +157,7 @@
             for (const attrName of ['name','event','actionExecCount','hidden','playerControlled']) {
                 retval[attrName] = this[attrName];
             }
-            for (const attrName of [STAT_ID_PARADOX,STAT_ID_CHRONAL]) {
+            for (const attrName of AGENT_STAT_IDS) {
                 // Use stableStringify since similarTo uses shallowEqual. If this gets 
                 // unwieldy change similarTo to use deepEqual and drop the stableStringify.
                 retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
@@ -261,6 +289,71 @@
                 accum.push({id:skillId, value:this.getSkill(skillId)});
             }
             return accum;
+        },
+        
+        
+        // Persistence /////////////////////////////////////////////////////////
+        exportToObj: function() {
+            const retval = {
+                hidden:getConstrainedValueCfg(this, 'hidden'),
+                playerControlled:this.playerControlled,
+                skills:{...this.skills},
+                event:this.event,
+                actionExecCount:this.actionExecCount,
+                arrivalOrder:this.arrivalOrder,
+                log:this.log.map(exportLogEntry)
+            };
+            for (const statId of AGENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
+            return retval;
+        },
+        
+        /*  Update only. Runs while constraint binding is paused. Deliberately avoids setEvent 
+            and adjValue since those would log, accrue paradox and stamp arrival again. */
+        importFromObj: function(obj) {
+            for (const statId of AGENT_STAT_IDS) {
+                if (obj[statId]) this[statId].importFromObj(obj[statId]);
+            }
+            if ('hidden' in obj) this.setHidden(obj.hidden);
+            if ('playerControlled' in obj) this.setPlayerControlled(obj.playerControlled);
+            
+            // A saved diff only holds the skills that changed so merge rather than replace.
+            if (obj.skills) this.setSkills({...this.skills, ...obj.skills});
+            
+            if ('event' in obj) {
+                //  Puts the Agent at an Event with none of the side effects of setEvent.
+                const eventId = obj.event,
+                    eventModel = pkg.model.getEventModel(eventId);
+                if (eventModel) {
+                    this.set('event', eventId, true);
+                    this._eventModel = eventModel;
+                } else {
+                    console.warn('Save puts Agent', this.id, 'at unknown Event', eventId, '(skipping)');
+                }
+            }
+            if ('actionExecCount' in obj) this.setActionExecCount(obj.actionExecCount, true);
+            
+            if (obj.log) {
+                const log = [];
+                for (const entryObj of obj.log) {
+                    const entry = importLogEntry(entryObj);
+                    if (entry) {
+                        log.push(entry);
+                    } else {
+                        console.warn('Save has a log entry for Agent', this.id, 'that references a missing model (skipping):', entryObj);
+                    }
+                }
+                this.log = log;
+            }
+        },
+        
+        /*  Runs after constraint binding resumes. Revealing an Agent stamps its arrival when 
+            the hidden constraint binds, so the saved order must be applied after that. */
+        completeImportFromObj: function(obj) {
+            if ('arrivalOrder' in obj) {
+                const arrivalOrder = this.arrivalOrder = obj.arrivalOrder;
+                arrivalCounter = mathMax(arrivalCounter, arrivalOrder ?? 0);
+            }
+            this.notifyCollectionOfUpdate();
         },
         
         
