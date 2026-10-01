@@ -338,6 +338,12 @@
             if (selectedBoxAnimatingToBounds) {
                 timeline.scrollToBoundingBox(selectedBoxAnimatingToBounds);
             }
+            
+            // Attempt to select an EventBox if the previous attempt failed. This is result of
+            // selection occuring while updateTimeLineLayoutDebounced is still delayed.
+            if (timeline._eventModelOrIdToSelect) {
+                timeline.doSelectEvent(timeline._eventModelOrIdToSelect);
+            }
         },
         
         updateTimeLineLayoutDebounced = debounce(updateTimelineLayout, STANDARD_DEBOUNCE_MILLIS),
@@ -887,7 +893,12 @@
         
         doSelectEvent: function(eventModelOrId) {
             const eventBox = this.getEventBox(eventModelOrId);
-            if (eventBox) this.select(eventBox);
+            if (eventBox) {
+                this._eventModelOrIdToSelect = null;
+                this.select(eventBox);
+            } else {
+                this._eventModelOrIdToSelect = eventModelOrId;
+            }
         },
         
         getAgentToken: function(agentModelOrId) {

@@ -282,11 +282,14 @@
             if ('currentOperation' in obj) {
                 const operationModel = model.getOperationModel(obj.currentOperation);
                 if (operationModel) {
+                    pkg.app.getTimelineView().doSelectEvent(); // Clear any lingering event selection.
                     model.setCurrentOperation(operationModel);
                 } else {
                     console.warn('Save has unknown current operation', obj.currentOperation, '(keeping', model.getCurrentOperation()?.id, ')');
                 }
             }
+            
+            // FIXME: restore selection.
             
             pkg.app.getTimelineView().notifyAgentLocOrVisChange();
         },
