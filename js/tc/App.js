@@ -355,7 +355,6 @@
         
         doReload: () => {
             location.reload(); // reload the browser.
-            //model.reset(); // FIXME: eventually we will want a true reset but that gets wrapped up in save/load so we defer for now.
         },
         
         /*  Clears the save first since a reload would otherwise restore it. */

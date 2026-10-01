@@ -477,8 +477,6 @@
                         pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
                         this.incrementActionExecCount();
                         this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:adj});
-                        
-                        // FIXME: mechanism to trigger various fog-of-war changes based on attestation.
                     }
                 }
             }
