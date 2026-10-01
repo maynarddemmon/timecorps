@@ -900,6 +900,7 @@
         doSelectEvent: function(eventModelOrId) {
             const eventBox = this.getEventBox(eventModelOrId);
             if (eventBox) {
+                this._eventModelOrIdToSelect = null;
                 this.select(eventBox);
             } else {
                 this._eventModelOrIdToSelect = eventModelOrId;
