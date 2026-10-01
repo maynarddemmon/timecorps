@@ -14,6 +14,16 @@ const exportModel = page => page.evaluate(() => JSON.parse(JSON.stringify(tc.mod
         [eventId, valueId, value]
     ),
 
+    /*  Save, confirm and acknowledge. Enter dismisses the acknowledgement, which also covers
+        the dialogs' Enter key support. */
+    saveGame = async page => {
+        await visibleButton(page, '✇').click();
+        await visibleButton(page, /Confirm/).click();
+        await expect(page.getByText('Save Succeeded', {exact:true}).filter({visible:true})).toBeVisible();
+        await page.keyboard.press('Enter');
+        await expect(page.getByText('Save Succeeded', {exact:true}).filter({visible:true})).toHaveCount(0);
+    },
+    
     reloadGame = async page => {
         await page.reload();
         await page.waitForFunction(() =>
@@ -46,7 +56,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
         vq.doDeployToEvent(roster);
     });
 
-    await visibleButton(page, '✇').click();
+    await saveGame(page);
     await expect(page.getByTitle(/^Last saved /)).toBeVisible();
 
     // Only what changed is saved: an untouched Event isn't in the save at all.
@@ -85,7 +95,7 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     await visibleButton(page, 'Next Mission ➜').last().click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
 
-    await visibleButton(page, '✇').click();
+    await saveGame(page);
     const before = await exportModel(page);
 
     await reloadGame(page);
@@ -104,7 +114,7 @@ test('restart campaign erases the save', async ({page}) => {
     const problems = await startGame(page);
 
     await setCausatorCfg(page, 'roster_reshuffle', 'remindBlair', 'true');
-    await visibleButton(page, '✇').click();
+    await saveGame(page);
     expect(await readSave(page)).not.toBeNull();
 
     await visibleButton(page, '⌫').click();

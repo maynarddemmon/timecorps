@@ -9,7 +9,7 @@
         {min:mathMin, max:mathMax, floor:mathFloor} = Math,
         
         M = myt,
-        {PaddedText, KeyObservable:{getCodeFromEvent}, global:{keys:{CODE_ESC, CODE_ENTER}}} = M,
+        {PaddedText, global:{keys:globalKeys}} = M,
         
         {
             UnderlineBtn,
@@ -95,12 +95,16 @@
             getHeaderView: function() {return this.getPanelView().getHeaderView();},
             setTitle: function(v, tooltip) {this.getPanelView().setTitle(v, tooltip);},
             getCloseBtn: function() {return this._closeBtn;},
+            getDefaultBtn: M.NOOP,
             getFooterView: function() {return this._footerView;},
             
             _keyDown: function(event) {
-                switch (getCodeFromEvent(event)) {
-                    case CODE_ESC:
+                switch (M.KeyObservable.getCodeFromEvent(event)) {
+                    case globalKeys.CODE_ESC:
                         this.getCloseBtn()?.doActivated();
+                        break;
+                    case globalKeys.CODE_ENTER:
+                        this.getDefaultBtn()?.doActivated();
                         break;
                 }
             },
@@ -154,17 +158,7 @@
                 self.callSuper(parent, attrs);
             },
             
-            getConfirmBtn: function() {return this.getFooterView().confirmBtn;},
-            
-            _keyDown: function(event) {
-                switch (getCodeFromEvent(event)) {
-                    case CODE_ENTER:
-                        this.getConfirmBtn()?.doActivated();
-                        break;
-                    default:
-                        this.callSuper(event);
-                }
-            },
+            getDefaultBtn: function() {return this.getFooterView().confirmBtn;},
             
             doClose: function() {
                 this.doCancel();
@@ -229,17 +223,7 @@
                 self.callSuper(parent, attrs);
             },
             
-            getAckBtn: function() {return this.getFooterView().ackBtn;},
-            
-            _keyDown: function(event) {
-                switch (getCodeFromEvent(event)) {
-                    case CODE_ENTER:
-                        this.getAckBtn()?.doActivated();
-                        break;
-                    default:
-                        this.callSuper(event);
-                }
-            },
+            getDefaultBtn: function() {return this.getFooterView().ackBtn;},
             
             doConfirm: function() {
                 const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.() === true;
