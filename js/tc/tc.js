@@ -3,7 +3,7 @@
     
     const {
             max:mathMax, floor:mathFloor, ceil:mathCeil, 
-            log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER
+            log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom
         } = Math,
         
         // Chronal Util
@@ -179,6 +179,8 @@
                 Rolls are integers in [0, max). A d1000 roll is 0-999, so every value is equally 
                 likely and a check's chance of success comes out as an exact percentage. */
             rng: {
+                D1000,
+                
                 /*  An integer in [0, max). Uses the next queued value if there is one. */
                 roll: (max=D1000) => {
                     if (queuedRNGs.length > 0) {
@@ -186,11 +188,11 @@
                         checkRNGRollable(v, max);
                         return v;
                     }
-                    return mathFloor(Math.random() * max);
+                    return mathFloor(mathRandom() * max);
                 },
                 
-                /*  An integer in [max, min], inclusive at both ends. A queued value is used as the
-                    offset from min. */
+                /*  An integer in [max, min], inclusive at both ends. If not provided min
+                    defaults to 0. */
                 randomInt: (max, min=0) => min + TC.rng.roll(max - min + 1),
                 
                 // Testing //

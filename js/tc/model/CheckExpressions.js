@@ -3,6 +3,8 @@
     
     const M = myt,
         
+        {roll, D1000} = pkg.rng,
+        
         FUNC_PARAMS = ['agent', 'event', 'random', 'difficulty'],
         
         // Compiled check functions by expression text. The parameters are the same for every
@@ -78,14 +80,14 @@
         
         /*  Rolls and evaluates. Returns {success, roll, difficulty}. */
         evaluate: (expr, {agent, event, difficulty=0} = {}) => {
-            const roll = pkg.rng.roll(pkg.rng.D1000);
+            const dieRoll = roll(D1000);
             let success = false;
             try {
-                success = !!compile(expr)(getAgentView(agent), event, roll, difficulty);
+                success = !!compile(expr)(getAgentView(agent), event, dieRoll, difficulty);
             } catch (err) {
                 console.warn('Check expression threw (' + err.message + '):', expr);
             }
-            return {success, roll, difficulty};
+            return {success, roll:dieRoll, difficulty};
         }
     };
 })(tc);
