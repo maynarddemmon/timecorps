@@ -20,7 +20,7 @@
             ICON_HQ,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION, AGENT_SKILL_IDS,
-            SCOPE_AGENT
+            SCOPE_AGENT, SCOPE_SKILLS
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL],
@@ -118,7 +118,7 @@
             const self = this;
             
             self.log = [];
-            self.skills = {};
+            self[SCOPE_SKILLS] = {};
             
             // Hidden and NPC unless the data says otherwise.
             self.hidden = true;
@@ -278,9 +278,9 @@
                     console.warn('Agent', this.id, 'skill', skillId, 'not numeric. IGNORING:', v);
                 }
             }
-            this.skills = clean;
+            this[SCOPE_SKILLS] = clean;
         },
-        getSkills: function() {return this.skills;},
+        getSkills: function() {return this[SCOPE_SKILLS];},
         getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
         getSkillChronogation: function() {return this.getSkill(SKILL_ID_CHRONOGATION);},
         getSkillInvestigation: function() {return this.getSkill(SKILL_ID_INVESTIGATION);},
@@ -293,13 +293,20 @@
             return accum;
         },
         
+        checkSkill: function(skillName, difficulty) {
+            return this.checkSkillExpression('agent.' + SCOPE_SKILLS + '.' + skillName + difficulty);
+        },
+        checkSkillExpression: function(skillExpr='', difficulty) {
+            return pkg.check.skill(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        },
+        
         
         // Persistence /////////////////////////////////////////////////////////
         exportToObj: function() {
             const retval = {
                 hidden:getConstrainedValueCfg(this, 'hidden'),
                 playerControlled:this.playerControlled,
-                skills:{...this.skills},
+                [SCOPE_SKILLS]:{...this[SCOPE_SKILLS]},
                 event:this.event,
                 actionExecCount:this.actionExecCount,
                 arrivalOrder:this.arrivalOrder,
@@ -319,7 +326,7 @@
             if ('playerControlled' in obj) this.setPlayerControlled(obj.playerControlled);
             
             // A saved diff only holds the skills that changed so merge rather than replace.
-            if (obj.skills) this.setSkills({...this.skills, ...obj.skills});
+            if (obj[SCOPE_SKILLS]) this.setSkills({...this[SCOPE_SKILLS], ...obj[SCOPE_SKILLS]});
             
             if ('event' in obj) {
                 //  Puts the Agent at an Event with none of the side effects of setEvent.

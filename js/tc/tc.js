@@ -191,8 +191,9 @@
                     return mathFloor(mathRandom() * max);
                 },
                 
-                /*  An integer in [max, min], inclusive at both ends. If not provided min
-                    defaults to 0. */
+                /*  An integer in from min to max, inclusive at both ends. Note: max is provided
+                    first because calls to randomInt use a min of 0 (the default when
+                    not provided.) */
                 randomInt: (max, min=0) => min + TC.rng.roll(max - min + 1),
                 
                 // Testing //
@@ -280,6 +281,9 @@
             SCOPE_AGENT:'agent',
             SCOPE_EVENTS:'events',
             SCOPE_EVENT:'event',
+            
+            // Agent Scopes
+            SCOPE_SKILLS:'skills',
             
             // Stat IDs
             STAT_ID_PARADOX:'paradox',

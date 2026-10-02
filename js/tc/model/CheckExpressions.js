@@ -3,9 +3,11 @@
     
     const M = myt,
         
-        {roll, D1000} = pkg.rng,
+        {SCOPE_SKILLS, rng:{roll, D1000}} = pkg,
         
-        FUNC_PARAMS = ['agent', 'event', 'random', 'difficulty'],
+        PARAM_RANDOM = 'random',
+        PARAM_DIFFICULTY = 'difficulty',
+        FUNC_PARAMS = ['agent', 'event', 'timeline', PARAM_RANDOM, PARAM_DIFFICULTY],
         
         // Compiled check functions by expression text. The parameters are the same for every
         // check, so events that share an expression share one function.
@@ -18,7 +20,7 @@
         
         // The agent as an expression sees it: the AgentModel, except skills default to 0.
         AGENT_HANDLER = {
-            get: (agentModel, key) => key === 'skills' ? new Proxy(agentModel.getSkills(), SKILLS_HANDLER) : agentModel[key]
+            get: (agentModel, key) => key === SCOPE_SKILLS ? new Proxy(agentModel.getSkills(), SKILLS_HANDLER) : agentModel[key]
         },
         AGENT_VIEWS = new WeakMap(),
         getAgentView = agentModel => {
@@ -58,36 +60,40 @@
                 COMPILED.set(expr, func);
             }
             return func;
+        },
+        
+        /*  Evaluates success expressions for checks such as investigating. An expression is plain
+            JavaScript that is truthy when the check succeeds. It can use:
+                agent - The AgentModel making the check. agent.skills.<id> is 0 for any skill the
+                    agent doesn't have.
+                event - The EventModel the check happens at.
+                random - The roll, an integer from 0 to 999.
+                difficulty - The check's difficulty.
+            For example "difficulty - agent.skills.deception <= random" succeeds more often the
+            lower the difficulty and the higher the skill. With skill 0 and difficulty 500 that's
+            a 50% chance, and each skill point adds 0.1%.
+            
+            An expression that doesn't compile or throws fails, with a warning. */
+        CHECK = pkg.checks = {
+            getCompileError,
+            
+            /*  The compiled function for an expression, cached by the expression text. */
+            compile,
+            
+            /*  Rolls and evaluates. Returns {success, roll, difficulty}. */
+            evaluate: (expr, {agent, event, difficulty=0} = {}) => {
+                const dieRoll = roll(D1000);
+                let success = false;
+                try {
+                    success = !!compile(expr)(getAgentView(agent), event, pkg.model, dieRoll, difficulty);
+                } catch (err) {
+                    console.warn('Check expression threw (' + err.message + '):', expr);
+                }
+                return {success, roll:dieRoll, difficulty};
+            },
+            
+            /*  Tests a skill expression for success against a provided config {agent, event, difficulty}.
+                success is calculated as: random + skillExpr >= diffuculty */
+            skill: (skillExpr, cfg) => CHECK.evaluate(PARAM_RANDOM + '+' + skillExpr + '>=' + PARAM_DIFFICULTY, cfg).success
         };
-    
-    /*  Evaluates success expressions for checks such as investigating. An expression is plain
-        JavaScript that is truthy when the check succeeds. It can use:
-            agent - The AgentModel making the check. agent.skills.<id> is 0 for any skill the
-                agent doesn't have.
-            event - The EventModel the check happens at.
-            random - The roll, an integer from 0 to 999.
-            difficulty - The check's difficulty.
-        For example "difficulty - agent.skills.deception <= random" succeeds more often the
-        lower the difficulty and the higher the skill. With skill 0 and difficulty 500 that's
-        a 50% chance, and each skill point adds 0.1%.
-        
-        An expression that doesn't compile or throws fails, with a warning. */
-    pkg.checks = {
-        getCompileError,
-        
-        /*  The compiled function for an expression, cached by the expression text. */
-        compile,
-        
-        /*  Rolls and evaluates. Returns {success, roll, difficulty}. */
-        evaluate: (expr, {agent, event, difficulty=0} = {}) => {
-            const dieRoll = roll(D1000);
-            let success = false;
-            try {
-                success = !!compile(expr)(getAgentView(agent), event, dieRoll, difficulty);
-            } catch (err) {
-                console.warn('Check expression threw (' + err.message + '):', expr);
-            }
-            return {success, roll:dieRoll, difficulty};
-        }
-    };
 })(tc);
