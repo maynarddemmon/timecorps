@@ -133,3 +133,50 @@ test.describe('checks', () => {
         expect(await page.evaluate(() => tc.checks.getCompileError(''))).not.toBeNull();
     });
 });
+
+test.describe('skill checks', () => {
+    // Rolls a skill check on VQ with the given skills and forced roll.
+    const checkSkill = (page, method, arg, difficulty, {roll, skills={}}) => page.evaluate(
+        ([method, arg, difficulty, roll, skills]) => {
+            const agent = tc.model.getAgentModel('VQ'),
+                original = agent.getSkills();
+            agent.setSkills(skills);
+            try {
+                tc.rng.queueRolls(roll);
+                return agent[method](arg, difficulty);
+            } finally {
+                agent.setSkills(original);
+            }
+        },
+        [method, arg, difficulty, roll, skills]
+    );
+    
+    test('checkSkill passes on random + skill >= difficulty', async ({page}) => {
+        const problems = await startGame(page);
+        
+        // Skill 100 at difficulty 500 needs a roll of 400 or more.
+        expect(await checkSkill(page, 'checkSkill', 'stealth', 500, {roll:400, skills:{stealth:100}})).toBe(true);
+        expect(await checkSkill(page, 'checkSkill', 'stealth', 500, {roll:399, skills:{stealth:100}})).toBe(false);
+        
+        // A skill the agent lacks counts as 0.
+        expect(await checkSkill(page, 'checkSkill', 'disguise', 500, {roll:499})).toBe(false);
+        expect(await checkSkill(page, 'checkSkill', 'disguise', 500, {roll:500})).toBe(true);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('checkSkillExpression combines skills', async ({page}) => {
+        const problems = await startGame(page);
+        const best = 'Math.max(agent.skills.deception, agent.skills.disguise)';
+        
+        expect(await checkSkill(page, 'checkSkillExpression', best, 500, {roll:300, skills:{disguise:200}})).toBe(true);
+        expect(await checkSkill(page, 'checkSkillExpression', best, 500, {roll:299, skills:{disguise:200}})).toBe(false);
+        
+        // The skill expression is added as a whole: with || unparenthesized, a roll of 50 would
+        // make the check succeed, since 50 + 0 is truthy.
+        expect(await checkSkill(page, 'checkSkillExpression', 'agent.skills.stealth || 200', 500, {roll:50})).toBe(false);
+        expect(await checkSkill(page, 'checkSkillExpression', 'agent.skills.stealth || 200', 500, {roll:300})).toBe(true);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+});

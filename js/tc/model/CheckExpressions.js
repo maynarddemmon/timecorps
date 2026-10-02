@@ -67,6 +67,7 @@
                 agent - The AgentModel making the check. agent.skills.<id> is 0 for any skill the
                     agent doesn't have.
                 event - The EventModel the check happens at.
+                timeline - The root Model.
                 random - The roll, an integer from 0 to 999.
                 difficulty - The check's difficulty.
             For example "difficulty - agent.skills.deception <= random" succeeds more often the
@@ -93,7 +94,8 @@
             },
             
             /*  Tests a skill expression for success against a provided config {agent, event, difficulty}.
-                success is calculated as: random + skillExpr >= diffuculty */
-            skill: (skillExpr, cfg) => CHECK.evaluate(PARAM_RANDOM + '+' + skillExpr + '>=' + PARAM_DIFFICULTY, cfg).success
+                success is calculated as: random + (skillExpr) >= difficulty. The parentheses keep
+                an expression using ||, ?: or comparisons from changing what's added. */
+            skill: (skillExpr, cfg) => CHECK.evaluate(PARAM_RANDOM + '+(' + skillExpr + ')>=' + PARAM_DIFFICULTY, cfg).success
         };
 })(tc);

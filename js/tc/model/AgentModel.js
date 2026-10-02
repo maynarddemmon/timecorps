@@ -293,11 +293,15 @@
             return accum;
         },
         
+        /*  Rolls a check of one skill against a difficulty. True on success. */
         checkSkill: function(skillName, difficulty) {
-            return this.checkSkillExpression('agent.' + SCOPE_SKILLS + '.' + skillName + difficulty);
+            return this.checkSkillExpression('agent.' + SCOPE_SKILLS + '.' + skillName, difficulty);
         },
-        checkSkillExpression: function(skillExpr='', difficulty) {
-            return pkg.check.skill(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        
+        /*  Rolls a check of a skill expression, e.g. "Math.max(agent.skills.a, agent.skills.b)",
+            against a difficulty. True on success. */
+        checkSkillExpression: function(skillExpr, difficulty) {
+            return pkg.checks.skill(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
         },
         
         
