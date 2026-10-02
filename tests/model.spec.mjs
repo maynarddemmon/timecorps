@@ -94,3 +94,69 @@ test('causator links together match each event\'s precursors and descendants', a
     });
     expect(mismatches).toEqual([]);
 });
+
+test('an event\'s investigate config is optional and validated', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const eventModel = tc.model.getEventModel('collision'),
+            read = () => [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkill()],
+            out = {};
+        
+        out.none = read();
+        
+        eventModel.setInvestigate({difficulty:500, skill:'Math.max(agent.skills.deception, agent.skills.disguise)'});
+        out.both = read();
+        
+        // Either part can be left out.
+        eventModel.setInvestigate({difficulty:700});
+        out.difficultyOnly = read();
+        
+        // Bad parts are dropped, good ones kept.
+        eventModel.setInvestigate({difficulty:'500', skill:'agent.skills.stealth'});
+        out.badDifficulty = read();
+        eventModel.setInvestigate({difficulty:250.5, skill:'  '});
+        out.badBoth = read();
+        eventModel.setInvestigate(['agent.skills.stealth']);
+        out.notObject = read();
+        
+        eventModel.setInvestigate(null);
+        out.cleared = read();
+        return out;
+    });
+    expect(result).toEqual({
+        none:[undefined, undefined],
+        both:[500, 'Math.max(agent.skills.deception, agent.skills.disguise)'],
+        difficultyOnly:[700, undefined],
+        badDifficulty:[undefined, 'agent.skills.stealth'],
+        badBoth:[undefined, undefined],
+        notObject:[undefined, undefined],
+        cleared:[undefined, undefined]
+    });
+    
+    // One warning per bad part, naming the event.
+    const investigateWarnings = problems.warnings.filter(w => w.includes('investigate'));
+    expect(investigateWarnings.length).toBe(4);
+    expect(investigateWarnings.every(w => w.startsWith('Event collision investigate'))).toBe(true);
+});
+
+test('investigate config in the event JSON reaches the model', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const build = investigate => {
+            // The id comes last, as when Events are loaded, so a warning can only name the
+            // Event if the config is applied after the other attrs.
+            const eventModel = new tc.EventModel({investigate, id:'investigate_test'});
+            try {
+                return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkill()];
+            } finally {
+                eventModel.destroy();
+            }
+        };
+        return [build({difficulty:300, skill:'agent.skills.stealth'}), build({difficulty:3.5})];
+    });
+    expect(result).toEqual([[300, 'agent.skills.stealth'], [undefined, undefined]]);
+    expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
+        'Event investigate_test investigate difficulty must be an integer: {difficulty: 3.5}'
+    ]);
+    expect(problems.pageErrors).toEqual([]);
+});

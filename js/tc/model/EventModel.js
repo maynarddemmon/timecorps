@@ -15,8 +15,12 @@
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
             ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
-            SCOPE_EVENT
+            SCOPE_EVENT, SCOPE_SKILLS,
+            SKILL_ID_INVESTIGATION
         } = pkg,
+        
+        DEFAULT_DIFFICULTY = 250, // 75% for a skill of 0.
+        DEFAULT_INVESTIGATE_CHECK_EXPR = 'agent.' + SCOPE_SKILLS + '.' + SKILL_ID_INVESTIGATION,
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
         toEventModels = (things, excludeEventModel) => {
@@ -219,7 +223,13 @@
                 // attestation/historicty check of say 15.
                 attrs.hidden ??= "event.attestation.value === 0 && event.historicity.value === 0";
                 
+                // Applied after the other attrs so any warnings can name the Event by its id.
+                const investigate = attrs.investigate;
+                delete attrs.investigate;
+                
                 self.callSuper(attrs);
+                
+                self.setInvestigate(investigate);
             },
             
             getAsObj: function(cfg) {
@@ -401,6 +411,47 @@
             },
             isAffectedByHidden: function(affectorEventModelOrId) {
                 return this.getHideAffectedByModel(affectorEventModelOrId)?.isHidden() ?? false;
+            },
+            
+            // Investigate
+            /*  Optional config for investigating this Event:
+                    {difficulty:<integer>, skill:<skill expression>}
+                Either part can be left out, in which case its getter returns undefined and the
+                caller uses a default. A part that's the wrong type is ignored, with a warning. */
+            setInvestigate: function(cfg) {
+                const self = this,
+                    warn = msg => console.warn('Event', self.id, 'investigate', msg + ':', cfg);
+                
+                self._invDifficulty = self._invSkill = undefined;
+                if (cfg == null) return;
+                if (typeof cfg !== 'object' || Array.isArray(cfg)) {
+                    warn('must be an object');
+                    return;
+                }
+                
+                const {difficulty, skill, ...unknown} = cfg;
+                if (difficulty !== undefined) {
+                    if (Number.isInteger(difficulty)) {
+                        self._invDifficulty = difficulty;
+                    } else {
+                        warn('difficulty must be an integer');
+                    }
+                }
+                if (skill !== undefined) {
+                    if (typeof skill === 'string' && skill.trim() !== '') {
+                        self._invSkill = skill;
+                    } else {
+                        warn('skill must be a non-empty string');
+                    }
+                }
+                const unknownKeys = Object.keys(unknown);
+                if (unknownKeys.length > 0) warn('has unknown keys ' + unknownKeys.join(', '));
+            },
+            getInvestigateDifficulty: function() {
+                return this._invDifficulty ?? DEFAULT_DIFFICULTY;
+            },
+            getInvestigateSkillExpr: function() {
+                return this._invSkill ?? DEFAULT_INVESTIGATE_CHECK_EXPR;
             },
             
             

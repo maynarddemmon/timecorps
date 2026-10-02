@@ -115,6 +115,10 @@
                 AGENT_DEFAULT_STARTING_CHRONAL:75,
                 AGENT_CHRONAL_LIMIT:100,
                 
+                // These ensure that any skill check has at least a 0.1% chance of success/failure.
+                MAX_SKILL_EASE:-1,
+                MIN_SKILL_EASE:-999,
+                
                 // The starting maximum paradox an Agent can have.
                 AGENT_PARADOX_LIMIT:3,
                 

@@ -118,3 +118,31 @@ test('every agent has a portrait and a dossier', () => {
     }
     expect(missing).toEqual([]);
 });
+
+test('every investigate config has an integer difficulty and a skill expression that compiles', () => {
+    const problems = [];
+    for (const [eventId, event] of Object.entries(events)) {
+        const cfg = event.investigate;
+        if (cfg === undefined) continue;
+        if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+            problems.push(eventId + ': investigate is not an object');
+            continue;
+        }
+        const {difficulty, skill, ...unknown} = cfg;
+        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(eventId + ': difficulty is not an integer');
+        if (skill !== undefined) {
+            if (typeof skill !== 'string' || skill.trim() === '') {
+                problems.push(eventId + ': skill is not a non-empty string');
+            } else {
+                // Compiled the same way as tc.checks.skill, with the same parameters.
+                try {
+                    new Function('agent', 'event', 'timeline', 'random', 'difficulty', '"use strict";return (random+(' + skill + ')>=difficulty);');
+                } catch (err) {
+                    problems.push(eventId + ': skill does not compile (' + err.message + ')');
+                }
+            }
+        }
+        for (const key of Object.keys(unknown)) problems.push(eventId + ': unknown key ' + key);
+    }
+    expect(problems).toEqual([]);
+});

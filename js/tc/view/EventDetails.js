@@ -26,6 +26,14 @@
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
+        getInvestigateBtnPhrase = (agentModel, eventModel) => {
+            const easePhrase = agentModel.getSkillEasePhrase(
+                eventModel.getInvestigateSkillExpr(),
+                eventModel.getInvestigateDifficulty()
+            );
+            return ICON_SEARCH + ' Investigate (' + easePhrase + ')'
+        },
+        
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
             initNode: function(parent, attrs) {
                 attrs.x ??= MARKER_EXTENT;
@@ -105,7 +113,7 @@
                 
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
                 new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                new UnderlineActionBtn(actionView, {text:ICON_SEARCH + ' Investigate', disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
+                new UnderlineActionBtn(actionView, {text:getInvestigateBtnPhrase(agentModel, eventModel), disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
                     doActivated: () => {agentModel.doInvestigate();}
                 }]);
                 const actionModels = eventModel.getActionModels();

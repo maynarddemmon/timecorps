@@ -23,6 +23,8 @@
             SCOPE_AGENT, SCOPE_SKILLS
         } = pkg,
         
+        CHECK_SKILL_EXPR_PREFIX = 'agent.' + SCOPE_SKILLS + '.',
+        
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL],
         
         LOG_TYPE_ORIGIN = 'origin',
@@ -293,15 +295,23 @@
             return accum;
         },
         
-        /*  Rolls a check of one skill against a difficulty. True on success. */
-        checkSkill: function(skillName, difficulty) {
-            return this.checkSkillExpression('agent.' + SCOPE_SKILLS + '.' + skillName, difficulty);
-        },
-        
         /*  Rolls a check of a skill expression, e.g. "Math.max(agent.skills.a, agent.skills.b)",
             against a difficulty. True on success. */
         checkSkillExpression: function(skillExpr, difficulty) {
             return pkg.checks.skill(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        },
+        
+        getSkillExpressionDifficulty: function(skillExpr, difficulty) {
+            return pkg.checks.getSkillDifficulty(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        },
+        
+        getSkillEasePhrase: function(skillExpr, difficulty) {
+            return pkg.checks.getEasePhrase(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        },
+        
+        /*  Rolls a check of one skill against a difficulty. True on success. */
+        checkSkill: function(skillName, difficulty) {
+            return this.checkSkillExpression(CHECK_SKILL_EXPR_PREFIX + skillName, difficulty);
         },
         
         
@@ -480,16 +490,25 @@
                     const attestationStat = eventModel.attestation;
                     let discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
                     if (discoverableAmt > 0) {
-                        let discovered = 1;
-                        if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
-                            [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
-                            discovered = pkg.rng.randomInt(discoverableAmt, discovered);
-                        }
-                        
-                        const adj = attestationStat.adjValue(discovered);
-                        pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
+                        // Check success or failure first
+                        const {success, result, roll, difficulty, ease} = this.checkSkillExpression(
+                            eventModel.getInvestigateSkillExpr(),
+                            eventModel.getInvestigateDifficulty()
+                        );
+// FIXME: show die roll result UI
                         this.incrementActionExecCount();
-                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, amount:adj});
+                        let adj;
+                        if (success) {
+                            let discovered = 1;
+                            if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
+                                [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
+                                discovered = pkg.rng.randomInt(discoverableAmt, discovered);
+                            }
+                            
+                            adj = attestationStat.adjValue(discovered);
+                            pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
+                        }
+                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, success, amount:adj});
                     }
                 }
             }

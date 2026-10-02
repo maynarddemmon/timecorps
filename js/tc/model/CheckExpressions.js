@@ -3,11 +3,16 @@
     
     const M = myt,
         
-        {SCOPE_SKILLS, rng:{roll, D1000}} = pkg,
+        {min:mathMin, max:mathMax} = Math,
         
-        PARAM_RANDOM = 'random',
+        {
+            SCOPE_SKILLS,
+            rng:{roll, D1000},
+            cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE}
+        } = pkg,
+        
         PARAM_DIFFICULTY = 'difficulty',
-        FUNC_PARAMS = ['agent', 'event', 'timeline', PARAM_RANDOM, PARAM_DIFFICULTY],
+        FUNC_PARAMS = ['agent', 'event', 'timeline', PARAM_DIFFICULTY],
         
         // Compiled check functions by expression text. The parameters are the same for every
         // check, so events that share an expression share one function.
@@ -55,7 +60,7 @@
                     console.warn('Check expression does not compile (' + err.message + '):', expr);
                     // Stands in for an expression that doesn't compile. It's cached like any 
                     // other, so the warning only happens once per expression.
-                    func = M.FALSE_FUNC;
+                    func = () => -1; // Negative values are generally failures.
                 }
                 COMPILED.set(expr, func);
             }
@@ -68,7 +73,6 @@
                     agent doesn't have.
                 event - The EventModel the check happens at.
                 timeline - The root Model.
-                random - The roll, an integer from 0 to 999.
                 difficulty - The check's difficulty.
             For example "difficulty - agent.skills.deception <= random" succeeds more often the
             lower the difficulty and the higher the skill. With skill 0 and difficulty 500 that's
@@ -82,20 +86,62 @@
             compile,
             
             /*  Rolls and evaluates. Returns {success, roll, difficulty}. */
-            evaluate: (expr, {agent, event, difficulty=0} = {}) => {
+            evaluate: (expr, {agent, event, difficulty=0, maxEase=0, minEase=-1000}={}) => {
                 const dieRoll = roll(D1000);
-                let success = false;
+                let success = false,
+                    ease,
+                    result;
                 try {
-                    success = !!compile(expr)(getAgentView(agent), event, pkg.model, dieRoll, difficulty);
+                    ease = mathMax(minEase, mathMin(maxEase, compile(expr)(getAgentView(agent), event, pkg.model, difficulty)));
+                    result = dieRoll + ease;
+                    success = result >= 0;
                 } catch (err) {
                     console.warn('Check expression threw (' + err.message + '):', expr);
                 }
-                return {success, roll:dieRoll, difficulty};
+                return {success, result, roll:dieRoll, difficulty, ease};
             },
             
             /*  Tests a skill expression for success against a provided config {agent, event, difficulty}.
-                success is calculated as: random + (skillExpr) >= difficulty. The parentheses keep
-                an expression using ||, ?: or comparisons from changing what's added. */
-            skill: (skillExpr, cfg) => CHECK.evaluate(PARAM_RANDOM + '+(' + skillExpr + ')>=' + PARAM_DIFFICULTY, cfg).success
+                success is calculated as: random + (skillExpr) - difficulty. Success is any result 
+                0 or greater. The parentheses keep an expression using ||, ?: or comparisons from 
+                changing what's added. */
+            skill: (skillExpr, cfg={}) => {
+                cfg.maxEase ??= MAX_SKILL_EASE;
+                cfg.minEase = MIN_SKILL_EASE;
+                return CHECK.evaluate('(' + skillExpr + ')-' + PARAM_DIFFICULTY, cfg);
+            },
+            
+            getSkillEase: (skillExpr, cfg) => CHECK.skill(skillExpr, cfg).ease,
+            
+            getEasePhrase: (skillExpr, cfg) => {
+                const ease = CHECK.getSkillEase(skillExpr, cfg);
+                if (ease >= 0) {           // 100% chance
+                    return 'guaranteed';
+                } else if (ease >= -1) {   // 99.9% chance
+                    return 'sure thing';
+                } else if (ease >= -99) {  // 90% chance
+                    return 'trivial';
+                } else if (ease >= -199) { // 80% chance
+                    return 'very easy';
+                } else if (ease >= -299) { // 70% chance
+                    return 'easy';
+                } else if (ease >= -399) { // 60% chance
+                    return 'moderate';
+                } else if (ease >= -499) { // 50% chance
+                    return 'toss-up';
+                } else if (ease >= -599) { // 40% chance
+                    return 'difficult';
+                } else if (ease >= -699) { // 30% chance
+                    return 'hard';
+                } else if (ease >= -799) { // 20% chance
+                    return 'very hard';
+                } else if (ease >= -899) { // 10% chance
+                    return 'extreme';
+                } else if (ease >= -999) { // 0.1% chance
+                    return 'insurmountable';
+                } else {                   // 0% chance
+                    return 'impossible';
+                }
+            }
         };
 })(tc);
