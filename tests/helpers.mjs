@@ -1,5 +1,6 @@
 // Shared helpers for driving the game from tests.
 import fs from 'node:fs';
+import {expect} from '@playwright/test';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -18,7 +19,7 @@ export const fileExists = relPath => fs.existsSync(path.join(ROOT, relPath));
     
     Requests to other origins (e.g. the Font Awesome CDN used by myt) are answered with an 
     empty response so the tests never depend on the network. */
-export const startGame = async (page, {skipHelp=true} = {}) => {
+export const startGame = async (page, {skipHelp=true, dismissBrief=true} = {}) => {
     const problems = {pageErrors:[], warnings:[], errors:[]};
     page.on('pageerror', err => problems.pageErrors.push(err.message));
     page.on('console', msg => {
@@ -40,11 +41,49 @@ export const startGame = async (page, {skipHelp=true} = {}) => {
     }
     
     await page.goto('/index.html');
-    await page.waitForFunction(() => 
-        window.tc?.model?.getCurrentOperation?.() != null && 
-        window.tc?.app?.getTimelineView?.()?.timelineReady === true
-    );
+    await waitForGame(page);
+    
+    // A fresh campaign opens with the first mission's brief.
+    if (dismissBrief) await dismissMissionBrief(page);
     return problems;
+};
+
+/*  Waits until the game has started a campaign, whether fresh or restored. */
+export const waitForGame = page => page.waitForFunction(() => 
+    window.tc?.model?.getCurrentOperation?.() != null && 
+    window.tc?.app?.getTimelineView?.()?.timelineReady === true
+);
+
+const missionBriefTitle = page => page.getByText('Mission Brief', {exact:true}).filter({visible:true});
+
+/*  Acknowledges the Mission Brief that opens when a mission is set up. Fails if it isn't open. */
+export const dismissMissionBrief = async page => {
+    await expect(missionBriefTitle(page)).toBeVisible();
+    await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
+    await expect(missionBriefTitle(page)).toHaveCount(0);
+};
+
+/*  After a reload: without a save the game starts a fresh campaign, which opens the first 
+    Mission Brief, so pass briefExpected:true to dismiss it. Restoring a save never shows a 
+    brief, since the mission was already set up, so otherwise that's checked. */
+const settleAfterReload = async (page, briefExpected) => {
+    await waitForGame(page);
+    if (briefExpected) {
+        await dismissMissionBrief(page);
+    } else {
+        await expect(missionBriefTitle(page)).toHaveCount(0);
+    }
+};
+
+export const reloadGame = async (page, {briefExpected=false} = {}) => {
+    await page.reload();
+    await settleAfterReload(page, briefExpected);
+};
+
+/*  Clicks a button (a Locator) that reloads the page, then settles as reloadGame does. */
+export const clickAndReload = async (page, button, {briefExpected=false} = {}) => {
+    await Promise.all([page.waitForEvent('load'), button.click()]);
+    await settleAfterReload(page, briefExpected);
 };
 
 /*  Sets a Causator's value directly, as an Action would. */

@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, getCurrentOperationId} from './helpers.mjs';
+import {startGame, getCurrentOperationId, reloadGame, clickAndReload} from './helpers.mjs';
 
 const LABEL = 'Save on mission completion',
     
@@ -14,14 +14,6 @@ const LABEL = 'Save on mission completion',
         m.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue('true', false);
         m.getEventModel('engine_order').getValueModels().countermandAstern.setValue('true', false);
     }),
-    
-    reloadGame = async page => {
-        await page.reload();
-        await page.waitForFunction(() =>
-            window.tc?.model?.getCurrentOperation?.() != null &&
-            window.tc?.app?.getTimelineView?.()?.timelineReady === true
-        );
-    },
     
     turnSettingOff = async page => {
         await visibleButton(page, '⚙').click();
@@ -63,7 +55,8 @@ test('turning the setting off stops the save and is remembered', async ({page}) 
     await expect(visibleText(page, 'Your progress has been saved.')).toHaveCount(0);
     expect(await readSave(page)).toBeNull();
     
-    await reloadGame(page);
+    // Nothing was saved, so the reload starts a fresh campaign.
+    await reloadGame(page, {briefExpected:true});
     expect(await getSetting(page)).toBe(false);
     
     // Turning it back on stores nothing, since on is the default.
@@ -81,8 +74,7 @@ test('restarting the campaign keeps settings', async ({page}) => {
     
     await turnSettingOff(page);
     await visibleButton(page, '⌫').click();
-    await Promise.all([page.waitForEvent('load'), visibleButton(page, /Confirm/).click()]);
-    await page.waitForFunction(() => window.tc?.app?.getTimelineView?.()?.timelineReady === true);
+    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
     expect(await getSetting(page)).toBe(false);
     
     expect(problems.pageErrors).toEqual([]);

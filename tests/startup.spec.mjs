@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame} from './helpers.mjs';
+import {startGame, dismissMissionBrief, reloadGame} from './helpers.mjs';
 
 test('loads with no errors or warnings', async ({page}) => {
     const problems = await startGame(page);
@@ -20,14 +20,21 @@ test('passes the startup data validation', async ({page}) => {
     expect(valid).toBe(true);
 });
 
-test('shows the Field Manual on the first visit only', async ({page}) => {
-    await startGame(page, {skipHelp:false});
-    await expect(page.getByText('Time Corps Field Manual')).toBeVisible();
+/*  On a first visit the Field Manual opens before the first Mission Brief, which waits behind 
+    it. Later visits go straight to the brief. */
+test('shows the Field Manual on the first visit only, before the Mission Brief', async ({page}) => {
+    const manualTitle = page.getByText('Time Corps Field Manual', {exact:true}).filter({visible:true});
     
-    await page.reload();
-    await page.waitForFunction(() => window.tc?.app?.getTimelineView?.()?.timelineReady === true);
-    await page.waitForTimeout(500);
-    await expect(page.getByText('Time Corps Field Manual')).toBeHidden();
+    await startGame(page, {skipHelp:false, dismissBrief:false});
+    await expect(manualTitle).toBeVisible();
+    await expect(page.getByText('Mission Brief', {exact:true}).filter({visible:true})).toHaveCount(0);
+    
+    await page.getByRole('button', {name:'X Close'}).filter({visible:true}).click();
+    await expect(manualTitle).toHaveCount(0);
+    await dismissMissionBrief(page);
+    
+    await reloadGame(page, {briefExpected:true});
+    await expect(manualTitle).toHaveCount(0);
 });
 
 /*  The timeline lays out on a debounce, so the operation's initial selection can be requested 

@@ -100,8 +100,6 @@
                         
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         if (eventsValid) {
-                            if (!hasSeenHelp()) appView.openHelp();
-                            
                             timelineView.setup(model);
                             teamView.setup(model);
                             model.reset();
@@ -110,12 +108,23 @@
                             
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistence.captureBaseline();
-                            if (persistence.hasSave()) {
-                                const restoreProblem = persistence.restore();
+                            const startCampaign = () => {
+                                if (persistence.hasSave()) {
+                                    const restoreProblem = persistence.restore();
+                                    if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
+                                } else {
+                                    model.setCurrentOperation(model.getInitialOperation());
+                                }
                                 updateLastSaved();
-                                if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
+                            };
+                            
+                            // On a first visit the Field Manual comes first. It loads asynchronously,
+                            // so start the campaign once it's open and the Mission Brief queues
+                            // behind it.
+                            if (hasSeenHelp()) {
+                                startCampaign();
                             } else {
-                                model.setCurrentOperation(model.getInitialOperation());
+                                appView.openHelp(startCampaign);
                             }
                         } else {
                             console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
@@ -231,7 +240,7 @@
             }]);
             
             new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
-                doActivated: appView.openHelp
+                doActivated: () => {appView.openHelp();}
             }]);
             
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
@@ -446,12 +455,14 @@
             return settingsDialog;
         },
         
-        openHelp: () => {
+        /*  afterOpenFunc is called once the manual is open, or once loading it has failed. */
+        openHelp: afterOpenFunc => {
             pkg.loadTxt('./data/' + 'help.txt', (success, txt) => {
                 if (success) {
                     markHelpSeen();
                     openAckMsgDialog('Time Corps Field Manual', txt, null, null, I18N_CLOSE_BTN);
                 }
+                afterOpenFunc?.();
             });
         },
         

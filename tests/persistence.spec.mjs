@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
-import {startGame, getCurrentOperationId} from './helpers.mjs';
+import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload} from './helpers.mjs';
 
 /*  Save/load round trips. localStorage survives a page reload within a test, so a reload
     exercises the autoload path at startup. */
@@ -25,17 +25,20 @@ const exportModel = page => page.evaluate(() => JSON.parse(JSON.stringify(tc.mod
         await expect(page.getByText('Save Succeeded', {exact:true}).filter({visible:true})).toHaveCount(0);
     },
     
-    reloadGame = async page => {
-        await page.reload();
-        await page.waitForFunction(() =>
-            window.tc?.model?.getCurrentOperation?.() != null &&
-            window.tc?.app?.getTimelineView?.()?.timelineReady === true
-        );
+    // What a fresh campaign would save: only the first mission's setup.
+    expectFreshCampaign = async page => {
+        const diff = await page.evaluate(() => tc.persistence.exportDiff());
+        expect(diff.currentOperation).toBe('titanic_noCollision');
+        expect(diff.operations).toEqual({titanic_noCollision:{setupApplied:true}});
+        expect(Object.keys(diff.agents)).toEqual(['VQ']);
+        expect(diff.events?.roster_reshuffle).toBeUndefined();
     };
 
-test('a fresh campaign has nothing to save', async ({page}) => {
+/*  The baseline is taken before the first mission is set up, so a fresh campaign saves just 
+    that setup: the current mission, VQ revealed and awarded, and the setup's adjustments. */
+test('a fresh campaign saves only the first mission\'s setup', async ({page}) => {
     const problems = await startGame(page);
-    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    await expectFreshCampaign(page);
     await expect(page.getByTitle('Not saved', {exact:true})).toBeVisible();
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
@@ -95,6 +98,7 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     await expect(missionComplete).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
+    await dismissMissionBrief(page);
 
     await saveGame(page);
     const before = await exportModel(page);
@@ -103,7 +107,7 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     expect(await getCurrentOperationId(page)).toBe('titanic_rescued');
     expect(await exportModel(page)).toEqual(before);
 
-    // No second debrief and no second award (score and HQ chronal are compared above).
+    // No second debrief, brief or award (score and HQ chronal are compared above).
     await page.waitForTimeout(250);
     await expect(missionComplete).toHaveCount(0);
 
@@ -119,14 +123,10 @@ test('restart campaign erases the save', async ({page}) => {
     expect(await readSave(page)).not.toBeNull();
 
     await visibleButton(page, '⌫').click();
-    await Promise.all([
-        page.waitForEvent('load'),
-        visibleButton(page, /Confirm/).click()
-    ]);
-    await page.waitForFunction(() => window.tc?.app?.getTimelineView?.()?.timelineReady === true);
+    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
 
     expect(await readSave(page)).toBeNull();
-    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    await expectFreshCampaign(page);
     await expect(page.getByTitle('Not saved', {exact:true})).toBeVisible();
 
     expect(problems.pageErrors).toEqual([]);
@@ -149,15 +149,6 @@ const importFile = async (page, contents) => {
         const title = page.getByText(/^Import (Succeeded|Failed)$/).filter({visible:true});
         await expect(title).toBeVisible();
         return title.textContent();
-    },
-    
-    // Clicking a button that reloads the page, then waiting for the game to be ready again.
-    clickAndReload = async (page, name) => {
-        await Promise.all([page.waitForEvent('load'), visibleButton(page, name).click()]);
-        await page.waitForFunction(() =>
-            window.tc?.model?.getCurrentOperation?.() != null &&
-            window.tc?.app?.getTimelineView?.()?.timelineReady === true
-        );
     };
 
 test('an exported file imports back to the same campaign', async ({page}) => {
@@ -181,11 +172,11 @@ test('an exported file imports back to the same campaign', async ({page}) => {
     
     // Start over, which also proves the import doesn't depend on the old save.
     await visibleButton(page, '⌫').click();
-    await clickAndReload(page, /Confirm/);
-    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
+    await expectFreshCampaign(page);
     
     expect(await importFile(page, exported)).toBe('Import Succeeded');
-    await clickAndReload(page, 'Continue');
+    await clickAndReload(page, visibleButton(page, 'Continue'));
     expect(await exportModel(page)).toEqual(before);
     
     expect(problems.pageErrors).toEqual([]);
@@ -222,9 +213,9 @@ test('a stored save that cannot be applied is cleared at startup', async ({page}
     await expect(page.getByText('Save Could Not Be Loaded', {exact:true}).filter({visible:true})).toBeVisible();
     expect(await readSave(page)).toBeNull();
     
-    // Starting over gives a clean campaign with no dialog.
-    await clickAndReload(page, 'Start Over');
-    expect(await page.evaluate(() => tc.persistence.exportDiff())).toEqual({});
+    // Starting over gives a fresh campaign, so just the first Mission Brief.
+    await clickAndReload(page, visibleButton(page, 'Start Over'), {briefExpected:true});
+    await expectFreshCampaign(page);
     await expect(page.getByText('Save Could Not Be Loaded', {exact:true}).filter({visible:true})).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
@@ -276,7 +267,7 @@ test('a restored save keeps the selected event and agent', async ({page}) => {
 /*  The second mission has no initial selection, and the selection here matches the baseline 
     so it isn't in the save. It must still be restored rather than lost when the restore 
     switches to the second mission. */
-test('a selection matching the fresh campaign is restored on a later mission', async ({page}) => {
+test('a selection on a later mission is restored', async ({page}) => {
     const problems = await startGame(page);
     
     await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
@@ -287,6 +278,7 @@ test('a selection matching the fresh campaign is restored on a later mission', a
     await expect(page.getByText('Mission Complete', {exact:true}).filter({visible:true})).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
+    await dismissMissionBrief(page);
     
     await page.evaluate(() => {
         tc.app.selectEventBox('collision');
@@ -294,7 +286,6 @@ test('a selection matching the fresh campaign is restored on a later mission', a
     });
     await expectSelection(page, {event:'collision', agent:'VQ'});
     await saveGame(page);
-    expect((await readSave(page)).data.selection).toBeUndefined();
     
     await reloadGame(page);
     expect(await getCurrentOperationId(page)).toBe('titanic_rescued');
@@ -303,6 +294,9 @@ test('a selection matching the fresh campaign is restored on a later mission', a
     expect(problems.pageErrors).toEqual([]);
 });
 
+/*  A cleared selection matches the baseline (nothing selected before the first mission's 
+    setup) so it isn't in the save. It must still override the selection the restored mission 
+    applies when it becomes current. */
 test('a cleared selection stays cleared after a reload', async ({page}) => {
     const problems = await startGame(page);
     await expectSelection(page, {event:'collision', agent:'VQ'});
@@ -313,6 +307,7 @@ test('a cleared selection stays cleared after a reload', async ({page}) => {
     });
     expect(await getSelection(page)).toEqual({event:null, agent:null});
     await saveGame(page);
+    expect((await readSave(page)).data.selection).toBeUndefined();
     
     await reloadGame(page);
     await expectSelection(page, {event:null, agent:null});
