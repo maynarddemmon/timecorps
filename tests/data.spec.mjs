@@ -136,7 +136,7 @@ test('every investigate config has an integer difficulty and a skill expression 
             } else {
                 // Compiled the same way as tc.checks.skill, with the same parameters.
                 try {
-                    new Function('agent', 'event', 'timeline', 'random', 'difficulty', '"use strict";return (random+(' + skill + ')>=difficulty);');
+                    new Function('agent', 'event', 'timeline', 'difficulty', '"use strict";return ((' + skill + ')-difficulty);');
                 } catch (err) {
                     problems.push(eventId + ': skill does not compile (' + err.message + ')');
                 }

@@ -95,11 +95,11 @@ test('causator links together match each event\'s precursors and descendants', a
     expect(mismatches).toEqual([]);
 });
 
-test('an event\'s investigate config is optional and validated', async ({page}) => {
+test('an event\'s investigate config is optional, validated and has defaults', async ({page}) => {
     const problems = await startGame(page);
     const result = await page.evaluate(() => {
         const eventModel = tc.model.getEventModel('collision'),
-            read = () => [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkill()],
+            read = () => [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()],
             out = {};
         
         out.none = read();
@@ -123,14 +123,15 @@ test('an event\'s investigate config is optional and validated', async ({page}) 
         out.cleared = read();
         return out;
     });
+    const DEFAULTS = [250, 'agent.skills.investigation'];
     expect(result).toEqual({
-        none:[undefined, undefined],
+        none:DEFAULTS,
         both:[500, 'Math.max(agent.skills.deception, agent.skills.disguise)'],
-        difficultyOnly:[700, undefined],
-        badDifficulty:[undefined, 'agent.skills.stealth'],
-        badBoth:[undefined, undefined],
-        notObject:[undefined, undefined],
-        cleared:[undefined, undefined]
+        difficultyOnly:[700, DEFAULTS[1]],
+        badDifficulty:[DEFAULTS[0], 'agent.skills.stealth'],
+        badBoth:DEFAULTS,
+        notObject:DEFAULTS,
+        cleared:DEFAULTS
     });
     
     // One warning per bad part, naming the event.
@@ -147,16 +148,47 @@ test('investigate config in the event JSON reaches the model', async ({page}) =>
             // Event if the config is applied after the other attrs.
             const eventModel = new tc.EventModel({investigate, id:'investigate_test'});
             try {
-                return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkill()];
+                return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()];
             } finally {
                 eventModel.destroy();
             }
         };
         return [build({difficulty:300, skill:'agent.skills.stealth'}), build({difficulty:3.5})];
     });
-    expect(result).toEqual([[300, 'agent.skills.stealth'], [undefined, undefined]]);
+    expect(result).toEqual([[300, 'agent.skills.stealth'], [250, 'agent.skills.investigation']]);
     expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
         'Event investigate_test investigate difficulty must be an integer: {difficulty: 3.5}'
     ]);
     expect(problems.pageErrors).toEqual([]);
+});
+
+test('investigating succeeds or fails on the check, and a failure still uses the action', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            roster = tc.model.getEventModel('roster_reshuffle'),
+            investigate = roll => {
+                const attestation = roster.attestation.value,
+                    actionCount = vq.getActionExecCount();
+                tc.rng.queueRolls(roll);
+                vq.doInvestigate();
+                const entry = vq.getLog().at(-1);
+                return {
+                    gained:roster.attestation.value - attestation,
+                    actionsUsed:vq.getActionExecCount() - actionCount,
+                    logged:{type:entry.type, success:entry.success, amount:entry.amount}
+                };
+            };
+        vq.doDeployToEvent(roster);
+        roster.setInvestigate({difficulty:500, skill:'agent.skills.stealth'});
+        vq.setSkills({stealth:100});
+        
+        // An ease of -400: a roll of 399 fails and 400 succeeds.
+        return {failure:investigate(399), success:investigate(400)};
+    });
+    expect(result.failure).toEqual({gained:0, actionsUsed:1, logged:{type:'investigate', success:false, amount:undefined}});
+    expect(result.success.actionsUsed).toBe(1);
+    expect(result.success.gained).toBeGreaterThan(0);
+    expect(result.success.logged).toEqual({type:'investigate', success:true, amount:result.success.gained});
+    expect(problems.warnings).toEqual([]);
 });

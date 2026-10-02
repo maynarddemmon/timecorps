@@ -31,7 +31,7 @@
                 eventModel.getInvestigateSkillExpr(),
                 eventModel.getInvestigateDifficulty()
             );
-            return ICON_SEARCH + ' Investigate (' + easePhrase + ')'
+            return ICON_SEARCH + ' Investigate (' + easePhrase + ')';
         },
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {

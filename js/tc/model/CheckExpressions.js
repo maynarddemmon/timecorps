@@ -1,9 +1,7 @@
 (pkg => {
     'use strict';
     
-    const M = myt,
-        
-        {min:mathMin, max:mathMax} = Math,
+    const {min:mathMin, max:mathMax} = Math,
         
         {
             SCOPE_SKILLS,
@@ -59,89 +57,98 @@
                 } catch (err) {
                     console.warn('Check expression does not compile (' + err.message + '):', expr);
                     // Stands in for an expression that doesn't compile. It's cached like any 
-                    // other, so the warning only happens once per expression.
-                    func = () => -1; // Negative values are generally failures.
+                    // other, so the warning only happens once per expression. NaN makes every
+                    // check with it fail.
+                    func = () => NaN;
                 }
                 COMPILED.set(expr, func);
             }
             return func;
         },
         
-        /*  Evaluates success expressions for checks such as investigating. An expression is plain
-            JavaScript that is truthy when the check succeeds. It can use:
+        /*  Evaluates an expression to an ease, clamped to [minEase, maxEase]. Doesn't roll. NaN
+            if the expression throws or isn't a number, which fails any check. */
+        getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-D1000}={}) => {
+            let value;
+            try {
+                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty);
+            } catch (err) {
+                console.warn('Check expression threw (' + err.message + '):', expr);
+                return NaN;
+            }
+            if (typeof value !== 'number') {
+                console.warn('Check expression is not a number (' + typeof value + '):', expr);
+                return NaN;
+            }
+            return mathMax(minEase, mathMin(maxEase, value)); // NaN stays NaN.
+        },
+        
+        /*  The expression for a skill check: (skillExpr) - difficulty. The parentheses keep an 
+            expression using ||, ?: or comparisons from changing what difficulty is taken from. */
+        toSkillCheckExpr = skillExpr => '(' + skillExpr + ')-' + PARAM_DIFFICULTY,
+        
+        /*  Skill checks always have at least a 0.1% chance of success and of failure, unless 
+            the cfg says otherwise. */
+        toSkillCheckCfg = cfg => ({maxEase:MAX_SKILL_EASE, minEase:MIN_SKILL_EASE, ...cfg}),
+        
+        /*  The ease phrase for an ease, by the lowest ease that earns it. The comment is the
+            chance of success at that ease. */
+        EASE_PHRASES = [
+            [0,    'guaranteed'],     // 100%
+            [-1,   'sure thing'],     // 99.9%
+            [-99,  'trivial'],        // 90.1%
+            [-199, 'very easy'],      // 80.1%
+            [-299, 'easy'],           // 70.1%
+            [-399, 'moderate'],       // 60.1%
+            [-499, 'toss-up'],        // 50.1%
+            [-599, 'difficult'],      // 40.1%
+            [-699, 'hard'],           // 30.1%
+            [-799, 'very hard'],      // 20.1%
+            [-899, 'extreme'],        // 10.1%
+            [-999, 'insurmountable']  // 0.1%
+        ],
+        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? 'impossible',
+        
+        /*  Evaluates check expressions for checks such as investigating. An expression is plain 
+            JavaScript that evaluates to an ease: the number added to a roll of 0 to 999, where a 
+            result of 0 or more succeeds. It can use:
                 agent - The AgentModel making the check. agent.skills.<id> is 0 for any skill the
                     agent doesn't have.
                 event - The EventModel the check happens at.
                 timeline - The root Model.
                 difficulty - The check's difficulty.
-            For example "difficulty - agent.skills.deception <= random" succeeds more often the
-            lower the difficulty and the higher the skill. With skill 0 and difficulty 500 that's
-            a 50% chance, and each skill point adds 0.1%.
+            For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
+            difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             
-            An expression that doesn't compile or throws fails, with a warning. */
+            An expression that doesn't compile, throws or isn't a number fails, with a warning. */
         CHECK = pkg.checks = {
             getCompileError,
             
             /*  The compiled function for an expression, cached by the expression text. */
             compile,
             
-            /*  Rolls and evaluates. Returns {success, roll, difficulty}. */
-            evaluate: (expr, {agent, event, difficulty=0, maxEase=0, minEase=-1000}={}) => {
-                const dieRoll = roll(D1000);
-                let success = false,
-                    ease,
-                    result;
-                try {
-                    ease = mathMax(minEase, mathMin(maxEase, compile(expr)(getAgentView(agent), event, pkg.model, difficulty)));
+            getEase,
+            
+            /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
+                Returns {success, result, roll, difficulty, ease} where result is roll + ease. */
+            evaluate: (expr, cfg={}) => {
+                const ease = getEase(expr, cfg),
+                    dieRoll = roll(D1000),
                     result = dieRoll + ease;
-                    success = result >= 0;
-                } catch (err) {
-                    console.warn('Check expression threw (' + err.message + '):', expr);
-                }
-                return {success, result, roll:dieRoll, difficulty, ease};
+                return {success:result >= 0, result, roll:dieRoll, difficulty:cfg.difficulty ?? 0, ease};
             },
             
-            /*  Tests a skill expression for success against a provided config {agent, event, difficulty}.
-                success is calculated as: random + (skillExpr) - difficulty. Success is any result 
-                0 or greater. The parentheses keep an expression using ||, ?: or comparisons from 
-                changing what's added. */
-            skill: (skillExpr, cfg={}) => {
-                cfg.maxEase ??= MAX_SKILL_EASE;
-                cfg.minEase = MIN_SKILL_EASE;
-                return CHECK.evaluate('(' + skillExpr + ')-' + PARAM_DIFFICULTY, cfg);
-            },
+            /*  Rolls a skill check: success when roll + (skillExpr) - difficulty >= 0. Returns the
+                same as evaluate. */
+            skill: (skillExpr, cfg) => CHECK.evaluate(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg)),
             
-            getSkillEase: (skillExpr, cfg) => CHECK.skill(skillExpr, cfg).ease,
+            /*  The ease of a skill check, without rolling. */
+            getSkillEase: (skillExpr, cfg) => getEase(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg)),
             
-            getEasePhrase: (skillExpr, cfg) => {
-                const ease = CHECK.getSkillEase(skillExpr, cfg);
-                if (ease >= 0) {           // 100% chance
-                    return 'guaranteed';
-                } else if (ease >= -1) {   // 99.9% chance
-                    return 'sure thing';
-                } else if (ease >= -99) {  // 90% chance
-                    return 'trivial';
-                } else if (ease >= -199) { // 80% chance
-                    return 'very easy';
-                } else if (ease >= -299) { // 70% chance
-                    return 'easy';
-                } else if (ease >= -399) { // 60% chance
-                    return 'moderate';
-                } else if (ease >= -499) { // 50% chance
-                    return 'toss-up';
-                } else if (ease >= -599) { // 40% chance
-                    return 'difficult';
-                } else if (ease >= -699) { // 30% chance
-                    return 'hard';
-                } else if (ease >= -799) { // 20% chance
-                    return 'very hard';
-                } else if (ease >= -899) { // 10% chance
-                    return 'extreme';
-                } else if (ease >= -999) { // 0.1% chance
-                    return 'insurmountable';
-                } else {                   // 0% chance
-                    return 'impossible';
-                }
-            }
+            /*  Describes how likely an ease is to succeed, e.g. 'easy' or 'toss-up'. */
+            toEasePhrase,
+            
+            /*  Describes how likely a skill check is to succeed, without rolling. */
+            getEasePhrase: (skillExpr, cfg) => toEasePhrase(CHECK.getSkillEase(skillExpr, cfg))
         };
 })(tc);

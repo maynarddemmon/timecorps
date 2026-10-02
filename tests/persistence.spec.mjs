@@ -55,6 +55,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
             roster = m.getEventModel('roster_reshuffle');
         vq.doDeployToEvent(roster);
         vq.doAction(roster.getActionModels().prevent);
+        tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
         vq.doInvestigate();
         vq.doFollowExit(roster.getExitModels().find(exit => exit.to === 'titanic_departs'));
         vq.doDeployToEvent(roster);
@@ -160,6 +161,7 @@ test('an exported file imports back to the same campaign', async ({page}) => {
             roster = m.getEventModel('roster_reshuffle');
         vq.doDeployToEvent(roster);
         vq.doAction(roster.getActionModels().prevent);
+        tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
         vq.doInvestigate();
     });
     const before = await exportModel(page);

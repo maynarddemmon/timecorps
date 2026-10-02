@@ -18,7 +18,7 @@ const evaluateCheck = (page, expr, {roll, difficulty=500, skills={}, agentId='VQ
         [expr, roll, difficulty, skills, agentId, eventId]
     ),
     
-    DECEPTION = 'difficulty - agent.skills.deception <= random';
+    DECEPTION = 'agent.skills.deception - difficulty';
 
 test.describe('rng', () => {
     test('rolls are integers in range', async ({page}) => {
@@ -56,12 +56,12 @@ test.describe('rng', () => {
 });
 
 test.describe('checks', () => {
-    test('difficulty against the roll, at the boundary', async ({page}) => {
+    test('the roll plus the ease succeeds at 0 or more', async ({page}) => {
         const problems = await startGame(page);
         
-        // Skill 0 at difficulty 500 succeeds on 500-999: exactly half the rolls.
-        expect(await evaluateCheck(page, DECEPTION, {roll:499})).toEqual({success:false, roll:499, difficulty:500});
-        expect(await evaluateCheck(page, DECEPTION, {roll:500})).toEqual({success:true, roll:500, difficulty:500});
+        // Skill 0 at difficulty 500 is an ease of -500, so it succeeds on 500-999: half the rolls.
+        expect(await evaluateCheck(page, DECEPTION, {roll:499})).toEqual({success:false, result:-1, roll:499, difficulty:500, ease:-500});
+        expect(await evaluateCheck(page, DECEPTION, {roll:500})).toEqual({success:true, result:0, roll:500, difficulty:500, ease:-500});
         
         // Skill lowers the roll needed by one point per skill point.
         expect((await evaluateCheck(page, DECEPTION, {roll:400, skills:{deception:100}})).success).toBe(true);
@@ -74,9 +74,19 @@ test.describe('checks', () => {
         expect(problems.warnings).toEqual([]);
     });
     
+    test('the ease is clamped, by default to between always and never', async ({page}) => {
+        const problems = await startGame(page);
+        
+        expect((await evaluateCheck(page, '5000', {roll:0})).ease).toBe(0);
+        expect((await evaluateCheck(page, '-5000', {roll:999})).ease).toBe(-1000);
+        expect((await evaluateCheck(page, '-5000', {roll:999})).success).toBe(false);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+    
     test('skills an agent lacks count as 0, including inside Math.max', async ({page}) => {
         const problems = await startGame(page);
-        const bestOf = 'difficulty - Math.max(agent.skills.deception, agent.skills.disguise) <= random';
+        const bestOf = 'Math.max(agent.skills.deception, agent.skills.disguise) - difficulty';
         
         // Neither skill: still a fair 50% check rather than NaN failing every time.
         expect((await evaluateCheck(page, bestOf, {roll:500})).success).toBe(true);
@@ -93,15 +103,16 @@ test.describe('checks', () => {
     
     test('weighted skills and the event are available', async ({page}) => {
         const problems = await startGame(page);
-        const weighted = 'difficulty - (0.75*agent.skills.disguise + 0.25*agent.skills.stealth) <= random';
+        const weighted = '0.75*agent.skills.disguise + 0.25*agent.skills.stealth - difficulty';
         
         // 0.75*200 + 0.25*100 = 175, so the roll needed is 325.
         expect((await evaluateCheck(page, weighted, {roll:325, skills:{disguise:200, stealth:100}})).success).toBe(true);
         expect((await evaluateCheck(page, weighted, {roll:324, skills:{disguise:200, stealth:100}})).success).toBe(false);
         
         // The event and the full agent model are there too.
-        const usesEvent = 'event.id === "collision" && agent.id === "VQ" && agent.paradox.value >= 0';
+        const usesEvent = '(event.id === "collision" && agent.id === "VQ" && agent.paradox.value >= 0) ? 0 : -1000';
         expect((await evaluateCheck(page, usesEvent, {roll:0})).success).toBe(true);
+        expect((await evaluateCheck(page, usesEvent, {roll:999, eventId:'roster_reshuffle'})).success).toBe(false);
         
         expect(problems.warnings).toEqual([]);
     });
@@ -109,22 +120,29 @@ test.describe('checks', () => {
     test('expressions are compiled once and shared', async ({page}) => {
         await startGame(page);
         expect(await page.evaluate(expr => tc.checks.compile(expr) === tc.checks.compile(expr), DECEPTION)).toBe(true);
-        expect(await page.evaluate(() => tc.checks.compile('random > 1') === tc.checks.compile('random > 2'))).toBe(false);
+        expect(await page.evaluate(() => tc.checks.compile('difficulty - 1') === tc.checks.compile('difficulty - 2'))).toBe(false);
     });
     
-    test('a broken expression fails the check with a warning', async ({page}) => {
+    test('a broken expression fails the check with a warning, even on the best roll', async ({page}) => {
         const problems = await startGame(page);
         
         // Doesn't compile.
-        expect(await page.evaluate(() => tc.checks.getCompileError('difficulty <= random +'))).not.toBeNull();
-        expect((await evaluateCheck(page, 'difficulty <= random +', {roll:999})).success).toBe(false);
+        expect(await page.evaluate(() => tc.checks.getCompileError('difficulty +'))).not.toBeNull();
+        expect((await evaluateCheck(page, 'difficulty +', {roll:999})).success).toBe(false);
         
         // Throws while running.
-        expect((await evaluateCheck(page, 'agent.nothing.here > 0', {roll:999})).success).toBe(false);
+        expect((await evaluateCheck(page, 'agent.nothing.here - difficulty', {roll:999})).success).toBe(false);
         
-        expect(problems.warnings).toHaveLength(2);
+        // Isn't a number, e.g. a leftover boolean success expression.
+        expect((await evaluateCheck(page, 'true', {roll:999})).success).toBe(false);
+        
+        // Is NaN, e.g. a misspelled property.
+        expect((await evaluateCheck(page, 'agent.skils - difficulty', {roll:999})).success).toBe(false);
+        
+        expect(problems.warnings).toHaveLength(3);
         expect(problems.warnings[0]).toContain('does not compile');
         expect(problems.warnings[1]).toContain('threw');
+        expect(problems.warnings[2]).toContain('is not a number');
     });
     
     test('valid expressions have no compile error', async ({page}) => {
@@ -135,23 +153,24 @@ test.describe('checks', () => {
 });
 
 test.describe('skill checks', () => {
-    // Rolls a skill check on VQ with the given skills and forced roll.
-    const checkSkill = (page, method, arg, difficulty, {roll, skills={}}) => page.evaluate(
-        ([method, arg, difficulty, roll, skills]) => {
+    // Calls an AgentModel check method on VQ with the given skills and forced roll.
+    const callOnAgent = (page, method, args, {roll, skills={}}) => page.evaluate(
+        ([method, args, roll, skills]) => {
             const agent = tc.model.getAgentModel('VQ'),
                 original = agent.getSkills();
             agent.setSkills(skills);
             try {
-                tc.rng.queueRolls(roll);
-                return agent[method](arg, difficulty);
+                if (roll != null) tc.rng.queueRolls(roll);
+                return agent[method](...args);
             } finally {
                 agent.setSkills(original);
             }
         },
-        [method, arg, difficulty, roll, skills]
-    );
+        [method, args, roll, skills]
+    ),
+        checkSkill = async (page, method, arg, difficulty, opts) => (await callOnAgent(page, method, [arg, difficulty], opts)).success;
     
-    test('checkSkill passes on random + skill >= difficulty', async ({page}) => {
+    test('checkSkill passes on random + skill - difficulty >= 0', async ({page}) => {
         const problems = await startGame(page);
         
         // Skill 100 at difficulty 500 needs a roll of 400 or more.
@@ -172,10 +191,58 @@ test.describe('skill checks', () => {
         expect(await checkSkill(page, 'checkSkillExpression', best, 500, {roll:300, skills:{disguise:200}})).toBe(true);
         expect(await checkSkill(page, 'checkSkillExpression', best, 500, {roll:299, skills:{disguise:200}})).toBe(false);
         
-        // The skill expression is added as a whole: with || unparenthesized, a roll of 50 would
-        // make the check succeed, since 50 + 0 is truthy.
-        expect(await checkSkill(page, 'checkSkillExpression', 'agent.skills.stealth || 200', 500, {roll:50})).toBe(false);
-        expect(await checkSkill(page, 'checkSkillExpression', 'agent.skills.stealth || 200', 500, {roll:300})).toBe(true);
+        // The skill expression is taken as a whole. Unparenthesized, || would make it
+        // "agent.skills.stealth || (200 - difficulty)", an ease of 100 instead of -400.
+        const either = 'agent.skills.stealth || 200';
+        expect(await checkSkill(page, 'checkSkillExpression', either, 500, {roll:399, skills:{stealth:100}})).toBe(false);
+        expect(await checkSkill(page, 'checkSkillExpression', either, 500, {roll:400, skills:{stealth:100}})).toBe(true);
+        expect(await checkSkill(page, 'checkSkillExpression', either, 500, {roll:299})).toBe(false);
+        expect(await checkSkill(page, 'checkSkillExpression', either, 500, {roll:300})).toBe(true);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('a skill check always has at least a 0.1% chance either way', async ({page}) => {
+        const problems = await startGame(page);
+        
+        // Far more skill than difficulty still fails on a roll of 0.
+        expect(await callOnAgent(page, 'checkSkill', ['stealth', 0], {roll:0, skills:{stealth:5000}})).toMatchObject({success:false, ease:-1});
+        expect(await checkSkill(page, 'checkSkill', 'stealth', 0, {roll:1, skills:{stealth:5000}})).toBe(true);
+        
+        // Far more difficulty than skill still succeeds on a roll of 999.
+        expect(await callOnAgent(page, 'checkSkill', ['stealth', 5000], {roll:999})).toMatchObject({success:true, ease:-999});
+        expect(await checkSkill(page, 'checkSkill', 'stealth', 5000, {roll:998})).toBe(false);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('the ease and its phrase come without rolling', async ({page}) => {
+        const problems = await startGame(page);
+        const phrase = (skill, difficulty) => callOnAgent(page, 'getSkillEasePhrase', ['agent.skills.stealth', difficulty], {skills:{stealth:skill}});
+        
+        // Each phrase starts at its ease, so one point less is the next phrase down.
+        expect(await phrase(5000, 0)).toBe('sure thing');
+        expect(await phrase(0, 1)).toBe('sure thing');
+        expect(await phrase(0, 2)).toBe('trivial');
+        expect(await phrase(0, 99)).toBe('trivial');
+        expect(await phrase(0, 100)).toBe('very easy');
+        expect(await phrase(250, 500)).toBe('easy');
+        expect(await phrase(0, 499)).toBe('toss-up');
+        expect(await phrase(0, 500)).toBe('difficult');
+        expect(await phrase(0, 899)).toBe('extreme');
+        expect(await phrase(0, 900)).toBe('insurmountable');
+        expect(await phrase(0, 5000)).toBe('insurmountable');
+        
+        // Without the skill check's clamp an ease can reach 'guaranteed' and 'impossible'.
+        expect(await page.evaluate(() => [0, -1000, NaN].map(tc.checks.toEasePhrase))).toEqual(['guaranteed', 'impossible', 'impossible']);
+        
+        // A queued roll is still there afterwards, so showing a phrase can't use up a roll.
+        expect(await page.evaluate(() => {
+            tc.rng.queueRolls(123);
+            tc.model.getAgentModel('VQ').getSkillEasePhrase('agent.skills.stealth', 500);
+            tc.model.getAgentModel('VQ').getSkillExpressionEase('agent.skills.stealth', 500);
+            return tc.rng.roll();
+        })).toBe(123);
         
         expect(problems.warnings).toEqual([]);
     });

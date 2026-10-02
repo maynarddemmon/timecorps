@@ -296,22 +296,30 @@
         },
         
         /*  Rolls a check of a skill expression, e.g. "Math.max(agent.skills.a, agent.skills.b)",
-            against a difficulty. True on success. */
+            against a difficulty. Returns {success, result, roll, difficulty, ease}. */
         checkSkillExpression: function(skillExpr, difficulty) {
-            return pkg.checks.skill(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+            return pkg.checks.skill(skillExpr, this._getCheckCfg(difficulty));
         },
         
-        getSkillExpressionDifficulty: function(skillExpr, difficulty) {
-            return pkg.checks.getSkillDifficulty(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+        /*  The ease of a skill expression check, without rolling. */
+        getSkillExpressionEase: function(skillExpr, difficulty) {
+            return pkg.checks.getSkillEase(skillExpr, this._getCheckCfg(difficulty));
         },
         
+        /*  Describes how likely a skill expression check is to succeed, without rolling. */
         getSkillEasePhrase: function(skillExpr, difficulty) {
-            return pkg.checks.getEasePhrase(skillExpr, {agent:this, event:this.getEventModel(), difficulty});
+            return pkg.checks.getEasePhrase(skillExpr, this._getCheckCfg(difficulty));
         },
         
-        /*  Rolls a check of one skill against a difficulty. True on success. */
+        /*  Rolls a check of one skill against a difficulty. Returns the same as 
+            checkSkillExpression. */
         checkSkill: function(skillName, difficulty) {
             return this.checkSkillExpression(CHECK_SKILL_EXPR_PREFIX + skillName, difficulty);
+        },
+        
+        /** @private */
+        _getCheckCfg: function(difficulty) {
+            return {agent:this, event:this.getEventModel(), difficulty};
         },
         
         
@@ -490,15 +498,15 @@
                     const attestationStat = eventModel.attestation;
                     let discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
                     if (discoverableAmt > 0) {
-                        // Check success or failure first
-                        const {success, result, roll, difficulty, ease} = this.checkSkillExpression(
+                        // A failed check still uses the action.
+                        const check = this.checkSkillExpression(
                             eventModel.getInvestigateSkillExpr(),
                             eventModel.getInvestigateDifficulty()
                         );
-// FIXME: show die roll result UI
+                        // FIXME: show die roll result UI using check.roll, check.ease, etc.
                         this.incrementActionExecCount();
                         let adj;
-                        if (success) {
+                        if (check.success) {
                             let discovered = 1;
                             if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
                                 [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
@@ -508,7 +516,7 @@
                             adj = attestationStat.adjValue(discovered);
                             pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
                         }
-                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, success, amount:adj});
+                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, success:check.success, amount:adj});
                     }
                 }
             }
