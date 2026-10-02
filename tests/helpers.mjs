@@ -93,3 +93,6 @@ export const setCausator = (page, eventId, valueId, value) => page.evaluate(
 );
 
 export const getCurrentOperationId = page => page.evaluate(() => tc.model.getCurrentOperation().id);
+
+/*  Forces the next rolls of tc.rng, in order. After they're used, rolls are random again. */
+export const queueRolls = (page, ...values) => page.evaluate(values => tc.rng.queueRolls(...values), values);

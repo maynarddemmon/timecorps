@@ -21,6 +21,19 @@
             a, b, mathLog, EULER, TC.timeUtil.MILLIS_PER_WEEK * calculateSkillFactor(agentModel)
         ),
         
+        // RNG Util
+        D1000 = 1000,
+        
+        // Values handed out, in order, before falling back to Math.random. Tests use this to
+        // force outcomes.
+        queuedRNGs = [],
+        
+        checkRNGRollable = (v, max) => {
+            if (!Number.isInteger(v) || v < 0 || v >= max) {
+                throw new RangeError('Queued roll ' + v + ' is not an integer in [0, ' + max + ')');
+            }
+        },
+        
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
@@ -158,6 +171,33 @@
                 // Dialogs
                 DEFAULT_TALL_DIALOG_WIDTH:550,
                 DIALOG_FOOTER_HEIGHT:0, // Set programmatically below
+            },
+            
+            /*  The game's single source of randomness, so tests can force outcomes. Game code 
+                should use this rather than Math.random directly.
+                
+                Rolls are integers in [0, max). A d1000 roll is 0-999, so every value is equally 
+                likely and a check's chance of success comes out as an exact percentage. */
+            rng: {
+                /*  An integer in [0, max). Uses the next queued value if there is one. */
+                roll: (max=D1000) => {
+                    if (queuedRNGs.length > 0) {
+                        const v = queuedRNGs.shift();
+                        checkRNGRollable(v, max);
+                        return v;
+                    }
+                    return mathFloor(Math.random() * max);
+                },
+                
+                /*  An integer in [max, min], inclusive at both ends. A queued value is used as the
+                    offset from min. */
+                randomInt: (max, min=0) => min + TC.rng.roll(max - min + 1),
+                
+                // Testing //
+                /*  The next rolls return these values, in order, then rolls are random again. */
+                queueRolls: (...values) => {queuedRNGs.push(...values);},
+                clearQueuedRolls: () => {queuedRNGs.length = 0;},
+                getQueuedRollCount: () => queuedRNGs.length
             },
             
             // Misc Formatters

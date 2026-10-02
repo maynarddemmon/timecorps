@@ -7,7 +7,6 @@
     const {max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil} = Math,
         
         M = myt,
-        {stableStringify, getRandomInt} = M,
         
         {
             NotifyingNumericStatModel, getConstrainedValueCfg,
@@ -160,7 +159,7 @@
             for (const attrName of AGENT_STAT_IDS) {
                 // Use stableStringify since similarTo uses shallowEqual. If this gets 
                 // unwieldy change similarTo to use deepEqual and drop the stableStringify.
-                retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
+                retval[attrName] = M.stableStringify(this[attrName].getAsObj(cfg));
             }
             return retval;
         },
@@ -473,7 +472,7 @@
                         let discovered = 1;
                         if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
                             [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
-                            discovered = getRandomInt(discovered, discoverableAmt);
+                            discovered = pkg.rng.randomInt(discoverableAmt, discovered);
                         }
                         
                         const adj = attestationStat.adjValue(discovered);

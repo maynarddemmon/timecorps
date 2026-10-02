@@ -9,23 +9,36 @@ JS.Packages(file => {
     file(TC_ROOT + 'timeUtil.js').provides('tc.timeUtil').requires('tc');
     
     // Component //
-    file(COMPONENT_ROOT + 'AgentMarker.js').provides('tc.SimpleAgentMarker','tc.SimpleAgentGridMarker').requires('tc');
-    file(COMPONENT_ROOT + 'Btn.js').provides('tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn').requires('tc.SimpleAgentMarker');
+    file(COMPONENT_ROOT + 'AgentMarker.js').provides(
+        'tc.SimpleAgentMarker','tc.SimpleAgentGridMarker'
+    ).requires('tc');
+    file(COMPONENT_ROOT + 'Btn.js').provides(
+            'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn'
+    ).requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
-        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar','tc.MiniStatBar','tc.BigStatBar'
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar','tc.MiniStatBar',
+        'tc.BigStatBar'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
-    file(COMPONENT_ROOT + 'Dialogs.js').provides('tc.dialogUtil','tc.ModalDialog').requires('tc.SquareBtn','tc.WideView','tc.Panel');
+    file(COMPONENT_ROOT + 'Dialogs.js').provides(
+        'tc.dialogUtil','tc.ModalDialog'
+    ).requires('tc.SquareBtn','tc.WideView','tc.Panel');
     
     // Model //
     file(MODEL_ROOT + 'Constraints.js').provides('tc.setConstrainedValue').requires('tc');
-    file(MODEL_ROOT + 'NumericStatModel.js').provides('tc.NumericStatModel','tc.NotifyingNumericStatModel').requires('tc');
-    file(MODEL_ROOT + 'Hideable.js').provides('tc.Hideable','tc.ConstrainableAttrSupport').requires('tc.setConstrainedValue');
-    file(MODEL_ROOT + 'Describable.js').provides('tc.Describable','tc.DescriptionPhraseModel').requires('tc.Hideable');
+    file(MODEL_ROOT + 'NumericStatModel.js').provides(
+        'tc.NumericStatModel','tc.NotifyingNumericStatModel'
+    ).requires('tc');
+    file(MODEL_ROOT + 'Hideable.js').provides(
+        'tc.Hideable','tc.ConstrainableAttrSupport'
+    ).requires('tc.setConstrainedValue');
+    file(MODEL_ROOT + 'Describable.js').provides(
+        'tc.Describable','tc.DescriptionPhraseModel'
+    ).requires('tc.Hideable');
     
     file(MODEL_ROOT + 'MediaSupport.js').provides('tc.MediaSupport').requires('tc');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires(
@@ -43,16 +56,20 @@ JS.Packages(file => {
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');
+    file(MODEL_ROOT + 'CheckExpressions.js').provides('tc.checks').requires('tc');
     
     // View //
     file(VIEW_ROOT + 'Agents.js').provides('tc.Agents').requires(
-        'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker','tc.ParadoxBar','tc.ChronalBar','tc.BigStatBar'
+        'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker',
+        'tc.ParadoxBar','tc.ChronalBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
-        'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
+        'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar',
+        'tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker',
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
@@ -63,7 +80,8 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel','tc.dialogUtil',
-        'tc.TimelineCompact','tc.EventDetails','tc.OperationDetails','tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog'
+        'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
+        'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
+        'tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog','tc.checks'
     );
 });
