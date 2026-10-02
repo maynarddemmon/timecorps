@@ -95,10 +95,18 @@ test('causator links together match each event\'s precursors and descendants', a
     expect(mismatches).toEqual([]);
 });
 
+/*  The default investigate skill expression, built from the tuning value so the tests don't need 
+    changing when it's tuned. */
+const getDefaultInvestigate = page => page.evaluate(() => [
+    250, 'agent.skills.investigation + ' + tc.cfg.DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE + '*event.attestation.value'
+]);
+
 test('an event\'s investigate config is optional, validated and has defaults', async ({page}) => {
     const problems = await startGame(page);
+    const DEFAULTS = await getDefaultInvestigate(page);
     const result = await page.evaluate(() => {
-        const eventModel = tc.model.getEventModel('collision'),
+        // An event with no investigate config in the data.
+        const eventModel = tc.model.getEventModel('roster_reshuffle'),
             read = () => [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()],
             out = {};
         
@@ -123,7 +131,6 @@ test('an event\'s investigate config is optional, validated and has defaults', a
         out.cleared = read();
         return out;
     });
-    const DEFAULTS = [250, 'agent.skills.investigation'];
     expect(result).toEqual({
         none:DEFAULTS,
         both:[500, 'Math.max(agent.skills.deception, agent.skills.disguise)'],
@@ -137,11 +144,19 @@ test('an event\'s investigate config is optional, validated and has defaults', a
     // One warning per bad part, naming the event.
     const investigateWarnings = problems.warnings.filter(w => w.includes('investigate'));
     expect(investigateWarnings.length).toBe(4);
-    expect(investigateWarnings.every(w => w.startsWith('Event collision investigate'))).toBe(true);
+    expect(investigateWarnings.every(w => w.startsWith('Event roster_reshuffle investigate'))).toBe(true);
 });
 
 test('investigate config in the event JSON reaches the model', async ({page}) => {
     const problems = await startGame(page);
+    const [defaultDifficulty, defaultSkill] = await getDefaultInvestigate(page);
+    
+    // collision's data sets just the difficulty.
+    expect(await page.evaluate(() => {
+        const eventModel = tc.model.getEventModel('collision');
+        return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()];
+    })).toEqual([150, defaultSkill]);
+    
     const result = await page.evaluate(() => {
         const build = investigate => {
             // The id comes last, as when Events are loaded, so a warning can only name the
@@ -155,11 +170,34 @@ test('investigate config in the event JSON reaches the model', async ({page}) =>
         };
         return [build({difficulty:300, skill:'agent.skills.stealth'}), build({difficulty:3.5})];
     });
-    expect(result).toEqual([[300, 'agent.skills.stealth'], [250, 'agent.skills.investigation']]);
+    expect(result).toEqual([[300, 'agent.skills.stealth'], [defaultDifficulty, defaultSkill]]);
     expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
         'Event investigate_test investigate difficulty must be an integer: {difficulty: 3.5}'
     ]);
     expect(problems.pageErrors).toEqual([]);
+});
+
+test('the default investigate check gets harder as attestation rises', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            roster = tc.model.getEventModel('roster_reshuffle'),
+            getEase = () => vq.getSkillExpressionEase(roster.getInvestigateSkillExpr(), roster.getInvestigateDifficulty());
+        vq.doDeployToEvent(roster);
+        vq.setSkills({investigation:100});
+        const out = {effect:tc.cfg.DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE};
+        roster.attestation.setValue(0);
+        out.at0 = getEase();
+        roster.attestation.setValue(20);
+        out.at20 = getEase();
+        return out;
+    });
+    
+    // investigation - difficulty, then each point of attestation adds the effect.
+    expect(result.effect).toBeLessThan(0);
+    expect(result.at0).toBe(100 - 250);
+    expect(result.at20).toBe(100 - 250 + 20*result.effect);
+    expect(problems.warnings).toEqual([]);
 });
 
 test('investigating succeeds or fails on the check, and a failure still uses the action', async ({page}) => {
