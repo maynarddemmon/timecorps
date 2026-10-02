@@ -63,9 +63,7 @@
         },
         EXIT_STYLE = {
             color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
-            dash:1,
             startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
-            endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         },
         
@@ -454,8 +452,8 @@
                     if (!newExitSplinesById[splineId]) {
                         newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
                             splineId,
-                            start:{view:boxesByEventId[fromModelId], side:'bottom', position:'85%'},
-                            end:  {view:boxesByEventId[toModelId],   side:'top',    position:'35%'},
+                            start:{view:boxesByEventId[fromModelId], side:'bottom', position:'75%'},
+                            end:  {view:boxesByEventId[toModelId],   side:'top',    position:'75%'},
                             style:EXIT_STYLE
                         });
                     }

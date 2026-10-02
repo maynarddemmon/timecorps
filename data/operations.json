@@ -11,7 +11,7 @@
 					"hidden":"events.casualties.attestation.value < 20 || !events.casualties.values.massLossOfLife.value"
 				}
 			],
-			"setup":{
+			"onSetup":{
 				"awardAgents":"VQ",
 				"revealAgents":"VQ",
 				"initialAgentSelection":"VQ",
@@ -71,7 +71,7 @@
 			"description":[
 				"It is essential that the Titanic sinks, but the massive loss of life must be prevented."
 			],
-			"setup":{
+			"onSetup":{
 				"historicityAdjustments":{
 					"lifeboat_capacity":25
 				}
@@ -118,7 +118,7 @@
 			"description":[
 				"Prevent the sinking of the Lusitania."
 			],
-			"setup":{
+			"onSetup":{
 				"historicityAdjustments":{
 					"torpedo_strike":75,
 					"lusitania_sinks":75

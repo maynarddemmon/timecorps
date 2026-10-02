@@ -16,7 +16,7 @@
             theme:{
                 spacing, padding, cornerRadius,
                 colorDark, colorMegaDark, colorSuccess, colorError,
-                fontSizeLarge, fontFamilyMono
+                fontSizeMedium, fontSizeLarge, fontFamilyMono
             },
             cfg:{DEFAULT_TALL_DIALOG_WIDTH, DIALOG_FOOTER_HEIGHT}
         } = pkg,
@@ -194,7 +194,7 @@
                 self.callSuper(parent, attrs);
                 
                 self._msgTxt = new PaddedText(self, {
-                    padding, whiteSpace:'pre-wrap', fontFamily:fontFamilyMono
+                    padding, whiteSpace:'pre-wrap', fontSize:fontSizeMedium, fontFamily:fontFamilyMono
                 });
             },
             
@@ -211,11 +211,11 @@
                 
                 const panelView = this.getPanelView(),
                     msgTxt = this.getMsgTxt(),
-                    fuzzyWidth = mathMin(500, mathMax(300, mathFloor(msg.length / 2)));
+                    fuzzyWidth = mathMin(550, mathMax(350, mathFloor(msg.length)));
                 panelView.setWidth(fuzzyWidth);
                 msgTxt.sizeViewToDom();
                 const idealHeight = this.getHeaderView().height + spacing + msgTxt.height + spacing + this.getFooterView().height;
-                panelView.setHeight(mathMin(550, idealHeight));
+                panelView.setHeight(mathMin(650, idealHeight));
             }
         }),
         
@@ -238,6 +238,15 @@
             doConfirm: function() {
                 const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
+            },
+            
+            hide: function(ignoreRestoreFocus) {
+                this.callSuper(ignoreRestoreFocus);
+                
+                // Drain queue
+                if (ackMsgQueue.length > 0) {
+                    pkg.dialogUtil.openAckMsgDialog(...ackMsgQueue.shift());
+                }
             }
         }),
         
@@ -247,7 +256,9 @@
         
         AckMsgDialog = pkg.AckMsgDialog = new JSClass('AckMsgDialog', AckDialog, {
             include: [MsgDialog]
-        });
+        }),
+        
+        ackMsgQueue = [];
     
     pkg.dialogUtil = {
         openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => {
@@ -261,9 +272,13 @@
         },
         openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
             ackMsgDialog ??= new AckMsgDialog(pkg.app);
-            ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
-            if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
-            return ackMsgDialog;
+            if (ackMsgDialog.visible) {
+                ackMsgQueue.push([title, msg, confirmFunc, cancelFunc, btnLabel]);
+            } else {
+                ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
+                if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
+                return ackMsgDialog;
+            }
         }
     }
 })(tc);

@@ -215,7 +215,7 @@
         
         setCurrentOperation: operationModel => {
             model.currentOperationModel = operationModel;
-            operationModel?.doSetup();
+            operationModel?.doOnSetup();
             pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
             
             // Objectives may already be satisfied on arrival (e.g. the player completed
@@ -311,7 +311,6 @@
             
             if (!isInit) {
                 for (const operationModel of model.getOperationModelsAsList()) operationModel.reset();
-                model.setCurrentOperation(model.getInitialOperation());
             }
         },
         

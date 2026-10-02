@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    let appView,
+    let readyToHandleEvents = false, // Prevents the notifyX methods from firing too early during startup.
+        
+        appView,
         model,
         persistence,
         hiddenSaveFileImporter,
@@ -98,19 +100,22 @@
                         
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         if (eventsValid) {
+                            if (!hasSeenHelp()) appView.openHelp();
+                            
                             timelineView.setup(model);
                             teamView.setup(model);
                             model.reset();
                             
+                            readyToHandleEvents = true;
+                            
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistence.captureBaseline();
-                            const restoreProblem = persistence.restore();
-                            updateLastSaved();
-                            
-                            if (restoreProblem) {
-                                openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
-                            } else if (!hasSeenHelp()) {
-                                appView.openHelp();
+                            if (persistence.hasSave()) {
+                                const restoreProblem = persistence.restore();
+                                updateLastSaved();
+                                if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
+                            } else {
+                                model.setCurrentOperation(model.getInitialOperation());
                             }
                         } else {
                             console.log('INVALID EVENT DATA: HALTING STARTUP!!!');
@@ -385,6 +390,8 @@
         },
         
         notifyTimelineParadoxExceeded: () => {
+            if (!readyToHandleEvents) return;
+            
             openAckMsgDialog(
                 'Timeline Destabilized',
                 'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.',
@@ -395,7 +402,10 @@
             );
         },
         
+        /*  Called when an Operation has completed successfully */
         notifyOperationCompleted: operationModel => {
+            if (!readyToHandleEvents) return;
+            
             let saveNote = '';
             if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistence.hasBaseline()) {
                 if (persistence.save()) {
@@ -419,6 +429,15 @@
                 // No next operation case.
                 openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
             }
+        },
+        
+        /*  Called when an Operation has been setup successfully */
+        notifyOperationBegun: operationModel => {
+            if (!readyToHandleEvents) return;
+            
+            openAckMsgDialog(
+                'Mission Brief', operationModel.getDescription()
+            );
         },
         
         openSettings: () => {

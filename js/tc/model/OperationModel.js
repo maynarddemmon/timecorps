@@ -87,7 +87,7 @@
             // We need to give the Objectives a chance to settle since events must propogate
             // to update success/failure.
             self.determineSuccessfulCompletion = debounce(() => {
-                if (self.isCurrent() && self.getProgress().completed) self.doCompletedSuccessfully();
+                if (self.isCurrent() && self.getProgress().completed) self.doOnSuccess();
             }, STANDARD_DEBOUNCE_MILLIS);
             
             self.callSuper(attrs);
@@ -146,7 +146,7 @@
         },
         
         
-        // Setup Config ////////////////////////////////////////////////////
+        // onSetup Config //////////////////////////////////////////////////////
         setHistoricityAdjustments: function(adjObj) {
             // Enforce numerical values for adjustments.
             if (adjObj) {
@@ -175,26 +175,16 @@
         },
         getInitialAgentSelection: function() {return this.initialAgentSelection;},
         
-        setRevealAgentsOnSetup: function(agentIds) {this.set('revealAgentsOnSetup', validateAgentIdList(agentIds, 'setup.revealAgents'), true);},
-        setAwardAgentsOnSetup: function(agentIds) {this.set('awardAgentsOnSetup', validateAgentIdList(agentIds, 'setup.awardAgents'), true);},
+        setRevealAgentsOnSetup: function(agentIds) {this.set('revealAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.revealAgents'), true);},
+        setAwardAgentsOnSetup: function(agentIds) {this.set('awardAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.awardAgents'), true);},
         
-        setSetup: function(setupCfg) {
-            if (setupCfg) {
-                this.setHistoricityAdjustments(setupCfg.historicityAdjustments);
-                this.setRevealAgentsOnSetup(setupCfg.revealAgents);
-                this.setAwardAgentsOnSetup(setupCfg.awardAgents);
-                this.setInitialEventSelection(setupCfg.initialEventSelection);
-                this.setInitialAgentSelection(setupCfg.initialAgentSelection);
-            }
-        },
-        
-        doSetup: function() {
-            if (!this.setupApplied) {
-                const rootModel = pkg.model;
-                rootModel.adjustHistoricity(this.getHistoricityAdjustments());
-                rootModel.revealAgents(this.revealAgentsOnSetup);
-                rootModel.awardAgents(this.awardAgentsOnSetup);
-                this.setupApplied = true;
+        setOnSetup: function(onSetupCfg) {
+            if (onSetupCfg) {
+                this.setHistoricityAdjustments(onSetupCfg.historicityAdjustments);
+                this.setRevealAgentsOnSetup(onSetupCfg.revealAgents);
+                this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
+                this.setInitialEventSelection(onSetupCfg.initialEventSelection);
+                this.setInitialAgentSelection(onSetupCfg.initialAgentSelection);
             }
         },
         
@@ -236,25 +226,13 @@
             }
         },
         
-        doCompletedSuccessfully: function() {
-            if (!this.successGranted) {
-                const rootModel = pkg.model;
-                this.grantScore();
-                this.grantHQChronal();
-                rootModel.revealAgents(this.revealAgentsOnSuccess);
-                rootModel.awardAgents(this.awardAgentsOnSuccess);
-                this.successGranted = true;
-                pkg.app.notifyOperationCompleted(this);
-            }
-        },
-        
         
         // Persistence /////////////////////////////////////////////////
         exportToObj: function() {
             return {setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
         },
         
-        /*  Restoring these before the current Operation is set keeps doSetup and the success
+        /*  Restoring these before the current Operation is set keeps doOnSetup and the success
             rewards from being applied a second time. */
         importFromObj: function(obj) {
             if ('setupApplied' in obj) this.setupApplied = obj.setupApplied;
@@ -267,10 +245,34 @@
             this.setupApplied = this.successGranted = false;
         },
         
+        // Notifications and Triggers
         notifyCollectionOfUpdate: function() {
             if (this.inited) {
                 this.callSuper();
                 this.fireEvent('updated');
+            }
+        },
+        
+        doOnSetup: function() {
+            if (!this.setupApplied) {
+                const rootModel = pkg.model;
+                rootModel.adjustHistoricity(this.getHistoricityAdjustments());
+                rootModel.revealAgents(this.revealAgentsOnSetup);
+                rootModel.awardAgents(this.awardAgentsOnSetup);
+                this.setupApplied = true;
+                pkg.app.notifyOperationBegun(this);
+            }
+        },
+        
+        doOnSuccess: function() {
+            if (!this.successGranted) {
+                const rootModel = pkg.model;
+                this.grantScore();
+                this.grantHQChronal();
+                rootModel.revealAgents(this.revealAgentsOnSuccess);
+                rootModel.awardAgents(this.awardAgentsOnSuccess);
+                this.successGranted = true;
+                pkg.app.notifyOperationCompleted(this);
             }
         },
         
