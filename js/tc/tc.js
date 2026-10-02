@@ -119,6 +119,8 @@
                 MAX_SKILL_EASE:-1,
                 MIN_SKILL_EASE:-999,
                 
+                DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE:-3,
+                
                 // The starting maximum paradox an Agent can have.
                 AGENT_PARADOX_LIMIT:3,
                 

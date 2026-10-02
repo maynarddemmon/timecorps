@@ -543,6 +543,7 @@
 			"start":"1912-04-14T23:40:00",
 			"duration":{"m":1},
 			"location":"titanic.bridge",
+			"investigate":{"difficulty":150},
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],

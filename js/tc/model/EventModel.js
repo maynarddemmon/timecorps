@@ -12,7 +12,8 @@
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
-                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
+                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK,
+                DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE
             },
             ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
             SCOPE_EVENT, SCOPE_SKILLS,
@@ -20,7 +21,10 @@
         } = pkg,
         
         DEFAULT_DIFFICULTY = 250, // 75% for a skill of 0.
-        DEFAULT_INVESTIGATE_CHECK_EXPR = 'agent.' + SCOPE_SKILLS + '.' + SKILL_ID_INVESTIGATION,
+        
+        //  agent.skills.investigation + -3*event.attestation.value
+        DEFAULT_INVESTIGATE_CHECK_EXPR = 'agent.' + SCOPE_SKILLS + '.' + SKILL_ID_INVESTIGATION + 
+            ' + ' + DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE + '*event.' + STAT_ID_ATTESTATION + '.value',
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
         toEventModels = (things, excludeEventModel) => {
