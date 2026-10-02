@@ -28,16 +28,17 @@ test('clicking a section header collapses and expands it, and the icon follows',
 test('the whole header toggles, with a pointer cursor', async ({page}) => {
     const problems = await startGame(page);
     
-    // Click the empty space at the right end of the Causators header, away from the label.
-    const header = await page.evaluate(() => {
-        const headerView = tc.app.getEventDetailsView().causatorsRow.getHeaderView(),
-            elem = headerView.getIDE(),
-            rect = elem.getBoundingClientRect();
-        return {x:rect.right - 20, y:rect.top + rect.height / 2, cursor:getComputedStyle(elem).cursor};
-    });
-    expect(header.cursor).toBe('pointer');
-    await page.mouse.click(header.x, header.y);
-    expect(await expandedRows(page)).toEqual({agents:true, causators:false});
+    // The header is the label's parent. A locator click (unlike page.mouse) waits for the
+    // header to be visible and stable, which matters since Event Details stays hidden until
+    // the initial event selection lands, and checks the click point actually hits it.
+    const header = visibleText(page, EXPANDED + 'Causators').locator('..');
+    await expect(header).toBeVisible();
+    expect(await header.evaluate(elem => getComputedStyle(elem).cursor)).toBe('pointer');
+    
+    // Click the empty space at the right end of the header, away from the label.
+    const box = await header.boundingBox();
+    await header.click({position:{x:box.width - 20, y:box.height / 2}});
+    await expect.poll(() => expandedRows(page)).toEqual({agents:true, causators:false});
     
     expect(problems.pageErrors).toEqual([]);
 });
