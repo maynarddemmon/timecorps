@@ -176,12 +176,19 @@
         }
     });
     
+    /*  A titled, collapsible section. Clicking the header toggles it, except on buttons placed
+        in the header. Expanded, it takes a share of its parent's height by layoutHint and 
+        scrolls its content. Collapsed, it shrinks to just the header.
+        
+        Attributes:
+            label:string - The header text. A +/- icon is shown in front of it.
+            expanded:boolean - Defaults to true. */
     pkg.ContainerRow = new JSClass('ContainerRow', WideView, {
         initNode: function(parent, attrs) {
-            const self = this,
-                label = attrs.label;
-            delete attrs.label;
+            const self = this;
             
+            self.label = attrs.label ?? '';
+            delete attrs.label;
             
             self.layoutWeight = attrs.layoutHint ??= 1;
             attrs.defaultPlacement = '_contentView';
@@ -190,7 +197,7 @@
             
             self.callSuper(parent, attrs);
             
-            const header = self._headerView = new DividerRow(self, {inset:padding, label}),
+            const header = self._headerView = new DividerRow(self, {inset:padding, cursor:'pointer'}),
                 wrapper = self._wrapperView = new WideView(self, {y:header.height, overflow:'autoy'}),
                 content = self._contentView = new WideView(wrapper);
             new SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
@@ -199,7 +206,13 @@
             wrapper.getIDS().overscrollBehavior = 'none';
             
             header.attachDomObserver(self, '_doClick', 'click');
+            
+            // Apply the initial state, which also sets the header text.
+            self._applyExpanded();
         },
+        
+        
+        // Accessors ///////////////////////////////////////////////////////////
         setHeight: function(v) {
             this.callSuper(v);
             if (this.inited) {
@@ -207,33 +220,47 @@
                 wrapper.setHeight(this.height - wrapper.y);
             }
         },
-        setLabel: function(v) {this.getHeaderView().setLabel(v);},
+        setLabel: function(v) {
+            this.label = v;
+            if (this.inited) this._updateHeaderLabel();
+        },
         getHeaderView: function() {return this._headerView;},
         getWrapperView: function() {return this._wrapperView;},
         getContentView: function() {return this._contentView;},
         
-        /*  Only clicks on the header itself or its label toggle, so buttons placed in the
-            header (e.g. Deploy/Recall) don't also collapse the row. */
-        _doClick: function(event) {
-            const header = this.getHeaderView(),
-                target = event.value.target;
-            if (target === header.getIDE() || target === header._label.getIDE()) {
-                this.setExpanded(!this.expanded);
-            }
-        },
         setExpanded: function(expanded) {
             this.set('expanded', expanded, true);
             if (this.inited) {
-                if (this.expanded) {
-                    this.setLayoutHint(this.layoutWeight);
-                    this.getWrapperView().setVisible(true);
-                } else {
-                    this.setLayoutHint(null);
-                    this.setHeight(this.getHeaderView().height);
-                    this.getWrapperView().setVisible(false);
-                }
+                this._applyExpanded();
                 this.parent.getFirstLayout().update();
             }
+        },
+        
+        
+        // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _applyExpanded: function() {
+            const self = this,
+                expanded = self.expanded;
+            if (expanded) {
+                self.setLayoutHint(self.layoutWeight);
+            } else {
+                self.setLayoutHint(null);
+                self.setHeight(self.getHeaderView().height);
+            }
+            self.getWrapperView().setVisible(expanded);
+            self._updateHeaderLabel();
+        },
+        
+        /** @private */
+        _updateHeaderLabel: function() {
+            this.getHeaderView().setLabel((this.expanded ? pkg.ICON_EXPANDED : pkg.ICON_COLLAPSED) + ' ' + this.label);
+        },
+        
+        /*  Clicks on buttons placed in the header (e.g. Deploy/Recall) don't toggle the row.
+            @private */
+        _doClick: function(event) {
+            if (!event.value.target.closest('button')) this.setExpanded(!this.expanded);
         }
     });
     

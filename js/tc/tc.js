@@ -280,6 +280,8 @@
             ICON_SAVE:'✇',
             ICON_SETTINGS:'⚙',
             ICON_RESTART:'⌫',
+            ICON_EXPANDED:'⊟',
+            ICON_COLLAPSED:'⊞',
             ICON_IMPORT:'↥',
             ICON_EXPORT:'↧'
         };

@@ -275,7 +275,6 @@
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {timelineView.navigateHistory(1);}}]);
             
-            
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
             });
@@ -381,7 +380,10 @@
                     ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
                 );
                 
-                self.descriptionTxt.setText(eventModel.getDescription() || 'The historical record is silent.');
+                const descriptionTxt = self.descriptionTxt,
+                    description = eventModel.getDescription();
+                descriptionTxt.setText(description || 'The historical record is silent.');
+                descriptionTxt.setFontStyle(description ? null : 'italic');
                 
                 const causatorsRow = self.causatorsRow;
                 causatorsRow.getContentView().destroyAllSubviews();

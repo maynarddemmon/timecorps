@@ -47,8 +47,8 @@
         SPLINE_ID_PREFIX_EXIT = 'exit-',
         
         Z_IDX_EVENT = 1,
-        Z_IDX_AGENT = 3,
         Z_IDX_FLOW = 2,
+        Z_IDX_AGENT = 3,
         
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
@@ -64,6 +64,7 @@
         EXIT_STYLE = {
             color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
             startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
+            endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         },
         
