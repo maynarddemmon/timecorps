@@ -88,7 +88,7 @@
         getScenarioIDsToLoad = () => ['titanic_scenario','lusitania_scenario'],
         
         loadAllData = () => {
-            const filesToLoad = ['init', ...getScenarioIDsToLoad(), 'agents','operations'];
+            const filesToLoad = ['init', ...getScenarioIDsToLoad(), 'agents', 'operations'];
             let idx = 0;
             const chainFunc = success => {
                 if (success) {

@@ -250,8 +250,13 @@ test.describe('skill checks', () => {
 
 test('every skill named in the data is a known skill', async ({page}) => {
     await startGame(page);
-    const knownIds = await page.evaluate(() => tc.AGENT_SKILL_IDS),
+    const knownIds = await page.evaluate(() => tc.getSkillIds()),
         unknown = new Set();
+    
+    // Skills the code names, e.g. tc.SKILL_ID_INVESTIGATION for the default investigate check.
+    for (const [key, skillId] of await page.evaluate(() => Object.entries(tc).filter(([key]) => key.startsWith('SKILL_ID_')))) {
+        if (!knownIds.includes(skillId)) unknown.add('tc.' + key + ': ' + skillId);
+    }
     
     // Skills given to agents.
     for (const [agentId, agent] of Object.entries(readJson('data/agents.json').agents)) {

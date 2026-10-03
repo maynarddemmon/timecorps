@@ -105,3 +105,19 @@ test('a location video that can\'t load falls back to the photo', async ({page})
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('the dossier lists every configured skill by name, with its description as the tooltip', async ({page}) => {
+    const problems = await startGame(page);
+    await openDossier(page, 'VQ');
+    
+    const skillsJson = readJson('data/init.json').skills,
+        skills = readJson('data/agents.json').agents.VQ.skills;
+    for (const [skillId, cfg] of Object.entries(skillsJson)) {
+        // Skills the agent wasn't given show as 0.
+        const skillText = page.getByText(cfg.name + ' (' + (skills[skillId] ?? 0) + ')', {exact:true}).filter({visible:true});
+        await expect(skillText).toBeVisible();
+        await expect(skillText).toHaveAttribute('title', cfg.description);
+    }
+    
+    expect(problems.pageErrors).toEqual([]);
+});

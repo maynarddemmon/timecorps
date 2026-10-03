@@ -4,7 +4,8 @@
     const JSClass = JS.Class;
     
     let model,
-        skillCfgs = {};
+        skillCfgs = {},
+        skillIds;
     
     const {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
@@ -316,11 +317,11 @@
         },
         
         processData: json => {
-            // Load any skills configurations found
+            // Load any skills configurations found. Later files can add skills or replace one.
             const moreSkillConfigs = json[SCOPE_SKILLS];
             if (moreSkillConfigs) {
                 skillCfgs = {...skillCfgs, ...moreSkillConfigs};
-                pkg.AGENT_SKILL_IDS = Object.keys(skillCfgs);
+                skillIds = Object.keys(skillCfgs);
             }
             
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
@@ -380,5 +381,9 @@
         }
     });
     
+    /*  The IDs of the skills configured in the data, in the order they were defined. */
+    pkg.getSkillIds = () => skillIds;
+    
+    /*  A skill's config, {name, description}, or undefined if there's no such skill. */
     pkg.getSkillConfig = skillId => skillCfgs[skillId];
 })(tc);

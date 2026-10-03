@@ -146,3 +146,15 @@ test('every investigate config has an integer difficulty and a skill expression 
     }
     expect(problems).toEqual([]);
 });
+
+test('every skill config has a name and a description', () => {
+    const problems = [];
+    for (const file of SCENARIO_FILES) {
+        for (const [skillId, cfg] of Object.entries(readJson(file).skills ?? {})) {
+            for (const key of ['name', 'description']) {
+                if (typeof cfg?.[key] !== 'string' || cfg[key].trim() === '') problems.push(file + ': ' + skillId + ' has no ' + key);
+            }
+        }
+    }
+    expect(problems).toEqual([]);
+});

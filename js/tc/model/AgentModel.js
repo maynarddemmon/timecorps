@@ -290,7 +290,7 @@
         
         getSkillInfo: function() {
             const accum = [];
-            for (const skillId of pkg.AGENT_SKILL_IDS) {
+            for (const skillId of pkg.getSkillIds()) {
                 accum.push({
                     id:skillId, 
                     value:this.getSkill(skillId), 
