@@ -14,6 +14,7 @@
             keep the style of whatever it showed before. */
         STYLE_DEFAULTS = {
             textColor:colorBtn,
+            bgColor:'', // Not undefined, which the DOM ignores, leaving the last bgColor.
             fontFamily:fontFamilyMono,
             fontSize:fontSizeSmall,
             fontWeight:'normal',
@@ -73,10 +74,11 @@
         showing at once.
         
         attrs is optional:
-            duration:number - Milliseconds to float and fade. Defaults to 1500.
+            duration:number - Milliseconds to float and fade. Defaults to 2000.
             rise:number - Pixels to float up. Defaults to 20.
-            Any Text attribute, e.g. textColor, fontSize, fontWeight, fontStyle or fontFamily.
-                The defaults are colorBtn and the monospaced font at fontSizeSmall.
+            Any Text attribute, e.g. textColor, bgColor, fontSize, fontWeight, fontStyle or 
+                fontFamily. The defaults are colorBtn on no background and the monospaced font 
+                at fontSizeSmall.
         
         Returns the FloatingText. */
     pkg.showFloatingText = (text, attrs, x, y) => {
@@ -88,9 +90,10 @@
         return floatingText;
     };
     
+    /*  Shows text centered just above a view. Returns the FloatingText. */
     pkg.showFloatingTextAboveView = (view, text, attrs) => {
         const pos = view.getPagePosition();
-        // More pleassing to begin centered over the view.
-        pkg.showFloatingText(text, attrs, pos.x + view.width / 2, pos.y);
-    }
+        // More pleasing to begin centered over the view.
+        return pkg.showFloatingText(text, attrs, pos.x + view.width / 2, pos.y);
+    };
 })(tc);
