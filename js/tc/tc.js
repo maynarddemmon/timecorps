@@ -177,6 +177,8 @@
                 // Dialogs
                 DEFAULT_TALL_DIALOG_WIDTH:550,
                 DIALOG_FOOTER_HEIGHT:0, // Set programmatically below
+                
+                CHECK_EXPR_SHOW_DIE_ROLL:false,
             },
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 

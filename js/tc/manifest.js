@@ -24,6 +24,7 @@ JS.Packages(file => {
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
+    file(COMPONENT_ROOT + 'FloatingText.js').provides('tc.FloatingText').requires('tc');
     file(COMPONENT_ROOT + 'Dialogs.js').provides(
         'tc.dialogUtil','tc.ModalDialog'
     ).requires('tc.SquareBtn','tc.WideView','tc.Panel');
@@ -45,7 +46,7 @@ JS.Packages(file => {
         'tc.Describable','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
-        'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport'
+        'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
     );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
@@ -82,6 +83,6 @@ JS.Packages(file => {
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog','tc.checks'
+        'tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog','tc.FloatingText'
     );
 });

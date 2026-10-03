@@ -1,12 +1,13 @@
 (pkg => {
     'use strict';
     
-    const {min:mathMin, max:mathMax} = Math,
+    const {min:mathMin, max:mathMax, abs:mathAbs} = Math,
         
         {
             SCOPE_SKILLS,
             rng:{roll, D1000},
-            cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE}
+            cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL},
+            theme:{colorSuccess, colorError, colorMegaDark}
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
@@ -149,6 +150,20 @@
             toEasePhrase,
             
             /*  Describes how likely a skill check is to succeed, without rolling. */
-            getEasePhrase: (skillExpr, cfg) => toEasePhrase(CHECK.getSkillEase(skillExpr, cfg))
+            getEasePhrase: (skillExpr, cfg) => toEasePhrase(CHECK.getSkillEase(skillExpr, cfg)),
+            
+            showFloatingTextForSkillCheck: (btnView, checkResult) => {
+                if (btnView && checkResult) {
+                    const {success, roll, ease} = checkResult;
+                    pkg.showFloatingTextAboveView(
+                        btnView, 
+                        (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? pkg.ICON_SEPARATOR + '⚅' + roll : ''), 
+                        {
+                            bgColor:success ? colorSuccess : colorError,
+                            textColor:colorMegaDark
+                        }
+                    );
+                }
+            }
         };
 })(tc);

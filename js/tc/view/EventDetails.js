@@ -114,7 +114,7 @@
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
                 new TextForFlow(actionView, {text:ICON_SEPARATOR});
                 new UnderlineActionBtn(actionView, {text:getInvestigateBtnPhrase(agentModel, eventModel), disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
-                    doActivated: () => {agentModel.doInvestigate();}
+                    doActivated: function() {agentModel.doInvestigate(this);}
                 }]);
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {

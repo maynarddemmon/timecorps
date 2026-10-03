@@ -16,6 +16,7 @@
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
+            checks:{skill, getSkillEase, getEasePhrase, showFloatingTextForSkillCheck},
             formatChronalAndParadox,
             ICON_HQ,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
@@ -298,17 +299,17 @@
         /*  Rolls a check of a skill expression, e.g. "Math.max(agent.skills.a, agent.skills.b)",
             against a difficulty. Returns {success, result, roll, difficulty, ease}. */
         checkSkillExpression: function(skillExpr, difficulty) {
-            return pkg.checks.skill(skillExpr, this._getCheckCfg(difficulty));
+            return skill(skillExpr, this._getCheckCfg(difficulty));
         },
         
         /*  The ease of a skill expression check, without rolling. */
         getSkillExpressionEase: function(skillExpr, difficulty) {
-            return pkg.checks.getSkillEase(skillExpr, this._getCheckCfg(difficulty));
+            return getSkillEase(skillExpr, this._getCheckCfg(difficulty));
         },
         
         /*  Describes how likely a skill expression check is to succeed, without rolling. */
         getSkillEasePhrase: function(skillExpr, difficulty) {
-            return pkg.checks.getEasePhrase(skillExpr, this._getCheckCfg(difficulty));
+            return getEasePhrase(skillExpr, this._getCheckCfg(difficulty));
         },
         
         /*  Rolls a check of one skill against a difficulty. Returns the same as 
@@ -491,7 +492,7 @@
             this.incrementActionExecCount();
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
         },
-        doInvestigate: function() {
+        doInvestigate: function(btnView) {
             if (this.canAct()) {
                 const eventModel = this.getEventModel();
                 if (eventModel) {
@@ -503,7 +504,9 @@
                             eventModel.getInvestigateSkillExpr(),
                             eventModel.getInvestigateDifficulty()
                         );
-                        // FIXME: show die roll result UI using check.roll, check.ease, etc.
+                        
+                        showFloatingTextForSkillCheck(btnView, check);
+                        
                         this.incrementActionExecCount();
                         let adj;
                         if (check.success) {
