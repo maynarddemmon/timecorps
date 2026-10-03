@@ -259,10 +259,23 @@
             include: [MsgDialog]
         }),
         
+        /*  Shows the next queued ack once no ack or confirm is showing. Checking first keeps
+            the order: openAckMsgDialog would put a message it can't show at the back. */
+        isAckBlocked = () => ackMsgDialog?.visible || confirmMsgDialog?.visible,
         drainAckMsgQueue = () => {
-            if (ackMsgQueue.length > 0) pkg.dialogUtil.openAckMsgDialog(...ackMsgQueue.shift());
+            if (ackMsgQueue.length > 0 && !isAckBlocked()) openAckMsgDialog(...ackMsgQueue.shift());
         },
-        ackMsgQueue = [];
+        ackMsgQueue = [],
+        openAckMsgDialog = (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
+            ackMsgDialog ??= new AckMsgDialog(pkg.app);
+            if (isAckBlocked()) {
+                ackMsgQueue.push([title, msg, confirmFunc, cancelFunc, btnLabel]);
+            } else {
+                ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
+                if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
+                return ackMsgDialog;
+            }
+        };
     
     pkg.dialogUtil = {
         openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => {
@@ -274,15 +287,6 @@
             footer.cancelBtn.setText(cancelLabel);
             return confirmMsgDialog;
         },
-        openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
-            ackMsgDialog ??= new AckMsgDialog(pkg.app);
-            if (ackMsgDialog.visible || confirmMsgDialog?.visible) {
-                ackMsgQueue.push([title, msg, confirmFunc, cancelFunc, btnLabel]);
-            } else {
-                ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
-                if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
-                return ackMsgDialog;
-            }
-        }
+        openAckMsgDialog
     }
 })(tc);

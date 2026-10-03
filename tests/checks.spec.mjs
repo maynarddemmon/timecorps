@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, queueRolls} from './helpers.mjs';
+import {startGame, queueRolls, readJson, SCENARIO_FILES} from './helpers.mjs';
 
 /*  Evaluates a check in the page against a real agent and event, after forcing the roll. The 
     agent's skills are replaced for the check and restored afterwards. */
@@ -246,4 +246,27 @@ test.describe('skill checks', () => {
         
         expect(problems.warnings).toEqual([]);
     });
+});
+
+test('every skill named in the data is a known skill', async ({page}) => {
+    await startGame(page);
+    const knownIds = await page.evaluate(() => tc.AGENT_SKILL_IDS),
+        unknown = new Set();
+    
+    // Skills given to agents.
+    for (const [agentId, agent] of Object.entries(readJson('data/agents.json').agents)) {
+        for (const skillId of Object.keys(agent.skills ?? {})) {
+            if (!knownIds.includes(skillId)) unknown.add(agentId + ': ' + skillId);
+        }
+    }
+    
+    // Skills used in expressions, e.g. agent.skills.stealth in an investigate config. A typo
+    // would otherwise quietly count as 0.
+    for (const file of [...SCENARIO_FILES, 'data/operations.json', 'data/agents.json']) {
+        for (const [, skillId] of JSON.stringify(readJson(file)).matchAll(/\bskills\.(\w+)/g)) {
+            if (!knownIds.includes(skillId)) unknown.add(file + ': ' + skillId);
+        }
+    }
+    
+    expect([...unknown]).toEqual([]);
 });

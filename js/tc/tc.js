@@ -37,10 +37,14 @@
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
+        // The efficiencty with which an Agent employs chronal to travel through time and space.
         SKILL_ID_CHRONOGATION = 'chronogation',
+        
+        // The overall effectiveness of an Agent in gaining knowledge about an Event through
+        // examining it first hand.
         SKILL_ID_INVESTIGATION = 'investigation',
         
-        // Avoid notice, either unseen and unheard or simply unremarkable in a crowd. This absorbs incognito.
+        // Avoid notice, either unseen and unheard or simply unremarkable in a crowd.
         SKILL_ID_STEALTH = 'stealth',
         
         // Pass as someone you are not. Can depend on props obtained elsewhere.
