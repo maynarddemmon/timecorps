@@ -3,7 +3,8 @@
     
     const JSClass = JS.Class;
     
-    let model;
+    let model,
+        skillCfgs = {};
     
     const {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
@@ -13,7 +14,7 @@
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT,
                 AGENT_DEFAULT_STARTING_CHRONAL
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
         } = pkg,
         
@@ -315,6 +316,13 @@
         },
         
         processData: json => {
+            // Load any skills configurations found
+            const moreSkillConfigs = json[SCOPE_SKILLS];
+            if (moreSkillConfigs) {
+                skillCfgs = {...skillCfgs, ...moreSkillConfigs};
+                pkg.AGENT_SKILL_IDS = Object.keys(skillCfgs);
+            }
+            
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
@@ -371,4 +379,6 @@
             return isValid;
         }
     });
+    
+    pkg.getSkillConfig = skillId => skillCfgs[skillId];
 })(tc);

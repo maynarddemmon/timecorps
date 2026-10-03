@@ -102,7 +102,11 @@
                 skillsRow.clearContent();
                 for (const skillInfo of agentModel.getSkillInfo()) {
                     if (isNotFirst) new TextForFlow(skillsRow, {text:ICON_SEPARATOR});
-                    new TextForFlow(skillsRow, {text:skillInfo.id + ' (' + skillInfo.value + ')'});
+                    const cfg = skillInfo.cfg;
+                    new TextForFlow(skillsRow, {
+                        text:cfg.name + '\u00A0(' + skillInfo.value + ')',
+                        tooltip:cfg.description
+                    });
                     isNotFirst = true;
                 }
                 

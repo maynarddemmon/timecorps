@@ -1,4 +1,27 @@
 {
+	"skills":{
+		"chronogation":{
+			"name":"Chronogation",
+			"description":"The efficiencty with which an agent employs “chronal” to travel through time and space."
+		},
+		"investigation":{
+			"name":"Investigation",
+			"description":"The overall effectiveness of an agent in gaining knowledge about a historical event through examining it first hand."
+		},
+		"stealth":{
+			"name":"Stealth",
+			"description":"Avoid notice, either unseen and unheard or simply unremarkable in a crowd."
+		},
+		"disguise":{
+			"name":"Disguise",
+			"description":"Pass as someone you are not. Can depend on props obtained elsewhere."
+		},
+		"deception":{
+			"name":"Deception",
+			"description":"Lie and interact socially without drawing suspicion."
+		}
+	},
+	
 	"locations":{
 		"_nexus":{
 			"name":"The Nexus",

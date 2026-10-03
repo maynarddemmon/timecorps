@@ -37,22 +37,6 @@
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
-        // The efficiencty with which an Agent employs chronal to travel through time and space.
-        SKILL_ID_CHRONOGATION = 'chronogation',
-        
-        // The overall effectiveness of an Agent in gaining knowledge about an Event through
-        // examining it first hand.
-        SKILL_ID_INVESTIGATION = 'investigation',
-        
-        // Avoid notice, either unseen and unheard or simply unremarkable in a crowd.
-        SKILL_ID_STEALTH = 'stealth',
-        
-        // Pass as someone you are not. Can depend on props obtained elsewhere.
-        SKILL_ID_DISGUISE = 'disguise',
-        
-        // Lie and interact socially without drawing suspicion.
-        SKILL_ID_DECEPTION = 'deception',
-        
         TC = pkg.tc = {
             app:null, // Holds the App instance.
             model:null, // Holds the Model instance.
@@ -312,14 +296,12 @@
             STAT_ID_HISTORICITY:'historicity',
             STAT_ID_ATTESTATION:'attestation',
             
-            // Skill IDS
-            SKILL_ID_CHRONOGATION,
-            SKILL_ID_INVESTIGATION,
-            SKILL_ID_STEALTH,
-            SKILL_ID_DISGUISE,
-            SKILL_ID_DECEPTION,
-            
-            AGENT_SKILL_IDS:[SKILL_ID_CHRONOGATION, SKILL_ID_INVESTIGATION, SKILL_ID_STEALTH, SKILL_ID_DISGUISE, SKILL_ID_DECEPTION],
+            // Skill IDS: these should match up to the ID of skills defined in init.json.
+            SKILL_ID_CHRONOGATION:'chronogation',
+            SKILL_ID_INVESTIGATION:'investigation',
+            SKILL_ID_STEALTH:'stealth',
+            SKILL_ID_DISGUISE:'disguise',
+            SKILL_ID_DECEPTION:'deception',
             
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',

@@ -20,7 +20,7 @@
             formatChronalAndParadox,
             ICON_HQ,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
-            SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION, AGENT_SKILL_IDS,
+            SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_SKILLS
         } = pkg,
         
@@ -290,8 +290,12 @@
         
         getSkillInfo: function() {
             const accum = [];
-            for (const skillId of AGENT_SKILL_IDS) {
-                accum.push({id:skillId, value:this.getSkill(skillId)});
+            for (const skillId of pkg.AGENT_SKILL_IDS) {
+                accum.push({
+                    id:skillId, 
+                    value:this.getSkill(skillId), 
+                    cfg:pkg.getSkillConfig(skillId)
+                });
             }
             return accum;
         },
