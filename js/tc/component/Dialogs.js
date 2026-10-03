@@ -182,6 +182,11 @@
             doCancel: function() {
                 const doNotClose = this.getRef(REF_ID_CANCEL_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
+            },
+            
+            hide: function(ignoreRestoreFocus) {
+                this.callSuper(ignoreRestoreFocus);
+                drainAckMsgQueue();
             }
         }),
         
@@ -242,11 +247,7 @@
             
             hide: function(ignoreRestoreFocus) {
                 this.callSuper(ignoreRestoreFocus);
-                
-                // Drain queue
-                if (ackMsgQueue.length > 0) {
-                    pkg.dialogUtil.openAckMsgDialog(...ackMsgQueue.shift());
-                }
+                drainAckMsgQueue();
             }
         }),
         
@@ -258,6 +259,9 @@
             include: [MsgDialog]
         }),
         
+        drainAckMsgQueue = () => {
+            if (ackMsgQueue.length > 0) pkg.dialogUtil.openAckMsgDialog(...ackMsgQueue.shift());
+        },
         ackMsgQueue = [];
     
     pkg.dialogUtil = {
@@ -272,7 +276,7 @@
         },
         openAckMsgDialog: (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
             ackMsgDialog ??= new AckMsgDialog(pkg.app);
-            if (ackMsgDialog.visible) {
+            if (ackMsgDialog.visible || confirmMsgDialog?.visible) {
                 ackMsgQueue.push([title, msg, confirmFunc, cancelFunc, btnLabel]);
             } else {
                 ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);

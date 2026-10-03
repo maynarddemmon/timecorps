@@ -40,6 +40,15 @@
         SKILL_ID_CHRONOGATION = 'chronogation',
         SKILL_ID_INVESTIGATION = 'investigation',
         
+        // Avoid notice, either unseen and unheard or simply unremarkable in a crowd. This absorbs incognito.
+        SKILL_ID_STEALTH = 'stealth',
+        
+        // Pass as someone you are not. Can depend on props obtained elsewhere.
+        SKILL_ID_DISGUISE = 'disguise',
+        
+        // Lie and interact socially without drawing suspicion.
+        SKILL_ID_DECEPTION = 'deception',
+        
         TC = pkg.tc = {
             app:null, // Holds the App instance.
             model:null, // Holds the Model instance.
@@ -302,7 +311,11 @@
             // Skill IDS
             SKILL_ID_CHRONOGATION,
             SKILL_ID_INVESTIGATION,
-            AGENT_SKILL_IDS:[SKILL_ID_CHRONOGATION, SKILL_ID_INVESTIGATION],
+            SKILL_ID_STEALTH,
+            SKILL_ID_DISGUISE,
+            SKILL_ID_DECEPTION,
+            
+            AGENT_SKILL_IDS:[SKILL_ID_CHRONOGATION, SKILL_ID_INVESTIGATION, SKILL_ID_STEALTH, SKILL_ID_DISGUISE, SKILL_ID_DECEPTION],
             
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
