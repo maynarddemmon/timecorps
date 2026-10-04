@@ -40,7 +40,7 @@
                 actionModel.getActionSkillDifficulty()
             );
             const name = actionModel.getActionSkillName();
-            return ICON_ACTION + ' ' + actionModel.label + ' (' + (name ? name + ' : ' : '') + easePhrase + ')';
+            return ICON_ACTION + ' ' + actionModel.label + ' (' + (name ? name + ICON_SEPARATOR : '') + easePhrase + ')';
         },
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {

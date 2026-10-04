@@ -310,9 +310,41 @@ test('action buttons show the action type and how easy the check is', async ({pa
         tc.model.getAgentModel('VQ').doDeployToEvent(roster);
         tc.app.selectEventBox('roster_reshuffle');
     });
-    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(Social : [a-z -]+\)/}).filter({visible:true})).toBeVisible();
+    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(Social · [a-z -]+\)/}).filter({visible:true})).toBeVisible();
     
     // Without an actionType there's no type to show.
     await expect(page.getByRole('button', {name:/Unchecked \([a-z -]+\)$/}).filter({visible:true})).toBeVisible();
     expect(problems.pageErrors).toEqual([]);
+});
+
+test('an actionType that names a skill checks that skill alone', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const read = action => [action.getActionSkillType(), action.getActionSkillName(), action.getActionSkillDifficulty(), action.getActionSkillExpr()],
+            roster = tc.model.getEventModel('roster_reshuffle');
+        roster.setActions({
+            bySkill:{label:'By Skill', skillCheck:{actionType:'stealth'}},
+            unknownType:{label:'Unknown Type', skillCheck:{actionType:'juggling'}}
+        });
+        const actions = roster.getActionModels();
+        return {
+            // From the data: relay checks charisma at difficulty 150.
+            relay:read(tc.model.getEventModel('ice_warnings').getActionModels().relay),
+            bySkill:read(actions.bySkill),
+            unknownType:read(actions.unknownType),
+            byCheck:read(roster.getActionModels().prevent),
+            defaults:[tc.cfg.DEFAULT_SKILL_DIFFICULTY, tc.cfg.DEFAULT_SKILL_EXPR]
+        };
+    });
+    const [defaultDifficulty, defaultExpr] = result.defaults,
+        initJson = readJson('data/init.json');
+    expect(result.relay).toEqual(['cha', initJson.skills.cha.name, 150, 'agent.skills.cha']);
+    expect(result.bySkill).toEqual(['stealth', initJson.skills.stealth.name, defaultDifficulty, 'agent.skills.stealth']);
+    
+    // Neither a default check nor a skill: the global defaults, shown by its id.
+    expect(result.unknownType).toEqual(['juggling', 'juggling', defaultDifficulty, defaultExpr]);
+    
+    // A default check takes its name from the check.
+    expect(result.byCheck[1]).toBe(initJson.skillChecks.social.name);
+    expect(problems.warnings).toEqual([]);
 });

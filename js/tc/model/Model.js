@@ -392,6 +392,7 @@
     /*  The IDs of the skills configured in the data, in the order they were defined. */
     pkg.getSkillIds = () => skillIds;
     
+    /*  True if there's a skill with this ID. */
     pkg.isSkillId = skillId => pkg.getSkillConfig(skillId) != null;
     
     /*  A skill's config, {name, description}, or undefined if there's no such skill. */
@@ -413,12 +414,13 @@
             }
         }
         return expr;
-    },
+    };
     
     /*  The difficulty of a default skill check, by action type. */
     pkg.getSkillDifficulty = actionType => skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
     
-    /*  The difficulty of a default skill check, by action type. */
+    /*  The display name of a default skill check, by action type. Falls back to the name of the
+        skill with that ID, otherwise the action type itself. */
     pkg.getSkillName = actionType => {
         let name = skillCheckDefaults[actionType]?.name;
         if (name == null) {
@@ -430,5 +432,5 @@
             }
         }
         return name;
-    }
+    };
 })(tc);

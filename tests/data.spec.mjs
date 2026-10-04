@@ -120,6 +120,7 @@ test('every agent has a portrait and a dossier', () => {
 });
 
 const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})),
+    skillCfgs = Object.assign({}, ...scenarios.map(s => s.skills ?? {})),
     
     // Returns why a skill expression doesn't compile, or null if it does. Compiled the same way 
     // as tc.checks.skill, with the same parameters.
@@ -143,7 +144,10 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
             const error = getSkillCompileError(skill);
             if (error) problems.push(where + ' skill ' + error);
         }
-        if (actionType !== undefined && !skillChecks[actionType]) problems.push(where + ' actionType ' + actionType + ' is not a default skill check');
+        // An actionType is a default skill check, or a skill, which checks that skill alone.
+        if (actionType !== undefined && !skillChecks[actionType] && !skillCfgs[actionType]) {
+            problems.push(where + ' actionType ' + actionType + ' is neither a default skill check nor a skill');
+        }
         for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
         return problems;
     };
@@ -159,11 +163,12 @@ test('every investigate and action skill check is valid', () => {
     expect(problems).toEqual([]);
 });
 
-test('every default skill check has a skill expression that compiles', () => {
+test('every default skill check has a name and a skill expression that compiles', () => {
     expect(Object.keys(skillChecks)).toContain('investigate');
     const problems = [];
     for (const [actionType, cfg] of Object.entries(skillChecks)) {
-        const {check, difficulty, ...unknown} = cfg;
+        const {name, check, difficulty, ...unknown} = cfg;
+        if (typeof name !== 'string' || name.trim() === '') problems.push(actionType + ' has no name');
         const error = getSkillCompileError(check);
         if (error) problems.push(actionType + ' check ' + error);
         if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(actionType + ' difficulty is not an integer');
