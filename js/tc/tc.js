@@ -281,6 +281,7 @@
                 });
             },
             
+            DIFFICULTY_NO_ROLL_THRESHOLD:-999999,
             CHECK_SKILL_EXPR_PREFIX: SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
             
             // Constraint Scopes

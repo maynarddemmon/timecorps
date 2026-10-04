@@ -614,6 +614,7 @@
 			"start":"1912-04-15T02:20:00",
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
+			"investigate":{"difficulty":"no-roll"},
 			"values":{
 				"massLossOfLife":{
 					"name":"Mass Loss of Life",

@@ -16,7 +16,7 @@
             },
             ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
             SCOPE_EVENT,
-            ACTION_INVESTIGATE
+            ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL_THRESHOLD
         } = pkg,
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
@@ -52,7 +52,9 @@
                 const {difficulty, skill, actionType, ...unknown} = cfg;
                 
                 if (difficulty !== undefined) {
-                    if (Number.isInteger(difficulty)) {
+                    if (difficulty === 'no-roll') {
+                        self[diffId] = DIFFICULTY_NO_ROLL_THRESHOLD;
+                    } else if (Number.isInteger(difficulty)) {
                         self[diffId] = difficulty;
                     } else {
                         warn('difficulty must be an integer');

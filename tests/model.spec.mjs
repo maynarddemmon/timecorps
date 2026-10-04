@@ -324,13 +324,13 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
             roster = tc.model.getEventModel('roster_reshuffle');
         roster.setActions({
             bySkill:{label:'By Skill', skillCheck:{actionType:'stealth'}},
+            bySkillHarder:{label:'By Skill, Harder', skillCheck:{actionType:'cha', difficulty:150}},
             unknownType:{label:'Unknown Type', skillCheck:{actionType:'juggling'}}
         });
         const actions = roster.getActionModels();
         return {
-            // From the data: relay checks charisma at difficulty 150.
-            relay:read(tc.model.getEventModel('ice_warnings').getActionModels().relay),
             bySkill:read(actions.bySkill),
+            bySkillHarder:read(actions.bySkillHarder),
             unknownType:read(actions.unknownType),
             byCheck:read(roster.getActionModels().prevent),
             defaults:[tc.cfg.DEFAULT_SKILL_DIFFICULTY, tc.cfg.DEFAULT_SKILL_EXPR]
@@ -338,7 +338,7 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
     });
     const [defaultDifficulty, defaultExpr] = result.defaults,
         initJson = readJson('data/init.json');
-    expect(result.relay).toEqual(['cha', initJson.skills.cha.name, 150, 'agent.skills.cha']);
+    expect(result.bySkillHarder).toEqual(['cha', initJson.skills.cha.name, 150, 'agent.skills.cha']);
     expect(result.bySkill).toEqual(['stealth', initJson.skills.stealth.name, defaultDifficulty, 'agent.skills.stealth']);
     
     // Neither a default check nor a skill: the global defaults, shown by its id.
@@ -346,5 +346,40 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
     
     // A default check takes its name from the check.
     expect(result.byCheck[1]).toBe(initJson.skillChecks.social.name);
+    expect(problems.warnings).toEqual([]);
+});
+
+test('a sure_thing check only fails on the lowest roll, whatever the agent\'s skills', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            roster = tc.model.getEventModel('roster_reshuffle'),
+            original = vq.getSkills();
+        roster.setActions({sure:{label:'Sure', skillCheck:{actionType:'sure_thing'}}});
+        const sure = roster.getActionModels().sure,
+            check = roll => {
+                tc.rng.queueRolls(roll);
+                return vq.checkSkillExpression(sure.getActionSkillExpr(), sure.getActionSkillDifficulty()).success;
+            },
+            out = {};
+        vq.doDeployToEvent(roster);
+        try {
+            for (const [label, skills] of [['unskilled', {}], ['inept', {cha:-5000, stealth:-5000, dex:-5000}]]) {
+                vq.setSkills(skills);
+                out[label] = {
+                    phrase:vq.getSkillEasePhrase(sure.getActionSkillExpr(), sure.getActionSkillDifficulty()),
+                    roll0:check(0),
+                    roll1:check(1)
+                };
+            }
+        } finally {
+            vq.setSkills(original);
+        }
+        return out;
+    });
+    
+    // MAX_SKILL_EASE keeps a 0.1% chance of failure.
+    const expected = {phrase:'sure thing', roll0:false, roll1:true};
+    expect(result).toEqual({unskilled:expected, inept:expected});
     expect(problems.warnings).toEqual([]);
 });

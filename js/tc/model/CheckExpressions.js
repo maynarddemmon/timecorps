@@ -7,7 +7,8 @@
             SCOPE_SKILLS,
             rng:{roll, D1000},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL},
-            theme:{colorSuccess, colorError, colorMegaDark}
+            theme:{colorSuccess, colorError, colorMegaDark},
+            DIFFICULTY_NO_ROLL_THRESHOLD
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
@@ -70,6 +71,9 @@
         /*  Evaluates an expression to an ease, clamped to [minEase, maxEase]. Doesn't roll. NaN
             if the expression throws or isn't a number, which fails any check. */
         getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-D1000}={}) => {
+            // Special Handling for a no-roll path
+            if (difficulty <= DIFFICULTY_NO_ROLL_THRESHOLD) return 0;
+            
             let value;
             try {
                 value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty);

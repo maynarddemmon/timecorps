@@ -139,7 +139,7 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return [where + ' is not an object'];
         const problems = [],
             {difficulty, skill, actionType, ...unknown} = cfg;
-        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(where + ' difficulty is not an integer');
+        if (difficulty !== undefined && !(Number.isInteger(difficulty) || difficulty === 'no-roll')) problems.push(where + ' difficulty is not an integer');
         if (skill !== undefined) {
             const error = getSkillCompileError(skill);
             if (error) problems.push(where + ' skill ' + error);
