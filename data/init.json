@@ -1,5 +1,38 @@
 {
 	"skills":{
+		"DEFAULT_CHECKS":{
+			"social":{
+				"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
+			},
+			"athletic":{
+				"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
+				"difficulty":175
+			},
+			"sneak":{
+				"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
+				"difficulty":275
+			},
+			"investigate":{
+				"check":"agent.skills.investigation -3*event.attestation.value",
+				"difficulty":200
+			}
+		},
+		"agl":{
+			"name":"Agility",
+			"description":"Balance and coordination."
+		},
+		"dex":{
+			"name":"Dexterity",
+			"description":"Fine motor skills."
+		},
+		"str":{
+			"name":"Strength",
+			"description":"Physical prowess and brawn."
+		},
+		"cha":{
+			"name":"Charisma",
+			"description":"Your force of personality."
+		},
 		"chronogation":{
 			"name":"Chronogation",
 			"description":"The efficiencty with which an agent employs “chronal” to travel through time and space."
@@ -10,7 +43,7 @@
 		},
 		"stealth":{
 			"name":"Stealth",
-			"description":"Avoid notice, either unseen and unheard or simply unremarkable in a crowd."
+			"description":"Avoid notice, either unseen and unheard or become simply unremarkable in a crowd."
 		},
 		"disguise":{
 			"name":"Disguise",
@@ -19,6 +52,10 @@
 		"deception":{
 			"name":"Deception",
 			"description":"Lie and interact socially without drawing suspicion."
+		},
+		"persuasion":{
+			"name":"Persuasion",
+			"description":"Through force of personality, persuade someone of an idea, concept or course of action."
 		}
 	},
 	

@@ -12,19 +12,71 @@
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
-                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK,
-                DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE
+                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
             ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
-            SCOPE_EVENT, SCOPE_SKILLS,
-            SKILL_ID_INVESTIGATION
+            SCOPE_EVENT,
+            ACTION_INVESTIGATE
         } = pkg,
         
-        DEFAULT_DIFFICULTY = 250, // 75% for a skill of 0.
+        ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
+        PREFIX_SKILL_DIFF = '_SkDff_',
+        PREFIX_SKILL_TYPE = '_SkTyp_',
+        PREFIX_SKILL_EXPR = '_SkExp_',
         
-        //  agent.skills.investigation + -3*event.attestation.value
-        DEFAULT_INVESTIGATE_CHECK_EXPR = 'agent.' + SCOPE_SKILLS + '.' + SKILL_ID_INVESTIGATION + 
-            ' + ' + DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE + '*event.' + STAT_ID_ATTESTATION + '.value',
+        ActionCheckSupport = new JSModule('ActionCheckSupport', {
+            addSkillCheck: function(actionId, cfg) {
+                if (cfg == null) return;
+                if (typeof cfg !== 'object' || Array.isArray(cfg)) {
+                    warn('must be an object');
+                    return;
+                }
+                
+                if (actionId == null) actionId = ACTION_TYPE_SINGULAR;
+                
+                const self = this,
+                    diffId = PREFIX_SKILL_DIFF + actionId,
+                    typeId = PREFIX_SKILL_TYPE + actionId,
+                    exprId = PREFIX_SKILL_EXPR + actionId,
+                    warn = msg => console.warn('Event', self.id, ACTION_INVESTIGATE, msg + ':', cfg),
+                    {difficulty, skill, actionType} = cfg
+                
+                self[diffId] = self[typeId] = self[exprId] = undefined;
+                
+                if (difficulty !== undefined) {
+                    if (Number.isInteger(difficulty)) {
+                        self[diffId] = difficulty;
+                    } else {
+                        warn('difficulty must be an integer');
+                    }
+                }
+                
+                if (actionType !== undefined) {
+                    if (typeof actionType === 'string' && actionType.trim() !== '') {
+                        self[typeId] = actionType;
+                    } else {
+                        warn('actionType must be a non-empty string');
+                    }
+                }
+                
+                if (skill !== undefined) {
+                    if (typeof skill === 'string' && skill.trim() !== '') {
+                        self[exprId] = skill;
+                    } else {
+                        warn('skill must be a non-empty string');
+                    }
+                }
+            },
+            getActionSkillDifficulty: function(actionId=ACTION_TYPE_SINGULAR) {
+                return this[PREFIX_SKILL_DIFF + actionId] ?? pkg.getSkillDifficulty(this.getActionSkillType(actionId));
+            },
+            getActionSkillExpr: function(actionId=ACTION_TYPE_SINGULAR) {
+                return this[PREFIX_SKILL_EXPR + actionId] ?? pkg.getSkillCheckExpr(this.getActionSkillType(actionId));
+            },
+            getActionSkillType: function(actionId=ACTION_TYPE_SINGULAR) {
+                return this[PREFIX_SKILL_TYPE + actionId] ?? actionId;
+            }
+        }),
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
         toEventModels = (things, excludeEventModel) => {
@@ -73,7 +125,7 @@
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -86,7 +138,11 @@
             // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
             
-            setSet: function(set) {this.set('setObj', set, true);}
+            setSet: function(set) {this.set('setObj', set, true);},
+            
+            setSkillCheck: function(cfg) {
+                this.addSkillCheck(null, cfg);
+            }
             
             /*setDone: function(done) {
                 this.set('done', done, true);
@@ -186,7 +242,7 @@
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
-            include: [ConstrainableAttrSupport, Hideable, Describable],
+            include: [ConstrainableAttrSupport, Hideable, Describable, ActionCheckSupport],
             
             /** @overrides ConstrainableAttrSupport */
             getConstraintScopeName: () => SCOPE_EVENT,
@@ -418,44 +474,14 @@
             },
             
             // Investigate
-            /*  Optional config for investigating this Event:
-                    {difficulty:<integer>, skill:<skill expression>}
-                Either part can be left out, in which case its getter returns undefined and the
-                caller uses a default. A part that's the wrong type is ignored, with a warning. */
             setInvestigate: function(cfg) {
-                const self = this,
-                    warn = msg => console.warn('Event', self.id, 'investigate', msg + ':', cfg);
-                
-                self._invDifficulty = self._invSkill = undefined;
-                if (cfg == null) return;
-                if (typeof cfg !== 'object' || Array.isArray(cfg)) {
-                    warn('must be an object');
-                    return;
-                }
-                
-                const {difficulty, skill, ...unknown} = cfg;
-                if (difficulty !== undefined) {
-                    if (Number.isInteger(difficulty)) {
-                        self._invDifficulty = difficulty;
-                    } else {
-                        warn('difficulty must be an integer');
-                    }
-                }
-                if (skill !== undefined) {
-                    if (typeof skill === 'string' && skill.trim() !== '') {
-                        self._invSkill = skill;
-                    } else {
-                        warn('skill must be a non-empty string');
-                    }
-                }
-                const unknownKeys = Object.keys(unknown);
-                if (unknownKeys.length > 0) warn('has unknown keys ' + unknownKeys.join(', '));
+                this.addSkillCheck(ACTION_INVESTIGATE, cfg);
             },
             getInvestigateDifficulty: function() {
-                return this._invDifficulty ?? DEFAULT_DIFFICULTY;
+                return this.getActionSkillDifficulty(ACTION_INVESTIGATE);
             },
             getInvestigateSkillExpr: function() {
-                return this._invSkill ?? DEFAULT_INVESTIGATE_CHECK_EXPR;
+                return this.getActionSkillExpr(ACTION_INVESTIGATE);
             },
             
             

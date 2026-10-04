@@ -5,7 +5,8 @@
     
     let model,
         skillCfgs = {},
-        skillIds;
+        skillIds = [],
+        skillCheckDefaults = {};
     
     const {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
@@ -13,7 +14,7 @@
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT,
-                AGENT_DEFAULT_STARTING_CHRONAL
+                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKIIL_EXPR
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
@@ -320,6 +321,13 @@
             // Load any skills configurations found. Later files can add skills or replace one.
             const moreSkillConfigs = json[SCOPE_SKILLS];
             if (moreSkillConfigs) {
+                // Pull out defaults into their own map
+                const moreSkillCheckDefaults = moreSkillConfigs.DEFAULT_CHECKS;
+                if (moreSkillCheckDefaults) {
+                    delete moreSkillConfigs.DEFAULT_CHECKS
+                    skillCheckDefaults = {...skillCheckDefaults, ...moreSkillCheckDefaults};
+                }
+                
                 skillCfgs = {...skillCfgs, ...moreSkillConfigs};
                 skillIds = Object.keys(skillCfgs);
             }
@@ -386,4 +394,11 @@
     
     /*  A skill's config, {name, description}, or undefined if there's no such skill. */
     pkg.getSkillConfig = skillId => skillCfgs[skillId];
+    
+    /*  The default skill check expression for a named skill check. */
+    pkg.getSkillCheckExpr = skillId => skillCheckDefaults[skillId]?.check ?? DEFAULT_SKIIL_EXPR;
+    
+    /*  The default skill check expression for a named skill check. */
+    pkg.getSkillDifficulty = skillId => skillCheckDefaults[skillId]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
 })(tc);
+

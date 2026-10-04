@@ -466,7 +466,7 @@
                 console.warn('Agent not at event for exit:', exitModel, this);
             }
         },
-        doAction: function(actionModel) {
+        doAction: function(btnView, actionModel) {
             if (!this.canAct()) return;
             
             /*if (actionModel.isDone()) {
@@ -482,19 +482,27 @@
                 return;
             }
             
-            for (const key in setObj) {
-                const value = setObj[key],
-                    eventValueModel = event.values[key];
-                if (eventValueModel) {
-                    eventValueModel.setValue(value, false);
-                } else {
-                    console.warn('Missing Value in doIt:' + key);
-                }
-            }
-            //actionModel.setDone(true);
+            // A failed check still uses the action.
+            const check = this.checkSkillExpression(
+                actionModel.getActionSkillExpr(),
+                actionModel.getActionSkillDifficulty()
+            );
+            showFloatingTextForSkillCheck(btnView, check);
             
             this.incrementActionExecCount();
-            this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel});
+            if (check.success) {
+                for (const key in setObj) {
+                    const value = setObj[key],
+                        eventValueModel = event.values[key];
+                    if (eventValueModel) {
+                        eventValueModel.setValue(value, false);
+                    } else {
+                        console.warn('Missing Value in doIt:' + key);
+                    }
+                }
+                //actionModel.setDone(true);
+            }
+            this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel, success:check.success});
         },
         doInvestigate: function(btnView) {
             if (this.canAct()) {

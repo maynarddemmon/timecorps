@@ -116,8 +116,6 @@
                 MAX_SKILL_EASE:-1,
                 MIN_SKILL_EASE:-999,
                 
-                DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE:-3,
-                
                 // The starting maximum paradox an Agent can have.
                 AGENT_PARADOX_LIMIT:3,
                 
@@ -176,6 +174,9 @@
                 DIALOG_FOOTER_HEIGHT:0, // Set programmatically below
                 
                 CHECK_EXPR_SHOW_DIE_ROLL:false,
+                
+                DEFAULT_SKILL_DIFFICULTY:250, // 75% for a skill of 0.
+                DEFAULT_SKIIL_EXPR:'0', // Default to no skill
             },
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 
@@ -302,6 +303,10 @@
             SKILL_ID_STEALTH:'stealth',
             SKILL_ID_DISGUISE:'disguise',
             SKILL_ID_DECEPTION:'deception',
+            
+            // Action Types
+            ACTION_ATHLETIC:'athletic',
+            ACTION_INVESTIGATE:'investigate',
             
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',

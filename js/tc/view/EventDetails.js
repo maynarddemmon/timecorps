@@ -34,6 +34,15 @@
             return ICON_SEARCH + ' Investigate (' + easePhrase + ')';
         },
         
+        getActionBtnPhrase = (agentModel, actionModel) => {
+            const easePhrase = agentModel.getSkillEasePhrase(
+                actionModel.getActionSkillExpr(),
+                actionModel.getActionSkillDifficulty()
+            );
+            const skillType = actionModel.getActionSkillType();
+            return ICON_ACTION + ' ' + actionModel.label + ' (' + skillType + ' : ' + easePhrase + ')';
+        },
+        
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
             initNode: function(parent, attrs) {
                 attrs.x ??= MARKER_EXTENT;
@@ -122,10 +131,10 @@
                     if (!actionModel.isHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
                         new UnderlineActionBtn(actionView, {
-                            text:ICON_ACTION + ' ' + actionModel.label, 
+                            text:getActionBtnPhrase(agentModel, actionModel),
                             disabled:agentCantActHere /*|| actionModel.done*/
                         }, [{
-                            doActivated: () => {agentModel.doAction(actionModel);}
+                            doActivated: function() {agentModel.doAction(this, actionModel);}
                         }]);
                     }
                 }

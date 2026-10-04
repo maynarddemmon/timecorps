@@ -152,11 +152,13 @@
 			"actions":{
 				"argueFor":{
 					"label":"Argue for Full Davits",
+					"skillCheck":{"actionType":"social"},
 					"set":{"fullDavits":"true"},
 					"hidden":"event.attestation.value < 25 || event.values.fullDavits.value"
 				},
 				"argueAgainst":{
 					"label":"Argue against Full Davits",
+					"skillCheck":{"actionType":"social"},
 					"set":{"fullDavits":"false"},
 					"hidden":"event.attestation.value < 25 || !event.values.fullDavits.value"
 				}
@@ -203,16 +205,19 @@
 			"actions":{
 				"prevent":{
 					"label":"Prevent Reshuffle",
+					"skillCheck":{"actionType":"social"},
 					"set":{"preventReshuffle":"true"},
 					"hidden":"event.values.preventReshuffle.value"
 				},
 				"allow":{
 					"label":"Allow Reshuffle",
+					"skillCheck":{"actionType":"social"},
 					"set":{"preventReshuffle":"false"},
 					"hidden":"!event.values.preventReshuffle.value"
 				},
 				"remind":{
 					"label":"Remind Blair",
+					"skillCheck":{"actionType":"social"},
 					"set":{"remindBlair":"true"},
 					"hidden":"event.values.remindBlair.value"
 				}
@@ -298,11 +303,13 @@
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
+					"skillCheck":{"difficulty":150, "actionType":"social"},
 					"set":{"relayToBridge":"true"},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
 				"noRelay":{
 					"label":"Don't relay to Bridge",
+					"skillCheck":{"difficulty":150, "actionType":"social"},
 					"set":{"relayToBridge":"false"},
 					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
 				}
@@ -341,11 +348,13 @@
 			"actions":{
 				"recover":{
 					"label":"Spare Recovered",
+					"skillCheck":{"difficulty":300, "actionType":"social"},
 					"set":{"spareRecovered":"true"},
 					"hidden":"event.values.spareRecovered.value"
 				},
 				"removeSpare":{
 					"label":"Spare Removed",
+					"skillCheck":{"difficulty":300, "actionType":"sneak"},
 					"set":{"spareRecovered":"false"},
 					"hidden":"!event.values.spareRecovered.value"
 				}
@@ -382,11 +391,13 @@
 			"actions":{
 				"clear":{
 					"label":"Clear Backlog Earlier",
+					"skillCheck":{"actionType":"social"},
 					"set":{"clearBacklogEarlier":"true"},
 					"hidden":"event.values.clearBacklogEarlier.value"
 				},
 				"noClear":{
 					"label":"Delay Clearing Backlog",
+					"skillCheck":{"actionType":"social"},
 					"set":{"clearBacklogEarlier":"false"},
 					"hidden":"!event.values.clearBacklogEarlier.value"
 				}
@@ -421,21 +432,25 @@
 			"actions":{
 				"plant":{
 					"label":"Plant Key",
+					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"true"},
 					"hidden":"event.values.plantKey.value"
 				},
 				"unplant":{
 					"label":"Remove Key",
+					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"false"},
 					"hidden":"!event.values.plantKey.value"
 				},
 				"pickTheLocker":{
 					"label":"Pick the Locker",
+					"skillCheck":{"difficulty":300, "actionType":"sneak"},
 					"set":{"pickTheLocker":"true"},
 					"hidden":"event.values.pickTheLocker.value"
 				},
 				"lockTheLocker":{
 					"label":"Lock the Locker",
+					"skillCheck":{"difficulty":300, "actionType":"sneak"},
 					"set":{"pickTheLocker":"false"},
 					"hidden":"!event.values.pickTheLocker.value"
 				}
@@ -485,11 +500,13 @@
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
+					"skillCheck":{"difficulty":175, "actionType":"social"},
 					"set":{"countermandAstern":"true"},
 					"hidden":"event.values.countermandAstern.value"
 				},
 				"allow":{
 					"label":"Allow Astern Order",
+					"skillCheck":{"difficulty":165, "actionType":"social"},
 					"set":{"countermandAstern":"false"},
 					"hidden":"!event.values.countermandAstern.value"
 				}
