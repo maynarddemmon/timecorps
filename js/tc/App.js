@@ -430,17 +430,21 @@
             
             const title = 'Mission Complete',
                 debrief = (operationModel.getDebrief() || 'All mission objectives have been achieved.') + saveNote;
-            if (operationModel.getNextOperation()) {
-                openConfirmMsgDialog(
-                    title, debrief,
-                    () => {operationModel.proceed();},
-                    null,
-                    'Next Mission ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
-                );
-            } else {
-                // No next operation case.
-                openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
-            }
+            
+            // Wait for the timeline to finish showing the changes that completed the mission.
+            timelineView.doWhenValueChangeAnimsDone(() => {
+                if (operationModel.getNextOperation()) {
+                    openConfirmMsgDialog(
+                        title, debrief,
+                        () => {operationModel.proceed();},
+                        null,
+                        'Next Mission ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
+                    );
+                } else {
+                    // No next operation case.
+                    openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
+                }
+            });
         },
         
         /*  Called when an Operation has been setup successfully */

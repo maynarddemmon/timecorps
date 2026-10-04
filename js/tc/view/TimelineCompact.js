@@ -87,12 +87,17 @@
             and boxes that are hidden by the time their turn comes are skipped. */
         VALUE_CHANGE_SCALE = 1.5,
         VALUE_CHANGE_MILLIS = 500,
-        valueChangeAnims = {queue:[], current:null},
+        valueChangeAnims = {queue:[], current:null, whenDone:[]},
         runNextValueChangeAnim = () => {
             const eventBox = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? null;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
                 pkg.app.scrollToEvent(pkg.app.getTimelineView().getSelectedEventBox()?.model, true);
+                
+                // Run whatever was waiting for the animations to finish. Taken first since a
+                // callback could start more animations.
+                const whenDone = valueChangeAnims.whenDone.splice(0);
+                for (const func of whenDone) func();
             } else if (eventBox.destroyed || !eventBox.visible) {
                 runNextValueChangeAnim();
             } else {
@@ -1035,6 +1040,17 @@
         /*  Turned on once startup, including restoring a save, is done, so only changes the 
             player makes from then on animate. */
         setAnimateValueChanges: function(v) {this.animateValueChanges = v;},
+        
+        /*  Calls func once the value change animations are done, or right away if none are
+            running, e.g. so a dialog doesn't cover the end of a chain of changes. */
+        doWhenValueChangeAnimsDone: func => {
+            const {queue, current, whenDone} = valueChangeAnims;
+            if (current || queue.length > 0) {
+                whenDone.push(func);
+            } else {
+                func();
+            }
+        },
         
         /*  The value change animations, as Event IDs: the box animating now and the boxes 
             waiting their turn. For tests and debugging. */

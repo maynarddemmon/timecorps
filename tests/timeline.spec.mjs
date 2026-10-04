@@ -101,3 +101,43 @@ test('nothing animates while the campaign starts or a save is restored', async (
     expect(await isIdle(page)).toBe(true);
     expect(await getScales(page, CHAIN)).toEqual([1, 1, 1]);
 });
+
+test('the Mission Complete dialog waits for the changes that completed the mission to finish animating', async ({page}) => {
+    const problems = await startGame(page),
+        missionComplete = page.getByText('Mission Complete', {exact:true}).filter({visible:true});
+    await reveal(page, [...CHAIN, 'engine_order']);
+    await recordAnims(page);
+    
+    // Notes whether the dialog is ever showing while a box is still animating.
+    await page.evaluate(() => {
+        const timeline = tc.app.getTimelineView();
+        globalThis.dialogDuringAnim = false;
+        globalThis.dialogWatchTimer = setInterval(() => {
+            if (timeline.getValueChangeAnimState().current && document.body.innerText.includes('Mission Complete')) {
+                globalThis.dialogDuringAnim = true;
+            }
+        }, 5);
+    });
+    
+    // Completes the first mission the way its Actions do.
+    await page.evaluate(() => {
+        const m = tc.model;
+        m.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue('true', false);
+        m.getEventModel('engine_order').getValueModels().countermandAstern.setValue('true', false);
+    });
+    
+    await expect(missionComplete).toBeVisible({timeout:10000});
+    expect(await isIdle(page)).toBe(true);
+    expect((await getAnimRecord(page)).order.length).toBeGreaterThan(1);
+    expect(await page.evaluate(() => globalThis.dialogDuringAnim)).toBe(false);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('waiting for the animations runs right away when none are running', async ({page}) => {
+    await startGame(page);
+    expect(await page.evaluate(() => {
+        let ran = false;
+        tc.app.getTimelineView().doWhenValueChangeAnimsDone(() => {ran = true;});
+        return ran;
+    })).toBe(true);
+});
