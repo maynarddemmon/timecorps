@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief} from './helpers.mjs';
+import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dialogTitle} from './helpers.mjs';
 
 /*  Plays the whole campaign by setting the Causators each mission needs, and checks that every 
     mission opens with its brief, completes, shows its debrief and advances. */
@@ -9,7 +9,7 @@ test('plays through all three missions', async ({page}) => {
     // link, which comes before the dialog's in the page.
     const problems = await startGame(page, {dismissBrief:false}),
         visibleButton = name => page.getByRole('button', {name}).filter({visible:true}),
-        missionComplete = page.getByText('Mission Complete', {exact:true}).filter({visible:true}),
+        missionComplete = dialogTitle(page, 'Mission Complete'),
         dialogNextMission = visibleButton('Next Mission ➜').last(),
         headerNextMission = visibleButton('Next Mission ➜').first(),
         dialogClose = visibleButton('X Close'),

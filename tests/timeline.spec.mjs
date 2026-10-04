@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, setCausator, reloadGame} from './helpers.mjs';
+import {startGame, setCausator, reloadGame, dialogTitle} from './helpers.mjs';
 
 /*  Events from the first lookout chain, which are hidden at the start of the campaign. */
 const CHAIN = ['roster_reshuffle', 'missing_binoculars', 'lookout_sights_berg'],
@@ -104,7 +104,7 @@ test('nothing animates while the campaign starts or a save is restored', async (
 
 test('the Mission Complete dialog waits for the changes that completed the mission to finish animating', async ({page}) => {
     const problems = await startGame(page),
-        missionComplete = page.getByText('Mission Complete', {exact:true}).filter({visible:true});
+        missionComplete = dialogTitle(page, 'Mission Complete');
     await reveal(page, [...CHAIN, 'engine_order']);
     await recordAnims(page);
     

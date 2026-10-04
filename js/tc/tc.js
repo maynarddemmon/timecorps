@@ -26,7 +26,7 @@
             const styleParts = [];
             if (color) styleParts.push({key:'color', value:color});
             if (fontFamily) styleParts.push({key:'font-family', value:fontFamily});
-            return '<span style="' + styleParts.reduce((accum, part) => accum + part.key + ':' + part.value + ';', '') + '">' + txt + '</span>'
+            return '<span style="' + styleParts.reduce((accum, part) => accum + part.key + ':' + part.value + ';', '') + '">' + txt + '</span>';
         },
         
         DOM_PARSER = new DOMParser(), // Used by stripMarkup

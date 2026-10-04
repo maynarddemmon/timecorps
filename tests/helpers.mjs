@@ -54,7 +54,14 @@ export const waitForGame = page => page.waitForFunction(() =>
     window.tc?.app?.getTimelineView?.()?.timelineReady === true
 );
 
-const missionBriefTitle = page => page.getByText('Mission Brief', {exact:true}).filter({visible:true});
+/*  A visible dialog title, e.g. "Mission Brief", including titles that go on to name something,
+    e.g. "Mission Brief : Avoid the Iceberg". Anchored at both ends so it only matches the title 
+    itself, not the dialog that contains it. */
+export const dialogTitle = (page, title) => page.getByText(
+    new RegExp('^' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '( : .*)?$')
+).filter({visible:true});
+
+const missionBriefTitle = page => dialogTitle(page, 'Mission Brief');
 
 /*  Acknowledges the Mission Brief that opens when a mission is set up. Fails if it isn't open. */
 export const dismissMissionBrief = async page => {

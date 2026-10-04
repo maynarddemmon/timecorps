@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, getCurrentOperationId, reloadGame, clickAndReload} from './helpers.mjs';
+import {startGame, getCurrentOperationId, reloadGame, clickAndReload, dialogTitle} from './helpers.mjs';
 
 const LABEL = 'Save on mission completion',
     
@@ -37,7 +37,7 @@ test('completing a mission saves by default', async ({page}) => {
     await reloadGame(page);
     expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');
     await page.waitForTimeout(250);
-    await expect(visibleText(page, 'Mission Complete')).toHaveCount(0);
+    await expect(dialogTitle(page, 'Mission Complete')).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
@@ -51,7 +51,7 @@ test('turning the setting off stops the save and is remembered', async ({page}) 
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.settings')))).toEqual({saveOnOperationCompletion:false});
     
     await completeFirstMission(page);
-    await expect(visibleText(page, 'Mission Complete')).toBeVisible();
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
     await expect(visibleText(page, 'Your progress has been saved.')).toHaveCount(0);
     expect(await readSave(page)).toBeNull();
     

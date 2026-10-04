@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
-import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload} from './helpers.mjs';
+import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload, dialogTitle} from './helpers.mjs';
 
 /*  Save/load round trips. localStorage survives a page reload within a test, so a reload
     exercises the autoload path at startup. */
@@ -93,7 +93,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
 
 test('a completed mission is not granted again after a reload', async ({page}) => {
     const problems = await startGame(page),
-        missionComplete = page.getByText('Mission Complete', {exact:true}).filter({visible:true});
+        missionComplete = dialogTitle(page, 'Mission Complete');
 
     await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
     await setCausatorCfg(page, 'engine_order', 'countermandAstern', 'true');
@@ -279,7 +279,7 @@ test('a selection on a later mission is restored', async ({page}) => {
     
     // Wait for the dialog, otherwise last() can match the Mission panel's own Next Mission
     // link, which the dialog's dimmer then covers.
-    await expect(page.getByText('Mission Complete', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
     await dismissMissionBrief(page);
