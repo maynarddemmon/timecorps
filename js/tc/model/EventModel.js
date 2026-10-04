@@ -253,14 +253,18 @@
             
             
             // Methods /////////////////////////////////////////////////////////
-            getBtnLabel: function() {
-                const toEvent = this.getToEventModel(),
-                    toEventName = toEvent ? toEvent.name : this.to;
+            /*  How the exit is taken, as the start of a button label, e.g. "Walk to". */
+            getModePhrase: function() {
                 switch (this.mode) {
-                    case TRAVEL_MODE_WAIT: return 'Wait til ' + toEventName;
-                    case TRAVEL_MODE_WALK: return 'Walk to ' + toEventName;
-                    default: return 'To ' + toEventName;
+                    case TRAVEL_MODE_WAIT: return 'Wait til';
+                    case TRAVEL_MODE_WALK: return 'Walk to';
+                    default: return 'To';
                 }
+            },
+            
+            getBtnLabel: function() {
+                const toEvent = this.getToEventModel();
+                return this.getModePhrase() + ' ' + (toEvent ? toEvent.name : this.to);
             }
         }),
         

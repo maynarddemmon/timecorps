@@ -427,6 +427,15 @@
             return {disabled, btnTxt};
         },
         
+        /*  The exit the Agent can take from its current Event to eventModel, or null if there's 
+            none. As in the Agent's list of exits, hidden exits and exits to hidden Events don't 
+            count. */
+        getExitTo: function(eventModel) {
+            const currentEventModel = this.getEventModel();
+            if (!currentEventModel || !eventModel || eventModel === currentEventModel || eventModel.isHidden()) return null;
+            return currentEventModel.getExitModels().find(exitModel => !exitModel.isHidden() && exitModel.getToEventModel() === eventModel) ?? null;
+        },
+        
         doDeployToEvent: function(eventModel) {
             if (eventModel) {
                 const cost = pkg.getChronalToDeploy(this, eventModel);

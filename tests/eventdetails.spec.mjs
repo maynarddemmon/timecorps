@@ -88,3 +88,76 @@ test('exit routes to an event without a box yet are skipped rather than warned a
     expect(skipped).toBe('casualties');
     expect(problems.warnings).toEqual([]);
 });
+
+const visibleButton = (page, name) => page.getByRole('button', {name}).filter({visible:true});
+
+test('an exit from the agent\'s event to the selected event can be taken from the header', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // VQ starts at collision, which has an exit to casualties.
+    const exit = await page.evaluate(() => {
+        const exitModel = tc.model.getEventModel('collision').getExitModels().find(e => e.to === 'casualties');
+        return {phrase:exitModel.getModePhrase(), chronal:tc.model.getAgentModel('VQ').chronal.value};
+    });
+    await page.evaluate(() => tc.app.selectEventBox('casualties'));
+    const followBtn = visibleButton(page, new RegExp('^' + exit.phrase + '$'));
+    await expect(followBtn).toBeVisible();
+    await expect(visibleButton(page, /Jump to/)).toBeVisible(); // Still offered alongside.
+    
+    await followBtn.click();
+    await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('VQ').event)).toBe('casualties');
+    const after = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            entry = vq.getLog().at(-1);
+        return {type:entry.type, from:entry.exit.event.id, to:entry.exit.to, chronal:vq.chronal.value};
+    });
+    
+    // Taken as the exit, so it's logged as one and costs no chronal, unlike jumping.
+    expect(after).toEqual({type:'exit', from:'collision', to:'casualties', chronal:exit.chronal});
+    
+    // Now at casualties, so there's no exit to offer for it.
+    await expect(followBtn).toHaveCount(0);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('no exit button without an exit from the agent\'s event to the selected event', async ({page}) => {
+    const problems = await startGame(page);
+    // The header button is just the phrase, plus any paradox cost. The agent's own list of 
+    // exits names the event too, e.g. "Walk to Loss of Life".
+    const exitPhrases = /^(Walk to|Wait til|To)( \[.*\])?$/;
+    
+    // The agent's own event.
+    await page.evaluate(() => tc.app.selectEventBox('collision'));
+    await expect(visibleButton(page, /Loop back/)).toBeVisible();
+    await expect(page.getByRole('button', {name:exitPhrases}).filter({visible:true})).toHaveCount(0);
+    
+    // An event with no exit leading to it from collision.
+    expect(await page.evaluate(() => {
+        tc.model.getEventModel('roster_reshuffle').attestation.setValue(50);
+        return tc.model.getAgentModel('VQ').getExitTo(tc.model.getEventModel('roster_reshuffle'));
+    })).toBeNull();
+    await page.waitForTimeout(300);
+    await page.evaluate(() => tc.app.selectEventBox('roster_reshuffle'));
+    await expect(visibleButton(page, /Jump to/)).toBeVisible();
+    await expect(page.getByRole('button', {name:exitPhrases}).filter({visible:true})).toHaveCount(0);
+    
+    // Nor does an exit to a hidden event.
+    expect(await page.evaluate(() => {
+        const casualties = tc.model.getEventModel('casualties');
+        casualties.setHidden(true);
+        try {
+            return tc.model.getAgentModel('VQ').getExitTo(casualties);
+        } finally {
+            casualties.setHidden(false);
+        }
+    })).toBeNull();
+    
+    // A hidden exit doesn't count.
+    expect(await page.evaluate(() => {
+        const exitModel = tc.model.getEventModel('collision').getExitModels().find(e => e.to === 'casualties');
+        exitModel.setHidden(true);
+        return tc.model.getAgentModel('VQ').getExitTo(tc.model.getEventModel('casualties'));
+    })).toBeNull();
+    
+    expect(problems.pageErrors).toEqual([]);
+});

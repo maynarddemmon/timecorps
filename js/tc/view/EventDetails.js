@@ -316,6 +316,10 @@
             row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
+            self.followExitBtn = new AgentBtn(headerView, {y:1}, [{
+                doActivated: () => {self.selectedAgentModel.doFollowExit(self.followExitModel);}
+            }]);
+            self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
             }]);
@@ -443,12 +447,22 @@
                 hasEventModel = eventModel != null;
             
             if (hasEventModel) {
-                const {selectedAgentModel, deployAgentBtn, recallAgentBtn} = self,
+                const {selectedAgentModel, followExitBtn, agentsRowBtnSeparator, deployAgentBtn, recallAgentBtn} = self,
                     isHQ = eventModel.isHQ(),
                     hasAgentModel = selectedAgentModel != null,
                     canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled();
+                
+                // An exit from where the Agent is to this Event, offered alongside jumping here.
+                const exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;
+                followExitBtn.setVisible(exitModel != null);
+                if (exitModel) {
+                    const paradoxCost = selectedAgentModel.calculateParadoxForEntry(eventModel);
+                    followExitBtn.setBtnModel(selectedAgentModel);
+                    followExitBtn.setText(exitModel.getModePhrase() + (paradoxCost > 0 ? ' ' + formatChronalAndParadox(0, paradoxCost) : ''));
+                }
                 recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
                 deployAgentBtn.setVisible(canDirectAgent && !eventModel.isHidden());
+                let sepIsVisible = false;
                 if (canDirectAgent) {
                     let btn;
                     if (recallAgentBtn.visible) {
@@ -457,12 +471,17 @@
                         btn = deployAgentBtn;
                     }
                     if (btn) {
+                        sepIsVisible = followExitBtn.visible;
+                        agentsRowBtnSeparator.setVisible();
+                        
                         btn.setBtnModel(selectedAgentModel);
                         const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
                         btn.setDisabled(info.disabled);
                         btn.setText(info.btnTxt);
                     }
                 }
+                
+                agentsRowBtnSeparator.setVisible(sepIsVisible);
             }
         },
         

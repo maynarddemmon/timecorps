@@ -280,6 +280,7 @@
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.roster_reshuffle.attestation.value < 5 && events.lifeboat_capacity.attestation.value < 5",
 			"exits":[
 				{"mode":"walk", "to":"ice_warnings"},
+				{"mode":"walk", "to":"wireless_priority"},
 				{"mode":"walk", "to":"purser_spare"},
 				{"mode":"walk", "to":"missing_binoculars"},
 				{"mode":"walk", "to":"lookout_sights_berg"},
@@ -403,6 +404,7 @@
 				}
 			},
 			"exits":[
+				{"mode":"walk", "to":"lookout_sights_berg"},
 				{"mode":"walk", "to":"collision"},
 				{"mode":"walk", "to":"casualties"}
 			],
@@ -457,6 +459,7 @@
 			},
 			"exits":[
 				{"mode":"wait", "to":"lookout_sights_berg"},
+				{"mode":"walk", "to":"collision"},
 				{"mode":"walk", "to":"casualties"}
 			],
 			"values":{
