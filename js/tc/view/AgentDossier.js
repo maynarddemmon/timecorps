@@ -85,9 +85,7 @@
                     name = agentModel.getName(),
                     eventModel = agentModel.getEventModel();
                 
-                const prefix = 'Agent Dossier : ',
-                    title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
-                self.setTitle(title, prefix + name);
+                self.setTitle('Agent Dossier : ' + pkg.wrapInStyledSpan(name, colorUltraLight));
                 
                 self._portrait.setMedia(...agentModel.getMediaUrls());
                 self._idView.setValue(id);

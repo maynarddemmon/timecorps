@@ -33,7 +33,7 @@
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
             theme:{
                 layoutSpacing, spacing, padding, 
-                colorUltraDark, colorMedium, colorLight,
+                colorUltraLight, colorLight, colorMedium, colorUltraDark,
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
@@ -428,7 +428,7 @@
                 }
             }
             
-            const title = 'Mission Complete',
+            const title = 'Mission Complete : ' + pkg.wrapInStyledSpan(operationModel.getName(), colorUltraLight),
                 debrief = (operationModel.getDebrief() || 'All mission objectives have been achieved.') + saveNote;
             
             // Wait for the timeline to finish showing the changes that completed the mission.
@@ -452,7 +452,8 @@
             if (!readyToHandleEvents) return;
             
             openAckMsgDialog(
-                'Mission Brief', operationModel.getDescription()
+                'Mission Brief : ' + pkg.wrapInStyledSpan(operationModel.getName(), colorUltraLight), 
+                operationModel.getDescription()
             );
         },
         

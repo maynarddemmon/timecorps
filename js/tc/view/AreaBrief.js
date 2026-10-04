@@ -76,16 +76,10 @@
             self.locationModel = locationModel;
             
             if (locationModel) {
-                const id = locationModel.id,
-                    name = locationModel.getName();
-                
-                const prefix = 'Area Brief : ',
-                    title = prefix + '<span style="color:' + colorUltraLight + ';">' + name + '</span>';
-                self.setTitle(title, prefix + name);
-                
+                self.setTitle('Area Brief : ' + pkg.wrapInStyledSpan(locationModel.getName(), colorUltraLight));
                 self._photo.setMedia(...locationModel.getMediaUrls());
                 self.updateFieldNotes();
-                pkg.loadTxtIntoElement('./data/location/' + id + '.txt', self._profileView, () => self.locationModel === locationModel);
+                pkg.loadTxtIntoElement('./data/location/' + locationModel.id + '.txt', self._profileView, () => self.locationModel === locationModel);
             } else {
                 self._photo.clearMedia();
             }

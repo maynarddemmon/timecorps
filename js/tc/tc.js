@@ -6,7 +6,7 @@
             log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom
         } = Math,
         
-        // Chronal Util
+        // Chronal Util //
         calculateSkillFactor = agentModel => 2 ** (agentModel.getSkillChronogation() / 100),
         
         getChronalByTimeDiff = (a, b, scaleFunc, fixed, divisor) => {
@@ -21,17 +21,33 @@
             a, b, mathLog, EULER, TC.timeUtil.MILLIS_PER_WEEK * calculateSkillFactor(agentModel)
         ),
         
-        // RNG Util
-        D1000 = 1000,
+        // Util //
+        wrapInStyledSpan = (txt, color, fontFamily) => {
+            const styleParts = [];
+            if (color) styleParts.push({key:'color', value:color});
+            if (fontFamily) styleParts.push({key:'font-family', value:fontFamily});
+            return '<span style="' + styleParts.reduce((accum, part) => accum + part.key + ':' + part.value + ';', '') + '">' + txt + '</span>'
+        },
         
+        DOM_PARSER = new DOMParser(), // Used by stripMarkup
+        
+        // RNG Util //
         // Values handed out, in order, before falling back to Math.random. Tests use this to
         // force outcomes.
         queuedRNGs = [],
         
-        checkRNGRollable = (v, max) => {
-            if (!Number.isInteger(v) || v < 0 || v >= max) {
-                throw new RangeError('Queued roll ' + v + ' is not an integer in [0, ' + max + ')');
+        /*  An integer in [0, max). Uses the next queued value if there is one. */
+        roll = (max=TC.cfg.DIE_SIZE) => {
+            if (queuedRNGs.length > 0) {
+                const v = queuedRNGs.shift();
+                
+                // Validate the queued value is valid.
+                if (!Number.isInteger(v) || v < 0 || v >= max) {
+                    throw new RangeError('Queued roll ' + v + ' is not an integer in [0, ' + max + ')');
+                }
+                return v;
             }
+            return mathFloor(mathRandom() * max);
         },
         
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
@@ -183,6 +199,9 @@
                 
                 CHECK_EXPR_SHOW_DIE_ROLL:false,
                 
+                // Gameplay //
+                DIE_SIZE:1000, // The range [0-DIE_SIZE-1] of randomly generated integers for a die roll.
+                
                 DEFAULT_SKILL_DIFFICULTY:250, // 75% for a skill of 0.
                 DEFAULT_SKILL_EXPR:'0', // Default to no skill
             },
@@ -193,22 +212,12 @@
                 Rolls are integers in [0, max). A d1000 roll is 0-999, so every value is equally 
                 likely and a check's chance of success comes out as an exact percentage. */
             rng: {
-                D1000,
-                
-                /*  An integer in [0, max). Uses the next queued value if there is one. */
-                roll: (max=D1000) => {
-                    if (queuedRNGs.length > 0) {
-                        const v = queuedRNGs.shift();
-                        checkRNGRollable(v, max);
-                        return v;
-                    }
-                    return mathFloor(mathRandom() * max);
-                },
+                roll,
                 
                 /*  An integer in from min to max, inclusive at both ends. Note: max is provided
                     first because calls to randomInt use a min of 0 (the default when
                     not provided.) */
-                randomInt: (max, min=0) => min + TC.rng.roll(max - min + 1),
+                randomInt: (max, min=0) => min + roll(max - min + 1),
                 
                 // Testing //
                 /*  The next rolls return these values, in order, then rolls are random again. */
@@ -223,9 +232,9 @@
                     hasChronal = chronal > 0,
                     hasParadox = paradox > 0;
                 return '[' + 
-                    (hasChronal ? '<span style="color:' + THEME.colorChronal + ';">' + chronal + ICON_CHRONAL + '</span>' : '') + 
+                    (hasChronal ? wrapInStyledSpan(chronal + ICON_CHRONAL, THEME.colorChronal) : '') + 
                     (hasChronal && hasParadox ? ' + ' : '') +
-                    (hasParadox ? '<span style="color:' + THEME.colorParadox + ';">' + paradox + ICON_PARADOX + '</span>' : '') + 
+                    (hasParadox ? wrapInStyledSpan(paradox + ICON_PARADOX, THEME.colorParadox) : '') + 
                     ']';
             },
             
@@ -361,7 +370,11 @@
             ICON_EXPANDED:'⊟',
             ICON_COLLAPSED:'⊞',
             ICON_IMPORT:'↥',
-            ICON_EXPORT:'↧'
+            ICON_EXPORT:'↧',
+            
+            // Formatting //
+            wrapInStyledSpan,
+            stripMarkup: str => str ? DOM_PARSER.parseFromString(str, 'text/html').body.textContent || '' : ''
         };
     
     // Apply config overrides

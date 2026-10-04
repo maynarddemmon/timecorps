@@ -169,10 +169,7 @@
         },
         
         updateTitle: function() {
-            const operationName = (this.operationModel?.name ?? 'none'),
-                prefix = 'Mission : ',
-                title = prefix + '<span style="color:' + colorUltraLight + ';">' + operationName + '</span>';
-            this.setTitle(title, prefix + operationName);
+            this.setTitle('Mission : ' + pkg.wrapInStyledSpan(this.operationModel?.name ?? 'none', colorUltraLight));
         }
     });
 })(tc);

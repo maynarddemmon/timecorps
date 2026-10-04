@@ -51,7 +51,7 @@
             setTitle: function(v, tooltip) {
                 const titleView = this.getTitleView();
                 titleView.setText(v);
-                titleView.setTooltip(tooltip ?? v);
+                titleView.setTooltip(tooltip ?? pkg.stripMarkup(v));
             },
             
             getHeaderView: function() {return this._headerView;},
@@ -172,7 +172,7 @@
         },
         
         updateText: function() {
-            this.setText(this.label + ' : <span style="color:' + this.valueTextColor + '; font-family:' + this.valueFontFamily + ';">' + this.value + '</span>');
+            this.setText(this.label + ' : ' + pkg.wrapInStyledSpan(this.value, this.valueTextColor, this.valueFontFamily));
         }
     });
     

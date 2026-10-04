@@ -466,10 +466,7 @@
         },
         
         updateTitle: function() {
-            const eventName = (this.eventModel?.name ?? 'none'),
-                prefix = 'Event : ',
-                title = prefix + '<span style="color:' + colorUltraLight + ';">' + eventName + '</span>';
-            this.setTitle(title, prefix + eventName);
+            this.setTitle('Event : ' + pkg.wrapInStyledSpan(this.eventModel?.name ?? 'none', colorUltraLight));
         }
     });
 })(tc);

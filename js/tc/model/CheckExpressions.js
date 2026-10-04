@@ -4,15 +4,15 @@
     const {min:mathMin, max:mathMax, abs:mathAbs} = Math,
         
         {
-            SCOPE_SKILLS,
-            rng:{roll, D1000},
-            cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL},
+            SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
+            rng:{roll},
+            cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
             isNoRollDifficulty
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
-        FUNC_PARAMS = ['agent', 'event', 'timeline', PARAM_DIFFICULTY],
+        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY],
         
         // Compiled check functions by expression text. The parameters are the same for every
         // check, so events that share an expression share one function.
@@ -38,7 +38,7 @@
         /*  Returns the function, or throws if the expression doesn't compile. */
         build = expr => {
             if (typeof expr !== 'string' || expr.trim() === '') throw new TypeError('expression must be a non-empty string');
-            return new Function(...FUNC_PARAMS, '"use strict";return (' + expr + ');');
+            return new Function(...FUNC_PARAMS, '"use strict";return(' + expr + ');');
         },
         
         /*  Returns why an expression can't be compiled, or null if it can. For validating data. */
@@ -70,7 +70,7 @@
         
         /*  Evaluates an expression to an ease, clamped to [minEase, maxEase]. Doesn't roll. NaN
             if the expression throws or isn't a number, which fails any check. */
-        getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-D1000}={}) => {
+        getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-DIE_SIZE}={}) => {
             // A no-roll check always succeeds, whatever the expression.
             if (isNoRollDifficulty(difficulty)) return 0;
             
@@ -140,7 +140,7 @@
             evaluate: (expr, cfg={}) => {
                 const difficulty = cfg.difficulty ?? 0,
                     ease = getEase(expr, cfg),
-                    dieRoll = isNoRollDifficulty(difficulty) ? null : roll(D1000),
+                    dieRoll = isNoRollDifficulty(difficulty) ? null : roll(),
                     result = (dieRoll ?? 0) + ease;
                 return {success:result >= 0, result, roll:dieRoll, difficulty, ease};
             },
