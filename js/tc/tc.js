@@ -366,6 +366,8 @@
             ICON_COLLAPSED:'⊞',
             ICON_IMPORT:'↥',
             ICON_EXPORT:'↧',
+            ICON_MISSION:'⚑',
+            ICON_EVENT:'⧉', // ⧉, ⚭
             
             // Formatting //
             wrapInStyledSpan,

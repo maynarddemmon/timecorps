@@ -12,7 +12,7 @@
                 colorUltraLight, colorMegaDark, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED
+            ICON_MISSION, ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED
         } = pkg,
         
         ObjectiveRow = new JSClass('ObjectiveRow', WideView, {
@@ -169,7 +169,7 @@
         },
         
         updateTitle: function() {
-            this.setTitle('Mission : ' + pkg.wrapInStyledSpan(this.operationModel?.name ?? 'none', colorUltraLight));
+            this.setTitle(ICON_MISSION + ' ' + pkg.wrapInStyledSpan(this.operationModel?.name ?? 'none', colorUltraLight));
         }
     });
 })(tc);

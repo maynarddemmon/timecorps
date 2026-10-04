@@ -18,7 +18,7 @@
             },
             cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
-            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ,
+            ICON_EVENT, ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
@@ -486,7 +486,7 @@
         },
         
         updateTitle: function() {
-            this.setTitle('Event : ' + pkg.wrapInStyledSpan(this.eventModel?.name ?? 'none', colorUltraLight));
+            this.setTitle(ICON_EVENT + ' ' + pkg.wrapInStyledSpan(this.eventModel?.name ?? 'none', colorUltraLight));
         }
     });
 })(tc);
