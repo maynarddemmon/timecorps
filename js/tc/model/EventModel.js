@@ -29,7 +29,7 @@
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
             /*  Sets the skill check for an action. An actionId of null is the model's own check,
                 as for an EventActionModel. cfg is optional and so is each part of it:
-                    {difficulty:<integer>, skill:<skill expression>, actionType:<skill check id>}
+                    {difficulty:<integer>, check:<skill expression>, actionType:<skill check id>}
                 A part left out comes from the actionType's default skill check. A part that's the
                 wrong type is ignored, with a warning. */
             addSkillCheck: function(actionId, cfg) {
@@ -49,7 +49,7 @@
                     return;
                 }
                 
-                const {difficulty, skill, actionType, ...unknown} = cfg;
+                const {difficulty, check, actionType, ...unknown} = cfg;
                 
                 if (difficulty !== undefined) {
                     if (Number.isInteger(difficulty) || difficulty === DIFFICULTY_NO_ROLL) {
@@ -67,11 +67,11 @@
                     }
                 }
                 
-                if (skill !== undefined) {
-                    if (typeof skill === 'string' && skill.trim() !== '') {
-                        self[exprId] = skill;
+                if (check !== undefined) {
+                    if (typeof check === 'string' && check.trim() !== '') {
+                        self[exprId] = check;
                     } else {
-                        warn('skill must be a non-empty string');
+                        warn('check must be a non-empty string');
                     }
                 }
                 

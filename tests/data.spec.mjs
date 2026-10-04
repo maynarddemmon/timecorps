@@ -141,11 +141,11 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
     checkSkillCheckCfg = (where, cfg) => {
         if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return [where + ' is not an object'];
         const problems = [],
-            {difficulty, skill, actionType, ...unknown} = cfg;
+            {difficulty, check, actionType, ...unknown} = cfg;
         if (!isValidDifficulty(difficulty)) problems.push(where + ' difficulty is not an integer or "no-roll"');
-        if (skill !== undefined) {
-            const error = getSkillCompileError(skill);
-            if (error) problems.push(where + ' skill ' + error);
+        if (check !== undefined) {
+            const error = getSkillCompileError(check);
+            if (error) problems.push(where + ' check ' + error);
         }
         // An actionType is a default skill check, or a skill, which checks that skill alone.
         if (actionType !== undefined && !skillChecks[actionType] && !skillCfgs[actionType]) {

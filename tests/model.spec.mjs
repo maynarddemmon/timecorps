@@ -113,7 +113,7 @@ test('an event\'s investigate config is optional, validated and has defaults', a
         
         out.none = read();
         
-        eventModel.setInvestigate({difficulty:500, skill:'Math.max(agent.skills.deception, agent.skills.disguise)'});
+        eventModel.setInvestigate({difficulty:500, check:'Math.max(agent.skills.deception, agent.skills.disguise)'});
         out.both = read();
         
         // Either part can be left out.
@@ -121,12 +121,16 @@ test('an event\'s investigate config is optional, validated and has defaults', a
         out.difficultyOnly = read();
         
         // Bad parts are dropped, good ones kept.
-        eventModel.setInvestigate({difficulty:'500', skill:'agent.skills.stealth'});
+        eventModel.setInvestigate({difficulty:'500', check:'agent.skills.stealth'});
         out.badDifficulty = read();
-        eventModel.setInvestigate({difficulty:250.5, skill:'  '});
+        eventModel.setInvestigate({difficulty:250.5, check:'  '});
         out.badBoth = read();
         eventModel.setInvestigate(['agent.skills.stealth']);
         out.notObject = read();
+        
+        // The old name for check is an unknown key, so stale data is warned about.
+        eventModel.setInvestigate({skill:'agent.skills.stealth'});
+        out.oldKey = read();
         
         eventModel.setInvestigate(null);
         out.cleared = read();
@@ -139,12 +143,13 @@ test('an event\'s investigate config is optional, validated and has defaults', a
         badDifficulty:[DEFAULTS[0], 'agent.skills.stealth'],
         badBoth:DEFAULTS,
         notObject:DEFAULTS,
+        oldKey:DEFAULTS,
         cleared:DEFAULTS
     });
     
     // One warning per bad part, naming the event.
     const investigateWarnings = problems.warnings.filter(w => w.includes('investigate'));
-    expect(investigateWarnings.length).toBe(4);
+    expect(investigateWarnings.length).toBe(5);
     expect(investigateWarnings.every(w => w.startsWith('Event roster_reshuffle investigate skill check'))).toBe(true);
 });
 
@@ -169,7 +174,7 @@ test('investigate config in the event JSON reaches the model', async ({page}) =>
                 eventModel.destroy();
             }
         };
-        return [build({difficulty:300, skill:'agent.skills.stealth'}), build({difficulty:3.5})];
+        return [build({difficulty:300, check:'agent.skills.stealth'}), build({difficulty:3.5})];
     });
     expect(result).toEqual([[300, 'agent.skills.stealth'], [defaultDifficulty, defaultSkill]]);
     expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
@@ -218,7 +223,7 @@ test('investigating succeeds or fails on the check, and a failure still uses the
                 };
             };
         vq.doDeployToEvent(roster);
-        roster.setInvestigate({difficulty:500, skill:'agent.skills.stealth'});
+        roster.setInvestigate({difficulty:500, check:'agent.skills.stealth'});
         vq.setSkills({stealth:100});
         
         // An ease of -400: a roll of 399 fails and 400 succeeds.
@@ -269,7 +274,7 @@ test('an action\'s skill check comes from its actionType, with the action\'s own
             read = action => [action.getActionSkillType(), action.getActionSkillDifficulty(), action.getActionSkillExpr()];
         roster.setActions({
             byType:{label:'By Type', skillCheck:{actionType:'sneak'}},
-            overridden:{label:'Overridden', skillCheck:{actionType:'sneak', difficulty:5, skill:'agent.skills.disguise'}},
+            overridden:{label:'Overridden', skillCheck:{actionType:'sneak', difficulty:5, check:'agent.skills.disguise'}},
             unchecked:{label:'Unchecked'},
             bad:{label:'Bad', skillCheck:{actionType:'sneak', difficulty:2.5, dificulty:3}},
             notObject:{label:'Not Object', skillCheck:'sneak'}
