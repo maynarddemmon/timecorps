@@ -55,3 +55,36 @@ test('a button in a section header does not collapse the section', async ({page}
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('exit routes to an event without a box yet are skipped rather than warned about', async ({page}) => {
+    const problems = await startGame(page);
+    const skipped = await page.evaluate(async () => {
+        const wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
+            timeline = tc.app.getTimelineView(),
+            boxes = timeline.boxesByEventId,
+            collision = tc.model.getEventModel('collision'),
+            exit = collision.getExitModels()[0],
+            target = exit.getToEventModel();
+        
+        // Both ends known, so the route would normally be drawn when collision is selected.
+        target.attestation.setValue(50);
+        tc.model.getEventModel('roster_reshuffle').attestation.setValue(50); // Something else to select.
+        await wait(200);
+        if (!collision.getVisibleExitAndEntrances().includes(exit)) return 'route not visible';
+        
+        // As while the timeline is rebuilt during a restore.
+        const box = boxes[target.id];
+        delete boxes[target.id];
+        try {
+            tc.app.selectEventBox('roster_reshuffle');
+            await wait(100);
+            tc.app.selectEventBox('collision');
+            await wait(300);
+        } finally {
+            boxes[target.id] = box;
+        }
+        return target.id;
+    });
+    expect(skipped).toBe('casualties');
+    expect(problems.warnings).toEqual([]);
+});

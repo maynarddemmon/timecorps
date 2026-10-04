@@ -120,6 +120,9 @@ test('every agent has a portrait and a dossier', () => {
 });
 
 const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})),
+    
+    // A difficulty is optional, and is an integer or "no-roll", which always succeeds.
+    isValidDifficulty = difficulty => difficulty === undefined || Number.isInteger(difficulty) || difficulty === 'no-roll',
     skillCfgs = Object.assign({}, ...scenarios.map(s => s.skills ?? {})),
     
     // Returns why a skill expression doesn't compile, or null if it does. Compiled the same way 
@@ -139,7 +142,7 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return [where + ' is not an object'];
         const problems = [],
             {difficulty, skill, actionType, ...unknown} = cfg;
-        if (difficulty !== undefined && !(Number.isInteger(difficulty) || difficulty === 'no-roll')) problems.push(where + ' difficulty is not an integer');
+        if (!isValidDifficulty(difficulty)) problems.push(where + ' difficulty is not an integer or "no-roll"');
         if (skill !== undefined) {
             const error = getSkillCompileError(skill);
             if (error) problems.push(where + ' skill ' + error);
@@ -171,7 +174,7 @@ test('every default skill check has a name and a skill expression that compiles'
         if (typeof name !== 'string' || name.trim() === '') problems.push(actionType + ' has no name');
         const error = getSkillCompileError(check);
         if (error) problems.push(actionType + ' check ' + error);
-        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(actionType + ' difficulty is not an integer');
+        if (!isValidDifficulty(difficulty)) problems.push(actionType + ' difficulty is not an integer or "no-roll"');
         for (const key of Object.keys(unknown)) problems.push(actionType + ' has unknown key ' + key);
     }
     expect(problems).toEqual([]);

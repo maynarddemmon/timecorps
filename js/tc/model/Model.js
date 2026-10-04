@@ -418,7 +418,7 @@
     };
     
     /*  The difficulty of a default skill check, by action type. */
-    pkg.getSkillDifficulty = actionType => skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
+    pkg.getSkillDifficulty = actionType => pkg.toDifficulty(skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY);
     
     /*  The display name of a default skill check, by action type. Falls back to the name of the
         skill with that ID, otherwise the action type itself. */

@@ -449,12 +449,17 @@
                 for (const exitModel of selectedModel.getVisibleExitAndEntrances()) {
                     const fromModelId = exitModel.event.id,
                         toModelId = exitModel.getToEventModel().id,
-                        splineId = SPLINE_ID_PREFIX_EXIT + fromModelId + '-' + toModelId;
-                    if (!newExitSplinesById[splineId]) {
+                        splineId = SPLINE_ID_PREFIX_EXIT + fromModelId + '-' + toModelId,
+                        fromBox = boxesByEventId[fromModelId],
+                        toBox = boxesByEventId[toModelId];
+                    
+                    // A box can be missing while the timeline is being rebuilt, e.g. during a 
+                    // restore. The route is drawn by a later refresh once both boxes exist.
+                    if (fromBox && toBox && !newExitSplinesById[splineId]) {
                         newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
                             splineId,
-                            start:{view:boxesByEventId[fromModelId], side:'bottom', position:'75%'},
-                            end:  {view:boxesByEventId[toModelId],   side:'top',    position:'75%'},
+                            start:{view:fromBox, side:'bottom', position:'75%'},
+                            end:  {view:toBox,   side:'top',    position:'75%'},
                             style:EXIT_STYLE
                         });
                     }

@@ -37,6 +37,11 @@
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
+        // A difficulty in the data that skips the roll, so the check always succeeds. It's
+        // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
+        DIFFICULTY_NO_ROLL = 'no-roll',
+        DIFFICULTY_NO_ROLL_THRESHOLD = -999999,
+        
         SCOPE_AGENT = 'agent',
         SCOPE_SKILLS = 'skills',
         
@@ -281,7 +286,16 @@
                 });
             },
             
-            DIFFICULTY_NO_ROLL_THRESHOLD:-999999,
+            DIFFICULTY_NO_ROLL,
+            DIFFICULTY_NO_ROLL_THRESHOLD,
+            
+            /*  A difficulty from the data as a number, so DIFFICULTY_NO_ROLL becomes the 
+                threshold. Anything else is returned as is. */
+            toDifficulty: v => v === DIFFICULTY_NO_ROLL ? DIFFICULTY_NO_ROLL_THRESHOLD : v,
+            
+            /*  True if a check at this difficulty skips the roll and always succeeds. */
+            isNoRollDifficulty: difficulty => difficulty <= DIFFICULTY_NO_ROLL_THRESHOLD,
+            
             CHECK_SKILL_EXPR_PREFIX: SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
             
             // Constraint Scopes

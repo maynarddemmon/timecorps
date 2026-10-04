@@ -8,7 +8,7 @@
             rng:{roll, D1000},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL},
             theme:{colorSuccess, colorError, colorMegaDark},
-            DIFFICULTY_NO_ROLL_THRESHOLD
+            isNoRollDifficulty
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
@@ -71,8 +71,8 @@
         /*  Evaluates an expression to an ease, clamped to [minEase, maxEase]. Doesn't roll. NaN
             if the expression throws or isn't a number, which fails any check. */
         getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-D1000}={}) => {
-            // Special Handling for a no-roll path
-            if (difficulty <= DIFFICULTY_NO_ROLL_THRESHOLD) return 0;
+            // A no-roll check always succeeds, whatever the expression.
+            if (isNoRollDifficulty(difficulty)) return 0;
             
             let value;
             try {
@@ -135,12 +135,14 @@
             getEase,
             
             /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
-                Returns {success, result, roll, difficulty, ease} where result is roll + ease. */
+                Returns {success, result, roll, difficulty, ease} where result is roll + ease. A
+                no-roll check doesn't roll, so its roll is null and its result is 0. */
             evaluate: (expr, cfg={}) => {
-                const ease = getEase(expr, cfg),
-                    dieRoll = roll(D1000),
-                    result = dieRoll + ease;
-                return {success:result >= 0, result, roll:dieRoll, difficulty:cfg.difficulty ?? 0, ease};
+                const difficulty = cfg.difficulty ?? 0,
+                    ease = getEase(expr, cfg),
+                    dieRoll = isNoRollDifficulty(difficulty) ? null : roll(D1000),
+                    result = (dieRoll ?? 0) + ease;
+                return {success:result >= 0, result, roll:dieRoll, difficulty, ease};
             },
             
             /*  Rolls a skill check: success when roll + (skillExpr) - difficulty >= 0. Returns the
@@ -158,10 +160,13 @@
             
             showFloatingTextForSkillCheck: (btnView, checkResult) => {
                 if (btnView && checkResult) {
-                    const {success, roll, ease} = checkResult;
+                    const {success, roll, ease} = checkResult,
+                        // A no-roll check has no margin or roll to show.
+                        text = roll == null ? 'Succeeded' : 
+                            (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? pkg.ICON_SEPARATOR + '⚅' + roll : '');
                     pkg.showFloatingTextAboveView(
                         btnView, 
-                        (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? pkg.ICON_SEPARATOR + '⚅' + roll : ''), 
+                        text, 
                         {
                             bgColor:success ? colorSuccess : colorError,
                             textColor:colorMegaDark

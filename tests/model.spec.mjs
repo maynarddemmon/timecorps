@@ -173,7 +173,7 @@ test('investigate config in the event JSON reaches the model', async ({page}) =>
     });
     expect(result).toEqual([[300, 'agent.skills.stealth'], [defaultDifficulty, defaultSkill]]);
     expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
-        'Event investigate_test investigate skill check difficulty must be an integer: {difficulty: 3.5}'
+        'Event investigate_test investigate skill check difficulty must be an integer or "no-roll": {difficulty: 3.5}'
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
@@ -295,7 +295,7 @@ test('an action\'s skill check comes from its actionType, with the action\'s own
     // Warnings name the action and its Event, and a config that isn't an object doesn't throw.
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([
-        'Event roster_reshuffle action bad skill check difficulty must be an integer: {actionType: sneak, difficulty: 2.5, dificulty: 3}',
+        'Event roster_reshuffle action bad skill check difficulty must be an integer or "no-roll": {actionType: sneak, difficulty: 2.5, dificulty: 3}',
         'Event roster_reshuffle action bad skill check has unknown keys dificulty: {actionType: sneak, difficulty: 2.5, dificulty: 3}',
         'Event roster_reshuffle action notObject skill check must be an object: sneak'
     ]);
@@ -382,4 +382,56 @@ test('a sure_thing check only fails on the lowest roll, whatever the agent\'s sk
     const expected = {phrase:'sure thing', roll0:false, roll1:true};
     expect(result).toEqual({unskilled:expected, inept:expected});
     expect(problems.warnings).toEqual([]);
+});
+
+test('a no-roll check succeeds without rolling, whatever the agent\'s skills', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            casualties = tc.model.getEventModel('casualties'),
+            roster = tc.model.getEventModel('roster_reshuffle'),
+            original = vq.getSkills();
+        
+        // A default skill check can be no-roll too.
+        tc.model.processData({skillChecks:{test_no_roll:{name:'Test No Roll', check:'agent.skills.cha', difficulty:'no-roll'}}});
+        roster.setActions({
+            byType:{label:'By Type', skillCheck:{actionType:'test_no_roll'}},
+            byAction:{label:'By Action', skillCheck:{actionType:'cha', difficulty:'no-roll'}},
+            bad:{label:'Bad', skillCheck:{difficulty:'no roll'}}
+        });
+        const actions = roster.getActionModels(),
+            check = (expr, difficulty) => {
+                tc.rng.clearQueuedRolls();
+                tc.rng.queueRolls(0); // The worst roll, which should be left unused.
+                const result = vq.checkSkillExpression(expr, difficulty);
+                return {...result, rollsLeft:tc.rng.getQueuedRollCount(), phrase:vq.getSkillEasePhrase(expr, difficulty)};
+            },
+            out = {};
+        vq.setSkills({cha:-5000, investigation:-5000});
+        try {
+            // From the data: investigating casualties is no-roll.
+            out.investigate = check(casualties.getInvestigateSkillExpr(), casualties.getInvestigateDifficulty());
+            out.byType = check(actions.byType.getActionSkillExpr(), actions.byType.getActionSkillDifficulty());
+            out.byAction = check(actions.byAction.getActionSkillExpr(), actions.byAction.getActionSkillDifficulty());
+        } finally {
+            vq.setSkills(original);
+            tc.rng.clearQueuedRolls();
+        }
+        out.badDifficulty = actions.bad.getActionSkillDifficulty();
+        out.defaultDifficulty = tc.cfg.DEFAULT_SKILL_DIFFICULTY;
+        
+        // The floating text has no margin to show.
+        tc.checks.showFloatingTextForSkillCheck(tc.app, out.byAction);
+        out.text = tc.app.getSubviews().filter(sv => sv.isA(tc.FloatingText) && sv.visible).at(-1)?.text;
+        return out;
+    });
+    
+    for (const key of ['investigate', 'byType', 'byAction']) {
+        expect(result[key]).toMatchObject({success:true, roll:null, result:0, ease:0, rollsLeft:1, phrase:'guaranteed'});
+    }
+    expect(result.text).toBe('Succeeded');
+    
+    // Anything else that isn't an integer is dropped, with a warning.
+    expect(result.badDifficulty).toBe(result.defaultDifficulty);
+    expect(problems.warnings).toEqual(['Event roster_reshuffle action bad skill check difficulty must be an integer or "no-roll": {difficulty: no roll}']);
 });
