@@ -54,6 +54,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
             vq = m.getAgentModel('VQ'),
             roster = m.getEventModel('roster_reshuffle');
         vq.doDeployToEvent(roster);
+        tc.rng.queueRolls(999); // So the action's skill check succeeds.
         vq.doAction(roster.getActionModels().prevent);
         tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
         vq.doInvestigate();
@@ -73,7 +74,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
     expect(save.data.agents.VQ.event).toBe('roster_reshuffle');
     expect(save.data.agents.VQ.paradox.value).toBeGreaterThan(0);
     expect(save.data.agents.VQ.log).toContainEqual({type:'exit', exit:['roster_reshuffle', 0]});
-    expect(save.data.agents.VQ.log).toContainEqual({type:'action', action:['roster_reshuffle', 'prevent']});
+    expect(save.data.agents.VQ.log).toContainEqual({type:'action', action:['roster_reshuffle', 'prevent'], success:true});
 
     const before = await exportModel(page);
     await reloadGame(page);
@@ -160,6 +161,7 @@ test('an exported file imports back to the same campaign', async ({page}) => {
             vq = m.getAgentModel('VQ'),
             roster = m.getEventModel('roster_reshuffle');
         vq.doDeployToEvent(roster);
+        tc.rng.queueRolls(999); // So the action's skill check succeeds.
         vq.doAction(roster.getActionModels().prevent);
         tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
         vq.doInvestigate();

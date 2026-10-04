@@ -1,6 +1,6 @@
 // Regression tests for the constraint scopes, Describable and the causal links.
 import {test, expect} from '@playwright/test';
-import {startGame} from './helpers.mjs';
+import {startGame, readJson} from './helpers.mjs';
 
 test('agent, agents and operations scopes bind and update', async ({page}) => {
     const problems = await startGame(page);
@@ -95,15 +95,16 @@ test('causator links together match each event\'s precursors and descendants', a
     expect(mismatches).toEqual([]);
 });
 
-/*  The default investigate skill expression, built from the tuning value so the tests don't need 
-    changing when it's tuned. */
-const getDefaultInvestigate = page => page.evaluate(() => [
-    250, 'agent.skills.investigation + ' + tc.cfg.DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE + '*event.attestation.value'
-]);
+/*  The default investigate check, [difficulty, skill expression], read from the data so the tests 
+    don't need changing when it's tuned. */
+const getDefaultInvestigate = () => {
+    const {difficulty, check} = readJson('data/init.json').skillChecks.investigate;
+    return [difficulty, check];
+};
 
 test('an event\'s investigate config is optional, validated and has defaults', async ({page}) => {
     const problems = await startGame(page);
-    const DEFAULTS = await getDefaultInvestigate(page);
+    const DEFAULTS = getDefaultInvestigate();
     const result = await page.evaluate(() => {
         // An event with no investigate config in the data.
         const eventModel = tc.model.getEventModel('roster_reshuffle'),
@@ -144,12 +145,12 @@ test('an event\'s investigate config is optional, validated and has defaults', a
     // One warning per bad part, naming the event.
     const investigateWarnings = problems.warnings.filter(w => w.includes('investigate'));
     expect(investigateWarnings.length).toBe(4);
-    expect(investigateWarnings.every(w => w.startsWith('Event roster_reshuffle investigate'))).toBe(true);
+    expect(investigateWarnings.every(w => w.startsWith('Event roster_reshuffle investigate skill check'))).toBe(true);
 });
 
 test('investigate config in the event JSON reaches the model', async ({page}) => {
     const problems = await startGame(page);
-    const [defaultDifficulty, defaultSkill] = await getDefaultInvestigate(page);
+    const [defaultDifficulty, defaultSkill] = getDefaultInvestigate();
     
     // collision's data sets just the difficulty.
     expect(await page.evaluate(() => {
@@ -172,7 +173,7 @@ test('investigate config in the event JSON reaches the model', async ({page}) =>
     });
     expect(result).toEqual([[300, 'agent.skills.stealth'], [defaultDifficulty, defaultSkill]]);
     expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
-        'Event investigate_test investigate difficulty must be an integer: {difficulty: 3.5}'
+        'Event investigate_test investigate skill check difficulty must be an integer: {difficulty: 3.5}'
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
@@ -185,7 +186,7 @@ test('the default investigate check gets harder as attestation rises', async ({p
             getEase = () => vq.getSkillExpressionEase(roster.getInvestigateSkillExpr(), roster.getInvestigateDifficulty());
         vq.doDeployToEvent(roster);
         vq.setSkills({investigation:100});
-        const out = {effect:tc.cfg.DEFAULT_ATTESTATION_EFFECT_ON_INVESTIGATE};
+        const out = {difficulty:roster.getInvestigateDifficulty()};
         roster.attestation.setValue(0);
         out.at0 = getEase();
         roster.attestation.setValue(20);
@@ -193,10 +194,9 @@ test('the default investigate check gets harder as attestation rises', async ({p
         return out;
     });
     
-    // investigation - difficulty, then each point of attestation adds the effect.
-    expect(result.effect).toBeLessThan(0);
-    expect(result.at0).toBe(100 - 250);
-    expect(result.at20).toBe(100 - 250 + 20*result.effect);
+    // investigation - difficulty, then attestation makes it harder.
+    expect(result.at0).toBe(100 - result.difficulty);
+    expect(result.at20).toBeLessThan(result.at0);
     expect(problems.warnings).toEqual([]);
 });
 
@@ -229,4 +229,90 @@ test('investigating succeeds or fails on the check, and a failure still uses the
     expect(result.success.gained).toBeGreaterThan(0);
     expect(result.success.logged).toEqual({type:'investigate', success:true, amount:result.success.gained});
     expect(problems.warnings).toEqual([]);
+});
+
+test('an action succeeds or fails on its skill check, and a failure still uses the action', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            roster = tc.model.getEventModel('roster_reshuffle'),
+            prevent = roster.getActionModels().prevent,
+            value = roster.getValueModels().preventReshuffle,
+            // The roll that just succeeds is -ease, so one less just fails.
+            ease = () => vq.getSkillExpressionEase(prevent.getActionSkillExpr(), prevent.getActionSkillDifficulty()),
+            act = roll => {
+                const actionCount = vq.getActionExecCount();
+                tc.rng.queueRolls(roll);
+                vq.doAction(prevent);
+                const entry = vq.getLog().at(-1);
+                return {
+                    value:value.value,
+                    actionsUsed:vq.getActionExecCount() - actionCount,
+                    logged:{type:entry.type, success:entry.success}
+                };
+            };
+        vq.doDeployToEvent(roster);
+        const neededRoll = -ease();
+        return {neededRoll, failure:act(neededRoll - 1), success:act(neededRoll)};
+    });
+    expect(result.neededRoll).toBeGreaterThan(0);
+    expect(result.failure).toEqual({value:false, actionsUsed:1, logged:{type:'action', success:false}});
+    expect(result.success).toEqual({value:true, actionsUsed:1, logged:{type:'action', success:true}});
+    expect(problems.warnings).toEqual([]);
+});
+
+test('an action\'s skill check comes from its actionType, with the action\'s own parts first', async ({page}) => {
+    const problems = await startGame(page);
+    const DEFAULTS = readJson('data/init.json').skillChecks;
+    const result = await page.evaluate(() => {
+        const roster = tc.model.getEventModel('roster_reshuffle'),
+            read = action => [action.getActionSkillType(), action.getActionSkillDifficulty(), action.getActionSkillExpr()];
+        roster.setActions({
+            byType:{label:'By Type', skillCheck:{actionType:'sneak'}},
+            overridden:{label:'Overridden', skillCheck:{actionType:'sneak', difficulty:5, skill:'agent.skills.disguise'}},
+            unchecked:{label:'Unchecked'},
+            bad:{label:'Bad', skillCheck:{actionType:'sneak', difficulty:2.5, dificulty:3}},
+            notObject:{label:'Not Object', skillCheck:'sneak'}
+        });
+        const actions = roster.getActionModels();
+        return {
+            byType:read(actions.byType),
+            overridden:read(actions.overridden),
+            unchecked:read(actions.unchecked),
+            bad:read(actions.bad),
+            notObject:read(actions.notObject),
+            defaults:[tc.cfg.DEFAULT_SKILL_DIFFICULTY, tc.cfg.DEFAULT_SKILL_EXPR]
+        };
+    });
+    const sneak = DEFAULTS.sneak,
+        [defaultDifficulty, defaultExpr] = result.defaults;
+    expect(result.byType).toEqual(['sneak', sneak.difficulty, sneak.check]);
+    expect(result.overridden).toEqual(['sneak', 5, 'agent.skills.disguise']);
+    expect(result.unchecked).toEqual(['', defaultDifficulty, defaultExpr]);
+    expect(result.bad).toEqual(['sneak', sneak.difficulty, sneak.check]);
+    expect(result.notObject).toEqual(['', defaultDifficulty, defaultExpr]);
+    
+    // Warnings name the action and its Event, and a config that isn't an object doesn't throw.
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([
+        'Event roster_reshuffle action bad skill check difficulty must be an integer: {actionType: sneak, difficulty: 2.5, dificulty: 3}',
+        'Event roster_reshuffle action bad skill check has unknown keys dificulty: {actionType: sneak, difficulty: 2.5, dificulty: 3}',
+        'Event roster_reshuffle action notObject skill check must be an object: sneak'
+    ]);
+});
+
+test('action buttons show the action type and how easy the check is', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {
+        const roster = tc.model.getEventModel('roster_reshuffle');
+        roster.attestation.setValue(50); // Known, so it shows on the timeline and can be selected.
+        roster.setActions({unchecked:{label:'Unchecked'}});
+        tc.model.getAgentModel('VQ').doDeployToEvent(roster);
+        tc.app.selectEventBox('roster_reshuffle');
+    });
+    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(social : [a-z -]+\)/}).filter({visible:true})).toBeVisible();
+    
+    // Without an actionType there's no type to show.
+    await expect(page.getByRole('button', {name:/Unchecked \([a-z -]+\)$/}).filter({visible:true})).toBeVisible();
+    expect(problems.pageErrors).toEqual([]);
 });

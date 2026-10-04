@@ -119,30 +119,55 @@ test('every agent has a portrait and a dossier', () => {
     expect(missing).toEqual([]);
 });
 
-test('every investigate config has an integer difficulty and a skill expression that compiles', () => {
+const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})),
+    
+    // Returns why a skill expression doesn't compile, or null if it does. Compiled the same way 
+    // as tc.checks.skill, with the same parameters.
+    getSkillCompileError = skill => {
+        if (typeof skill !== 'string' || skill.trim() === '') return 'is not a non-empty string';
+        try {
+            new Function('agent', 'event', 'timeline', 'difficulty', '"use strict";return ((' + skill + ')-difficulty);');
+            return null;
+        } catch (err) {
+            return 'does not compile (' + err.message + ')';
+        }
+    },
+    
+    // Returns the problems with a skill check config from an investigate or an action.
+    checkSkillCheckCfg = (where, cfg) => {
+        if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return [where + ' is not an object'];
+        const problems = [],
+            {difficulty, skill, actionType, ...unknown} = cfg;
+        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(where + ' difficulty is not an integer');
+        if (skill !== undefined) {
+            const error = getSkillCompileError(skill);
+            if (error) problems.push(where + ' skill ' + error);
+        }
+        if (actionType !== undefined && !skillChecks[actionType]) problems.push(where + ' actionType ' + actionType + ' is not a default skill check');
+        for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
+        return problems;
+    };
+
+test('every investigate and action skill check is valid', () => {
     const problems = [];
     for (const [eventId, event] of Object.entries(events)) {
-        const cfg = event.investigate;
-        if (cfg === undefined) continue;
-        if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
-            problems.push(eventId + ': investigate is not an object');
-            continue;
+        if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
+        for (const [actionId, action] of Object.entries(event.actions ?? {})) {
+            if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(eventId + '.' + actionId + ' skillCheck', action.skillCheck));
         }
-        const {difficulty, skill, ...unknown} = cfg;
-        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(eventId + ': difficulty is not an integer');
-        if (skill !== undefined) {
-            if (typeof skill !== 'string' || skill.trim() === '') {
-                problems.push(eventId + ': skill is not a non-empty string');
-            } else {
-                // Compiled the same way as tc.checks.skill, with the same parameters.
-                try {
-                    new Function('agent', 'event', 'timeline', 'difficulty', '"use strict";return ((' + skill + ')-difficulty);');
-                } catch (err) {
-                    problems.push(eventId + ': skill does not compile (' + err.message + ')');
-                }
-            }
-        }
-        for (const key of Object.keys(unknown)) problems.push(eventId + ': unknown key ' + key);
+    }
+    expect(problems).toEqual([]);
+});
+
+test('every default skill check has a skill expression that compiles', () => {
+    expect(Object.keys(skillChecks)).toContain('investigate');
+    const problems = [];
+    for (const [actionType, cfg] of Object.entries(skillChecks)) {
+        const {check, difficulty, ...unknown} = cfg;
+        const error = getSkillCompileError(check);
+        if (error) problems.push(actionType + ' check ' + error);
+        if (difficulty !== undefined && !Number.isInteger(difficulty)) problems.push(actionType + ' difficulty is not an integer');
+        for (const key of Object.keys(unknown)) problems.push(actionType + ' has unknown key ' + key);
     }
     expect(problems).toEqual([]);
 });

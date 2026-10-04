@@ -24,24 +24,32 @@
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
         
+        /*  Skill checks for the actions of an Event (e.g. investigate) or for an action itself.
+            Checks are stored by action ID, so an Event can have one per action it offers. */
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
+            /*  Sets the skill check for an action. An actionId of null is the model's own check,
+                as for an EventActionModel. cfg is optional and so is each part of it:
+                    {difficulty:<integer>, skill:<skill expression>, actionType:<skill check id>}
+                A part left out comes from the actionType's default skill check. A part that's the
+                wrong type is ignored, with a warning. */
             addSkillCheck: function(actionId, cfg) {
+                const self = this;
+                actionId ??= ACTION_TYPE_SINGULAR;
+                
+                const diffId = PREFIX_SKILL_DIFF + actionId,
+                    typeId = PREFIX_SKILL_TYPE + actionId,
+                    exprId = PREFIX_SKILL_EXPR + actionId,
+                    owner = self.event ? 'Event ' + self.event.id + ' action ' + self.id : 'Event ' + self.id + ' ' + actionId,
+                    warn = msg => console.warn(owner, 'skill check', msg + ':', cfg);
+                
+                self[diffId] = self[typeId] = self[exprId] = undefined;
                 if (cfg == null) return;
                 if (typeof cfg !== 'object' || Array.isArray(cfg)) {
                     warn('must be an object');
                     return;
                 }
                 
-                if (actionId == null) actionId = ACTION_TYPE_SINGULAR;
-                
-                const self = this,
-                    diffId = PREFIX_SKILL_DIFF + actionId,
-                    typeId = PREFIX_SKILL_TYPE + actionId,
-                    exprId = PREFIX_SKILL_EXPR + actionId,
-                    warn = msg => console.warn('Event', self.id, ACTION_INVESTIGATE, msg + ':', cfg),
-                    {difficulty, skill, actionType} = cfg
-                
-                self[diffId] = self[typeId] = self[exprId] = undefined;
+                const {difficulty, skill, actionType, ...unknown} = cfg;
                 
                 if (difficulty !== undefined) {
                     if (Number.isInteger(difficulty)) {
@@ -66,6 +74,9 @@
                         warn('skill must be a non-empty string');
                     }
                 }
+                
+                const unknownKeys = Object.keys(unknown);
+                if (unknownKeys.length > 0) warn('has unknown keys ' + unknownKeys.join(', '));
             },
             getActionSkillDifficulty: function(actionId=ACTION_TYPE_SINGULAR) {
                 return this[PREFIX_SKILL_DIFF + actionId] ?? pkg.getSkillDifficulty(this.getActionSkillType(actionId));
@@ -131,7 +142,14 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 //this.done = false;
+                
+                // Applied after the other attrs so any warnings can name the action and its Event.
+                const skillCheck = attrs.skillCheck;
+                delete attrs.skillCheck;
+                
                 this.callSuper(attrs);
+                
+                this.setSkillCheck(skillCheck);
             },
             
             

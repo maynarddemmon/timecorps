@@ -176,7 +176,7 @@
                 CHECK_EXPR_SHOW_DIE_ROLL:false,
                 
                 DEFAULT_SKILL_DIFFICULTY:250, // 75% for a skill of 0.
-                DEFAULT_SKIIL_EXPR:'0', // Default to no skill
+                DEFAULT_SKILL_EXPR:'0', // Default to no skill
             },
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 

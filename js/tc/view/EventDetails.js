@@ -40,7 +40,7 @@
                 actionModel.getActionSkillDifficulty()
             );
             const skillType = actionModel.getActionSkillType();
-            return ICON_ACTION + ' ' + actionModel.label + ' (' + skillType + ' : ' + easePhrase + ')';
+            return ICON_ACTION + ' ' + actionModel.label + ' (' + (skillType ? skillType + ' : ' : '') + easePhrase + ')';
         },
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
@@ -134,7 +134,7 @@
                             text:getActionBtnPhrase(agentModel, actionModel),
                             disabled:agentCantActHere /*|| actionModel.done*/
                         }, [{
-                            doActivated: function() {agentModel.doAction(this, actionModel);}
+                            doActivated: function() {agentModel.doAction(actionModel, this);}
                         }]);
                     }
                 }

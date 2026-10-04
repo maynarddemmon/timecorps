@@ -8,13 +8,16 @@
         skillIds = [],
         skillCheckDefaults = {};
     
+    // The data key for default skill checks by action type.
+    const DATA_KEY_SKILL_CHECKS = 'skillChecks';
+    
     const {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT,
-                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKIIL_EXPR
+                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
@@ -321,16 +324,13 @@
             // Load any skills configurations found. Later files can add skills or replace one.
             const moreSkillConfigs = json[SCOPE_SKILLS];
             if (moreSkillConfigs) {
-                // Pull out defaults into their own map
-                const moreSkillCheckDefaults = moreSkillConfigs.DEFAULT_CHECKS;
-                if (moreSkillCheckDefaults) {
-                    delete moreSkillConfigs.DEFAULT_CHECKS
-                    skillCheckDefaults = {...skillCheckDefaults, ...moreSkillCheckDefaults};
-                }
-                
                 skillCfgs = {...skillCfgs, ...moreSkillConfigs};
                 skillIds = Object.keys(skillCfgs);
             }
+            
+            // Default skill checks by action type, e.g. "social" or "investigate".
+            const moreSkillChecks = json[DATA_KEY_SKILL_CHECKS];
+            if (moreSkillChecks) skillCheckDefaults = {...skillCheckDefaults, ...moreSkillChecks};
             
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
@@ -395,10 +395,12 @@
     /*  A skill's config, {name, description}, or undefined if there's no such skill. */
     pkg.getSkillConfig = skillId => skillCfgs[skillId];
     
-    /*  The default skill check expression for a named skill check. */
-    pkg.getSkillCheckExpr = skillId => skillCheckDefaults[skillId]?.check ?? DEFAULT_SKIIL_EXPR;
+    /*  The IDs of the default skill checks (action types) configured in the data. */
+    pkg.getSkillCheckIds = () => Object.keys(skillCheckDefaults);
     
-    /*  The default skill check expression for a named skill check. */
-    pkg.getSkillDifficulty = skillId => skillCheckDefaults[skillId]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
+    /*  The skill expression of a default skill check, by action type. */
+    pkg.getSkillCheckExpr = actionType => skillCheckDefaults[actionType]?.check ?? DEFAULT_SKILL_EXPR;
+    
+    /*  The difficulty of a default skill check, by action type. */
+    pkg.getSkillDifficulty = actionType => skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
 })(tc);
-

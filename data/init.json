@@ -1,22 +1,23 @@
 {
-	"skills":{
-		"DEFAULT_CHECKS":{
-			"social":{
-				"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
-			},
-			"athletic":{
-				"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
-				"difficulty":175
-			},
-			"sneak":{
-				"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
-				"difficulty":275
-			},
-			"investigate":{
-				"check":"agent.skills.investigation -3*event.attestation.value",
-				"difficulty":200
-			}
+	"skillChecks":{
+		"social":{
+			"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
 		},
+		"athletic":{
+			"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
+			"difficulty":175
+		},
+		"sneak":{
+			"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
+			"difficulty":275
+		},
+		"investigate":{
+			"check":"agent.skills.investigation -3*event.attestation.value",
+			"difficulty":200
+		}
+	},
+	
+	"skills":{
 		"agl":{
 			"name":"Agility",
 			"description":"Balance and coordination."

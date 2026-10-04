@@ -466,7 +466,7 @@
                 console.warn('Agent not at event for exit:', exitModel, this);
             }
         },
-        doAction: function(btnView, actionModel) {
+        doAction: function(actionModel, btnView) {
             if (!this.canAct()) return;
             
             /*if (actionModel.isDone()) {
