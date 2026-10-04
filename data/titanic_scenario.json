@@ -535,7 +535,7 @@
 			"start":"1912-04-14T23:39:00",
 			"duration":{"m":1},
 			"location":"titanic.nest",
-			"investigate":{"check":"2*agent.skills.investigate"},
+			"investigate":{"check":"2*agent.skills.investigation"},
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.collision.attestation.value < 15",
 			"exits":[
 				{"mode":"walk", "to":"casualties"}

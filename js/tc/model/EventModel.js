@@ -179,6 +179,12 @@
             // Accessors ///////////////////////////////////////////////////////
             setValue: function(value, isActual) {
                 if (isActual) {
+                    // Lets views react to a Value actually changing, e.g. the timeline animating
+                    // the Event's box. Not fired while the Value is first being set up. Fired
+                    // before the new value is set because setting it updates any dependent 
+                    // Values right away, so listeners hear about changes in causal order.
+                    if (this.inited && this.value !== value) this.event.fireEvent('valueChanged', this);
+                    
                     this.set('value', value, true);
                     this.event.notifyCollectionOfUpdate();
                 } else {

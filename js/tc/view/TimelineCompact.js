@@ -79,6 +79,45 @@
             for (const attrName in attrs) animateAttr(target, attrName, attrs[attrName]);
         },
         
+        // Value Change Animation //
+        /*  When a Value of an Event changes, its box pops: it grows, then bounces back. Boxes take 
+            turns in the order their Values changed, so a change that cascades through the 
+            timeline reads like a row of dominoes falling. A box that's animating or already 
+            waiting its turn isn't queued again, e.g. when several of its Values change at once, 
+            and boxes that are hidden by the time their turn comes are skipped. */
+        VALUE_CHANGE_SCALE = 1.5,
+        VALUE_CHANGE_MILLIS = 500,
+        valueChangeAnims = {queue:[], current:null},
+        runNextValueChangeAnim = () => {
+            const eventBox = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? null;
+            if (!eventBox) {
+                // Scroll back to the currently selected event after animation.
+                pkg.app.scrollToEvent(pkg.app.getTimelineView().getSelectedEventBox()?.model, true);
+            } else if (eventBox.destroyed || !eventBox.visible) {
+                runNextValueChangeAnim();
+            } else {
+                // Scroll to each event immediately before animating.
+                eventBox.timeline.scrollToEventBox(eventBox, false);
+                
+                // The from values are needed because there's no "scale" attribute to read them from,
+                // just scaleX and scaleY.
+                eventBox.animate({
+                    attribute:'scale', from:1, to:VALUE_CHANGE_SCALE, duration:VALUE_CHANGE_MILLIS, easingFunction:'wiggle',
+                    callback:() => {
+                        eventBox.setScale(1);
+                        runNextValueChangeAnim();
+                    }
+                });
+            }
+        },
+        queueValueChangeAnim = eventBox => {
+            const {queue, current} = valueChangeAnims;
+            if (eventBox !== current && !queue.includes(eventBox)) {
+                queue.push(eventBox);
+                if (!current) runNextValueChangeAnim();
+            }
+        },
+        
         updateTimelineLayout = (timeline, isInitial) => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
                 {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
@@ -473,7 +512,7 @@
         }, STANDARD_DEBOUNCE_MILLIS),
         
         EventBox = new JSClass('EventBox', M.SimpleButton, {
-            include: [Selectable],
+            include: [Selectable, M.TransformSupport],
             
             initNode: function(parent, attrs) {
                 const self = this,
@@ -510,12 +549,24 @@
             },
             
             setModel: function(model) {
-                if (this.model !== model) {
-                    this.releaseConstraint('_updateForModelChanges');
-                    this.set('model', model, true);
-                    if (this.model) this.constrain('_updateForModelChanges', [this.model, 'updated']);
-                    if (this.inited) updateEventBox(this);
+                const self = this,
+                    existingModel = self.model;
+                if (existingModel !== model) {
+                    self.releaseConstraint('_updateForModelChanges');
+                    if (existingModel) self.detachFrom(existingModel, '_doValueChanged', 'valueChanged');
+                    self.set('model', model, true);
+                    const newModel = self.model;
+                    if (newModel) {
+                        self.constrain('_updateForModelChanges', [newModel, 'updated']);
+                        self.attachTo(newModel, '_doValueChanged', 'valueChanged');
+                    }
+                    if (self.inited) updateEventBox(self);
                 }
+            },
+            
+            /** @private */
+            _doValueChanged: function(_event) {
+                if (this.timeline?.animateValueChanges) queueValueChangeAnim(this);
             },
             
             setSelected: function(v) {
@@ -980,6 +1031,17 @@
             updateTimelineLayout(this, true);
             this.timelineReady = true;
         },
+        
+        /*  Turned on once startup, including restoring a save, is done, so only changes the 
+            player makes from then on animate. */
+        setAnimateValueChanges: function(v) {this.animateValueChanges = v;},
+        
+        /*  The value change animations, as Event IDs: the box animating now and the boxes 
+            waiting their turn. For tests and debugging. */
+        getValueChangeAnimState: () => ({
+            current:valueChangeAnims.current?.model?.id ?? null,
+            queued:valueChangeAnims.queue.map(eventBox => eventBox.model?.id)
+        }),
         
         notifyEventVisibilityChange: function(_eventModel) {
             if (this.timelineReady) updateTimeLineLayoutDebounced(this);

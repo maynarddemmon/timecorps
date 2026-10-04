@@ -116,6 +116,9 @@
                                     model.setCurrentOperation(model.getInitialOperation());
                                 }
                                 updateLastSaved();
+                                
+                                // Only changes from here on animate, not the restore or setup.
+                                timelineView.setAnimateValueChanges(true);
                             };
                             
                             // On a first visit the Field Manual comes first. It loads asynchronously,
