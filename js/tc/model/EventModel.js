@@ -14,7 +14,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
                 TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
             },
-            ICON_SEPARATOR, ICON_TRAVEL, ICON_NIL,
+            ICON_SEPARATOR, ICON_NIL,
             SCOPE_EVENT,
             ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
@@ -257,8 +257,8 @@
                 const toEvent = this.getToEventModel(),
                     toEventName = toEvent ? toEvent.name : this.to;
                 switch (this.mode) {
-                    case TRAVEL_MODE_WAIT: return 'Wait' + ICON_TRAVEL + toEventName;
-                    case TRAVEL_MODE_WALK: return 'Walk' + ICON_TRAVEL + toEventName;
+                    case TRAVEL_MODE_WAIT: return 'Wait til ' + toEventName;
+                    case TRAVEL_MODE_WALK: return 'Walk to ' + toEventName;
                     default: return 'To ' + toEventName;
                 }
             }

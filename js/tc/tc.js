@@ -208,7 +208,7 @@
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 
                 should use this rather than Math.random directly. Rolls are integers in [0, max). 
-                The default roll is 0-999. */
+                The default roll is [0-DIE_SIZE-1]. */
             rng: {
                 roll,
                 
@@ -347,7 +347,6 @@
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
             ICON_JUMP:'⎌',
-            ICON_TRAVEL:'⎆', // ⎈
             ICON_VIEW:'⏿',
             ICON_CHRONAL,
             ICON_PARADOX,

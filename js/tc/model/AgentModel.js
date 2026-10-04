@@ -418,7 +418,7 @@
                 btnTxt;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                btnTxt = ' Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = 'Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
                 const isAlreadyAtEvent = this.isAtEvent(eventModel);
                 disabled = !hasEnoughChronal;
