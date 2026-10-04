@@ -1,17 +1,21 @@
 {
 	"skillChecks":{
 		"social":{
+			"name":"Social",
 			"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
 		},
 		"athletic":{
+			"name":"Athletic",
 			"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
 			"difficulty":175
 		},
 		"sneak":{
+			"name":"Sneak",
 			"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
 			"difficulty":275
 		},
 		"investigate":{
+			"name":"Investigate",
 			"check":"agent.skills.investigation -3*event.attestation.value",
 			"difficulty":200
 		}

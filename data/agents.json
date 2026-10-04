@@ -27,7 +27,15 @@
 			"event":"collision",
 			"skills":{
 				"chronogation":-100,
-				"investigation":100
+				"investigation":100,
+				"str":50,
+				"agl":25,
+				"dex":25,
+				"cha":0,
+				"stealth":25,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":25
 			}
 		},
 		"OK":{
@@ -36,7 +44,15 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":25,
-				"investigation":75
+				"investigation":75,
+				"str":50,
+				"agl":50,
+				"dex":25,
+				"cha":25,
+				"stealth":75,
+				"disguise":50,
+				"deception":25,
+				"persuasion":25
 			}
 		},
 		"HW":{
@@ -44,7 +60,15 @@
 			"event":"lifeboat_capacity",
 			"skills":{
 				"chronogation":-50,
-				"investigation":100
+				"investigation":100,
+				"str":0,
+				"agl":-25,
+				"dex":75,
+				"cha":0,
+				"stealth":25,
+				"disguise":125,
+				"deception":50,
+				"persuasion":25
 			},
 			"paradox":2,
 			"playerControlled":true,
@@ -53,7 +77,15 @@
 		"GO":{
 			"name":"Gordon",
 			"skills":{
-				"investigation":50
+				"investigation":50,
+				"str":-25,
+				"agl":0,
+				"dex":0,
+				"cha":150,
+				"stealth":-25,
+				"disguise":75,
+				"deception":100,
+				"persuasion":175
 			}
 		},
 		"PI":{
@@ -61,14 +93,30 @@
 			"video":true,
 			"skills":{
 				"chronogation":200,
-				"investigation":-50
+				"investigation":-50,
+				"str":25,
+				"agl":0,
+				"dex":150,
+				"cha":-50,
+				"stealth":0,
+				"disguise":-50,
+				"deception":-50,
+				"persuasion":0
 			}
 		},
 		"AA":{
 			"name":"Alexander Aimes",
 			"skills":{
 				"chronogation":25,
-				"investigation":50
+				"investigation":50,
+				"str":25,
+				"agl":75,
+				"dex":50,
+				"cha":50,
+				"stealth":150,
+				"disguise":75,
+				"deception":50,
+				"persuasion":25
 			}
 		},
 		"AB":{
@@ -76,7 +124,15 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":-25,
-				"investigation":75
+				"investigation":75,
+				"str":75,
+				"agl":0,
+				"dex":75,
+				"cha":25,
+				"stealth":25,
+				"disguise":100,
+				"deception":25,
+				"persuasion":25
 			}
 		},
 		"AC":{
@@ -84,35 +140,75 @@
 			"paradox":2,
 			"skills":{
 				"chronogation":50,
-				"investigation":50
+				"investigation":50,
+				"str":50,
+				"agl":25,
+				"dex":25,
+				"cha":0,
+				"stealth":50,
+				"disguise":50,
+				"deception":25,
+				"persuasion":-25
 			}
 		},
 		"AD":{
 			"name":"Amon Duncan",
 			"skills":{
 				"chronogation":100,
-				"investigation":-25
+				"investigation":-25,
+				"str":100,
+				"agl":75,
+				"dex":25,
+				"cha":25,
+				"stealth":0,
+				"disguise":-25,
+				"deception":-25,
+				"persuasion":25
 			}
 		},
 		"AE":{
 			"name":"Anton Eklund",
 			"skills":{
 				"chronogation":-50,
-				"investigation":150
+				"investigation":150,
+				"str":-50,
+				"agl":-25,
+				"dex":25,
+				"cha":-25,
+				"stealth":25,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":-25
 			}
 		},
 		"AF":{
 			"name":"Ambrose Fenwick",
 			"skills":{
 				"chronogation":75,
-				"investigation":0
+				"investigation":0,
+				"str":0,
+				"agl":50,
+				"dex":50,
+				"cha":75,
+				"stealth":25,
+				"disguise":150,
+				"deception":75,
+				"persuasion":50
 			}
 		},
 		"AG":{
 			"name":"Aurelio Garza",
 			"skills":{
 				"chronogation":150,
-				"investigation":-50
+				"investigation":-50,
+				"str":25,
+				"agl":50,
+				"dex":75,
+				"cha":0,
+				"stealth":0,
+				"disguise":-25,
+				"deception":0,
+				"persuasion":0
 			}
 		},
 		"AH":{
@@ -120,42 +216,90 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":50,
-				"investigation":25
+				"investigation":25,
+				"str":75,
+				"agl":75,
+				"dex":50,
+				"cha":-25,
+				"stealth":50,
+				"disguise":0,
+				"deception":0,
+				"persuasion":-25
 			}
 		},
 		"AI":{
 			"name":"Aldous Ingram",
 			"skills":{
 				"chronogation":-25,
-				"investigation":100
+				"investigation":100,
+				"str":-50,
+				"agl":-25,
+				"dex":25,
+				"cha":75,
+				"stealth":25,
+				"disguise":100,
+				"deception":50,
+				"persuasion":75
 			}
 		},
 		"AJ":{
 			"name":"Asher Jansen",
 			"skills":{
 				"chronogation":100,
-				"investigation":25
+				"investigation":25,
+				"str":0,
+				"agl":75,
+				"dex":50,
+				"cha":-50,
+				"stealth":125,
+				"disguise":-25,
+				"deception":-25,
+				"persuasion":-50
 			}
 		},
 		"AK":{
 			"name":"Arjun Kasliwal",
 			"skills":{
 				"chronogation":0,
-				"investigation":75
+				"investigation":75,
+				"str":0,
+				"agl":0,
+				"dex":25,
+				"cha":100,
+				"stealth":0,
+				"disguise":50,
+				"deception":125,
+				"persuasion":150
 			}
 		},
 		"AL":{
 			"name":"Abram Lowe",
 			"skills":{
 				"chronogation":50,
-				"investigation":0
+				"investigation":0,
+				"str":150,
+				"agl":-25,
+				"dex":0,
+				"cha":25,
+				"stealth":-75,
+				"disguise":25,
+				"deception":-25,
+				"persuasion":50
 			}
 		},
 		"AM":{
 			"name":"Amadou Mensah",
 			"skills":{
 				"chronogation":25,
-				"investigation":50
+				"investigation":50,
+				"str":25,
+				"agl":-25,
+				"dex":25,
+				"cha":100,
+				"stealth":-25,
+				"disguise":75,
+				"deception":100,
+				"persuasion":100
 			}
 		},
 		"AN":{
@@ -163,42 +307,90 @@
 			"paradox":2,
 			"skills":{
 				"chronogation":25,
-				"investigation":100
+				"investigation":100,
+				"str":-50,
+				"agl":-50,
+				"dex":25,
+				"cha":75,
+				"stealth":100,
+				"disguise":100,
+				"deception":50,
+				"persuasion":50
 			}
 		},
 		"AO":{
 			"name":"Alden Orme",
 			"skills":{
 				"chronogation":-75,
-				"investigation":125
+				"investigation":125,
+				"str":-25,
+				"agl":-25,
+				"dex":25,
+				"cha":-50,
+				"stealth":100,
+				"disguise":50,
+				"deception":-50,
+				"persuasion":-25
 			}
 		},
 		"AP":{
 			"name":"Aurelien Pascal",
 			"skills":{
 				"chronogation":125,
-				"investigation":-25
+				"investigation":-25,
+				"str":0,
+				"agl":75,
+				"dex":100,
+				"cha":100,
+				"stealth":0,
+				"disguise":25,
+				"deception":150,
+				"persuasion":75
 			}
 		},
 		"AQ":{
 			"name":"Anya Quill",
 			"skills":{
 				"chronogation":0,
-				"investigation":100
+				"investigation":100,
+				"str":-25,
+				"agl":0,
+				"dex":50,
+				"cha":0,
+				"stealth":25,
+				"disguise":25,
+				"deception":50,
+				"persuasion":25
 			}
 		},
 		"AR":{
 			"name":"Ayumi Reyes",
 			"skills":{
 				"chronogation":125,
-				"investigation":0
+				"investigation":0,
+				"str":25,
+				"agl":100,
+				"dex":75,
+				"cha":50,
+				"stealth":-50,
+				"disguise":0,
+				"deception":25,
+				"persuasion":25
 			}
 		},
 		"AS":{
 			"name":"Ava Sato",
 			"skills":{
 				"chronogation":25,
-				"investigation":75
+				"investigation":75,
+				"str":-25,
+				"agl":25,
+				"dex":25,
+				"cha":150,
+				"stealth":25,
+				"disguise":125,
+				"deception":125,
+				"persuasion":125
 			}
 		},
 		"AT":{
@@ -206,28 +398,60 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":-25,
-				"investigation":75
+				"investigation":75,
+				"str":25,
+				"agl":25,
+				"dex":50,
+				"cha":-25,
+				"stealth":150,
+				"disguise":100,
+				"deception":50,
+				"persuasion":-25
 			}
 		},
 		"AU":{
 			"name":"Aurora Ueda",
 			"skills":{
 				"chronogation":75,
-				"investigation":25
+				"investigation":25,
+				"str":75,
+				"agl":100,
+				"dex":50,
+				"cha":-25,
+				"stealth":25,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":-25
 			}
 		},
 		"AV":{
 			"name":"Asha Varga",
 			"skills":{
 				"chronogation":125,
-				"investigation":25
+				"investigation":25,
+				"str":-25,
+				"agl":25,
+				"dex":0,
+				"cha":75,
+				"stealth":50,
+				"disguise":0,
+				"deception":0,
+				"persuasion":75
 			}
 		},
 		"AW":{
 			"name":"Aislin Wren",
 			"skills":{
 				"chronogation":50,
-				"investigation":50
+				"investigation":50,
+				"str":25,
+				"agl":50,
+				"dex":50,
+				"cha":0,
+				"stealth":75,
+				"disguise":25,
+				"deception":0,
+				"persuasion":0
 			}
 		},
 		"AX":{
@@ -235,7 +459,15 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":150,
-				"investigation":-75
+				"investigation":-75,
+				"str":25,
+				"agl":50,
+				"dex":25,
+				"cha":25,
+				"stealth":-25,
+				"disguise":-50,
+				"deception":-50,
+				"persuasion":25
 			}
 		},
 		"AY":{
@@ -243,56 +475,120 @@
 			"paradox":2,
 			"skills":{
 				"chronogation":50,
-				"investigation":50
+				"investigation":50,
+				"str":50,
+				"agl":50,
+				"dex":50,
+				"cha":25,
+				"stealth":50,
+				"disguise":-25,
+				"deception":0,
+				"persuasion":25
 			}
 		},
 		"AZ":{
 			"name":"Anika Zeller",
 			"skills":{
 				"chronogation":-50,
-				"investigation":125
+				"investigation":125,
+				"str":0,
+				"agl":0,
+				"dex":50,
+				"cha":50,
+				"stealth":75,
+				"disguise":25,
+				"deception":25,
+				"persuasion":50
 			}
 		},
 		"BA":{
 			"name":"Blythe Asano",
 			"skills":{
 				"chronogation":100,
-				"investigation":25
+				"investigation":25,
+				"str":50,
+				"agl":75,
+				"dex":50,
+				"cha":100,
+				"stealth":25,
+				"disguise":25,
+				"deception":25,
+				"persuasion":100
 			}
 		},
 		"BB":{
 			"name":"Bianca Brandt",
 			"skills":{
 				"chronogation":25,
-				"investigation":75
+				"investigation":75,
+				"str":0,
+				"agl":0,
+				"dex":125,
+				"cha":-25,
+				"stealth":0,
+				"disguise":25,
+				"deception":50,
+				"persuasion":-25
 			}
 		},
 		"BC":{
 			"name":"Bree Castellanos",
 			"skills":{
 				"chronogation":50,
-				"investigation":50
+				"investigation":50,
+				"str":50,
+				"agl":50,
+				"dex":125,
+				"cha":0,
+				"stealth":50,
+				"disguise":0,
+				"deception":0,
+				"persuasion":0
 			}
 		},
 		"BD":{
 			"name":"Brigid Dunne",
 			"skills":{
 				"chronogation":0,
-				"investigation":75
+				"investigation":75,
+				"str":0,
+				"agl":0,
+				"dex":25,
+				"cha":100,
+				"stealth":50,
+				"disguise":75,
+				"deception":50,
+				"persuasion":75
 			}
 		},
 		"BE":{
 			"name":"Beatriz Esteves",
 			"skills":{
 				"chronogation":50,
-				"investigation":25
+				"investigation":25,
+				"str":25,
+				"agl":50,
+				"dex":150,
+				"cha":50,
+				"stealth":0,
+				"disguise":25,
+				"deception":0,
+				"persuasion":50
 			}
 		},
 		"BF":{
 			"name":"Bodil Falk",
 			"skills":{
 				"chronogation":75,
-				"investigation":-25
+				"investigation":-25,
+				"str":50,
+				"agl":50,
+				"dex":150,
+				"cha":-50,
+				"stealth":150,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":-50
 			}
 		},
 		"BG":{
@@ -300,14 +596,30 @@
 			"paradox":1,
 			"skills":{
 				"chronogation":50,
-				"investigation":100
+				"investigation":100,
+				"str":-25,
+				"agl":0,
+				"dex":50,
+				"cha":-25,
+				"stealth":50,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":-25
 			}
 		},
 		"BH":{
 			"name":"Beatrix Hsu",
 			"skills":{
 				"chronogation":-25,
-				"investigation":150
+				"investigation":150,
+				"str":-25,
+				"agl":0,
+				"dex":75,
+				"cha":0,
+				"stealth":0,
+				"disguise":25,
+				"deception":25,
+				"persuasion":25
 			}
 		},
 		"BI":{
@@ -315,21 +627,45 @@
 			"paradox":2,
 			"skills":{
 				"chronogation":100,
-				"investigation":50
+				"investigation":50,
+				"str":-25,
+				"agl":0,
+				"dex":50,
+				"cha":25,
+				"stealth":0,
+				"disguise":-25,
+				"deception":-25,
+				"persuasion":50
 			}
 		},
 		"BJ":{
 			"name":"Brynn Jaeger",
 			"skills":{
 				"chronogation":200,
-				"investigation":-50
+				"investigation":-50,
+				"str":50,
+				"agl":75,
+				"dex":75,
+				"cha":25,
+				"stealth":-50,
+				"disguise":-75,
+				"deception":0,
+				"persuasion":0
 			}
 		},
 		"BK":{
 			"name":"Beatrice Kaur",
 			"skills":{
 				"chronogation":50,
-				"investigation":75
+				"investigation":75,
+				"str":0,
+				"agl":25,
+				"dex":25,
+				"cha":25,
+				"stealth":125,
+				"disguise":75,
+				"deception":50,
+				"persuasion":75
 			}
 		},
 		"BL":{
@@ -337,7 +673,15 @@
 			"paradox":3,
 			"skills":{
 				"chronogation":25,
-				"investigation":50
+				"investigation":50,
+				"str":50,
+				"agl":100,
+				"dex":-25,
+				"cha":50,
+				"stealth":50,
+				"disguise":50,
+				"deception":75,
+				"persuasion":75
 			}
 		}
 	}

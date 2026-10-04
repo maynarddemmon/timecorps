@@ -84,6 +84,9 @@
             getActionSkillExpr: function(actionId=ACTION_TYPE_SINGULAR) {
                 return this[PREFIX_SKILL_EXPR + actionId] ?? pkg.getSkillCheckExpr(this.getActionSkillType(actionId));
             },
+            getActionSkillName: function(actionId=ACTION_TYPE_SINGULAR) {
+                return pkg.getSkillName(this.getActionSkillType(actionId));
+            },
             getActionSkillType: function(actionId=ACTION_TYPE_SINGULAR) {
                 return this[PREFIX_SKILL_TYPE + actionId] ?? actionId;
             }

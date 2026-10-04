@@ -96,7 +96,17 @@ test.describe('checks', () => {
         expect((await evaluateCheck(page, bestOf, {roll:299, skills:{disguise:200}})).success).toBe(false);
         
         // The agent's own data is untouched by the defaulting.
-        expect(await page.evaluate(() => 'deception' in tc.model.getAgentModel('VQ').getSkills())).toBe(false);
+        expect(await page.evaluate(() => {
+            const agent = tc.model.getAgentModel('VQ'),
+                original = agent.getSkills();
+            agent.setSkills({});
+            try {
+                tc.checks.evaluate('agent.skills.deception', {agent});
+                return 'deception' in agent.getSkills();
+            } finally {
+                agent.setSkills(original);
+            }
+        })).toBe(false);
         
         expect(problems.warnings).toEqual([]);
     });

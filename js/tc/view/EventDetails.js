@@ -39,8 +39,8 @@
                 actionModel.getActionSkillExpr(),
                 actionModel.getActionSkillDifficulty()
             );
-            const skillType = actionModel.getActionSkillType();
-            return ICON_ACTION + ' ' + actionModel.label + ' (' + (skillType ? skillType + ' : ' : '') + easePhrase + ')';
+            const name = actionModel.getActionSkillName();
+            return ICON_ACTION + ' ' + actionModel.label + ' (' + (name ? name + ' : ' : '') + easePhrase + ')';
         },
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {

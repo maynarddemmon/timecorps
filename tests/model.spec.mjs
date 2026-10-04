@@ -310,7 +310,7 @@ test('action buttons show the action type and how easy the check is', async ({pa
         tc.model.getAgentModel('VQ').doDeployToEvent(roster);
         tc.app.selectEventBox('roster_reshuffle');
     });
-    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(social : [a-z -]+\)/}).filter({visible:true})).toBeVisible();
+    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(Social : [a-z -]+\)/}).filter({visible:true})).toBeVisible();
     
     // Without an actionType there's no type to show.
     await expect(page.getByRole('button', {name:/Unchecked \([a-z -]+\)$/}).filter({visible:true})).toBeVisible();

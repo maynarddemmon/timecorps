@@ -392,15 +392,43 @@
     /*  The IDs of the skills configured in the data, in the order they were defined. */
     pkg.getSkillIds = () => skillIds;
     
+    pkg.isSkillId = skillId => pkg.getSkillConfig(skillId) != null;
+    
     /*  A skill's config, {name, description}, or undefined if there's no such skill. */
     pkg.getSkillConfig = skillId => skillCfgs[skillId];
     
     /*  The IDs of the default skill checks (action types) configured in the data. */
     pkg.getSkillCheckIds = () => Object.keys(skillCheckDefaults);
     
-    /*  The skill expression of a default skill check, by action type. */
-    pkg.getSkillCheckExpr = actionType => skillCheckDefaults[actionType]?.check ?? DEFAULT_SKILL_EXPR;
+    /*  The skill expression of a default skill check, by action type. If not found an attempt is
+        made to return a simple skill check expression, otherwise a default expression
+        is returned. */
+    pkg.getSkillCheckExpr = actionType => {
+        let expr = skillCheckDefaults[actionType]?.check;
+        if (expr == null) {
+            if (pkg.isSkillId(actionType)) {
+                expr = 'agent.' + SCOPE_SKILLS + '.' + actionType;
+            } else {
+                expr = DEFAULT_SKILL_EXPR;
+            }
+        }
+        return expr;
+    },
     
     /*  The difficulty of a default skill check, by action type. */
     pkg.getSkillDifficulty = actionType => skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY;
+    
+    /*  The difficulty of a default skill check, by action type. */
+    pkg.getSkillName = actionType => {
+        let name = skillCheckDefaults[actionType]?.name;
+        if (name == null) {
+            const skillCfg = pkg.getSkillConfig(actionType);
+            if (skillCfg != null) {
+                name = skillCfg.name;
+            } else {
+                name = actionType;
+            }
+        }
+        return name;
+    }
 })(tc);

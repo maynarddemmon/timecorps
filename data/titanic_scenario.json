@@ -303,7 +303,7 @@
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
-					"skillCheck":{"difficulty":150, "actionType":"social"},
+					"skillCheck":{"difficulty":150, "actionType":"cha"},
 					"set":{"relayToBridge":"true"},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
