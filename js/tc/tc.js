@@ -23,10 +23,10 @@
         
         // Util //
         wrapInStyledSpan = (txt, color, fontFamily) => {
-            const styleParts = [];
-            if (color) styleParts.push({key:'color', value:color});
-            if (fontFamily) styleParts.push({key:'font-family', value:fontFamily});
-            return '<span style="' + styleParts.reduce((accum, part) => accum + part.key + ':' + part.value + ';', '') + '">' + txt + '</span>';
+            let css = '';
+            if (color) css += 'color:' + color + ';';
+            if (fontFamily) css += 'font-family:' + fontFamily + ';';
+            return '<span style="' + css + '">' + txt + '</span>';
         },
         
         DOM_PARSER = new DOMParser(), // Used by stripMarkup
@@ -207,10 +207,8 @@
             },
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 
-                should use this rather than Math.random directly.
-                
-                Rolls are integers in [0, max). A d1000 roll is 0-999, so every value is equally 
-                likely and a check's chance of success comes out as an exact percentage. */
+                should use this rather than Math.random directly. Rolls are integers in [0, max). 
+                The default roll is 0-999. */
             rng: {
                 roll,
                 
@@ -348,7 +346,6 @@
             ICON_ARROW:'\u00A0→\u00A0',
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
-            ICON_ACTION:'⎇', // ⎌ ⎇ ☟
             ICON_JUMP:'⎌',
             ICON_TRAVEL:'⎆', // ⎈
             ICON_VIEW:'⏿',
@@ -356,7 +353,6 @@
             ICON_PARADOX,
             ICON_THE_VOID:'⦰',
             ICON_HQ:'❉',
-            ICON_SEARCH:'?',
             ICON_HELP:'?',
             ICON_NIL:'–',
             ICON_NEXT:'➜',

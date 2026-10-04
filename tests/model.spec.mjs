@@ -384,7 +384,7 @@ test('a sure_thing check only fails on the lowest roll, whatever the agent\'s sk
     });
     
     // MAX_SKILL_EASE keeps a 0.1% chance of failure.
-    const expected = {phrase:'sure thing', roll0:false, roll1:true};
+    const expected = {phrase:'ensured', roll0:false, roll1:true};
     expect(result).toEqual({unskilled:expected, inept:expected});
     expect(problems.warnings).toEqual([]);
 });
@@ -432,7 +432,7 @@ test('a no-roll check succeeds without rolling, whatever the agent\'s skills', a
     });
     
     for (const key of ['investigate', 'byType', 'byAction']) {
-        expect(result[key]).toMatchObject({success:true, roll:null, result:0, ease:0, rollsLeft:1, phrase:'guaranteed'});
+        expect(result[key]).toMatchObject({success:true, roll:null, result:0, ease:0, rollsLeft:1, phrase:'certain'});
     }
     expect(result.text).toBe('Succeeded');
     

@@ -418,11 +418,11 @@
                 btnTxt;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                btnTxt = ICON_HQ + ' Recall to HQ ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = ' Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             } else {
                 const isAlreadyAtEvent = this.isAtEvent(eventModel);
                 disabled = !hasEnoughChronal;
-                btnTxt = (this.isAtHQ() ? 'Deploy' : (isAlreadyAtEvent ? 'Loop' : 'Jump')) + ' Here ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                btnTxt = (this.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
             }
             return {disabled, btnTxt};
         },

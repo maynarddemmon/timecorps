@@ -172,7 +172,7 @@
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
             dividerV.setValue(187);
-            dividerH.setValue(900);
+            dividerH.setValue(800);
             
             loadAllData();
         },
@@ -281,7 +281,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:600, limitToParent:300,
+                width:5, percentOfParentHeight:100, minValue:600, limitToParent:350,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {

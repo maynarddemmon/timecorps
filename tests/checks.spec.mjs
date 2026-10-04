@@ -231,20 +231,20 @@ test.describe('skill checks', () => {
         const phrase = (skill, difficulty) => callOnAgent(page, 'getSkillEasePhrase', ['agent.skills.stealth', difficulty], {skills:{stealth:skill}});
         
         // Each phrase starts at its ease, so one point less is the next phrase down.
-        expect(await phrase(5000, 0)).toBe('sure thing');
-        expect(await phrase(0, 1)).toBe('sure thing');
+        expect(await phrase(5000, 0)).toBe('ensured');
+        expect(await phrase(0, 1)).toBe('ensured');
         expect(await phrase(0, 2)).toBe('trivial');
         expect(await phrase(0, 99)).toBe('trivial');
         expect(await phrase(0, 100)).toBe('very easy');
         expect(await phrase(250, 500)).toBe('easy');
-        expect(await phrase(0, 499)).toBe('toss-up');
-        expect(await phrase(0, 500)).toBe('difficult');
-        expect(await phrase(0, 899)).toBe('extreme');
-        expect(await phrase(0, 900)).toBe('insurmountable');
-        expect(await phrase(0, 5000)).toBe('insurmountable');
+        expect(await phrase(0, 499)).toBe('even');
+        expect(await phrase(0, 500)).toBe('tough');
+        expect(await phrase(0, 899)).toBe('brutal');
+        expect(await phrase(0, 900)).toBe('hopeless');
+        expect(await phrase(0, 5000)).toBe('hopeless');
         
-        // Without the skill check's clamp an ease can reach 'guaranteed' and 'impossible'.
-        expect(await page.evaluate(() => [0, -1000, NaN].map(tc.checks.toEasePhrase))).toEqual(['guaranteed', 'impossible', 'impossible']);
+        // Without the skill check's clamp an ease can reach 'certain' and 'impossible'.
+        expect(await page.evaluate(() => [0, -1000, NaN].map(tc.checks.toEasePhrase))).toEqual(['certain', 'impossible', 'impossible']);
         
         // A queued roll is still there afterwards, so showing a phrase can't use up a roll.
         expect(await page.evaluate(() => {

@@ -18,8 +18,8 @@
             },
             cfg:{RELOAD_CHRONAL_AMOUNT},
             formatChronalAndParadox,
-            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_ACTION, ICON_VIEW, ICON_HQ,
-            ICON_THE_VOID, ICON_SEARCH, ICON_NIL,
+            ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ,
+            ICON_THE_VOID, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
@@ -31,7 +31,7 @@
                 eventModel.getInvestigateSkillExpr(),
                 eventModel.getInvestigateDifficulty()
             );
-            return ICON_SEARCH + ' Investigate (' + easePhrase + ')';
+            return 'Investigate (' + easePhrase + ')';
         },
         
         getActionBtnPhrase = (agentModel, actionModel) => {
@@ -40,7 +40,7 @@
                 actionModel.getActionSkillDifficulty()
             );
             const name = actionModel.getActionSkillName();
-            return ICON_ACTION + ' ' + actionModel.label + ' (' + (name ? name + ICON_SEPARATOR : '') + easePhrase + ')';
+            return actionModel.label + ' (' + (name ? name + ICON_SEPARATOR : '') + easePhrase + ')';
         },
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
@@ -439,13 +439,14 @@
         
         updateForSelectedAgent: function() {
             const self = this,
-                {selectedAgentModel, eventModel, deployAgentBtn, recallAgentBtn} = self,
-                hasEventModel = eventModel != null,
-                hasAgentModel = selectedAgentModel != null,
-                canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled();
+                eventModel = self.eventModel,
+                hasEventModel = eventModel != null;
             
             if (hasEventModel) {
-                const isHQ = eventModel.isHQ();
+                const {selectedAgentModel, deployAgentBtn, recallAgentBtn} = self,
+                    isHQ = eventModel.isHQ(),
+                    hasAgentModel = selectedAgentModel != null,
+                    canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled();
                 recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
                 deployAgentBtn.setVisible(canDirectAgent && !eventModel.isHidden());
                 if (canDirectAgent) {

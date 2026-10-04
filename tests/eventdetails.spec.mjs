@@ -49,7 +49,7 @@ test('a button in a section header does not collapse the section', async ({page}
     const problems = await startGame(page);
     
     await page.evaluate(() => tc.app.selectEventBox('casualties'));
-    await page.getByRole('button', {name:/Jump Here/}).filter({visible:true}).click();
+    await page.getByRole('button', {name:/Jump to/}).filter({visible:true}).click();
     await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('VQ').event)).toBe('casualties');
     expect(await expandedRows(page)).toEqual({agents:true, causators:true});
     

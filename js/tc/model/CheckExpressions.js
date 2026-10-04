@@ -41,16 +41,6 @@
             return new Function(...FUNC_PARAMS, '"use strict";return(' + expr + ');');
         },
         
-        /*  Returns why an expression can't be compiled, or null if it can. For validating data. */
-        getCompileError = expr => {
-            try {
-                build(expr);
-                return null;
-            } catch (err) {
-                return err.message;
-            }
-        },
-        
         compile = expr => {
             let func = COMPILED.get(expr);
             if (!func) {
@@ -99,18 +89,18 @@
         /*  The ease phrase for an ease, by the lowest ease that earns it. The comment is the
             chance of success at that ease. */
         EASE_PHRASES = [
-            [0,    'guaranteed'],     // 100%
-            [-1,   'sure thing'],     // 99.9%
-            [-99,  'trivial'],        // 90.1%
-            [-199, 'very easy'],      // 80.1%
-            [-299, 'easy'],           // 70.1%
-            [-399, 'moderate'],       // 60.1%
-            [-499, 'toss-up'],        // 50.1%
-            [-599, 'difficult'],      // 40.1%
-            [-699, 'hard'],           // 30.1%
-            [-799, 'very hard'],      // 20.1%
-            [-899, 'extreme'],        // 10.1%
-            [-999, 'insurmountable']  // 0.1%
+            [0,    'certain'],   // 100%
+            [-1,   'ensured'],   // 99.9%
+            [-99,  'trivial'],   // 90.1%
+            [-199, 'very easy'], // 80.1%
+            [-299, 'easy'],      // 70.1%
+            [-399, 'fair'],      // 60.1%
+            [-499, 'even'],      // 50.1%
+            [-599, 'tough'],     // 40.1%
+            [-699, 'hard'],      // 30.1%
+            [-799, 'very hard'], // 20.1%
+            [-899, 'brutal'],    // 10.1%
+            [-999, 'hopeless']   // 0.1%
         ],
         toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? 'impossible',
         
@@ -127,11 +117,17 @@
             
             An expression that doesn't compile, throws or isn't a number fails, with a warning. */
         CHECK = pkg.checks = {
-            getCompileError,
+            /*  Returns why an expression can't be compiled, or null if it can. */
+            getCompileError: expr => {
+                try {
+                    build(expr);
+                    return null;
+                } catch (err) {
+                    return err.message;
+                }
+            },
             
-            /*  The compiled function for an expression, cached by the expression text. */
             compile,
-            
             getEase,
             
             /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
