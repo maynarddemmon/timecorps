@@ -20,7 +20,8 @@
                 AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY,
+            CHECK_SKILL_EXPR_PREFIX
         } = pkg,
         
         STARTING_SCORE = 0,
@@ -408,7 +409,7 @@
         let expr = skillCheckDefaults[actionType]?.check;
         if (expr == null) {
             if (pkg.isSkillId(actionType)) {
-                expr = 'agent.' + SCOPE_SKILLS + '.' + actionType;
+                expr = CHECK_SKILL_EXPR_PREFIX + actionType;
             } else {
                 expr = DEFAULT_SKILL_EXPR;
             }

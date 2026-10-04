@@ -21,10 +21,8 @@
             ICON_HQ,
             STAT_ID_PARADOX, STAT_ID_CHRONAL,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_SKILLS
+            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
         } = pkg,
-        
-        CHECK_SKILL_EXPR_PREFIX = 'agent.' + SCOPE_SKILLS + '.',
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL],
         

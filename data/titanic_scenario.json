@@ -303,13 +303,13 @@
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
-					"skillCheck":{"difficulty":150, "actionType":"cha"},
+					"skillCheck":{"actionType":"sure_thing"},
 					"set":{"relayToBridge":"true"},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
 				"noRelay":{
 					"label":"Don't relay to Bridge",
-					"skillCheck":{"difficulty":150, "actionType":"social"},
+					"skillCheck":{"actionType":"cha"},
 					"set":{"relayToBridge":"false"},
 					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
 				}

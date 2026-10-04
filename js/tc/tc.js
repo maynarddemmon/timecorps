@@ -37,6 +37,9 @@
         ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         
+        SCOPE_AGENT = 'agent',
+        SCOPE_SKILLS = 'skills',
+        
         TC = pkg.tc = {
             app:null, // Holds the App instance.
             model:null, // Holds the Model instance.
@@ -278,18 +281,20 @@
                 });
             },
             
+            CHECK_SKILL_EXPR_PREFIX: SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
+            
             // Constraint Scopes
             SCOPE_TIMELINE:'timeline',
             SCOPE_LOCATIONS:'locations',
             SCOPE_OPERATIONS:'operations',
             SCOPE_OPERATION:'operation',
             SCOPE_AGENTS:'agents',
-            SCOPE_AGENT:'agent',
+            SCOPE_AGENT,
             SCOPE_EVENTS:'events',
             SCOPE_EVENT:'event',
             
             // Agent Scopes
-            SCOPE_SKILLS:'skills',
+            SCOPE_SKILLS,
             
             // Stat IDs
             STAT_ID_PARADOX:'paradox',
