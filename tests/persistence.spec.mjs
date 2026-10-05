@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
-import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload, dialogTitle} from './helpers.mjs';
+import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 /*  Save/load round trips. localStorage survives a page reload within a test, so a reload
     exercises the autoload path at startup. */
@@ -257,6 +257,7 @@ test('a restored save keeps the selected event and agent', async ({page}) => {
         tc.app.selectAgentRow('OK');
         tc.app.selectEventBox('casualties');
     });
+    await dismissAgentDossier(page, 'Okonjo');
     await expectSelection(page, {event:'casualties', agent:'OK'});
     await saveGame(page);
     expect((await readSave(page)).data.selection).toEqual({event:'casualties', agent:'OK'});

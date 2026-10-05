@@ -1,7 +1,7 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dialogTitle, ROOT} from './helpers.mjs';
+import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dismissAgentDossier, dialogTitle, ROOT} from './helpers.mjs';
 
 /*  Plays the whole campaign by setting the Causators each mission needs, and checks that every 
     mission opens with its brief, completes, shows its debrief and advances. */
@@ -25,6 +25,7 @@ test('plays through all three missions', async ({page}) => {
     expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');
     await expect(briefHeading('titanic_noCollision')).toBeVisible();
     await dismissMissionBrief(page);
+    await dismissAgentDossier(page, 'Vasquez'); // Given to the player by the mission's setup.
     await setCausator(page, 'roster_reshuffle', 'preventReshuffle', true);
     await setCausator(page, 'engine_order', 'countermandAstern', true);
     await expect(missionComplete).toBeVisible();
@@ -43,12 +44,21 @@ test('plays through all three missions', async ({page}) => {
     await setCausator(page, 'engine_order', 'countermandAstern', false);
     await setCausator(page, 'lifeboat_capacity', 'fullDavits', true);
     await setCausator(page, 'wireless_priority', 'clearBacklogEarlier', true);
+    
+    // Gordon and Pierce are revealed by completing mission 2. Their dossiers open at once, 
+    // while Mission Complete waits for the timeline to finish animating.
+    await dismissAgentDossier(page, 'Gordon');
+    await dismissAgentDossier(page, 'Pierce');
     await expect(missionComplete).toBeVisible();
     await expect(page.getByText('almost everyone she carried lived', {exact:false})).toBeVisible();
     await dialogNextMission.click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('lusitania_nosink');
+    
+    // Mission 3's setup gives the player Pierce, who is already visible, so no dossier.
     await expect(briefHeading('lusitania_nosink')).toBeVisible();
     await dismissMissionBrief(page);
+    await page.waitForTimeout(300);
+    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     
     // Mission 3: Lusitania escorted to safety. The last mission has no Next Mission button.
     await setCausator(page, 'admiralty_warnings', 'escortDispatched', true);

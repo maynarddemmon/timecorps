@@ -66,20 +66,26 @@ test('an ack opened during a confirm waits for it, then shows with focus', async
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('queued acks keep their order when a confirm opens over an ack', async ({page}) => {
+test('a confirm opened while an ack shows waits its turn with the acks', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => {
         const {openConfirmMsgDialog, openAckMsgDialog} = tc.dialogUtil;
         openAckMsgDialog('Ack 1', 'Showing first.');
-        openConfirmMsgDialog('Confirm Over', 'Opened over the ack.');
+        openConfirmMsgDialog('Confirm Queued', 'Opened while the ack shows.');
         openAckMsgDialog('Ack 2', 'Queued.');
         openAckMsgDialog('Ack 3', 'Queued.');
     });
     
-    // Cancel the confirm, then dismiss the acks in turn.
+    await expect(visibleText(page, 'Ack 1')).toBeVisible();
+    await expect(visibleText(page, 'Confirm Queued')).toHaveCount(0);
+    await visibleButton(page, /Acknowledge/).click();
+    
+    // Cancel the confirm, then dismiss the remaining acks in turn.
+    await expect(visibleText(page, 'Confirm Queued')).toBeVisible();
+    await expect(visibleText(page, 'Ack 2')).toHaveCount(0);
     await page.keyboard.press('Escape');
-    await expect(visibleText(page, 'Confirm Over')).toHaveCount(0);
-    for (const title of ['Ack 1', 'Ack 2', 'Ack 3']) {
+    await expect(visibleText(page, 'Confirm Queued')).toHaveCount(0);
+    for (const title of ['Ack 2', 'Ack 3']) {
         await expect(visibleText(page, title)).toBeVisible();
         await visibleButton(page, /Acknowledge/).click();
         await expect(visibleText(page, title)).toHaveCount(0);

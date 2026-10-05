@@ -43,8 +43,8 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true} = {}) =
     await page.goto('/index.html');
     await waitForGame(page);
     
-    // A fresh campaign opens with the first mission's brief.
-    if (dismissBrief) await dismissMissionBrief(page);
+    // A fresh campaign opens with the first mission's brief and its Agent's dossier.
+    if (dismissBrief) await dismissCampaignStart(page);
     return problems;
 };
 
@@ -70,15 +70,35 @@ export const dismissMissionBrief = async page => {
     await expect(missionBriefTitle(page)).toHaveCount(0);
 };
 
+/*  Acknowledges the dossier shown when an Agent is revealed. Fails if it isn't 
+    open, or is for some other Agent. */
+export const dismissAgentDossier = async (page, agentName) => {
+    const title = dialogTitle(page, 'Agent Dossier');
+    await expect(title).toBeVisible();
+    if (agentName) await expect(title).toHaveText('Agent Dossier : ' + agentName);
+    await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
+    // The next queued dossier may reuse the dialog at once, so wait for this one's title to go.
+    await expect(agentName ? page.getByText('Agent Dossier : ' + agentName, {exact:true}).filter({visible:true}) : title).toHaveCount(0);
+};
+
+/*  A fresh campaign opens with the first mission's brief, then the dossier of the Agent it 
+    reveals. */
+export const dismissCampaignStart = async page => {
+    await dismissMissionBrief(page);
+    await dismissAgentDossier(page, 'Vasquez');
+};
+
 /*  After a reload: without a save the game starts a fresh campaign, which opens the first 
-    Mission Brief, so pass briefExpected:true to dismiss it. Restoring a save never shows a 
-    brief, since the mission was already set up, so otherwise that's checked. */
+    Mission Brief and then Vasquez's dossier, so pass briefExpected:true to dismiss them. 
+    Restoring a save never shows either, since the mission was already set up, so otherwise 
+    that's checked. */
 const settleAfterReload = async (page, briefExpected) => {
     await waitForGame(page);
     if (briefExpected) {
-        await dismissMissionBrief(page);
+        await dismissCampaignStart(page);
     } else {
         await expect(missionBriefTitle(page)).toHaveCount(0);
+        await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     }
 };
 

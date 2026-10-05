@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, dismissMissionBrief, reloadGame, dialogTitle} from './helpers.mjs';
+import {startGame, dismissMissionBrief, dismissAgentDossier, reloadGame, dialogTitle} from './helpers.mjs';
 
 test('loads with no errors or warnings', async ({page}) => {
     const problems = await startGame(page);
@@ -32,6 +32,7 @@ test('shows the Field Manual on the first visit only, before the Mission Brief',
     await page.getByRole('button', {name:'X Close'}).filter({visible:true}).click();
     await expect(manualTitle).toHaveCount(0);
     await dismissMissionBrief(page);
+    await dismissAgentDossier(page, 'Vasquez');
     
     await reloadGame(page, {briefExpected:true});
     await expect(manualTitle).toHaveCount(0);

@@ -46,7 +46,7 @@
         openAgentDossier = agentModel => {
             if (!readyToHandleEvents) return;
             
-            openWhenClear(() => {
+            return openWhenClear(() => {
                 agentDossier ??= new pkg.AgentDossier(appView);
                 agentDossier.show(agentModel);
                 return agentDossier;

@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, SCENARIO_FILES} from './helpers.mjs';
+import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame} from './helpers.mjs';
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
@@ -118,6 +118,54 @@ test('the dossier lists every configured skill by name, with its description as 
         await expect(skillText).toBeVisible();
         await expect(skillText).toHaveAttribute('title', cfg.description);
     }
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('revealing an agent shows their dossier, after a mission brief opened first', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // As a mission's setup does: open the brief, then reveal.
+    await page.evaluate(() => {
+        tc.app.openMissionBrief(tc.model.getCurrentOperation());
+        tc.model.revealAgents(['OK']);
+    });
+    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    await dismissMissionBrief(page);
+    await dismissAgentDossier(page, 'Okonjo');
+    
+    // Agents who are already visible aren't announced again.
+    await page.evaluate(() => tc.model.revealAgents(['VQ', 'OK']));
+    await page.waitForTimeout(300);
+    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent revealed during play has their dossier shown', async ({page}) => {
+    const problems = await startGame(page);
+    const isHidden = () => page.evaluate(() => tc.model.getAgentModel('HW').isHidden());
+    
+    // Halloway is hidden until his event is attested.
+    expect(await isHidden()).toBe(true);
+    await page.evaluate(() => tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10));
+    await dismissAgentDossier(page, 'Halloway');
+    expect(await isHidden()).toBe(false);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent already visible in a restored save has no dossier shown', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10));
+    await dismissAgentDossier(page, 'Halloway');
+    await page.evaluate(() => tc.persistence.save());
+    
+    // The reload helper fails if any dossier shows.
+    await reloadGame(page);
+    expect(await page.evaluate(() => tc.model.getAgentModel('HW').isHidden())).toBe(false);
+    await page.waitForTimeout(1500);
+    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });
