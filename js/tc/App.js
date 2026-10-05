@@ -43,6 +43,16 @@
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
         
+        openAgentDossier = agentModel => {
+            if (!readyToHandleEvents) return;
+            
+            openWhenClear(() => {
+                agentDossier ??= new pkg.AgentDossier(appView);
+                agentDossier.show(agentModel);
+                return agentDossier;
+            });
+        },
+        
         // Help //
         HELP_SEEN_KEY = 'tc.helpSeen',
         hasSeenHelp = () => {
@@ -105,15 +115,15 @@
                             teamView.setup(model);
                             model.reset();
                             
-                            readyToHandleEvents = true;
-                            
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistence.captureBaseline();
                             const startCampaign = () => {
                                 if (persistence.hasSave()) {
                                     const restoreProblem = persistence.restore();
+                                    readyToHandleEvents = true;
                                     if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
                                 } else {
+                                    readyToHandleEvents = true;
                                     model.setCurrentOperation(model.getInitialOperation());
                                 }
                                 updateLastSaved();
@@ -449,11 +459,11 @@
             });
         },
         
-        /*  Called when an Operation has been setup successfully */
-        notifyOperationBegun: operationModel => {
-            if (!readyToHandleEvents) return;
-            
-            appView.openMissionBrief(operationModel);
+        notifyAgentLocOrVisChange: function(agentModel, isHiddenChange) {
+            if (isHiddenChange && agentModel && agentModel.inited && !agentModel.isHidden()) {
+                openAgentDossier(agentModel);
+            }
+            timelineView.notifyAgentLocOrVisChange(agentModel);
         },
         
         openSettings: () => {
@@ -473,11 +483,7 @@
             });
         },
         
-        openAgentDossier: agentModel => {
-            agentDossier ??= new pkg.AgentDossier(appView);
-            agentDossier.show(agentModel);
-            return agentDossier;
-        },
+        openAgentDossier,
         
         openAreaBrief: locationModel => {
             areaBrief ??= new pkg.AreaBrief(appView);

@@ -271,10 +271,10 @@
             if (!this.setupApplied) {
                 const rootModel = pkg.model;
                 rootModel.adjustHistoricity(this.getHistoricityAdjustments());
+                pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
                 this.setupApplied = true;
-                pkg.app.notifyOperationBegun(this);
             }
         },
         

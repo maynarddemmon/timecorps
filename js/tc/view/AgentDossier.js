@@ -135,8 +135,8 @@
         },
         
         hide: function(ignoreRestoreFocus) {
-            this.callSuper(ignoreRestoreFocus);
             this.setAgentModel();
+            this.callSuper(ignoreRestoreFocus);
         }
     });
 })(tc);

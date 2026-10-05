@@ -302,7 +302,7 @@
             // selection, which the saved selection should override.
             if (obj.selection) pkg.app.restoreSelectionForLoad(obj.selection);
             
-            timelineView.notifyAgentLocOrVisChange();
+            pkg.app.notifyAgentLocOrVisChange();
         },
         
         

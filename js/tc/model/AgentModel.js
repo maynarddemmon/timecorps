@@ -220,7 +220,7 @@
                 accrueEntryParadox(this, newEventModel);
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
-                pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
+                pkg.app.notifyAgentLocOrVisChange(this, false);
             }
         },
         
@@ -244,7 +244,7 @@
             if (this.inited) {
                 if (!hidden) this.stampArrival();
                 this.notifyCollectionOfUpdate();
-                pkg.app.getTimelineView().notifyAgentLocOrVisChange(this);
+                pkg.app.notifyAgentLocOrVisChange(this, true);
             }
         },
         

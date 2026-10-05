@@ -294,7 +294,7 @@
         });
     
     pkg.dialogUtil = {
-        openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => {
+        openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => openWhenClear(() => {
             confirmMsgDialog ??= new ConfirmMsgDialog(pkg.app);
             confirmMsgDialog.show(title, msg, confirmFunc, cancelFunc);
             // Always set both labels since the dialog is shared.
@@ -302,7 +302,7 @@
             footer.confirmBtn.setText(confirmLabel);
             footer.cancelBtn.setText(cancelLabel);
             return confirmMsgDialog;
-        },
+        }),
         openAckMsgDialog,
         openWhenClear
     };
