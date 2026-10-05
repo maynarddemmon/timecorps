@@ -21,6 +21,7 @@
         
         agentDossier,
         areaBrief,
+        missionBrief,
         settingsDialog;
     
     const JSClass = JS.Class,
@@ -30,7 +31,7 @@
         
         {
             SquareBtn, WideView,
-            dialogUtil:{openConfirmMsgDialog, openAckMsgDialog},
+            dialogUtil:{openConfirmMsgDialog, openAckMsgDialog, openWhenClear},
             theme:{
                 layoutSpacing, spacing, padding, 
                 colorUltraLight, colorLight, colorMedium, colorUltraDark,
@@ -171,7 +172,7 @@
             
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
-            dividerV.setValue(187);
+            dividerV.setValue(133);
             dividerH.setValue(800);
             
             loadAllData();
@@ -363,6 +364,7 @@
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);
+                    missionBrief?.notifyOperationModelChanged(instanceModel);
                     break;
                 case SCOPE_LOCATIONS:
                     areaBrief?.notifyLocationModelChanged(instanceModel);
@@ -451,10 +453,7 @@
         notifyOperationBegun: operationModel => {
             if (!readyToHandleEvents) return;
             
-            openAckMsgDialog(
-                'Mission Brief : ' + pkg.wrapInStyledSpan(operationModel.getName(), colorUltraLight), 
-                operationModel.getDescription()
-            );
+            appView.openMissionBrief(operationModel);
         },
         
         openSettings: () => {
@@ -484,6 +483,15 @@
             areaBrief ??= new pkg.AreaBrief(appView);
             areaBrief.show(locationModel);
             return areaBrief;
-        }
+        },
+        
+        /*  Takes its turn with the other ack and confirm dialogs, e.g. a new mission's brief
+            waits for the previous mission's Mission Complete. Returns the MissionBrief, or 
+            undefined if it's waiting its turn. */
+        openMissionBrief: operationModel => openWhenClear(() => {
+            missionBrief ??= new pkg.MissionBrief(appView);
+            missionBrief.show(operationModel);
+            return missionBrief;
+        })
     });
 })(tc);

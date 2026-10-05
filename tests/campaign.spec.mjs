@@ -14,8 +14,8 @@ test('plays through all three missions', async ({page}) => {
         headerNextMission = visibleButton('Next Mission ➜').first(),
         dialogClose = visibleButton('X Close'),
         
-        // Text in the Mission Brief, which is an ack dialog. The same text is also in the Mission panel.
-        briefText = text => page.locator('.myt-AckMsgDialog').getByText(text, {exact:false});
+        // Text in the Mission Brief's field notes.
+        briefText = text => page.locator('.myt-MissionBrief').getByText(text, {exact:false});
     
     // Mission 1: Titanic avoids the iceberg. Keep the locker key aboard and don't reverse.
     expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');

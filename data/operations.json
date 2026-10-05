@@ -5,7 +5,6 @@
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
 			"description":[
-				"Prevent the Titanic from colliding with the iceberg.",
 				{
 					"text":"Too few lifeboats means a massive loss of life is imminent.",
 					"hidden":"events.casualties.attestation.value < 20 || !events.casualties.values.massLossOfLife.value"

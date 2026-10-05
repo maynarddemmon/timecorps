@@ -87,8 +87,6 @@
                 x:padding, percentOfParentWidthOffset:-2*padding, visible:false
             });
             
-            self.descriptionRow = new DetailRow(detailsContainer, {label:'Description'});
-            
             const objectivesRow = self.objectivesRow = new MiniPanel(detailsContainer, {
                 title:'Objectives', percentOfParentWidth:100
             }, [GrandWidthMixin, SizeToParent, {
@@ -96,10 +94,15 @@
                     this.getContentView().destroyAllSubviews();
                 }
             }]);
-            self.progressView = new pkg.LabeledValue(objectivesRow.getHeaderView(), {label:'Progress', fontSize:fontSizeMedium});
+            self.progressView = new pkg.LabeledValue(objectivesRow.getHeaderView(), {y:2, label:'Progress', fontSize:fontSizeMedium});
             new SpacedLayout(objectivesRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
-            new SpacedLayout(detailsContainer, {axis:'y', inset:spacing, spacing:spacing, collapseParent:true});
+            new SpacedLayout(detailsContainer, {axis:'y', spacing:spacing, collapseParent:true});
+            
+            // The title opens the Mission Brief, which has the mission's full description.
+            const titleView = self.getTitleView();
+            titleView.setCursor('pointer');
+            self.attachToDom(titleView, '_doTitleClick', 'click');
             
             self.ready = true;
             
@@ -153,8 +156,6 @@
                 progressView.setValueTextColor(completed ? colorSuccess : colorError);
                 self.proceedBtn.setVisible(operationModel.canProceed());
                 
-                self.descriptionRow.setValue(operationModel.getDescription());
-                
                 // Agent Information //
                 const objectivesRow = self.objectivesRow;
                 objectivesRow.clearContent();
@@ -169,7 +170,16 @@
         },
         
         updateTitle: function() {
-            this.setTitle(ICON_MISSION + ' ' + pkg.wrapInStyledSpan(this.operationModel?.name ?? 'none', colorUltraLight));
+            const opName = this.operationModel?.name ?? 'none';
+            this.setTitle(
+                ICON_MISSION + ' ' + pkg.wrapInStyledSpan(opName, colorUltraLight),
+                'Open the mission brief for: ' + opName
+            );
+        },
+        
+        /** @private */
+        _doTitleClick: function(_event) {
+            if (this.operationModel) pkg.app.openMissionBrief(this.operationModel);
         }
     });
 })(tc);

@@ -486,7 +486,11 @@
         },
         
         updateTitle: function() {
-            this.setTitle(ICON_EVENT + ' ' + pkg.wrapInStyledSpan(this.eventModel?.name ?? 'none', colorUltraLight));
+            const eventName = this.eventModel?.name ?? 'none';
+            this.setTitle(
+                ICON_EVENT + ' ' + pkg.wrapInStyledSpan(eventName, colorUltraLight),
+                'Historical Event : ' + eventName
+            );
         }
     });
 })(tc);

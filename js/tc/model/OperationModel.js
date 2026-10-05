@@ -72,10 +72,24 @@
         });
     
     pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
-        include: [ConstrainableAttrSupport, Describable],
+        include: [ConstrainableAttrSupport, Describable, pkg.MediaSupport],
         
         /** @overrides ConstrainableAttrSupport */
         getConstraintScopeName: () => SCOPE_OPERATION,
+        
+        /** @overrides MediaSupport */
+        getMediaFolder: () => 'mission',
+        
+        /*  Unlike Agents and Locations, an Operation's image is optional, so it only has one
+            when the data says "image":true. Without one there's nothing to load, and no 
+            failed request for a missing file. */
+        setImage: function(v) {this.image = v === true;},
+        hasImage: function() {return this.image === true;},
+        
+        /** @overrides MediaSupport */
+        getMediaUrls: function() {
+            return this.hasImage() ? this.callSuper() : [null, null];
+        },
         
         
         // Life Cycle //////////////////////////////////////////////////////

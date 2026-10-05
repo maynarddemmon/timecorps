@@ -1,0 +1,9 @@
+OPERATION TITANIC — Avoid the Iceberg
+
+RMS Titanic, the White Star Line's newest and largest liner, left Southampton on her maiden voyage on 10 April 1912 with more than 2,200 people aboard. At 23:40 on 14 April, south of the Grand Banks of Newfoundland, she struck an iceberg on her starboard bow. She sank at 02:20 the next morning, and more than 1,500 people died.
+
+Your objective is to prevent the collision. The Titanic must pass the iceberg untouched.
+
+Analysts have traced the collision to a chain of small failures, any of which an agent may be able to break. The lookouts in the crow's nest had no binoculars. Ice warnings from other ships reached the wireless room but not the officers on watch. And when the berg was finally sighted, the orders given on the bridge may have made the turn harder rather than easier.
+
+Agent Vasquez has been deployed to the bridge in the minutes before the collision. Investigate what you can reach, and follow the record back to where the chain can be broken.

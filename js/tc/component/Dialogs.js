@@ -149,8 +149,23 @@
             }
         }),
         
+        /*  Dialogs that take turns. While one is showing, acks and anything opened with 
+            dialogUtil.openWhenClear wait, and the next one opens once it hides. */
+        QueuedDialog = pkg.QueuedDialog = new JSModule('QueuedDialog', {
+            show: function(...args) {
+                this.callSuper(...args);
+                showingQueuedDialogs.add(this);
+            },
+            
+            hide: function(ignoreRestoreFocus) {
+                this.callSuper(ignoreRestoreFocus);
+                showingQueuedDialogs.delete(this);
+                drainDialogQueue();
+            }
+        }),
+        
         ConfirmDialog = pkg.ConfirmDialog = new JSClass('ConfirmDialog', ModalDialog, {
-            include: [ThreeColFooter],
+            include: [ThreeColFooter, QueuedDialog],
             
             initNode: function(parent, attrs) {
                 const self = this;
@@ -182,11 +197,6 @@
             doCancel: function() {
                 const doNotClose = this.getRef(REF_ID_CANCEL_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
-            },
-            
-            hide: function(ignoreRestoreFocus) {
-                this.callSuper(ignoreRestoreFocus);
-                drainAckMsgQueue();
             }
         }),
         
@@ -225,7 +235,7 @@
         }),
         
         AckDialog = pkg.AckDialog = new JSClass('AckDialog', ModalDialog, {
-            include: [ThreeColFooter],
+            include: [ThreeColFooter, QueuedDialog],
             
             initNode: function(parent, attrs) {
                 const self = this;
@@ -243,11 +253,6 @@
             doConfirm: function() {
                 const doNotClose = this.getRef(REF_ID_CONFIRM_FUNC)?.() === true;
                 if (!doNotClose) this.hide();
-            },
-            
-            hide: function(ignoreRestoreFocus) {
-                this.callSuper(ignoreRestoreFocus);
-                drainAckMsgQueue();
             }
         }),
         
@@ -259,23 +264,34 @@
             include: [MsgDialog]
         }),
         
-        /*  Shows the next queued ack once no ack or confirm is showing. Checking first keeps
-            the order: openAckMsgDialog would put a message it can't show at the back. */
-        isAckBlocked = () => ackMsgDialog?.visible || confirmMsgDialog?.visible,
-        drainAckMsgQueue = () => {
-            if (ackMsgQueue.length > 0 && !isAckBlocked()) openAckMsgDialog(...ackMsgQueue.shift());
+        // The QueuedDialogs showing now, and the functions waiting to open a dialog.
+        showingQueuedDialogs = new Set(),
+        dialogQueue = [],
+        
+        /*  Opens what's waiting, in order, until a dialog is showing again. Checking first 
+            keeps the order, since a function that can't show its dialog would requeue it at 
+            the back. */
+        drainDialogQueue = () => {
+            while (dialogQueue.length > 0 && showingQueuedDialogs.size === 0) dialogQueue.shift()();
         },
-        ackMsgQueue = [],
-        openAckMsgDialog = (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => {
-            ackMsgDialog ??= new AckMsgDialog(pkg.app);
-            if (isAckBlocked()) {
-                ackMsgQueue.push([title, msg, confirmFunc, cancelFunc, btnLabel]);
+        
+        /*  Calls openFunc now if no QueuedDialog is showing, returning what it returns. 
+            Otherwise it's called once the dialogs ahead of it have closed, and this returns
+            undefined. */
+        openWhenClear = openFunc => {
+            if (showingQueuedDialogs.size > 0) {
+                dialogQueue.push(openFunc);
             } else {
-                ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
-                if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
-                return ackMsgDialog;
+                return openFunc();
             }
-        };
+        },
+        
+        openAckMsgDialog = (title, msg, confirmFunc, cancelFunc, btnLabel=DEFAULT_ACK_LABEL) => openWhenClear(() => {
+            ackMsgDialog ??= new AckMsgDialog(pkg.app);
+            ackMsgDialog.show(title, msg, confirmFunc, cancelFunc);
+            if (btnLabel) ackMsgDialog.getFooterView().ackBtn.setText(btnLabel);
+            return ackMsgDialog;
+        });
     
     pkg.dialogUtil = {
         openConfirmMsgDialog: (title, msg, confirmFunc, cancelFunc, confirmLabel=DEFAULT_CONFIRM_LABEL, cancelLabel=DEFAULT_CANCEL_LABEL) => {
@@ -287,6 +303,7 @@
             footer.cancelBtn.setText(cancelLabel);
             return confirmMsgDialog;
         },
-        openAckMsgDialog
-    }
+        openAckMsgDialog,
+        openWhenClear
+    };
 })(tc);

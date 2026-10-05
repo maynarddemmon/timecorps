@@ -18,10 +18,11 @@
         
         PHOTO_SIZE = 256;
     
-    pkg.AgentDossier = new JS.Class('AgentDossier', pkg.ModalDialog, {
+    pkg.AgentDossier = new JS.Class('AgentDossier', pkg.AckDialog, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             const self = this;
+            attrs.cancelable ??= true;
             
             self.callSuper(parent, attrs);
             

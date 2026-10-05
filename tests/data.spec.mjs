@@ -191,3 +191,16 @@ test('every skill config has a name and a description', () => {
     }
     expect(problems).toEqual([]);
 });
+
+test('every operation has a mission briefing, and an image if it says it has one', () => {
+    const missing = [];
+    for (const [operationId, operation] of Object.entries(operations)) {
+        const files = ['data/missions/' + operationId + '.txt'];
+        if (operation.image) files.push('img/mission/' + operationId + '.jpg');
+        if (operation.video) files.push('img/mission/' + operationId + '.webm');
+        for (const file of files) {
+            if (!fileExists(file)) missing.push(file);
+        }
+    }
+    expect(missing).toEqual([]);
+});

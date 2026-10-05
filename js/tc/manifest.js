@@ -24,6 +24,7 @@ JS.Packages(file => {
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
     ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
+    file(COMPONENT_ROOT + 'BriefSupport.js').provides('tc.BriefSupport').requires('tc.WideView','tc.MediaView');
     file(COMPONENT_ROOT + 'FloatingText.js').provides('tc.FloatingText').requires('tc');
     file(COMPONENT_ROOT + 'Dialogs.js').provides(
         'tc.dialogUtil','tc.ModalDialog'
@@ -51,7 +52,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
     );
-    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.Describable');
+    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.Describable','tc.MediaSupport');
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
         'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
@@ -76,13 +77,14 @@ JS.Packages(file => {
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog','tc.MediaView');
-    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.MediaView');
+    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.SettingsDialog','tc.FloatingText'
+        'tc.AgentDossier','tc.AreaBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
     );
 });
