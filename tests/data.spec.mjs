@@ -195,7 +195,7 @@ test('every skill config has a name and a description', () => {
 test('every operation has a mission briefing, and an image if it says it has one', () => {
     const missing = [];
     for (const [operationId, operation] of Object.entries(operations)) {
-        const files = ['data/missions/' + operationId + '.txt'];
+        const files = ['data/mission/' + operationId + '.txt'];
         if (operation.image) files.push('img/mission/' + operationId + '.jpg');
         if (operation.video) files.push('img/mission/' + operationId + '.webm');
         for (const file of files) {

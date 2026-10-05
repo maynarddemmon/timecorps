@@ -1,5 +1,7 @@
 import {test, expect} from '@playwright/test';
-import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dialogTitle} from './helpers.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dialogTitle, ROOT} from './helpers.mjs';
 
 /*  Plays the whole campaign by setting the Causators each mission needs, and checks that every 
     mission opens with its brief, completes, shows its debrief and advances. */
@@ -14,12 +16,14 @@ test('plays through all three missions', async ({page}) => {
         headerNextMission = visibleButton('Next Mission ➜').first(),
         dialogClose = visibleButton('X Close'),
         
-        // Text in the Mission Brief's field notes.
-        briefText = text => page.locator('.myt-MissionBrief').getByText(text, {exact:false});
+        // The first line of a mission's briefing file, shown in its Mission Brief.
+        briefHeading = operationId => page.locator('.myt-MissionBrief').getByText(
+            fs.readFileSync(path.join(ROOT, 'data/mission/' + operationId + '.txt'), 'utf8').split(/\r?\n/)[0], {exact:false}
+        );
     
     // Mission 1: Titanic avoids the iceberg. Keep the locker key aboard and don't reverse.
     expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');
-    await expect(briefText('Prevent the Titanic from colliding with the iceberg')).toBeVisible();
+    await expect(briefHeading('titanic_noCollision')).toBeVisible();
     await dismissMissionBrief(page);
     await setCausator(page, 'roster_reshuffle', 'preventReshuffle', true);
     await setCausator(page, 'engine_order', 'countermandAstern', true);
@@ -32,7 +36,7 @@ test('plays through all three missions', async ({page}) => {
     expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');
     await headerNextMission.click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
-    await expect(briefText('the massive loss of life must be prevented')).toBeVisible();
+    await expect(briefHeading('titanic_rescued')).toBeVisible();
     await dismissMissionBrief(page);
     
     // Mission 2: Titanic still sinks, but everyone is saved.
@@ -43,7 +47,7 @@ test('plays through all three missions', async ({page}) => {
     await expect(page.getByText('almost everyone she carried lived', {exact:false})).toBeVisible();
     await dialogNextMission.click();
     await expect.poll(() => getCurrentOperationId(page)).toBe('lusitania_nosink');
-    await expect(briefText('Prevent the sinking of the Lusitania.')).toBeVisible();
+    await expect(briefHeading('lusitania_nosink')).toBeVisible();
     await dismissMissionBrief(page);
     
     // Mission 3: Lusitania escorted to safety. The last mission has no Next Mission button.

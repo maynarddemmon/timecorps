@@ -4,6 +4,7 @@
 	"operations":{
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
+			"image":true,
 			"description":[
 				{
 					"text":"Too few lifeboats means a massive loss of life is imminent.",
@@ -67,6 +68,7 @@
 		
 		"titanic_rescued":{
 			"name":"Titanic - Passengers Rescued",
+			"image":true,
 			"description":[
 				"It is essential that the Titanic sinks, but the massive loss of life must be prevented."
 			],
@@ -114,6 +116,7 @@
 		
 		"lusitania_nosink":{
 			"name":"Lusitania - Doesn't Sink",
+			"image":true,
 			"description":[
 				"Prevent the sinking of the Lusitania."
 			],

@@ -6,7 +6,7 @@ import {startGame, dismissMissionBrief, dialogTitle, ROOT} from './helpers.mjs';
 const brief = page => page.locator('.myt-MissionBrief'),
     
     // The first line of an Operation's briefing file.
-    briefingHeading = operationId => fs.readFileSync(path.join(ROOT, 'data/missions/' + operationId + '.txt'), 'utf8').split(/\r?\n/)[0],
+    briefingHeading = operationId => fs.readFileSync(path.join(ROOT, 'data/mission/' + operationId + '.txt'), 'utf8').split(/\r?\n/)[0],
     
     getBriefState = page => page.evaluate(() => {
         const dialog = tc.app.getSubviews().find(sv => sv.isA(tc.MissionBrief));
@@ -15,20 +15,24 @@ const brief = page => page.locator('.myt-MissionBrief'),
             operationId:dialog.getBriefModel()?.id ?? null,
             photoVisible:dialog._photo.visible,
             fieldNotesVisible:dialog._fieldNotesView.visible,
-            fieldNotes:dialog._fieldNotesView.getValueView().text
+            // A hidden row still holds a placeholder, so only a showing row's text counts.
+            fieldNotes:dialog._fieldNotesView.visible ? dialog._fieldNotesView.getValueView().text : ''
         };
     });
 
-test('a new mission opens with its brief: field notes from the mission and the briefing file', async ({page}) => {
+test('a new mission opens with its brief: the briefing file, and field notes from the mission', async ({page}) => {
     const problems = await startGame(page, {dismissBrief:false});
     
     await expect(dialogTitle(page, 'Mission Brief')).toBeVisible();
     await expect(page.getByText('Mission Brief : Titanic - Avoid the Iceberg', {exact:true}).filter({visible:true})).toBeVisible();
     await expect(brief(page).getByText(briefingHeading('titanic_noCollision'), {exact:false})).toBeVisible();
     
+    // The field notes are the mission's description. The row is hidden when there's none to 
+    // show yet, as for the first mission at the start.
+    const description = await page.evaluate(() => tc.model.getOperationModel('titanic_noCollision').getDescription());
     expect(await getBriefState(page)).toEqual({
-        visible:true, operationId:'titanic_noCollision', photoVisible:false,
-        fieldNotesVisible:true, fieldNotes:await page.evaluate(() => tc.model.getOperationModel('titanic_noCollision').getDescription())
+        visible:true, operationId:'titanic_noCollision', photoVisible:true,
+        fieldNotesVisible:description !== '', fieldNotes:description
     });
     
     await dismissMissionBrief(page);
@@ -93,12 +97,13 @@ test('a mission image is only loaded when the mission has one', async ({page}) =
     await startGame(page);
     expect(await page.evaluate(() => {
         const operationModel = tc.model.getCurrentOperation(),
-            without = operationModel.getMediaUrls();
-        operationModel.setImage(true);
+            withImage = operationModel.getMediaUrls();
+        operationModel.setImage(false);
+        const without = operationModel.getMediaUrls();
         try {
-            return [without, operationModel.getMediaUrls()];
+            return [without, withImage];
         } finally {
-            operationModel.setImage(false);
+            operationModel.setImage(true);
         }
     })).toEqual([[null, null], ['./img/mission/titanic_noCollision.jpg', null]]);
 });
