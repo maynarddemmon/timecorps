@@ -210,15 +210,8 @@
             },
             
             formatForTimeline: date => {
-                const d = toDate(date),
-                    era = toEra(d.getUTCFullYear()),
-                    year = eraLabel(era),
-                    day = d.getUTCDate(),
-                    month = MONTH_NAMES[d.getUTCMonth()];
-                return {
-                    d:day + ' ' + month + ', ' + year,
-                    t:pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds())
-                };
+                const d = toDate(date);
+                return timeUtil.format(d, TO_DAY) + '<br>' + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
             },
             
             formatCompactRange: (start, end) => {

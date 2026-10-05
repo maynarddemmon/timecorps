@@ -690,11 +690,10 @@
                 
                 this.callSuper(parent, attrs);
                 
-                const labelWidth = TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ,
-                    {d, t} = formatForTimeline(time);
+                const labelWidth = TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ;
                 this._label = new Text(this, {
                     y:TICK_LABEL_ADJ, width:labelWidth, textAlign:'right', 
-                    text:d + '<br>' + t
+                    text:formatForTimeline(time)
                 });
                 this._gapLabel = new PlainText(this, {
                     y:46, width:labelWidth, textAlign:'right', 
