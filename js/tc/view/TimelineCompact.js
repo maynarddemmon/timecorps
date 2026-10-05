@@ -681,8 +681,8 @@
         // Tick //
         Tick = new JSClass('Tick', View, {
             initNode: function(parent, attrs) {
-                const time = this.time = attrs.time,
-                    timeline = this.timeline = attrs.timeline;
+                const time = this.time = attrs.time;
+                this.timeline = attrs.timeline;
                 delete attrs.time;
                 delete attrs.timeline;
                 
