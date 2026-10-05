@@ -28,7 +28,7 @@
         PRECISION_RANK = PRECISION_ORDER.reduce((o, p, i) => (o[p] = i, o), {}),
         
         MONTH_NAMES = [
-            'January','February','March','April','May','June','July','August','September','October','November','December'
+            'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
         ],
         
         MILLIS_PER_SECOND = 1000,
@@ -207,6 +207,18 @@
                     default:
                         return day + ' ' + month + ', ' + year + ICON_SEPARATOR + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
                 }
+            },
+            
+            formatForTimeline: date => {
+                const d = toDate(date),
+                    era = toEra(d.getUTCFullYear()),
+                    year = eraLabel(era),
+                    day = d.getUTCDate(),
+                    month = MONTH_NAMES[d.getUTCMonth()];
+                return {
+                    d:day + ' ' + month + ', ' + year,
+                    t:pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds())
+                };
             },
             
             formatCompactRange: (start, end) => {

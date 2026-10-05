@@ -6,11 +6,11 @@
         {min:mathMin, max:mathMax, floor:mathFloor} = Math,
         
         M = myt,
-        {View, PaddedPlainText, PlainText, Selectable, debounce} = M,
+        {Text, View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
         {
             SquareBtn, Btn, MiniStatBar,
-            timeUtil:{format,formatApproxDuration},
+            timeUtil:{formatApproxDuration,formatForTimeline},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
                 MAX_HISTORY_LENGTH, 
@@ -24,7 +24,7 @@
                 spacing, cornerRadius, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn,
-                fontSizeLarge, fontSizeVeryLarge
+                fontSizeLarge
             },
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
         } = pkg,
@@ -690,14 +690,15 @@
                 
                 this.callSuper(parent, attrs);
                 
-                const labelWidth = TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ;
-                this._label = new PlainText(this, {
+                const labelWidth = TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ,
+                    {d, t} = formatForTimeline(time);
+                this._label = new Text(this, {
                     y:TICK_LABEL_ADJ, width:labelWidth, textAlign:'right', 
-                    text:format(time, timeline.scale)
+                    text:d + '<br>' + t
                 });
                 this._gapLabel = new PlainText(this, {
-                    y:35, width:labelWidth, textAlign:'center', 
-                    fontSize:fontSizeVeryLarge, textColor:colorMediumDark
+                    y:46, width:labelWidth, textAlign:'right', 
+                    fontSize:fontSizeLarge, textColor:colorMediumDark
                 });
             },
             
@@ -716,7 +717,7 @@
                 
                 this.callSuper(parent, attrs);
                 this._label = new PlainText(this, {
-                    y:2, width:TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ, textAlign:'center',
+                    y:2, width:TL_ROW_HEADER_WIDTH - 2*TICK_LABEL_ADJ, textAlign:'right',
                     textColor:colorMediumDark
                 });
             },
@@ -844,12 +845,12 @@
             // Selected Event History Nav
             const btnY = (TL_COL_HEADER_HEIGHT - btnHeight) / 2;
             self.histPrevBtn = new SquareBtn(self, {
-                x:37, y:btnY, buttonType:'plain', disabled:true,
+                x:12, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge,
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
-                x:62, y:btnY, buttonType:'plain', disabled:true,
+                x:39, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge,
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
