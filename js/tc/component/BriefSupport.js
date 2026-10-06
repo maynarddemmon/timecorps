@@ -48,7 +48,8 @@
             
             // Build UI //
             
-            // Hidden until the photo loads. Without one the report fills the whole dialog.
+            // Hidden until the photo loads. Without one the report fills the whole dialog unless 
+            // the dialog reserves the photo's space
             const photoAttrs = {x:halfPadding, y:halfPadding, height:photoHeight, visible:false},
                 photoMixins = [{
                     doMediaReady: function() {

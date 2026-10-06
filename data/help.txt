@@ -10,9 +10,9 @@ Each column is a location and each box is a historical event, with time running 
 Select an agent, select an event, then Deploy (from HQ) or Jump (from another event) to send them there. Time travel costs chronal energy. Recall agents to HQ to reload their chronal from the HQ Chronal Pool.
 
 <span style="font-size:16px;">AT AN EVENT</span>
-? Investigate raises the event's attestation: how much the Corps knows about it. Knowing more reveals more of its account, hidden events connected to it, and the actions an agent can take there.
-⎇ Actions change causators, and the change ripples forward through every event that depends on them.
-⎆ Walk and Wait move an agent to a connected event without spending chronal.
+- Investigate raises the event's attestation: how much the Corps knows about it. Knowing more reveals more of its account, hidden events connected to it, and the actions an agent can take there.
+- Actions change causators, and the change ripples forward through every event that depends on them.
+- Walk and Wait move an agent to a connected event without spending chronal.
 
 <span style="font-size:16px;">PARADOX</span>
 Entering an event an agent has already visited creates paradox. It builds up in the agent, the event and the timeline. If the timeline's paradox passes the Otomo threshold, the campaign is lost.

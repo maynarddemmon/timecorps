@@ -119,6 +119,7 @@
                 
                 TRAVEL_MODE_WAIT:'wait',
                 TRAVEL_MODE_WALK:'walk',
+                TRAVEL_MODE_SWIM:'swim',
                 
                 // The amount of chronal granted when reloading at HQ.
                 RELOAD_CHRONAL_AMOUNT:5,

@@ -12,7 +12,7 @@
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
-                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK
+                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK, TRAVEL_MODE_SWIM
             },
             ICON_SEPARATOR, ICON_NIL,
             SCOPE_EVENT,
@@ -258,6 +258,7 @@
                 switch (this.mode) {
                     case TRAVEL_MODE_WAIT: return 'Wait til';
                     case TRAVEL_MODE_WALK: return 'Walk to';
+                    case TRAVEL_MODE_SWIM: return 'Swim to';
                     default: return 'To';
                 }
             },
