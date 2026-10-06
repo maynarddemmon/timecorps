@@ -23,6 +23,8 @@
             const self = this;
             attrs.cancelable ??= true;
             attrs.photoWidth = attrs.photoHeight = PHOTO_SIZE;
+            // The vitals sit beside the portrait, so the profile never moves up into its space.
+            attrs.reservePhotoSpace = true;
             
             self.callSuper(parent, attrs);
             

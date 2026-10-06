@@ -77,6 +77,32 @@ test('an area brief shows its location photo, or hides it when there is none', a
     expect(problems.pageErrors).toEqual([]);
 });
 
+/*  Where a brief's report panel starts, relative to the bottom of its photo's space. */
+const reportTop = (page, getterSrc) => page.evaluate(getterSrc => {
+    const brief = new Function('return ' + getterSrc)(),
+        photo = brief._photo;
+    return brief._profileView.parent.parent.y - (photo.y + photo.height);
+}, getterSrc);
+
+test('without a photo, an area brief\'s report moves up but a dossier\'s stays below the vitals', async ({page}) => {
+    const problems = await startGame(page);
+    
+    await openBrief(page, '_nexus');
+    await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toMatchObject({visible:false});
+    expect(await reportTop(page, BRIEF_PHOTO.replace('._photo', ''))).toBeLessThan(0);
+    await page.keyboard.press('Escape');
+    
+    await page.evaluate(() => {
+        const agentModel = tc.model.getAgentModel('OK');
+        agentModel.getMediaUrls = () => ['./img/agent/missing.jpg', null];
+        tc.app.openAgentDossier.lastDossier = tc.app.openAgentDossier(agentModel);
+    });
+    await expect.poll(() => mediaState(page, DOSSIER_PORTRAIT)).toMatchObject({visible:false});
+    expect(await reportTop(page, DOSSIER_PORTRAIT.replace('._photo', ''))).toBeGreaterThan(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
 /*  Opens the area brief for each Location with a video and checks the video actually plays,
     then that closing the brief stops it. */
 test('location videos play in the area brief', async ({page}) => {

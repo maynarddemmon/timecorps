@@ -16,6 +16,12 @@
         notes from the model's Describable phrases, and a typed report loaded from a text file.
         Mix into a ModalDialog.
         
+        Attrs:
+            photoWidth - A fixed photo width. Without one the photo spans the dialog.
+            photoHeight - Defaults to 200.
+            reservePhotoSpace - When true the report stays below the photo's space even if 
+                there's no photo, for dialogs that put other views beside the photo.
+        
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
             getBriefReportUrl(model) - Required. The URL of the report text.
@@ -26,41 +32,46 @@
             const self = this,
                 halfPadding = padding / 2,
                 photoWidth = attrs.photoWidth,
-                hasPhotoWidth = photoWidth > 0,
                 photoHeight = attrs.photoHeight ?? 200,
-                profileY = halfPadding + photoHeight + layoutSpacing;
+                reservePhotoSpace = attrs.reservePhotoSpace ?? false,
+                profileY = halfPadding + photoHeight + layoutSpacing,
+                placeProfile = belowPhoto => {
+                    const y = belowPhoto || reservePhotoSpace ? profileY : halfPadding;
+                    profile.setY(y);
+                    profile.setPercentOfParentHeightOffset(-(y + halfPadding));
+                };
             delete attrs.photoWidth;
             delete attrs.photoHeight;
+            delete attrs.reservePhotoSpace;
             
             self.callSuper(parent, attrs);
             
             // Build UI //
             
             // Hidden until the photo loads. Without one the report fills the whole dialog.
-            const photoAttrs = {x:halfPadding, y:halfPadding, height:photoHeight, visible:false};
-            if (hasPhotoWidth) {
+            const photoAttrs = {x:halfPadding, y:halfPadding, height:photoHeight, visible:false},
+                photoMixins = [{
+                    doMediaReady: function() {
+                        this.setVisible(true);
+                        placeProfile(true);
+                    },
+                    doMediaFailed: function() {
+                        this.setVisible(false);
+                        placeProfile(false);
+                    }
+                }];
+            if (photoWidth > 0) {
                 photoAttrs.width = photoWidth;
             } else {
+                photoMixins.unshift(M.SizeToParent);
                 photoAttrs.percentOfParentWidth = 100;
                 photoAttrs.percentOfParentWidthOffset = -padding;
             }
-            self._photo = new pkg.MediaView(self, photoAttrs, [hasPhotoWidth ? {} : M.SizeToParent, {
-                doMediaReady: function() {
-                    this.setVisible(true);
-                    profile.setY(profileY);
-                    profile.setPercentOfParentHeightOffset(-(profileY + halfPadding));
-                },
-                doMediaFailed: function() {
-                    this.setVisible(false);
-                    profile.setY(halfPadding);
-                    profile.setPercentOfParentHeightOffset(-padding);
-                }
-            }]);
+            self._photo = new pkg.MediaView(self, photoAttrs, photoMixins);
             
             const labelWidth = 65,
                 profile = new WideView(self, {
-                    x:halfPadding, y:halfPadding, percentOfParentWidthOffset:-padding,
-                    percentOfParentHeight:100, percentOfParentHeightOffset:-padding,
+                    x:halfPadding, percentOfParentWidthOffset:-padding, percentOfParentHeight:100,
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
                     overflow:'autoy'
                 }),
@@ -82,6 +93,8 @@
             profileViewValue.setFontSize(fontSizeMedium);
             
             new M.SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
+            
+            placeProfile(false);
         },
         
         
