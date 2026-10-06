@@ -566,7 +566,8 @@
 			"location":"titanic.bridge",
 			"investigate":{"difficulty":150},
 			"exits":[
-				{"mode":"walk", "to":"casualties"}
+				{"mode":"walk", "to":"casualties"},
+				{"mode":"wait", "to":"arrival_new_york", "hidden":"event.values.struck.value"}
 			],
 			"values":{
 				"struck":{
@@ -619,6 +620,9 @@
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
 			"investigate":{"difficulty":"no-roll"},
+			"exits":[
+				{"mode":"wait", "to":"arrival_new_york", "hidden":"events.collision.values.struck.value"}
+			],
 			"values":{
 				"massLossOfLife":{
 					"name":"Mass Loss of Life",
@@ -644,6 +648,45 @@
 				{"text":"At 02:20 the boat deck is quiet: a few late passengers taking the air on a cold, clear night, the boats hanging untouched in their davits, and a great ship steaming on toward New York.", "hidden":"events.collision.values.struck.value"},
 				{"text":"<br><br>Twenty boats leave the ship, many of them half full; the first to go carries 28 people in space for 65. Only one boat goes back to search the water, and it finds only a few alive. The Carpathia, racing up from 58 miles away, arrives after 04:00 and takes aboard some 710 people.", "hidden":"event.attestation.value < 20 || !event.values.massLossOfLife.value"},
 				{"text":"<br><br>In a single night, the rules that governed lifeboats on every ship at sea are shown to have been written for a world that no longer exists. Within two years an international convention will demand a place in a boat for everyone aboard.", "hidden":"event.attestation.value < 40 || !event.values.massLossOfLife.value"}
+			]
+		},
+		"arrival_new_york":{
+			"name":"Arrival in NY",
+			"start":"1912-04-17T07:00:00",
+			"duration":{"d":1,"h":15},
+			"location":"new_york.pier_54",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 30",
+			"values":{
+				"arrivingShip":{
+					"name":"Ship Arriving",
+					"value":"!events.collision.values.struck.value ? 'Titanic' : events.californian_nearby.values.rescueResponds.value ? 'Californian' : 'Carpathia'",
+					"description":[
+						{"text":"Titanic comes in at the end of her maiden voyage.", "hidden":"event.values.arrivingShip.value !== 'Titanic'"},
+						{"text":"The Californian brings Titanic’s survivors to New York.", "hidden":"event.values.arrivingShip.value !== 'Californian'"},
+						{"text":"The Carpathia brings Titanic’s survivors to New York.", "hidden":"event.values.arrivingShip.value !== 'Carpathia'"}
+					]
+				},
+				"peopleLanded":{
+					"name":"People Landed",
+					"value":"!events.collision.values.struck.value ? 2224 : events.casualties.values.massLossOfLife.value ? 706 : 2112",
+					"description":[
+						{"text":"Everyone who sailed in her comes ashore.", "hidden":"events.collision.values.struck.value"},
+						{"text":"Almost everyone who sailed in her comes ashore.", "hidden":"!events.collision.values.struck.value || events.casualties.values.massLossOfLife.value"},
+						{"text":"Fewer than a third of those who sailed in her come ashore.", "hidden":"!events.casualties.values.massLossOfLife.value"}
+					]
+				}
+			},
+			"hideAffectedBy":{
+				"californian_nearby":"event.attestation.value < 30"
+			},
+			"description":[
+				{"text":"On the morning of Wednesday 17 April, Titanic comes up through the Narrows at the end of her maiden voyage, flags flying and whistles answering the harbour’s salute. Tugs nose her into the Chelsea Piers, and more than 2,200 passengers and crew come down her gangways into a city that has turned out to see the largest ship in the world.", "hidden":"events.collision.values.struck.value"},
+				{"text":"Titanic was due at the Chelsea Piers on the morning of Wednesday 17 April. She never comes. All day the crowds gather outside the White Star offices on Broadway, reading the lists of names as they are posted.", "hidden":"!events.collision.values.struck.value"},
+				{"text":"<br><br>At about 21:00 on Thursday 18 April, in driving rain, the Carpathia steams up the Hudson. She stops first at White Star’s Pier 59 to set down Titanic’s lifeboats, the only part of the ship to reach New York, then berths here at Pier 54. Tens of thousands of people line the waterfront in near silence as 706 survivors come ashore.", "hidden":"!events.collision.values.struck.value || events.californian_nearby.values.rescueResponds.value"},
+				{"text":"<br><br>On Thursday 18 April the Leyland liner Californian, bound for Boston when she sailed, comes up the Hudson instead with Titanic’s people crammed into every cabin, hold and alleyway of a cargo ship built for a few dozen passengers. She berths here at Pier 54, and 2,112 survivors come ashore to a crowd that has spent two days expecting far worse.", "hidden":"!events.collision.values.struck.value || !events.californian_nearby.values.rescueResponds.value || events.casualties.values.massLossOfLife.value"},
+				{"text":"<br><br>On Thursday 18 April the Leyland liner Californian, bound for Boston when she sailed, comes up the Hudson instead, carrying everyone she could pull from Titanic’s boats. She berths here at Pier 54, and 706 survivors come ashore. Her boats reached the scene first, but there were never enough seats in Titanic’s own.", "hidden":"!events.collision.values.struck.value || !events.californian_nearby.values.rescueResponds.value || !events.casualties.values.massLossOfLife.value"},
+				{"text":"<br><br>Guglielmo Marconi himself goes aboard to find Harold Bride, the surviving wireless operator, whose story will fill the next morning’s front page of The New York Times.", "hidden":"event.attestation.value < 20 || !events.collision.values.struck.value"},
+				{"text":"<br><br>The next morning, in the East Room of the Waldorf-Astoria, Senator William Alden Smith opens the United States Senate inquiry into the disaster. His first witness is J. Bruce Ismay, chairman of the White Star Line, who left the ship in one of the last boats.", "hidden":"event.attestation.value < 40 || !events.casualties.values.massLossOfLife.value"}
 			]
 		}
 	}
