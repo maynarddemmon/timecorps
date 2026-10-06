@@ -6,7 +6,7 @@
         {
             WideView, DetailRow,
             theme:{
-                layoutSpacing, spacing, padding, cornerRadius,
+                layoutSpacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
                 fontSizeMedium, fontSizeHandwritten, fontFamilyMono, fontFamilyHandwritten
             }
@@ -25,18 +25,26 @@
         initNode: function(parent, attrs) {
             const self = this,
                 halfPadding = padding / 2,
+                photoWidth = attrs.photoWidth,
+                hasPhotoWidth = photoWidth > 0,
                 photoHeight = attrs.photoHeight ?? 200,
                 profileY = halfPadding + photoHeight + layoutSpacing;
+            delete attrs.photoWidth;
             delete attrs.photoHeight;
             
             self.callSuper(parent, attrs);
             
-            // Build UI
+            // Build UI //
+            
             // Hidden until the photo loads. Without one the report fills the whole dialog.
-            self._photo = new pkg.MediaView(self, {
-                x:halfPadding, y:halfPadding, percentOfParentWidth:100, percentOfParentWidthOffset:-padding,
-                height:photoHeight, visible:false
-            }, [M.SizeToParent, {
+            const photoAttrs = {x:halfPadding, y:halfPadding, height:photoHeight, visible:false};
+            if (hasPhotoWidth) {
+                photoAttrs.width = photoWidth;
+            } else {
+                photoAttrs.percentOfParentWidth = 100;
+                photoAttrs.percentOfParentWidthOffset = -padding;
+            }
+            self._photo = new pkg.MediaView(self, photoAttrs, [hasPhotoWidth ? {} : M.SizeToParent, {
                 doMediaReady: function() {
                     this.setVisible(true);
                     profile.setY(profileY);
@@ -49,15 +57,16 @@
                 }
             }]);
             
-            const profile = new WideView(self, {
+            const labelWidth = 65,
+                profile = new WideView(self, {
                     x:halfPadding, y:halfPadding, percentOfParentWidthOffset:-padding,
                     percentOfParentHeight:100, percentOfParentHeightOffset:-padding,
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
                     overflow:'autoy'
                 }),
-                profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
-                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {label:'Field Notes'}),
-                profileView = self._profileView = new DetailRow(profileContainer, {label:self.getBriefReportLabel()}),
+                profileContainer = new WideView(profile, {percentOfParentWidthOffset:-labelWidth/1.5}),
+                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {labelWidth, label:'Field Notes'}),
+                profileView = self._profileView = new DetailRow(profileContainer, {labelWidth, label:self.getBriefReportLabel()}),
                 profileViewValue = profileView.getValueView(),
                 fieldNotesValueView = fieldNotesView.getValueView();
             
@@ -72,7 +81,7 @@
             profileViewValue.setFontFamily(fontFamilyMono);
             profileViewValue.setFontSize(fontSizeMedium);
             
-            new M.SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
+            new M.SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
         },
         
         
@@ -116,8 +125,8 @@
         },
         
         hide: function(ignoreRestoreFocus) {
-            this.callSuper(ignoreRestoreFocus);
             this.setBriefModel();
+            this.callSuper(ignoreRestoreFocus);
         }
     });
     

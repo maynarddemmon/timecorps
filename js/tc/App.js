@@ -363,7 +363,7 @@
         notifyModelUpdated: (instanceModel, scopeId) => {
             switch (scopeId) {
                 case SCOPE_AGENTS:
-                    agentDossier?.notifyAgentModelChanged(instanceModel);
+                    agentDossier?.notifyBriefModelChanged(instanceModel);
                     eventDetailsView.notifyEventModelChanged(instanceModel.getEventModel());
                     if (eventDetailsView.selectedAgentModel === instanceModel) {
                         eventDetailsView.updateForSelectedAgent();
@@ -374,10 +374,10 @@
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);
-                    missionBrief?.notifyOperationModelChanged(instanceModel);
+                    missionBrief?.notifyBriefModelChanged(instanceModel);
                     break;
                 case SCOPE_LOCATIONS:
-                    areaBrief?.notifyLocationModelChanged(instanceModel);
+                    areaBrief?.notifyBriefModelChanged(instanceModel);
                     break;
             }
         },

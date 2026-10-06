@@ -1,6 +1,6 @@
 // Regression tests for the constraint scopes, Describable and the causal links.
 import {test, expect} from '@playwright/test';
-import {startGame, readJson} from './helpers.mjs';
+import {startGame, readJson, setCausator} from './helpers.mjs';
 
 test('agent, agents and operations scopes bind and update', async ({page}) => {
     const problems = await startGame(page);
@@ -439,4 +439,37 @@ test('a no-roll check succeeds without rolling, whatever the agent\'s skills', a
     // Anything else that isn't an integer is dropped, with a warning.
     expect(result.badDifficulty).toBe(result.defaultDifficulty);
     expect(problems.warnings).toEqual(['Event roster_reshuffle action bad skill check difficulty must be an integer or "no-roll": {difficulty: no roll}']);
+});
+
+test('the ship that reaches New York, and who it lands, follow the night of the collision', async ({page}) => {
+    const problems = await startGame(page),
+        arrival = () => page.evaluate(() => {
+            const model = tc.model,
+                eventModel = model.getEventModel('arrival_new_york'),
+                {arrivingShip, peopleLanded} = eventModel.getValueModels(),
+                // Waiting for New York is only possible while she stays afloat.
+                waitHidden = id => model.getEventModel(id).getExitModels()
+                    .filter(exitModel => exitModel.getToEventModel() === eventModel)
+                    .map(exitModel => exitModel.isHidden());
+            return {ship:arrivingShip.value, landed:peopleLanded.value, waitHidden:[...waitHidden('collision'), ...waitHidden('casualties')]};
+        });
+    
+    // History: she sinks, and the Carpathia lands the survivors.
+    expect(await arrival()).toEqual({ship:'Carpathia', landed:706, waitHidden:[true, true]});
+    
+    // The Californian answers the call, but there aren't boats for everyone.
+    await setCausator(page, 'wireless_priority', 'clearBacklogEarlier', true);
+    expect(await arrival()).toEqual({ship:'Californian', landed:706, waitHidden:[true, true]});
+    
+    // With boats for everyone, the Californian lands almost everyone.
+    await setCausator(page, 'lifeboat_capacity', 'fullDavits', true);
+    expect(await arrival()).toEqual({ship:'Californian', landed:2112, waitHidden:[true, true]});
+    
+    // No collision: Titanic arrives herself, and both events can wait for her.
+    await setCausator(page, 'ice_warnings', 'relayToBridge', true);
+    await setCausator(page, 'engine_order', 'countermandAstern', true);
+    expect(await arrival()).toEqual({ship:'Titanic', landed:2224, waitHidden:[false, false]});
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
 });

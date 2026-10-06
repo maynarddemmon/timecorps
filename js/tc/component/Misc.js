@@ -268,24 +268,28 @@
         initNode: function(parent, attrs) {
             const self = this,
                 label = attrs.label,
-                labelWidth = attrs.labelWidth ?? LABEL_WIDTH;
+                labelWidth = attrs.labelWidth ?? LABEL_WIDTH,
+                vertical = attrs.vertical ?? false;
             delete attrs.label;
             delete attrs.labelWidth;
+            delete attrs.vertical;
             
             self.callSuper(parent, attrs);
             
-            self._label = new PaddedPlainText(self, {
-                width:labelWidth, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:'right',
+            const labelView = self._label = new PaddedPlainText(self, {
+                width:labelWidth, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:vertical ? 'left' : 'right',
                 paddingTop:ROW_PADDING_TOP, text:label
             });
             
-            const valueX = labelWidth + padding;
+            const valueX = vertical ? 0 : labelWidth + padding;
             self._value = new TextForFlow(self, {
-                x:valueX, percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, text:ICON_NIL
+                x:valueX, y:vertical ? labelView.y + labelView.height : 0,
+                percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, text:ICON_NIL
             }, [SizeToParent, {
                 sizeViewToDom: function() {
                     this.callSuper();
-                    if (self.height !== this.height) self.setHeight(this.height);
+                    const yExtent = this.y + this.height;
+                    if (self.height !== yExtent) self.setHeight(yExtent);
                 }
             }]);
         },

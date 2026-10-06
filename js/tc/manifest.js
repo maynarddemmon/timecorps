@@ -76,7 +76,7 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
-    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog','tc.MediaView');
+    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');

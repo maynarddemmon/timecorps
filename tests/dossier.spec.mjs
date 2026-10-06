@@ -22,7 +22,7 @@ const idsWithVideo = models => Object.entries(models).filter(([, model]) => mode
         };
     }, getterSrc),
 
-    DOSSIER_PORTRAIT = 'tc.app.openAgentDossier.lastDossier._portrait',
+    DOSSIER_PORTRAIT = 'tc.app.openAgentDossier.lastDossier._photo',
     BRIEF_PHOTO = 'tc.app.openAreaBrief.lastBrief._photo',
 
     openDossier = (page, agentId, video) => page.evaluate(([agentId, video]) => {

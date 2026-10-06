@@ -6,11 +6,7 @@
         {
             WideView, DetailRow, DetailRowFlow, TextForFlow,
             timeUtil:{format},
-            theme:{
-                layoutSpacing, spacing, padding, cornerRadius,
-                colorUltraLight, colorMegaDark,
-                fontSizeMedium, fontFamilyMono, fontSizeHandwritten, fontFamilyHandwritten
-            },
+            theme:{layoutSpacing, spacing, padding, cornerRadius, colorMegaDark},
             ICON_SEPARATOR
         } = pkg,
         
@@ -19,18 +15,18 @@
         PHOTO_SIZE = 256;
     
     pkg.AgentDossier = new JS.Class('AgentDossier', pkg.AckDialog, {
+        include: [pkg.BriefSupport],
+        
+        
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             const self = this;
             attrs.cancelable ??= true;
+            attrs.photoWidth = attrs.photoHeight = PHOTO_SIZE;
             
             self.callSuper(parent, attrs);
             
             // Build UI
-            self._portrait = new pkg.MediaView(self, {
-                x:HALF_PADDING, y:HALF_PADDING, width:PHOTO_SIZE, height:PHOTO_SIZE
-            });
-            
             const vitalsX = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
                 vitals = new WideView(self, {
                     x:vitalsX, y:HALF_PADDING, height:PHOTO_SIZE,
@@ -47,48 +43,28 @@
             self._whenView = new DetailRow(vitalsContainer, {label:'When'});
             self._skills = new DetailRowFlow(vitalsContainer, {label:'Skills'});
             new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
-            
-            const profileY = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
-                profile = new WideView(self, {
-                    x:HALF_PADDING, y:profileY, percentOfParentWidthOffset:-2*HALF_PADDING,
-                    percentOfParentHeight:100, percentOfParentHeightOffset:-(profileY + HALF_PADDING),
-                    roundedCorners:cornerRadius, bgColor:colorMegaDark,
-                    overflow:'autoy'
-                }),
-                profileContainer = new WideView(profile, {percentOfParentWidthOffset:-2*padding}),
-                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {label:'Field Notes'}),
-                profileView = self._profileView = new DetailRow(profileContainer, {label:'Profile'}),
-                profileViewValue = profileView.getValueView(),
-                fieldNotesValueView = fieldNotesView.getValueView();
-            
-            fieldNotesValueView.setWhiteSpace('normal');
-            fieldNotesValueView.setPaddingTop(0);
-            fieldNotesValueView.setLineHeight('1.75em');
-            fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
-            fieldNotesValueView.setFontSize(fontSizeHandwritten);
-            
-            profileViewValue.setWhiteSpace('pre-wrap');
-            profileViewValue.setPaddingTop(1);
-            profileViewValue.setFontFamily(fontFamilyMono);
-            profileViewValue.setFontSize(fontSizeMedium);
-            
-            new SpacedLayout(profileContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
         },
         
         
         // Accessors ///////////////////////////////////////////////////////////
-        setAgentModel: function(agentModel) {
+        /** @overrides BriefSupport */
+        getBriefTitle: briefModel => pkg.makeBriefTitle('Agent Dossier', briefModel.getName()),
+        
+        /** @overrides BriefSupport */
+        getBriefReportUrl: briefModel => './data/dossiers/' + briefModel.id + '.txt',
+        
+        /** @overrides BriefSupport */
+        getBriefReportLabel: () => 'Profile',
+        
+        /** @overrides BriefSupport */
+        setBriefModel: function(agentModel) {
             const self = this;
-            self.agentModel = agentModel;
             
             if (agentModel) {
                 const id = agentModel.id,
                     name = agentModel.getName(),
                     eventModel = agentModel.getEventModel();
                 
-                self.setTitle('Agent Dossier : ' + pkg.wrapInStyledSpan(name, colorUltraLight));
-                
-                self._portrait.setMedia(...agentModel.getMediaUrls());
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
                 self._roleView.setValue(agentModel.getRoleLabel());
@@ -108,35 +84,9 @@
                     });
                     isNotFirst = true;
                 }
-                
-                self.updateFieldNotes();
-                pkg.loadTxtIntoElement('./data/dossiers/' + id + '.txt', self._profileView, () => self.agentModel === agentModel);
-            } else {
-                self._portrait.clearMedia();
             }
-        },
-        
-        
-        // Methods /////////////////////////////////////////////////////////////
-        updateFieldNotes: function() {
-            const fieldNotes = this.agentModel?.getDescription() ?? '',
-                fieldNotesView = this._fieldNotesView;
-            fieldNotesView.setVisible(fieldNotes !== '');
-            fieldNotesView.setValue(fieldNotes);
-        },
-        
-        notifyAgentModelChanged: function(agentModel) {
-            if (this.visible && this.agentModel === agentModel) this.updateFieldNotes();
-        },
-        
-        show: function(agentModel) {
-            this.callSuper();
-            this.setAgentModel(agentModel);
-        },
-        
-        hide: function(ignoreRestoreFocus) {
-            this.setAgentModel();
-            this.callSuper(ignoreRestoreFocus);
+            
+            self.callSuper(agentModel);
         }
     });
 })(tc);

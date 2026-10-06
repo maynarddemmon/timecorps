@@ -26,18 +26,12 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         /** @overrides BriefSupport */
-        getBriefTitle: operationModel => pkg.makeBriefTitle('Mission Brief', operationModel.getName()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle('Mission Brief', briefModel.getName()),
         
         /** @overrides BriefSupport */
-        getBriefReportUrl: operationModel => './data/mission/' + operationModel.id + '.txt',
+        getBriefReportUrl: briefModel => './data/mission/' + briefModel.id + '.txt',
         
         /** @overrides BriefSupport */
-        getBriefReportLabel: () => 'Briefing',
-        
-        
-        // Methods /////////////////////////////////////////////////////////////
-        notifyOperationModelChanged: function(operationModel) {
-            this.notifyBriefModelChanged(operationModel);
-        }
+        getBriefReportLabel: () => 'Briefing'
     });
 })(tc);

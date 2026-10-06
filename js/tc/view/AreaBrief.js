@@ -24,15 +24,9 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         /** @overrides BriefSupport */
-        getBriefTitle: locationModel => pkg.makeBriefTitle('Area Brief', locationModel.getName()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle('Area Brief', briefModel.getName()),
         
         /** @overrides BriefSupport */
-        getBriefReportUrl: locationModel => './data/location/' + locationModel.id + '.txt',
-        
-        
-        // Methods /////////////////////////////////////////////////////////////
-        notifyLocationModelChanged: function(locationModel) {
-            this.notifyBriefModelChanged(locationModel);
-        }
+        getBriefReportUrl: briefModel => './data/location/' + briefModel.id + '.txt'
     });
 })(tc);
