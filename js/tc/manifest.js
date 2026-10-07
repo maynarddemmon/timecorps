@@ -18,10 +18,11 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
         'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar',
-        'tc.HealthBar','tc.MiniStatBar','tc.BigStatBar'
+        'tc.HealthBar','tc.SkillBar','tc.MiniStatBar','tc.BigStatBar'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Misc.js').provides(
-        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
+        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue',
+        'tc.CompactField','tc.CompactFieldRow','tc.TallView'
     ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
     file(COMPONENT_ROOT + 'BriefSupport.js').provides('tc.BriefSupport').requires('tc.WideView','tc.MediaView');
@@ -76,7 +77,10 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
     );
-    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires(
+        'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow','tc.TallView',
+        'tc.ChronalBar','tc.ParadoxBar','tc.HealthBar','tc.SkillBar'
+    );
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');

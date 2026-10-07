@@ -139,10 +139,12 @@ test('the dossier lists every configured skill by name, with its description as 
     const skillsJson = readJson('data/init.json').skills,
         skills = readJson('data/agents.json').agents.VQ.skills;
     for (const [skillId, cfg] of Object.entries(skillsJson)) {
-        // Skills the agent wasn't given show as 0.
-        const skillText = page.getByText(cfg.name + ' (' + (skills[skillId] ?? 0) + ')', {exact:true}).filter({visible:true});
-        await expect(skillText).toBeVisible();
-        await expect(skillText).toHaveAttribute('title', cfg.description);
+        // Skills the agent wasn't given show as 0. Each skill's bar carries the description.
+        const label = cfg.name + ' : ' + (skills[skillId] ?? 0),
+            skillBar = page.locator('.myt-AgentDossier [title]').filter({visible:true})
+                .filter({has:page.getByText(label, {exact:true})});
+        await expect(skillBar).toHaveCount(1);
+        await expect(skillBar).toHaveAttribute('title', label + ' - ' + cfg.description);
     }
     
     expect(problems.pageErrors).toEqual([]);
@@ -198,20 +200,26 @@ test('an agent already visible in a restored save has no dossier shown', async (
 
 test('agent health shows in the dossier and the agents grid, and follows changes', async ({page}) => {
     const problems = await startGame(page),
-        healthRow = page.getByText('Health', {exact:true}).filter({visible:true});
+        // A stat bar's tooltip, e.g. "Health · 60% · [60/100]".
+        healthTooltip = (value, max) => ['Health', Math.round(100*value/max) + '%', '[' + value + '/' + max + ']'].join('\u00A0·\u00A0'),
+        dossierHealth = (value, max) => page.locator('.myt-AgentDossier').locator(`[title="${healthTooltip(value, max)}"]`);
     
-    await page.evaluate(() => {tc.app.openAgentDossier(tc.model.getAgentModel('VQ'));});
-    await expect(page.getByText('100/100', {exact:true}).filter({visible:true})).toBeVisible();
+    await page.evaluate(() => {
+        const statHealth = tc.model.getAgentModel('VQ').health;
+        statHealth.setMax(100);
+        statHealth.setValue(100);
+        tc.app.openAgentDossier(tc.model.getAgentModel('VQ'));
+    });
+    await expect(dossierHealth(100, 100)).not.toHaveCount(0);
     
     // A change while the dossier is open shows at once.
     await page.evaluate(() => tc.model.getAgentModel('VQ').health.adjValue(-40));
-    await expect(page.getByText('60/100', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(dossierHealth(60, 100)).not.toHaveCount(0);
     await page.keyboard.press('Escape');
     
     // The grid has a Health column whose bar tracks the stat.
-    await expect(healthRow).toHaveCount(1);
-    await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('[title]')]
-        .some(elem => /^Health\s·\s60%\s·\s\[60\/100\]$/.test(elem.title)))).toBe(true);
+    await expect(page.getByText('Health', {exact:true}).filter({visible:true})).toHaveCount(1);
+    await expect(page.locator(`[title="${healthTooltip(60, 100)}"]`).filter({visible:true})).not.toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });

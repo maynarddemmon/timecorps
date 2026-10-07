@@ -90,7 +90,7 @@
         }
     });
     
-    pkg.SkillBar = new JSClass('HealthBar', M.ProgressBar, {
+    pkg.SkillBar = new JSClass('SkillBar', M.ProgressBar, {
         initNode: function(parent, attrs) {
             attrs.valueColor ??= colorUltraLight;
             attrs.bgColor ??= colorDark;
