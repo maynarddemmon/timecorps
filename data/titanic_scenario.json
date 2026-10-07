@@ -630,13 +630,13 @@
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":500, "actionType":"athletics", "damage":"150"}
+					"injurySkillCheck":{"difficulty":500, "actionType":"athletic", "damage":"150"}
 				},
 				{
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":50, "actionType":"athletics", "damage":"150"}
+					"injurySkillCheck":{"difficulty":50, "actionType":"athletic", "damage":"150"}
 				}
 			],
 			"values":{

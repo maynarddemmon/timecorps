@@ -137,6 +137,17 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         }
     },
     
+    // Why an amount expression such as damage, e.g. "d(6)+4", doesn't compile, or null.
+    getAmountCompileError = amount => {
+        if (typeof amount !== 'string' || amount.trim() === '') return 'is not a non-empty string';
+        try {
+            new Function('agent', 'event', 'timeline', 'difficulty', 'd', '"use strict";return (' + amount + ');');
+            return null;
+        } catch (err) {
+            return 'does not compile (' + err.message + ')';
+        }
+    },
+    
     // Returns the problems with a skill check config from an investigate or an action.
     checkSkillCheckCfg = (where, cfg) => {
         if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) return [where + ' is not an object'];
@@ -155,12 +166,21 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         return problems;
     };
 
-test('every investigate and action skill check is valid', () => {
+test('every investigate, action and exit injury skill check is valid', () => {
     const problems = [];
     for (const [eventId, event] of Object.entries(events)) {
         if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
         for (const [actionId, action] of Object.entries(event.actions ?? {})) {
             if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(eventId + '.' + actionId + ' skillCheck', action.skillCheck));
+        }
+        for (const exit of event.exits ?? []) {
+            if (exit.injurySkillCheck !== undefined) {
+                const where = eventId + ' exit to ' + exit.to + ' injurySkillCheck',
+                    {damage, ...checkCfg} = exit.injurySkillCheck ?? {};
+                problems.push(...checkSkillCheckCfg(where, checkCfg));
+                const error = getAmountCompileError(damage);
+                if (error) problems.push(where + ' damage ' + error);
+            }
         }
     }
     expect(problems).toEqual([]);

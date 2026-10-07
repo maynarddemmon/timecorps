@@ -61,7 +61,7 @@ test('agent field notes follow the agent\'s paradox', async ({page}) => {
             vq.paradox.setValue(paradox);
             out.push(vq.getDescription());
         }
-        vq.doDevouredByChronovores();
+        vq.setDevoured(true);
         out.push(vq.getDescription());
         return out;
     });
@@ -447,28 +447,35 @@ test('the ship that reaches New York, and who it lands, follow the night of the 
             const model = tc.model,
                 eventModel = model.getEventModel('arrival_new_york'),
                 {arrivingShip, peopleLanded} = eventModel.getValueModels(),
+                exitsToNY = (id, mode) => model.getEventModel(id).getExitModels()
+                    .filter(exitModel => exitModel.getToEventModel() === eventModel && exitModel.mode === mode),
                 // Waiting for New York is only possible while she stays afloat.
-                waitHidden = id => model.getEventModel(id).getExitModels()
-                    .filter(exitModel => exitModel.getToEventModel() === eventModel)
-                    .map(exitModel => exitModel.isHidden());
-            return {ship:arrivingShip.value, landed:peopleLanded.value, waitHidden:[...waitHidden('collision'), ...waitHidden('casualties')]};
+                waitHidden = id => exitsToNY(id, 'wait').map(exitModel => exitModel.isHidden()),
+                // Once she sinks, the lifeboats are the way, harder when there aren't enough.
+                lifeboatDifficulty = exitsToNY('casualties', 'lifeboat')
+                    .filter(exitModel => !exitModel.isHidden())
+                    .map(exitModel => exitModel.getActionSkillDifficulty());
+            return {
+                ship:arrivingShip.value, landed:peopleLanded.value,
+                waitHidden:[...waitHidden('collision'), ...waitHidden('casualties')], lifeboatDifficulty
+            };
         });
     
     // History: she sinks, and the Carpathia lands the survivors.
-    expect(await arrival()).toEqual({ship:'Carpathia', landed:706, waitHidden:[true, true]});
+    expect(await arrival()).toEqual({ship:'Carpathia', landed:706, waitHidden:[true, true], lifeboatDifficulty:[500]});
     
     // The Californian answers the call, but there aren't boats for everyone.
     await setCausator(page, 'wireless_priority', 'clearBacklogEarlier', true);
-    expect(await arrival()).toEqual({ship:'Californian', landed:706, waitHidden:[true, true]});
+    expect(await arrival()).toEqual({ship:'Californian', landed:706, waitHidden:[true, true], lifeboatDifficulty:[500]});
     
     // With boats for everyone, the Californian lands almost everyone.
     await setCausator(page, 'lifeboat_capacity', 'fullDavits', true);
-    expect(await arrival()).toEqual({ship:'Californian', landed:2112, waitHidden:[true, true]});
+    expect(await arrival()).toEqual({ship:'Californian', landed:2112, waitHidden:[true, true], lifeboatDifficulty:[50]});
     
     // No collision: Titanic arrives herself, and both events can wait for her.
     await setCausator(page, 'ice_warnings', 'relayToBridge', true);
     await setCausator(page, 'engine_order', 'countermandAstern', true);
-    expect(await arrival()).toEqual({ship:'Titanic', landed:2224, waitHidden:[false, false]});
+    expect(await arrival()).toEqual({ship:'Titanic', landed:2224, waitHidden:[false, false], lifeboatDifficulty:[]});
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);

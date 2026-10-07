@@ -110,6 +110,14 @@
                     return;
                 }
                 
+                // The dead can't act, travel or be resupplied.
+                if (agentModel.isDead()) {
+                    recallBtn.setVisible(false);
+                    reloadChronalBtn.setVisible(false);
+                    new TextForFlow(actionView, {paddingTop:3, text:'Deceased'});
+                    return;
+                }
+                
                 const isHQ = eventModel.isHQ();
                 recallBtn.setVisible(!isHQ);
                 reloadChronalBtn.setVisible(isHQ);
@@ -452,7 +460,7 @@
                 const {selectedAgentModel, followExitBtn, agentsRowBtnSeparator, deployAgentBtn, recallAgentBtn} = self,
                     isHQ = eventModel.isHQ(),
                     hasAgentModel = selectedAgentModel != null,
-                    canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled();
+                    canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled() && !selectedAgentModel.isDead();
                 
                 // An exit from where the Agent is to this Event, offered alongside jumping here.
                 const exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;

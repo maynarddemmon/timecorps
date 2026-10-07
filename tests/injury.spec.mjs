@@ -1,6 +1,6 @@
 // Injury checks on exits: taking an exit always succeeds, but a failed check costs health.
 import {test, expect} from '@playwright/test';
-import {startGame, readJson} from './helpers.mjs';
+import {startGame, readJson, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 const INJURY = {difficulty:300, actionType:'athletic', damage:'d(6)+4'},
 
@@ -178,3 +178,86 @@ test('exit buttons show the injury risk, and a failure floats the damage', async
 
     expect(problems.pageErrors).toEqual([]);
 });
+
+
+/*  Kills VQ on his exit from the collision: a check he can't pass, and more damage than he has. */
+const killVQOnExit = page => page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties');
+        exitModel.setInjurySkillCheck({difficulty:1000, check:'0', damage:'500'});
+        tc.rng.queueRolls(0);
+        vq.doFollowExit(exitModel);
+        return {dead:vq.isDead(), health:vq.health.value};
+    }),
+    
+    // Okonjo joins the team. He starts with no chronal.
+    giveOkonjo = page => page.evaluate(() => {
+        tc.model.revealAgents(['OK']);
+        tc.model.awardAgents(['OK']);
+    }),
+    
+    acknowledge = page => page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
+
+test('a death is announced, then the dossier, and losing the last agent ends the campaign', async ({page}) => {
+    const problems = await startGame(page);
+    expect(await killVQOnExit(page)).toEqual({dead:true, health:0});
+    
+    await expect(dialogTitle(page, 'Agent Death')).toHaveText('Agent Death : Vasquez');
+    await expect(page.getByText(/^At the Nexus, Vasquez’s telemetry goes flat/).filter({visible:true})).toBeVisible();
+    await acknowledge(page);
+    await dismissAgentDossier(page, 'Vasquez');
+    await expect(dialogTitle(page, 'Agent Roster Depleted')).toBeVisible();
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a dead agent can\'t act or travel, and an agent with no chronal still counts toward the roster', async ({page}) => {
+    const problems = await startGame(page);
+    await giveOkonjo(page);
+    await dismissAgentDossier(page, 'Okonjo');
+    expect(await page.evaluate(() => tc.model.getAgentModel('OK').isDevoured())).toBe(false);
+    
+    await killVQOnExit(page);
+    await acknowledge(page);
+    await dismissAgentDossier(page, 'Vasquez');
+    
+    // Okonjo is still on the team, so the campaign goes on.
+    await page.waitForTimeout(300);
+    await expect(dialogTitle(page, 'Agent Roster Depleted')).toHaveCount(0);
+    
+    // Nothing moves the dead.
+    const moves = await page.evaluate(() => {
+        const vq = tc.model.getAgentModel('VQ'),
+            casualties = tc.model.getEventModel('casualties'),
+            exitModel = casualties.getExitModels()[0],
+            before = vq.event;
+        vq.doRecallToHQ();
+        vq.doDeployToEvent(tc.model.getEventModel('collision'));
+        vq.doFollowExit(exitModel);
+        return {before, after:vq.event, canAct:vq.canAct(), canReload:vq.canReloadChronal()};
+    });
+    expect(moves).toEqual({before:'casualties', after:'casualties', canAct:false, canReload:false});
+    
+    // The agent's row says so, with no actions or exits, and the header offers no travel.
+    await page.evaluate(() => {
+        tc.app.selectAgentRow('VQ');
+        tc.app.selectEventBox('casualties');
+    });
+    await expect(page.getByText('Deceased', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(page.getByText(/^Investigate/).filter({visible:true})).toHaveCount(0);
+    await expect(page.getByText(/^(Loop back|Jump to|Recall to|Deploy to)/).filter({visible:true})).toHaveCount(0);
+    
+    // Nor does the header offer an exit to New York, though the lifeboats lead there.
+    await page.evaluate(() => {
+        tc.model.getEventModel('arrival_new_york').attestation.setValue(10);
+        tc.app.selectEventBox('arrival_new_york');
+    });
+    await expect(page.getByText('Ship Arriving', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(page.getByText(/^Lifeboat to/).filter({visible:true})).toHaveCount(0);
+    await page.evaluate(() => tc.model.getAgentModel('OK').setEvent('casualties'));
+    await page.evaluate(() => tc.app.selectAgentRow('OK'));
+    await expect(page.getByText(/^Lifeboat to/).filter({visible:true})).toHaveCount(1);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+

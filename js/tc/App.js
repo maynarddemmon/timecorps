@@ -45,7 +45,6 @@
         
         checkForActiveRoster = () => {
             const activeAgents = pkg.model.getActiveAgentsAsList();
-console.log('checkForActiveRoster', activeAgents);
             if (!activeAgents || activeAgents.length === 0) {
                 openEndGameDialog(
                     'Agent Roster Depleted',
@@ -485,9 +484,12 @@ console.log('checkForActiveRoster', activeAgents);
         },
         
         notifyAgentDevouredChange: function(agentModel) {
+console.log('devoured');
             if (readyToHandleEvents) {
+console.log('ready');
                 if (agentModel.isDevoured()) {
                     const name = agentModel.getName();
+console.log('agent', name);
                     openAckMsgDialog(
                         'Agent Devoured : ' + wrapInStyledSpan(name, colorUltraLight),
                         'The agent was devoured by chronovores.',
@@ -506,7 +508,7 @@ console.log('checkForActiveRoster', activeAgents);
                     const name = agentModel.getName();
                     openAckMsgDialog(
                         'Agent Death : ' + wrapInStyledSpan(name, colorUltraLight),
-                        'At the Nexus, ' + name + '‘s telemetry goes flat between one pulse and the next. The array keeps listening for a recall signal that does not come, and the duty officer marks the time twice: once in the Corps’ own year, and once in a year ' + name + ' would not be born for centuries. Somewhere in the past there is now a body that history has no record of, and a grave that will never be dug. The Corps files the loss as it files every loss, provisionally, because a timeline that can be changed is a timeline in which ' + name + ' might still come home.',
+                        'At the Nexus, ' + name + '’s telemetry goes flat between one pulse and the next. The array keeps listening for a recall signal that does not come, and the duty officer marks the time twice: once in the Corps’ own year, and once in a year ' + name + ' would not be born for centuries. Somewhere in the past there is now a body that history has no record of, and a grave that will never be dug. The Corps files the loss as it files every loss, provisionally, because a timeline that can be changed is a timeline in which ' + name + ' might still come home.',
                         () => {
                             openAgentDossier(agentModel);
                             checkForActiveRoster();

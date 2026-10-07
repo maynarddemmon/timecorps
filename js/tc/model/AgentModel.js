@@ -150,6 +150,7 @@
             // Hidden and NPC unless the data says otherwise.
             self.hidden = true;
             self.playerControlled = false;
+            self.devoured = false;
             
             // The number of actions the Agent has executed in the EventModel they are currently in.
             self.actionExecCount = 0;
@@ -164,7 +165,7 @@
                 },
                 triggerValueClampedToMax: function() {
                     this.callSuper();
-                    self.doDevouredByChronovores();
+                    self.setDevoured(true);
                 }
             }]);
             
@@ -472,6 +473,8 @@
         },
         
         doDeployToEvent: function(eventModel) {
+            if (this.isDead()) return;
+            
             if (eventModel) {
                 const cost = pkg.getChronalToDeploy(this, eventModel);
                 if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
@@ -485,6 +488,8 @@
             }
         },
         doRecallToHQ: function() {
+            if (this.isDead()) return;
+            
             const hqEventModel = pkg.model.getHQEventModel();
             if (hqEventModel) {
                 const cost = pkg.getChronalToRecall(this);
@@ -499,6 +504,8 @@
             }
         },
         doFollowExit: function(exitModel, btnView) {
+            if (this.isDead()) return;
+            
             if (this.getEventModel() === exitModel.event) {
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
@@ -607,7 +614,7 @@
             return mathMin(requestedAmount, -pkg.model[STAT_ID_CHRONAL].getValueToMin(), this[STAT_ID_CHRONAL].getValueToMax());
         },
         canReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
-            return this.getReloadChronalAmount(requestedAmount) > 0;
+            return !this.isDead() && this.getReloadChronalAmount(requestedAmount) > 0;
         },
         
         
@@ -625,16 +632,19 @@
             return 0;
         },
         
-        doDevouredByChronovores: function() {
-            this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
-            this.setEvent(EVENT_ID_THE_VOID, {type:LOG_TYPE_DEVOURED});
-            
-            pkg.app.notifyAgentDevouredChange(this);
+        setDevoured: function(v) {
+            if (this.devoured !== v) {
+                this.set('devoured', v, true);
+                if (this.devoured) {
+                    // Do devoured by chronovores
+                    this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
+                    this.setEvent(EVENT_ID_THE_VOID, {type:LOG_TYPE_DEVOURED});
+                    
+                    pkg.app.notifyAgentDevouredChange(this);
+                }
+            }
         },
-        
-        isDevoured: function() {
-            return this[STAT_ID_CHRONAL].isAtMinValue();
-        },
+        isDevoured: function() {return this.devoured;},
         
         
         // Health, Injury, Death //
