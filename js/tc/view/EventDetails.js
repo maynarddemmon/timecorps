@@ -110,9 +110,7 @@
                     return;
                 }
                 
-                const rootModel = pkg.model,
-                    isHQ = eventModel.isHQ();
-                
+                const isHQ = eventModel.isHQ();
                 recallBtn.setVisible(!isHQ);
                 reloadChronalBtn.setVisible(isHQ);
                 
@@ -121,9 +119,7 @@
                     reloadChronalBtn.setText('Reload Agent Chronal +' + reloadAmount);
                     reloadChronalBtn.setDisabled(!agentModel.canReloadChronal());
                 } else {
-                    const info = agentModel.getInfoForTimeTravel(rootModel.getHQEventModel());
-                    recallBtn.setText(info.btnTxt);
-                    recallBtn.setDisabled(info.disabled);
+                    agentModel.updateBtnForTimeTravel(recallBtn, pkg.model.getHQEventModel());
                 }
                 
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
@@ -481,9 +477,7 @@
                         agentsRowBtnSeparator.setVisible();
                         
                         btn.setBtnModel(selectedAgentModel);
-                        const info = selectedAgentModel.getInfoForTimeTravel(eventModel);
-                        btn.setDisabled(info.disabled);
-                        btn.setText(info.btnTxt);
+                        selectedAgentModel.updateBtnForTimeTravel(btn, eventModel);
                     }
                 }
                 

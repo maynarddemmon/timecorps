@@ -30,7 +30,7 @@
         {View, PlainText, ResizeLayout, SizeToParent, global:G, NOOP} = M,
         
         {
-            SquareBtn, WideView,
+            SquareBtn, WideView, wrapInStyledSpan,
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog, openWhenClear},
             theme:{
                 layoutSpacing, spacing, padding, 
@@ -42,6 +42,28 @@
         } = pkg,
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
+        
+        checkForActiveRoster = () => {
+            const activeAgents = pkg.model.getActiveAgentsAsList();
+console.log('checkForActiveRoster', activeAgents);
+            if (!activeAgents || activeAgents.length === 0) {
+                openEndGameDialog(
+                    'Agent Roster Depleted',
+                    'You no longer have any agents under your control.'
+                );
+            }
+        },
+        
+        openEndGameDialog = (title, msg) => {
+            openAckMsgDialog(
+                title,
+                msg,
+                () => {
+                    // FIXME: do other housekeeping?
+                    appView.doRestartCampaign();
+                }
+            );
+        },
         
         openAgentDossier = agentModel => {
             if (!readyToHandleEvents) return;
@@ -414,16 +436,12 @@
         },
         
         notifyTimelineParadoxExceeded: () => {
-            if (!readyToHandleEvents) return;
-            
-            openAckMsgDialog(
-                'Timeline Destabilized',
-                'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.',
-                () => {
-                    // FIXME: do other housekeeping?
-                    appView.doRestartCampaign();
-                }
-            );
+            if (readyToHandleEvents) {
+                openEndGameDialog(
+                    'Timeline Destabilized',
+                    'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.'
+                );
+            }
         },
         
         /*  Called when an Operation has completed successfully */
@@ -440,7 +458,7 @@
                 }
             }
             
-            const title = 'Mission Complete : ' + pkg.wrapInStyledSpan(operationModel.getName(), colorUltraLight),
+            const title = 'Mission Complete : ' + wrapInStyledSpan(operationModel.getName(), colorUltraLight),
                 debrief = (operationModel.getDebrief() || 'All mission objectives have been achieved.') + saveNote;
             
             // Wait for the timeline to finish showing the changes that completed the mission.
@@ -464,6 +482,38 @@
                 openAgentDossier(agentModel);
             }
             timelineView.notifyAgentLocOrVisChange(agentModel);
+        },
+        
+        notifyAgentDevouredChange: function(agentModel) {
+            if (readyToHandleEvents) {
+                if (agentModel.isDevoured()) {
+                    const name = agentModel.getName();
+                    openAckMsgDialog(
+                        'Agent Devoured : ' + wrapInStyledSpan(name, colorUltraLight),
+                        'The agent was devoured by chronovores.',
+                        () => {
+                            openAgentDossier(agentModel);
+                            checkForActiveRoster();
+                        }
+                    );
+                }
+            }
+        },
+        
+        notifyAgentAliveChange: function(agentModel) {
+            if (readyToHandleEvents) {
+                if (agentModel.isDead()) {
+                    const name = agentModel.getName();
+                    openAckMsgDialog(
+                        'Agent Death : ' + wrapInStyledSpan(name, colorUltraLight),
+                        'At the Nexus, ' + name + '‘s telemetry goes flat between one pulse and the next. The array keeps listening for a recall signal that does not come, and the duty officer marks the time twice: once in the Corps’ own year, and once in a year ' + name + ' would not be born for centuries. Somewhere in the past there is now a body that history has no record of, and a grave that will never be dug. The Corps files the loss as it files every loss, provisionally, because a timeline that can be changed is a timeline in which ' + name + ' might still come home.',
+                        () => {
+                            openAgentDossier(agentModel);
+                            checkForActiveRoster();
+                        }
+                    );
+                }
+            }
         },
         
         openSettings: () => {

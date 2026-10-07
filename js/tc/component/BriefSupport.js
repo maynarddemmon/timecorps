@@ -100,21 +100,24 @@
         
         
         // Accessors ///////////////////////////////////////////////////////////
+        getPhoto: function() {return this._photo;},
+        
         getBriefReportLabel: () => 'Report',
         
         getBriefModel: function() {return this.briefModel;},
         
         setBriefModel: function(model) {
-            const self = this;
+            const self = this,
+                photo = self.getPhoto();
             self.briefModel = model;
             
             if (model) {
                 self.setTitle(self.getBriefTitle(model));
-                self._photo.setMedia(...model.getMediaUrls());
+                photo.setMedia(...model.getMediaUrls());
                 self.updateFieldNotes();
                 pkg.loadTxtIntoElement(self.getBriefReportUrl(model), self._profileView, () => self.briefModel === model);
             } else {
-                self._photo.clearMedia();
+                photo.clearMedia();
             }
         },
         

@@ -1,7 +1,7 @@
 (pkg => {
     'use strict';
     
-    const {SpacedLayout, ResizeLayout, SizeToParent} = myt,
+    const {PlainText, SpacedLayout, ResizeLayout, SizeToParent} = myt,
         
         {
             WideView, TallView, CompactField, CompactFieldRow,
@@ -33,6 +33,8 @@
             self.callSuper(parent, attrs);
             
             // Build UI
+            self._statusTxt = new PlainText(self);
+            
             const vitalsX = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
                 vitals = new WideView(self, {
                     x:vitalsX, y:HALF_PADDING, height:PHOTO_SIZE,
@@ -84,7 +86,9 @@
             if (agentModel) {
                 const id = agentModel.id,
                     name = agentModel.getName(),
-                    eventModel = agentModel.getEventModel();
+                    eventModel = agentModel.getEventModel(),
+                    photo = self.getPhoto(),
+                    statusTxt = self._statusTxt;
                 
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
@@ -93,6 +97,15 @@
                 self._whenView.setValue(format(eventModel.getStart()));
                 self._eventView.setValue(eventModel.name);
                 self.updateStats(agentModel);
+                
+                let statusAttrs = {text:''};
+                if (agentModel.isDead()) {
+                    photo.addDomClass('agent-dead');
+                    statusAttrs = {x:12, y:-135, fontSize:'400px', textColor:'#fff3', text:pkg.ICON_DEATH};
+                } else {
+                    photo.removeDomClass('agent-dead');
+                }
+                statusTxt.callSetters(statusAttrs);
                 
                 const skillsRow = self._skills;
                 skillsRow.destroyAllSubviews();

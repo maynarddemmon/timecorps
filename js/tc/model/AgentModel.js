@@ -35,6 +35,29 @@
         LOG_TYPE_INVESTIGATE = 'investigate',
         LOG_TYPE_DEVOURED = 'devoured',
         
+        getInfoForTimeTravel = (agentModel, eventModel) => {
+            const isHQ = eventModel.isHQ(),
+                chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
+                chronalAvailable = -agentModel[STAT_ID_CHRONAL].getValueToMin(),
+                hasEnoughChronal = chronalNeeded <= chronalAvailable,
+                paradoxCost = agentModel.calculateParadoxForEntry(eventModel);
+            let disabled,
+                text,
+                visible = true;
+            if (isHQ) {
+                disabled = !hasEnoughChronal;
+                text = 'Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+            } else {
+                const isAlreadyAtEvent = agentModel.isAtEvent(eventModel);
+                disabled = !hasEnoughChronal;
+                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+            }
+            
+            if (agentModel.isDead()) visible = false;
+            
+            return {disabled, text, visible};
+        },
+        
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
@@ -153,7 +176,12 @@
             self[STAT_ID_HEALTH] = new NotifyingNumericStatModel({
                 notifyTargets:self, id:STAT_ID_HEALTH, 
                 absMin:0, min:0, value:AGENT_DEFAULT_HEALTH, max:AGENT_DEFAULT_HEALTH, absMax:AGENT_HEALTH_LIMIT
-            });
+            }, [{
+                triggerValueAtMin: function() {
+                    this.callSuper();
+                    pkg.app.notifyAgentAliveChange(self);
+                }
+            }]);
             
             // Nullish event during init is assumed to be the HQ.
             attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
@@ -220,7 +248,10 @@
         getActionExecCount: function() {return this.actionExecCount;},
         incrementActionExecCount: function() {this.setActionExecCount(this.actionExecCount + 1);},
         getEventActionLimit: function() {return this.getEventModel()?.getActionLimit() ?? 0;},
-        getActionsRemaining: function() {return mathMax(0, this.getEventActionLimit() - this.getActionExecCount());},
+        getActionsRemaining: function() {
+            if (this.isDead()) return 0;
+            return mathMax(0, this.getEventActionLimit() - this.getActionExecCount());
+        },
         canAct: function() {return this.getActionsRemaining() > 0;},
         getActionsPhrase: function() {
             return 'Actions: ' + pkg.wrapInStyledSpan(this.getActionsRemaining(), colorAction, fontFamilyMono);
@@ -427,23 +458,8 @@
             if (this.inited) this.notifyCollectionOfUpdate();
         },
         
-        getInfoForTimeTravel: function(eventModel) {
-            const isHQ = eventModel.isHQ(),
-                chronalNeeded = isHQ ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel),
-                chronalAvailable = -this[STAT_ID_CHRONAL].getValueToMin(),
-                hasEnoughChronal = chronalNeeded <= chronalAvailable,
-                paradoxCost = this.calculateParadoxForEntry(eventModel);
-            let disabled,
-                btnTxt;
-            if (isHQ) {
-                disabled = !hasEnoughChronal;
-                btnTxt = 'Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
-            } else {
-                const isAlreadyAtEvent = this.isAtEvent(eventModel);
-                disabled = !hasEnoughChronal;
-                btnTxt = (this.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
-            }
-            return {disabled, btnTxt};
+        updateBtnForTimeTravel: function(btn, eventModel) {
+            btn.callSetters(getInfoForTimeTravel(this, eventModel));
         },
         
         /*  The exit the Agent can take from its current Event to eventModel, or null if there's 
@@ -488,7 +504,7 @@
                 if (toEvent) {
                     // Taking the exit always succeeds, but it may hurt on the way. The result
                     // is shown before the damage since that rebuilds the views, btnView included.
-                    const injury = this.checkInjury(exitModel),
+                    const injury = this.checkInjuryForExit(exitModel),
                         logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
                     if (injury) {
                         showFloatingTextForSkillCheck(btnView, injury);
@@ -502,40 +518,6 @@
             } else {
                 console.warn('Agent not at event for exit:', exitModel, this);
             }
-        },
-        
-        /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 
-            apply the damage. Returns the check result plus the damage, or null if there's no
-            check. */
-        checkInjury: function(exitModel) {
-            if (!exitModel.hasInjuryCheck()) return null;
-            
-            const difficulty = exitModel.getActionSkillDifficulty(),
-                check = this.checkSkillExpression(exitModel.getActionSkillExpr(), difficulty);
-            let damage = 0;
-            if (!check.success) {
-                // Whole points only, and never healing. A broken expression does no damage.
-                const amount = rollAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty));
-                if (amount > 0) damage = Math.round(amount);
-            }
-            return {...check, damage};
-        },
-        
-        /*  Lowers health by a whole, positive amount of damage. */
-        takeDamage: function(damage) {
-            if (damage > 0) this[STAT_ID_HEALTH].adjValue(-damage);
-        },
-        
-        /*  Describes the risk of an exit's injury check, e.g. "Athletic · easy · injury: light",
-            or an empty string if there's none. The damage is its average, without rolling. */
-        getInjuryRiskPhrase: function(exitModel) {
-            if (!exitModel.hasInjuryCheck()) return '';
-            
-            const difficulty = exitModel.getActionSkillDifficulty(),
-                easePhrase = this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty),
-                averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
-                name = exitModel.getActionSkillName();
-            return (name ? name + ICON_SEPARATOR : '') + easePhrase + ICON_SEPARATOR + 'injury: ' + toDamagePhrase(averageDamage);
         },
         
         doAction: function(actionModel, btnView) {
@@ -576,6 +558,9 @@
             }
             this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel, success:check.success});
         },
+        
+        
+        // Investigation //
         doInvestigate: function(btnView) {
             if (this.canAct()) {
                 const eventModel = this.getEventModel();
@@ -608,6 +593,9 @@
                 }
             }
         },
+        
+        
+        // Chronal //
         doReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
             if (this.canReloadChronal(requestedAmount)) {
                 const amount = this.getReloadChronalAmount(requestedAmount);
@@ -622,7 +610,8 @@
             return this.getReloadChronalAmount(requestedAmount) > 0;
         },
         
-        // Paradox
+        
+        // Paradox //
         calculateParadoxForEntry: function(eventModelOrId, visitsAdj=0) {
             const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
             if (eventModel) {
@@ -639,9 +628,56 @@
         doDevouredByChronovores: function() {
             this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
             this.setEvent(EVENT_ID_THE_VOID, {type:LOG_TYPE_DEVOURED});
+            
+            pkg.app.notifyAgentDevouredChange(this);
         },
         
-        // Life and Log
+        isDevoured: function() {
+            return this[STAT_ID_CHRONAL].isAtMinValue();
+        },
+        
+        
+        // Health, Injury, Death //
+        /*  Describes the risk of an exit's injury check, e.g. "Athletic · easy · injury: light",
+            or an empty string if there's none. The damage is its average, without rolling. */
+        getInjuryRiskPhrase: function(exitModel) {
+            if (!exitModel.hasInjuryCheck()) return '';
+            
+            const difficulty = exitModel.getActionSkillDifficulty(),
+                easePhrase = this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty),
+                averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
+                name = exitModel.getActionSkillName();
+            return (name ? name + ICON_SEPARATOR : '') + easePhrase + ICON_SEPARATOR + 'injury: ' + toDamagePhrase(averageDamage);
+        },
+        
+        /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 
+            apply the damage. Returns the check result plus the damage, or null if there's no
+            check. */
+        checkInjuryForExit: function(exitModel) {
+            if (!exitModel.hasInjuryCheck()) return null;
+            
+            const difficulty = exitModel.getActionSkillDifficulty(),
+                check = this.checkSkillExpression(exitModel.getActionSkillExpr(), difficulty);
+            let damage = 0;
+            if (!check.success) {
+                // Whole points only, and never healing. A broken expression does no damage.
+                const amount = rollAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty));
+                if (amount > 0) damage = Math.round(amount);
+            }
+            return {...check, damage};
+        },
+        
+        /*  Lowers health by a whole, positive amount of damage. */
+        takeDamage: function(damage) {
+            if (damage > 0) this[STAT_ID_HEALTH].adjValue(-damage);
+        },
+        
+        isDead: function() {
+            return this[STAT_ID_HEALTH].isAtMinValue();
+        },
+        
+        
+        // Life and Log //
         pushOntoLog: function(logEntry) {this.log.push(logEntry);},
         getLog: function() {return this.log;},
         countVisitsToEvent: function(eventModel) {

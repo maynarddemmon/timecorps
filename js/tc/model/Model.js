@@ -176,7 +176,15 @@
             (a, b) => b.getArrivalOrder() - a.getArrivalOrder(),
             agent => agent.getEvent() === eventId && !agent.isHidden()
         ),
-        
+        getActiveAgentsAsList: () => model.getAgentModelsAsList(
+            agentModel => {
+                const isPlayerControlled = agentModel.isPlayerControlled(),
+                    isHidden = agentModel.isHidden(),
+                    isDead = agentModel.isDead(),
+                    isDevoured = agentModel.isDevoured();
+                return isPlayerControlled && !isHidden && !isDead && !isDevoured;
+            }
+        ),
         
         revealAgents: agentIds => {
             if (agentIds) {

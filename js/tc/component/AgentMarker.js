@@ -9,7 +9,7 @@
         {
             theme:{
                 btnHeight,
-                colorUltraLight, colorMedium, colorMegaDark,
+                colorUltraLight, colorLight, colorMedium, colorMegaDark,
                 fontSizeMicro, fontSizeMedium,
                 colorParadox, colorChronal, colorHealth, colorAction
             },
@@ -33,7 +33,8 @@
                 attrs.bgColor ??= colorMegaDark;
                 attrs.photoBgColor ??= colorMedium;
                 attrs.photoInset ??= 1;
-                const idFontSize = attrs.idFontSize ??= fontSizeMicro,
+                const statusFontSize = attrs.statusFontSize ??= '23px',
+                    idFontSize = attrs.idFontSize ??= fontSizeMicro,
                     size = attrs.size ??= btnHeight;
                 attrs.width = attrs.height = size;
                 
@@ -42,6 +43,9 @@
                 self.attachDomObserver(self, '_doDblClick', 'dblclick');
                 
                 self._photo = new View(self, {imageSize:'contain'}, [M.ImageSupport]);
+                self._statusTxt = new M.PlainText(self, {
+                    x:5, y:-4, fontSize:statusFontSize, textColor:colorLight
+                });
                 self._idTxt = new M.PlainText(self, {
                     align:'center', valign:'middle', fontSize:idFontSize, textColor:colorUltraLight,
                     visible:false
@@ -57,7 +61,7 @@
             },
             
             _updateLook: function() {
-                const {_photo, _idTxt, idFontSize, size, photoInset, photoBgColor} = this;
+                const {_photo, _idTxt, _statusTxt, idFontSize, statusFontSize, size, photoInset, photoBgColor} = this;
                 
                 this.setWidth(size);
                 this.setHeight(size);
@@ -73,6 +77,7 @@
                 _photo.setBgColor(photoBgColor);
                 
                 _idTxt.setFontSize(idFontSize);
+                _statusTxt.setFontSize(statusFontSize);
             },
             
             setModel: function(v) {
@@ -85,12 +90,21 @@
                 if (model) {
                     this._photo.setImageUrl(model.getImageUrl());
                     this._idTxt.setText(model.id);
+                    
+                    if (model.isDead()) {
+                        this.addDomClass('agent-dead');
+                        this._statusTxt.setText(pkg.ICON_DEATH);
+                    } else {
+                        this.removeDomClass('agent-dead');
+                        this._statusTxt.setText('');
+                    }
                 }
             },
             
             updateUI: function() {
                 this.callSuper();
                 this._idTxt?.setVisible(this.mouseOver);
+                this._statusTxt?.setVisible(!this.mouseOver);
                 this._photo?.setOpacity(this.mouseOver ? 0.25 : 1);
             },
             
@@ -162,7 +176,10 @@
             attrs.thickness ??= 2;
             attrs.size ??= 2*btnHeight;
             attrs.idFontSize ??= fontSizeMedium;
+            attrs.statusFontSize ??= '46px';
             this.callSuper(parent, attrs);
+            
+            this._statusTxt.callSetters({x:10, y:-9});
         }
     });
     

@@ -373,6 +373,7 @@
             ICON_EXPORT:'↧',
             ICON_MISSION:'⚑',
             ICON_EVENT:'⧉', // ⧉, ⚭
+            ICON_DEATH:'☠',
             
             // Formatting //
             wrapInStyledSpan,
