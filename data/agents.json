@@ -25,6 +25,7 @@
 			"name":"Vasquez",
 			"video":true,
 			"event":"collision",
+			"health":{"value":65, "max":85},
 			"skills":{
 				"chronogation":-100,
 				"investigation":100,
@@ -40,6 +41,7 @@
 		},
 		"OK":{
 			"name":"Okonjo",
+			"health":{"value":50, "max":90},
 			"chronal":0,
 			"paradox":1,
 			"skills":{
@@ -57,6 +59,7 @@
 		},
 		"HW":{
 			"name":"Halloway",
+			"health":{"value":25},
 			"event":"lifeboat_capacity",
 			"skills":{
 				"chronogation":-50,
@@ -137,6 +140,7 @@
 		},
 		"AC":{
 			"name":"Aaron Crown",
+			"health":{"value":10},
 			"paradox":2,
 			"skills":{
 				"chronogation":50,
@@ -153,6 +157,7 @@
 		},
 		"AD":{
 			"name":"Amon Duncan",
+			"health":{"value":56},
 			"skills":{
 				"chronogation":100,
 				"investigation":-25,
@@ -168,6 +173,7 @@
 		},
 		"AE":{
 			"name":"Anton Eklund",
+			"health":{"value":88},
 			"skills":{
 				"chronogation":-50,
 				"investigation":150,
@@ -183,6 +189,7 @@
 		},
 		"AF":{
 			"name":"Ambrose Fenwick",
+			"health":{"value":91},
 			"skills":{
 				"chronogation":75,
 				"investigation":0,
@@ -198,6 +205,7 @@
 		},
 		"AG":{
 			"name":"Aurelio Garza",
+			"health":{"value":93},
 			"skills":{
 				"chronogation":150,
 				"investigation":-50,
@@ -213,6 +221,7 @@
 		},
 		"AH":{
 			"name":"Axel Harrow",
+			"health":{"value":79},
 			"paradox":1,
 			"skills":{
 				"chronogation":50,
@@ -441,6 +450,7 @@
 		},
 		"AW":{
 			"name":"Aislin Wren",
+			"health":{"value":65,"max":75},
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -456,6 +466,7 @@
 		},
 		"AX":{
 			"name":"Alina Xu",
+			"health":{"value":33},
 			"paradox":1,
 			"skills":{
 				"chronogation":150,
@@ -503,6 +514,7 @@
 		},
 		"BA":{
 			"name":"Blythe Asano",
+			"health":{"max":95},
 			"skills":{
 				"chronogation":100,
 				"investigation":25,
@@ -518,6 +530,7 @@
 		},
 		"BB":{
 			"name":"Bianca Brandt",
+			"health":{"max":80},
 			"skills":{
 				"chronogation":25,
 				"investigation":75,
@@ -563,6 +576,7 @@
 		},
 		"BE":{
 			"name":"Beatriz Esteves",
+			"health":{"value":98},
 			"skills":{
 				"chronogation":50,
 				"investigation":25,
@@ -578,6 +592,7 @@
 		},
 		"BF":{
 			"name":"Bodil Falk",
+			"health":{"value":50},
 			"skills":{
 				"chronogation":75,
 				"investigation":-25,
@@ -593,6 +608,7 @@
 		},
 		"BG":{
 			"name":"Bryony Gale",
+			"health":{"value":80},
 			"paradox":1,
 			"skills":{
 				"chronogation":50,
@@ -670,6 +686,7 @@
 		},
 		"BL":{
 			"name":"Bo Lindqvist",
+			"health":{"value":95},
 			"paradox":3,
 			"skills":{
 				"chronogation":25,

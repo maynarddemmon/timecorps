@@ -13,19 +13,19 @@
             rng:{randomInt},
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
-                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
+                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, showFloatingTextForSkillCheck},
             formatChronalAndParadox,
             ICON_HQ,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
         } = pkg,
         
-        AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL],
+        AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -147,6 +147,12 @@
                 notifyTargets:self, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
             });
             
+            // The max is the Agent's constitution, which can be raised up to the absMax. 
+            self[STAT_ID_HEALTH] = new NotifyingNumericStatModel({
+                notifyTargets:self, id:STAT_ID_HEALTH, 
+                absMin:0, min:0, value:AGENT_DEFAULT_HEALTH, max:AGENT_DEFAULT_HEALTH, absMax:AGENT_HEALTH_LIMIT
+            });
+            
             // Nullish event during init is assumed to be the HQ.
             attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
             
@@ -184,6 +190,22 @@
                 console.warn('AgentModel.setChronal after init', this);
             } else {
                 this[STAT_ID_CHRONAL].setValue(v);
+            }
+        },
+        
+        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
+            to the max. */
+        setHealth: function(v) {
+            if (this.inited) {
+                console.warn('AgentModel.setHealth after init', this);
+            } else {
+                const statHealth = this[STAT_ID_HEALTH];
+                if (typeof v === 'number') {
+                    statHealth.setValue(v);
+                } else if (v) {
+                    if (v.max != null) statHealth.setMax(v.max);
+                    statHealth.setValue(v.value ?? statHealth.getMax());
+                }
             }
         },
         

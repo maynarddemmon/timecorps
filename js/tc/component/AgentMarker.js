@@ -11,9 +11,9 @@
                 btnHeight,
                 colorUltraLight, colorMedium, colorMegaDark,
                 fontSizeMicro, fontSizeMedium,
-                colorParadox, colorChronal, colorAction
+                colorParadox, colorChronal, colorHealth, colorAction
             },
-            STAT_ID_CHRONAL, STAT_ID_PARADOX
+            STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_HEALTH
         } = pkg,
         
         /** A circular AgentMarker that shows a photo and the ID on mouseover. */
@@ -119,6 +119,7 @@
                     inset = 0;
                 for (const [type,color] of [
                     ['action',colorAction],
+                    ['health',colorHealth],
                     ['chronal',colorChronal],
                     ['paradox',colorParadox]
                 ]) {
@@ -137,18 +138,19 @@
             },
             
             _updateForAgentModel: function() {
-                const {model, chronalGauge, paradoxGauge, actionGauge} = this;
+                const {model, healthGauge, chronalGauge, paradoxGauge, actionGauge} = this;
                 if (model && chronalGauge) {
                     this.callSuper();
                     
-                    const statChronal = model[STAT_ID_CHRONAL],
-                        statParadox = model[STAT_ID_PARADOX];
-                    chronalGauge.setMinValue(statChronal.getMin());
-                    chronalGauge.setMaxValue(statChronal.getMax());
-                    chronalGauge.setValue(statChronal.getValue());
-                    paradoxGauge.setMinValue(statParadox.getMin());
-                    paradoxGauge.setMaxValue(statParadox.getMax());
-                    paradoxGauge.setValue(statParadox.getValue());
+                    for (const [gauge, statModel] of [
+                        [healthGauge, model[STAT_ID_HEALTH]],
+                        [chronalGauge, model[STAT_ID_CHRONAL]],
+                        [paradoxGauge, model[STAT_ID_PARADOX]]
+                    ]) {
+                        gauge.setMinValue(statModel.getMin());
+                        gauge.setMaxValue(statModel.getMax());
+                        gauge.setValue(statModel.getValue());
+                    }
                     actionGauge.setMaxValue(model.getEventActionLimit());
                     actionGauge.setValue(model.getActionsRemaining());
                 }

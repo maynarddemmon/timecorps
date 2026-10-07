@@ -6,8 +6,8 @@
         {min:mathMin, max:mathMax} = Math,
         
         {
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
-            I18N_PARADOX, I18N_CHRONAL, I18N_HISTORICITY, I18N_ATTESTATION,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
+            I18N_PARADOX, I18N_CHRONAL, I18N_HEALTH, I18N_HISTORICITY, I18N_ATTESTATION,
             ICON_SEPARATOR, ICON_NIL
         } = pkg,
         
@@ -174,6 +174,7 @@
                         switch (id) {
                             case STAT_ID_PARADOX: return I18N_PARADOX;
                             case STAT_ID_CHRONAL: return I18N_CHRONAL;
+                            case STAT_ID_HEALTH: return I18N_HEALTH;
                             case STAT_ID_HISTORICITY: return I18N_HISTORICITY;
                             case STAT_ID_ATTESTATION: return I18N_ATTESTATION;
                             default: return id;

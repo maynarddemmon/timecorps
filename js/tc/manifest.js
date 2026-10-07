@@ -17,8 +17,8 @@ JS.Packages(file => {
     ).requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
-        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar','tc.MiniStatBar',
-        'tc.BigStatBar'
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar',
+        'tc.HealthBar','tc.MiniStatBar','tc.BigStatBar'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue'
@@ -63,7 +63,7 @@ JS.Packages(file => {
     // View //
     file(VIEW_ROOT + 'Agents.js').provides('tc.Agents').requires(
         'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker',
-        'tc.ParadoxBar','tc.ChronalBar','tc.BigStatBar'
+        'tc.ParadoxBar','tc.ChronalBar','tc.HealthBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
         'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar',

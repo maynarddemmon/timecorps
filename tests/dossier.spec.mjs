@@ -195,3 +195,24 @@ test('an agent already visible in a restored save has no dossier shown', async (
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('agent health shows in the dossier and the agents grid, and follows changes', async ({page}) => {
+    const problems = await startGame(page),
+        healthRow = page.getByText('Health', {exact:true}).filter({visible:true});
+    
+    await page.evaluate(() => {tc.app.openAgentDossier(tc.model.getAgentModel('VQ'));});
+    await expect(page.getByText('100/100', {exact:true}).filter({visible:true})).toBeVisible();
+    
+    // A change while the dossier is open shows at once.
+    await page.evaluate(() => tc.model.getAgentModel('VQ').health.adjValue(-40));
+    await expect(page.getByText('60/100', {exact:true}).filter({visible:true})).toBeVisible();
+    await page.keyboard.press('Escape');
+    
+    // The grid has a Health column whose bar tracks the stat.
+    await expect(healthRow).toHaveCount(1);
+    await expect.poll(() => page.evaluate(() => [...document.querySelectorAll('[title]')]
+        .some(elem => /^Health\s·\s60%\s·\s\[60\/100\]$/.test(elem.title)))).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+

@@ -1,13 +1,17 @@
 (pkg => {
     'use strict';
     
-    const {SpacedLayout} = myt,
+    const {SpacedLayout, ResizeLayout, SizeToParent} = myt,
         
         {
-            WideView, DetailRow, DetailRowFlow, TextForFlow,
+            WideView, TallView, CompactField, CompactFieldRow,
+            SkillBar,
             timeUtil:{format},
-            theme:{layoutSpacing, spacing, padding, cornerRadius, colorMegaDark},
-            ICON_SEPARATOR
+            theme:{
+                layoutSpacing, spacing, padding, cornerRadius, 
+                colorMedium, colorDark, colorMegaDark
+            },
+            STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_HEALTH
         } = pkg,
         
         HALF_PADDING = padding / 2,
@@ -36,15 +40,30 @@
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
                     overflow:'autoy'
                 }),
-                vitalsContainer = new WideView(vitals, {});
-            self._idView = new DetailRow(vitalsContainer, {label:'ID'});
-            self._nameView = new DetailRow(vitalsContainer, {label:'Name'});
-            self._roleView = new DetailRow(vitalsContainer, {label:'Role'});
-            self._eventView = new DetailRow(vitalsContainer, {label:'Event'});
-            self._whereView = new DetailRow(vitalsContainer, {label:'Where'});
-            self._whenView = new DetailRow(vitalsContainer, {label:'When'});
-            self._skills = new DetailRowFlow(vitalsContainer, {label:'Skills'});
-            new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
+                vitalsContainer = new WideView(vitals);
+            
+            let row = new WideView(vitalsContainer, {height:18});
+            self._chronalView = new pkg.ChronalBar(row, {y:12, bgColor:colorDark, layoutHint:1});
+            self._paradoxView = new pkg.ParadoxBar(row, {y:12, bgColor:colorDark, layoutHint:1});
+            self._healthView = new pkg.HealthBar(row, {y:12, bgColor:colorDark, layoutHint:1});
+            new ResizeLayout(row, {inset:spacing, spacing, outset:spacing});
+            
+            row = new CompactFieldRow(vitalsContainer);
+            self._idView = new CompactField(row, {label:'ID', layoutHint:1});
+            self._nameView = new CompactField(row, {label:'Name', layoutHint:1});
+            self._roleView = new CompactField(row, {label:'Role', layoutHint:1});
+            row.getFirstLayout().update();
+            
+            row = new CompactFieldRow(vitalsContainer);
+            self._whereView = new CompactField(row, {label:'Where', layoutHint:1});
+            self._whenView = new CompactField(row, {label:'When', layoutHint:1});
+            self._eventView = new CompactField(row, {label:'Event', layoutHint:1});
+            row.getFirstLayout().update();
+            
+            const skillsContainer = self._skills = new WideView(vitalsContainer);
+            new SpacedLayout(skillsContainer, {axis:'y', inset:20, spacing:18, outset:12, collapseParent:true});
+            
+            new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, outset:spacing, collapseParent:true});
         },
         
         
@@ -70,25 +89,45 @@
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
                 self._roleView.setValue(agentModel.getRoleLabel());
-                self._eventView.setValue(eventModel.name);
                 self._whereView.setValue(eventModel.getLocationModel()?.name);
                 self._whenView.setValue(format(eventModel.getStart()));
+                self._eventView.setValue(eventModel.name);
+                self.updateStats(agentModel);
                 
                 const skillsRow = self._skills;
-                let isNotFirst = false;
-                skillsRow.clearContent();
+                skillsRow.destroyAllSubviews();
+                new TallView(skillsRow, {
+                    align:'center', y:16, width:1, bgColor:colorMedium, 
+                    percentOfParentHeightOffset:-24, ignoreLayout:true
+                });
                 for (const skillInfo of agentModel.getSkillInfo()) {
-                    if (isNotFirst) new TextForFlow(skillsRow, {text:ICON_SEPARATOR});
-                    const cfg = skillInfo.cfg;
-                    new TextForFlow(skillsRow, {
-                        text:cfg.name + '\u00A0(' + skillInfo.value + ')',
-                        tooltip:cfg.description
-                    });
-                    isNotFirst = true;
+                    const cfg = skillInfo.cfg,
+                        label = cfg.name + ' : ' + skillInfo.value;
+                    new SkillBar(skillsRow, {
+                        x:spacing, minValue:-1000, value:skillInfo.value, maxValue:1000,
+                        percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
+                        label, tooltip:label + ' - ' + cfg.description
+                    }, [SizeToParent]);
                 }
             }
             
             self.callSuper(agentModel);
+        },
+        
+        
+        // Methods /////////////////////////////////////////////////////////////
+        updateStats: function(agentModel) {
+            this._chronalView.updateForStat(agentModel[STAT_ID_CHRONAL]);
+            this._paradoxView.updateForStat(agentModel[STAT_ID_PARADOX]);
+            this._healthView.updateForStat(agentModel[STAT_ID_HEALTH]);
+        },
+        
+        /** @overrides BriefSupport */
+        notifyBriefModelChanged: function(agentModel) {
+            this.callSuper(agentModel);
+            if (this.visible && this.getBriefModel() === agentModel) {
+                this.updateStats(agentModel);
+            }
         }
     });
 })(tc);

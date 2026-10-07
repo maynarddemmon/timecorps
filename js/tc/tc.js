@@ -100,8 +100,9 @@
                 colorBtn:'#a70',
                 colorBtnLight:'#f70',
                 
-                colorParadox:'#f39',
+                colorParadox:'#c0f',
                 colorChronal:'#39f',
+                colorHealth:'#f00',
                 colorHistoricity:'#da6',
                 colorAttestation:'#fc0',
                 colorAction:'#6f0',
@@ -136,6 +137,10 @@
                 // The starting maximum chronal an Agent can have.
                 AGENT_DEFAULT_STARTING_CHRONAL:75,
                 AGENT_CHRONAL_LIMIT:100,
+                
+                // An Agent's normal maximum health, and the most it can ever be raised to.
+                AGENT_DEFAULT_HEALTH:100,
+                AGENT_HEALTH_LIMIT:150,
                 
                 // These ensure that any skill check has at least a 0.1% chance of success/failure.
                 MAX_SKILL_EASE:-1,
@@ -195,7 +200,7 @@
                 PARADOX_SCORE_MULTIPLIER:-500,
                 
                 // Dialogs
-                DEFAULT_TALL_DIALOG_WIDTH:550,
+                DEFAULT_TALL_DIALOG_WIDTH:648,
                 DIALOG_FOOTER_HEIGHT:0, // Set programmatically below
                 
                 CHECK_EXPR_SHOW_DIE_ROLL:false,
@@ -322,6 +327,7 @@
             // Stat IDs
             STAT_ID_PARADOX:'paradox',
             STAT_ID_CHRONAL:'chronal',
+            STAT_ID_HEALTH:'health',
             STAT_ID_HISTORICITY:'historicity',
             STAT_ID_ATTESTATION:'attestation',
             
@@ -339,6 +345,7 @@
             // Text Constants
             I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
             I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
+            I18N_HEALTH:'Health',
             I18N_HISTORICITY:'Historicity',
             I18N_ATTESTATION:'Attestation',
             
@@ -351,6 +358,7 @@
             ICON_VIEW:'⏿',
             ICON_CHRONAL,
             ICON_PARADOX,
+            ICON_HEALTH:'♥',
             ICON_THE_VOID:'⦰',
             ICON_HQ:'❉',
             ICON_HELP:'?',

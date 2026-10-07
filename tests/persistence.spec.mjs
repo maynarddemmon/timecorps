@@ -319,3 +319,25 @@ test('a cleared selection stays cleared after a reload', async ({page}) => {
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('agent health and constitution survive a save and reload', async ({page}) => {
+    const problems = await startGame(page),
+        readHealth = () => page.evaluate(() => {
+            const {value, max} = tc.model.getAgentModel('VQ').health;
+            return {value, max};
+        });
+    await page.evaluate(() => {
+        const statHealth = tc.model.getAgentModel('VQ').health;
+        statHealth.setMax(120);
+        statHealth.setValue(70);
+        tc.persistence.save();
+    });
+    expect((await readSave(page)).data.agents.VQ.health).toMatchObject({value:70, max:120});
+    
+    await reloadGame(page);
+    expect(await readHealth()).toEqual({value:70, max:120});
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});
+

@@ -10,7 +10,7 @@
             theme:{
                 spacing, padding, layoutSpacing, rowHeight,
                 colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, colorBtn,
-                fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono
+                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono
             },
             ICON_NIL
         } = pkg,
@@ -85,7 +85,7 @@
                 
                 this.callSuper(parent, attrs);
                 
-                new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset})
+                new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset});
             }
         }),
         DividerRow = pkg.DividerRow = new JSClass('DividerRow', Row, {
@@ -337,6 +337,64 @@
     pkg.NoValueText = new JSClass('NoValueText', TextForFlow, {
         initNode: function(parent, attrs) {
             attrs.text ??= ICON_NIL;
+            this.callSuper(parent, attrs);
+        }
+    });
+    
+    pkg.CompactField = new JSClass('CompactField', View, {
+        initNode: function(parent, attrs) {
+            const self = this,
+                label = attrs.label ??= '',
+                value = attrs.value ??= '',
+                labelFontSize = attrs.labelFontSize ??= fontSizeMicro;
+            delete attrs.label;
+            delete attrs.value;
+            delete attrs.labelFontSize;
+            
+            self.callSuper(parent, attrs);
+            
+            self._lv = new PlainText(self, {
+                x:1, text:label, textColor:colorMedium, fontSize:labelFontSize});
+            const vv = self._vv = new Text(self, {
+                x:1, y:12, text:value, whiteSpace:'normal'
+            });
+            
+            self.constrain('_updateHeight', [vv, 'y', vv, 'height']);
+            self.setWidth(self.width);
+        },
+        
+        _updateHeight: function(_event) {
+            const vv = this._vv;
+            this.setHeight(vv.y + vv.height);
+        },
+        
+        setWidth: function(v) {
+            this.callSuper(v);
+            if (this.inited) {
+                const w = this.width - 2;
+                this._lv.setWidth(w);
+                this._vv.setWidth(w);
+            }
+        },
+        
+        setLabel: function(v) {this._lv.setText(v);},
+        setValue: function(v) {this._vv.setText(v);}
+    });
+    
+    pkg.CompactFieldRow = new JSClass('CompactFieldRow', WideView, {
+        initNode: function(parent, attrs) {
+            this.callSuper(parent, attrs);
+            
+            new ResizeLayout(this, {inset:spacing, spacing, outset:spacing});
+            new M.SizeToChildren(this, {axis:'y'});
+        }
+    });
+    
+    pkg.TallView = new JSClass('TallView', View, {
+        include: [SizeToParent],
+        
+        initNode: function(parent, attrs) {
+            attrs.percentOfParentHeight ??= 100;
             this.callSuper(parent, attrs);
         }
     });

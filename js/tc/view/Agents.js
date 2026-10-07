@@ -9,8 +9,8 @@
             timeUtil:{format},
             theme:{padding, btnHeight},
             SCOPE_AGENTS,
-            ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX,
-            STAT_ID_CHRONAL, STAT_ID_PARADOX
+            ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX, I18N_HEALTH,
+            STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_HEALTH
         } = pkg,
         
         updateBtnCell = (row, colId, eventExistsTxtFunc) => {
@@ -29,9 +29,10 @@
         }),
         AgentParadoxBar = new JSClass('AgentParadoxBar', pkg.ParadoxBar, {include: [AgentBar]}),
         AgentChronalBar = new JSClass('AgentChronalBar', pkg.ChronalBar, {include: [AgentBar]}),
+        AgentHealthBar = new JSClass('AgentHealthBar', pkg.HealthBar, {include: [AgentBar]}),
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
-            getColIds: () => ['id','name','role','event','where','when',STAT_ID_PARADOX,STAT_ID_CHRONAL],
+            getColIds: () => ['id','name','role','event','where','when',STAT_ID_HEALTH,STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
                 this.doCellBtnActivated('event');
@@ -48,6 +49,7 @@
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
                     case 'when':  eventExistsTxtFunc = event => format(event.getStart());            break;
+                    case STAT_ID_HEALTH:
                     case STAT_ID_PARADOX:
                     case STAT_ID_CHRONAL:
                         this.getRef(colId).updateForStat(this.model[colId]);
@@ -67,6 +69,8 @@
                     case 'where':
                     case 'when':
                         return GridCellBtn;
+                    case STAT_ID_HEALTH:
+                        return AgentHealthBar;
                     case STAT_ID_PARADOX:
                         return AgentParadoxBar;
                     case STAT_ID_CHRONAL:
@@ -77,6 +81,7 @@
             },
             isPlainCell: function(colId) {
                 switch (colId) {
+                    case STAT_ID_HEALTH:
                     case STAT_ID_PARADOX:
                     case STAT_ID_CHRONAL:
                         return false;
@@ -119,8 +124,8 @@
             }, [{
                 makeGridHeaders: gridHeader => {
                     const WIDTH_ID = btnHeight + padding,
-                        WIDTH_MISC = 70,
-                        WIDTH_WHEN = 150,
+                        WIDTH_MISC = 60,
+                        WIDTH_WHEN = 125,
                         WIDTH_BAR = 65;
                     new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:'ID',         cellXAdj:padding,   cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:2000,       text:'Name',  flex:1});
@@ -128,6 +133,7 @@
                     new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:2000,       text:'Event', flex:1});
                     new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:2000,       text:'Where', flex:1});
                     new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:'When'});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_HEALTH,  minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_HEALTH,  cellXAdj:padding/2, cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_PARADOX, cellXAdj:padding/2, cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_CHRONAL, cellXAdj:padding/2, cellWidthAdj:-padding});
                 },
@@ -206,6 +212,7 @@
                                     return (vA - vB) * sortAsc;
                                 }
                             };
+                        case STAT_ID_HEALTH:
                         case STAT_ID_PARADOX:
                         case STAT_ID_CHRONAL:
                             return (a, b) => {

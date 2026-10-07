@@ -473,3 +473,38 @@ test('the ship that reaches New York, and who it lands, follow the night of the 
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
 });
+
+test('agent health comes from the data, with a constitution that can rise to the absolute max', async ({page}) => {
+    const problems = await startGame(page),
+        agentsJson = readJson('data/agents.json').agents,
+        health = await page.evaluate(() => Object.fromEntries(Object.values(tc.model.getAgentModels()).map(agentModel => {
+            const {value, max, absMax} = agentModel.health;
+            return [agentModel.id, {value, max, absMax}];
+        })));
+    for (const [agentId, datum] of Object.entries(agentsJson)) {
+        const expected = {max:datum.health?.max ?? 100};
+        expected.value = datum.health?.value ?? expected.max;
+        expect(health[agentId], agentId).toEqual({...expected, absMax:150});
+    }
+    
+    // A value alone, or a max alone where the value follows it.
+    const forms = await page.evaluate(() => {
+        const agentModel = tc.model.getAgentModel('VQ'),
+            statHealth = agentModel.health,
+            out = [];
+        agentModel.inited = false;
+        for (const v of [80, {max:75}, {max:200}, {max:120, value:90}]) {
+            statHealth.setMax(100);
+            statHealth.setValue(100);
+            agentModel.setHealth(v);
+            out.push([statHealth.value, statHealth.max]);
+        }
+        agentModel.inited = true;
+        return out;
+    });
+    expect(forms).toEqual([[80, 100], [75, 75], [150, 150], [90, 120]]);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});
+

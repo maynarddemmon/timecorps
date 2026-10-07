@@ -17,8 +17,8 @@
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             attrs.cancelable ??= true;
-            attrs.tallWidth ??= 4*(TL_COL_WIDTH + padding) + padding;
-            attrs.photoHeight ??= 4*TL_COL_HEADER_HEIGHT;
+            attrs.tallWidth ??= 5*(TL_COL_WIDTH + padding) + padding;
+            attrs.photoHeight ??= 5*TL_COL_HEADER_HEIGHT;
             
             this.callSuper(parent, attrs);
         },
