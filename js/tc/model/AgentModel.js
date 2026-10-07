@@ -18,7 +18,7 @@
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, toDamagePhrase, showFloatingTextForSkillCheck},
-            formatChronalAndParadox,
+            formatAgentRisks,
             ICON_HQ, ICON_SEPARATOR,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
@@ -46,11 +46,11 @@
                 visible = true;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                text = 'Recall to ' + ICON_HQ + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                text = 'Recall to ' + ICON_HQ + ' ' + formatAgentRisks(chronalNeeded, paradoxCost);
             } else {
                 const isAlreadyAtEvent = agentModel.isAtEvent(eventModel);
                 disabled = !hasEnoughChronal;
-                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatChronalAndParadox(chronalNeeded, paradoxCost);
+                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatAgentRisks(chronalNeeded, paradoxCost);
             }
             
             if (agentModel.isDead()) visible = false;

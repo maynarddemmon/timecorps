@@ -50,8 +50,9 @@
             return mathFloor(mathRandom() * max);
         },
         
-        ICON_CHRONAL ='⏲', // ⏲ ⏱ ⌚ ♾ ⧖
+        ICON_CHRONAL ='⏲', // ⏲ ⏱ ♾ ⧖
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
+        ICON_HEALTH = '♥',
         
         // A difficulty in the data that skips the roll, so the check always succeeds. It's
         // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
@@ -227,14 +228,18 @@
             },
             
             // Misc Formatters
-            formatChronalAndParadox: (chronal, paradox) => {
+            formatAgentRisks: (chronal, paradox, hasInjuryRisk) => {
                 const THEME = TC.theme,
                     hasChronal = chronal > 0,
                     hasParadox = paradox > 0;
+                
+                if (!hasChronal && !hasParadox && !hasInjuryRisk) return '';
+                
                 return '[' + 
                     (hasChronal ? wrapInStyledSpan(chronal + ICON_CHRONAL, THEME.colorChronal) : '') + 
                     (hasChronal && hasParadox ? ' + ' : '') +
                     (hasParadox ? wrapInStyledSpan(paradox + ICON_PARADOX, THEME.colorParadox) : '') + 
+                    (hasInjuryRisk === true ? wrapInStyledSpan(ICON_HEALTH, THEME.colorHealth) : '') + 
                     ']';
             },
             
@@ -350,11 +355,12 @@
             ICON_ARROW:'\u00A0→\u00A0',
             ICON_NAV_BACK:'❮',
             ICON_NAV_FORWARD:'❯',
+            ICON_ACTION:'⎇', // ⎌ ⎇ ☟
             ICON_JUMP:'⎌',
             ICON_VIEW:'⏿',
             ICON_CHRONAL,
             ICON_PARADOX,
-            ICON_HEALTH:'♥',
+            ICON_HEALTH,
             ICON_THE_VOID:'⦰',
             ICON_HQ:'❉',
             ICON_HELP:'?',
