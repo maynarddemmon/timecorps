@@ -12,7 +12,28 @@
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
-        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY],
+        PARAM_DIE = 'd',
+        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE],
+        
+        /*  The d(sides) function an expression sees. A die needs a whole number of sides, 1 or 
+            more, so anything else throws and fails the check. */
+        checkSides = sides => {
+            if (!Number.isInteger(sides) || sides < 1) throw new RangeError('d(' + sides + ') needs a whole number of sides, 1 or more');
+        },
+        
+        // Rolls the die: 1 to sides. A queued roll is the die's value minus 1.
+        rollDie = sides => {
+            checkSides(sides);
+            return roll(sides) + 1;
+        },
+        
+        /*  The die's average, (1 + sides) / 2, for working out an ease without rolling. Success
+            is linear in the ease, so a check's chance at the average ease is its true chance, 
+            unless the ease gets clamped. */
+        averageDie = sides => {
+            checkSides(sides);
+            return (1 + sides) / 2;
+        },
         
         // Compiled check functions by expression text. The parameters are the same for every
         // check, so events that share an expression share one function.
@@ -58,15 +79,16 @@
             return func;
         },
         
-        /*  Evaluates an expression to an ease, clamped to [minEase, maxEase]. Doesn't roll. NaN
-            if the expression throws or isn't a number, which fails any check. */
-        getEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-DIE_SIZE}={}) => {
-            // A no-roll check always succeeds, whatever the expression.
+        /*  Evaluates an expression to an ease, clamped to [minEase, maxEase], with die as the 
+            expression's d function. NaN if the expression throws or isn't a number, which fails 
+            any check. */
+        evaluateEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-DIE_SIZE}, die) => {
+            // A no-roll check always succeeds, whatever the expression, and rolls no dice.
             if (isNoRollDifficulty(difficulty)) return 0;
             
             let value;
             try {
-                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty);
+                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty, die);
             } catch (err) {
                 console.warn('Check expression threw (' + err.message + '):', expr);
                 return NaN;
@@ -77,6 +99,9 @@
             }
             return mathMax(minEase, mathMin(maxEase, value)); // NaN stays NaN.
         },
+        
+        /*  The ease without rolling: any d(sides) counts as its average. */
+        getEase = (expr, cfg={}) => evaluateEase(expr, cfg, averageDie),
         
         /*  The expression for a skill check: (skillExpr) - difficulty. The parentheses keep an 
             expression using ||, ?: or comparisons from changing what difficulty is taken from. */
@@ -112,6 +137,10 @@
                 event - The EventModel the check happens at.
                 timeline - The root Model.
                 difficulty - The check's difficulty.
+                d(sides) - Rolls a die: a whole number from 1 to sides, e.g. 
+                    "agent.skills.str + d(12) - difficulty". Use d(13) - 1 for 0 to 12. Only a
+                    real check rolls. Working out the ease without rolling, e.g. for an ease 
+                    phrase, uses the die's average.
             For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
             difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             
@@ -132,10 +161,11 @@
             
             /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
                 Returns {success, result, roll, difficulty, ease} where result is roll + ease. A
-                no-roll check doesn't roll, so its roll is null and its result is 0. */
+                no-roll check doesn't roll, so its roll is null and its result is 0. Any dice in
+                the expression are rolled first, then the check's roll. */
             evaluate: (expr, cfg={}) => {
                 const difficulty = cfg.difficulty ?? 0,
-                    ease = getEase(expr, cfg),
+                    ease = evaluateEase(expr, cfg, rollDie),
                     dieRoll = isNoRollDifficulty(difficulty) ? null : roll(),
                     result = (dieRoll ?? 0) + ease;
                 return {success:result >= 0, result, roll:dieRoll, difficulty, ease};

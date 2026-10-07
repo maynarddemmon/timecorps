@@ -162,6 +162,68 @@ test.describe('checks', () => {
     });
 });
 
+test.describe('dice in check expressions', () => {
+    // A cfg wide enough that dice aren't clamped away.
+    const WIDE = {minEase:-1000, maxEase:1000};
+    
+    test('d(sides) rolls a whole number from 1 to sides', async ({page}) => {
+        const problems = await startGame(page),
+            eases = await page.evaluate(cfg => Array.from({length:600}, () => tc.checks.evaluate('d(6)', cfg).ease), WIDE);
+        expect(new Set(eases)).toEqual(new Set([1, 2, 3, 4, 5, 6]));
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('dice roll before the check, and a queued die roll is its value minus 1', async ({page}) => {
+        const problems = await startGame(page),
+            result = await page.evaluate(cfg => {
+                tc.rng.queueRolls(11, 0, 500); // d(12) of 12, d(4) of 1, then the check's roll.
+                return tc.checks.evaluate('agent.skills.str + d(12) + d(4) - difficulty', {
+                    ...cfg, agent:tc.model.getAgentModel('VQ'), difficulty:100
+                });
+            }, WIDE),
+            str = readJson('data/agents.json').agents.VQ.skills.str;
+        expect(result).toMatchObject({ease:str + 12 + 1 - 100, roll:500, result:500 + str + 13 - 100});
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('the ease without rolling uses the die\'s average and rolls nothing', async ({page}) => {
+        const problems = await startGame(page),
+            out = await page.evaluate(cfg => {
+                tc.rng.queueRolls(0);
+                const ease = tc.checks.getEase('d(12) - 20', cfg),
+                    // d(100) averages 50.5, so with 350 difficulty the ease is -299.5: fair.
+                    phrase = tc.checks.getEasePhrase('d(100)', {difficulty:350}),
+                    queued = tc.rng.getQueuedRollCount();
+                tc.rng.clearQueuedRolls();
+                return {ease, phrase, queued};
+            }, WIDE);
+        expect(out).toEqual({ease:6.5 - 20, phrase:'fair', queued:1});
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('a no-roll check rolls no dice', async ({page}) => {
+        await startGame(page);
+        const out = await page.evaluate(() => {
+            tc.rng.queueRolls(2);
+            const result = tc.checks.evaluate('d(6) - difficulty', {difficulty:tc.toDifficulty('no-roll')}),
+                queued = tc.rng.getQueuedRollCount();
+            tc.rng.clearQueuedRolls();
+            return {success:result.success, queued};
+        });
+        // The queued roll is still there: neither the die nor the check used it.
+        expect(out).toEqual({success:true, queued:1});
+    });
+    
+    test('a die without a whole number of sides, 1 or more, fails the check with a warning', async ({page}) => {
+        const problems = await startGame(page);
+        for (const sides of ['0', '-3', '2.5', '"six"', '']) {
+            expect((await evaluateCheck(page, 'd(' + sides + ') + 1000', {roll:999})).success, sides).toBe(false);
+        }
+        expect(problems.warnings).toHaveLength(5);
+        for (const warning of problems.warnings) expect(warning).toContain('whole number of sides');
+    });
+});
+
 test.describe('skill checks', () => {
     // Calls an AgentModel check method on VQ with the given skills and forced roll.
     const callOnAgent = (page, method, args, {roll, skills={}}) => page.evaluate(
