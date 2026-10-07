@@ -341,3 +341,26 @@ test('agent health and constitution survive a save and reload', async ({page}) =
     expect(problems.warnings).toEqual([]);
 });
 
+test('a devoured agent stays devoured after a save and reload', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Okonjo joins and is devoured, so Vasquez keeps the campaign going.
+    await page.evaluate(() => {
+        tc.model.revealAgents(['OK']);
+        tc.model.awardAgents(['OK']);
+    });
+    await dismissAgentDossier(page, 'Okonjo');
+    await page.evaluate(() => tc.model.getAgentModel('OK').setDevoured(true));
+    await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
+    await dismissAgentDossier(page, 'Okonjo');
+    await page.evaluate(() => tc.persistence.save());
+    
+    await reloadGame(page);
+    expect(await page.evaluate(() => {
+        const ok = tc.model.getAgentModel('OK');
+        return {devoured:ok.isDevoured(), event:ok.event, active:tc.model.getActiveAgentsAsList().map(agentModel => agentModel.id)};
+    })).toEqual({devoured:true, event:'the_void', active:['VQ']});
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+

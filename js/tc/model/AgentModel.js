@@ -387,6 +387,7 @@
                 event:this.event,
                 actionExecCount:this.actionExecCount,
                 arrivalOrder:this.arrivalOrder,
+                devoured:this.devoured,
                 log:this.log.map(exportLogEntry)
             };
             for (const statId of AGENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
@@ -401,6 +402,10 @@
             }
             if ('hidden' in obj) this.setHidden(obj.hidden);
             if ('playerControlled' in obj) this.setPlayerControlled(obj.playerControlled);
+            
+            // Set directly, since setDevoured would send the Agent to The Void again. The saved
+            // event and chronal already have them there.
+            if ('devoured' in obj) this.set('devoured', !!obj.devoured, true);
             
             // A saved diff only holds the skills that changed so merge rather than replace.
             if (obj[SCOPE_SKILLS]) this.setSkills({...this[SCOPE_SKILLS], ...obj[SCOPE_SKILLS]});
