@@ -621,7 +621,23 @@
 			"location":"titanic.boatdeck",
 			"investigate":{"difficulty":"no-roll"},
 			"exits":[
-				{"mode":"wait", "to":"arrival_new_york", "hidden":"events.collision.values.struck.value"}
+				{
+					"mode":"wait",
+					"to":"arrival_new_york",
+					"hidden":"events.collision.values.struck.value"
+				},
+				{
+					"mode":"lifeboat",
+					"to":"arrival_new_york",
+					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
+					"injurySkillCheck":{"difficulty":500, "actionType":"athletics", "damage":"150"}
+				},
+				{
+					"mode":"lifeboat",
+					"to":"arrival_new_york",
+					"hidden":"!events.collision.values.struck.value || event.values.massLossOfLife.value",
+					"injurySkillCheck":{"difficulty":50, "actionType":"athletics", "damage":"150"}
+				}
 			],
 			"values":{
 				"massLossOfLife":{
@@ -655,7 +671,7 @@
 			"start":"1912-04-17T07:00:00",
 			"duration":{"d":1,"h":15},
 			"location":"new_york.pier_54",
-			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 30",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 10",
 			"values":{
 				"arrivingShip":{
 					"name":"Ship Arriving",

@@ -11,13 +11,17 @@
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
-                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT,
-                TRAVEL_MODE_WAIT, TRAVEL_MODE_WALK, TRAVEL_MODE_SWIM
+                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT
             },
             ICON_SEPARATOR, ICON_NIL,
             SCOPE_EVENT,
             ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
+        
+        TRAVEL_MODE_WAIT ='wait',
+        TRAVEL_MODE_WALK ='walk',
+        TRAVEL_MODE_SWIM ='swim',
+        TRAVEL_MODE_LIFEBOAT = 'lifeboat',
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
         PREFIX_SKILL_DIFF = '_SkDff_',
@@ -39,14 +43,14 @@
                 const diffId = PREFIX_SKILL_DIFF + actionId,
                     typeId = PREFIX_SKILL_TYPE + actionId,
                     exprId = PREFIX_SKILL_EXPR + actionId,
-                    owner = self.event ? 'Event ' + self.event.id + ' action ' + self.id : 'Event ' + self.id + ' ' + actionId,
+                    owner = self.getSkillCheckOwner(actionId),
                     warn = msg => console.warn(owner, 'skill check', msg + ':', cfg);
                 
                 self[diffId] = self[typeId] = self[exprId] = undefined;
                 if (cfg == null) return;
                 if (typeof cfg !== 'object' || Array.isArray(cfg)) {
                     warn('must be an object');
-                    return;
+                    return false;
                 }
                 
                 const {difficulty, check, actionType, ...unknown} = cfg;
@@ -77,6 +81,11 @@
                 
                 const unknownKeys = Object.keys(unknown);
                 if (unknownKeys.length > 0) warn('has unknown keys ' + unknownKeys.join(', '));
+                return true;
+            },
+            /*  Names the model in warnings about its skill checks. */
+            getSkillCheckOwner: function(actionId) {
+                return this.event ? 'Event ' + this.event.id + ' action ' + this.id : 'Event ' + this.id + ' ' + actionId;
             },
             getActionSkillDifficulty: function(actionId=ACTION_TYPE_SINGULAR) {
                 return this[PREFIX_SKILL_DIFF + actionId] ?? pkg.getSkillDifficulty(this.getActionSkillType(actionId));
@@ -235,10 +244,59 @@
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport],
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                // Applied after the other attrs so any warnings can name the exit.
+                const injurySkillCheck = attrs.injurySkillCheck;
+                delete attrs.injurySkillCheck;
+                
+                this.callSuper(attrs);
+                
+                this.setInjurySkillCheck(injurySkillCheck);
+            },
             
             
             // Accessors ///////////////////////////////////////////////////////
+            /*  Taking an exit always succeeds, but it can risk injury. cfg is a skill check, as for
+                an action, plus the damage taken if it fails:
+                    {difficulty:<integer>, check:<skill expression>, actionType:<skill check id>,
+                     damage:<amount expression, e.g. "d(6)+4">}
+                The damage is required, so a cfg without one is ignored, with a warning. */
+            setInjurySkillCheck: function(cfg) {
+                const self = this;
+                self.injuryDamage = undefined;
+                
+                if (cfg == null) {
+                    self.addSkillCheck(null);
+                    return;
+                }
+                
+                const {damage, ...checkCfg} = typeof cfg === 'object' && !Array.isArray(cfg) ? cfg : {},
+                    isValidDamage = typeof damage === 'string' && damage.trim() !== '';
+                if (self.addSkillCheck(null, typeof cfg === 'object' ? checkCfg : cfg)) {
+                    if (isValidDamage) {
+                        self.injuryDamage = damage;
+                    } else {
+                        console.warn(self.getSkillCheckOwner(), 'injury skill check needs a damage expression (ignoring the check):', cfg);
+                        self.addSkillCheck(null);
+                    }
+                }
+            },
+            
+            /*  True if taking this exit risks injury. */
+            hasInjuryCheck: function() {return this.injuryDamage != null;},
+            
+            /*  The damage expression for a failed injury check, or undefined if there's no check. */
+            getInjuryDamage: function() {return this.injuryDamage;},
+            
+            /** @overrides ActionCheckSupport */
+            getSkillCheckOwner: function() {
+                return 'Event ' + this.event?.id + ' exit to ' + this.to;
+            },
+            
             setMode: function(mode) {this.set('mode', mode, true);},
             
             setTo: function(to) {
@@ -256,9 +314,10 @@
             /*  How the exit is taken, as the start of a button label, e.g. "Walk to". */
             getModePhrase: function() {
                 switch (this.mode) {
-                    case TRAVEL_MODE_WAIT: return 'Wait til';
-                    case TRAVEL_MODE_WALK: return 'Walk to';
-                    case TRAVEL_MODE_SWIM: return 'Swim to';
+                    case TRAVEL_MODE_WAIT:     return 'Wait til';
+                    case TRAVEL_MODE_WALK:     return 'Walk to';
+                    case TRAVEL_MODE_SWIM:     return 'Swim to';
+                    case TRAVEL_MODE_LIFEBOAT: return 'Lifeboat to';
                     default: return 'To';
                 }
             },
@@ -315,13 +374,18 @@
                 // attestation/historicty check of say 15.
                 attrs.hidden ??= "event.attestation.value === 0 && event.historicity.value === 0";
                 
-                // Applied after the other attrs so any warnings can name the Event by its id.
-                const investigate = attrs.investigate;
+                // Applied after the other attrs so any warnings, including those about the skill 
+                // checks of actions and exits, can name the Event by its id.
+                const {investigate, actions, exits} = attrs;
                 delete attrs.investigate;
+                delete attrs.actions;
+                delete attrs.exits;
                 
                 self.callSuper(attrs);
                 
                 self.setInvestigate(investigate);
+                if (actions) self.setActions(actions);
+                if (exits) self.setExits(exits);
             },
             
             getAsObj: function(cfg) {

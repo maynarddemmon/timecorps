@@ -17,9 +17,9 @@
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
-            checks:{skill, getSkillEase, getEasePhrase, showFloatingTextForSkillCheck},
+            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, toDamagePhrase, showFloatingTextForSkillCheck},
             formatChronalAndParadox,
-            ICON_HQ,
+            ICON_HQ, ICON_SEPARATOR,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
@@ -34,6 +34,8 @@
         LOG_TYPE_ACTION = 'action',
         LOG_TYPE_INVESTIGATE = 'investigate',
         LOG_TYPE_DEVOURED = 'devoured',
+        
+        getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
             const skillFactor = agentModel.getSkillInvestigation() / 25,
@@ -324,28 +326,23 @@
         /*  Rolls a check of a skill expression, e.g. "Math.max(agent.skills.a, agent.skills.b)",
             against a difficulty. Returns {success, result, roll, difficulty, ease}. */
         checkSkillExpression: function(skillExpr, difficulty) {
-            return skill(skillExpr, this._getCheckCfg(difficulty));
+            return skill(skillExpr, getCheckCfg(this, difficulty));
         },
         
         /*  The ease of a skill expression check, without rolling. */
         getSkillExpressionEase: function(skillExpr, difficulty) {
-            return getSkillEase(skillExpr, this._getCheckCfg(difficulty));
+            return getSkillEase(skillExpr, getCheckCfg(this, difficulty));
         },
         
         /*  Describes how likely a skill expression check is to succeed, without rolling. */
         getSkillEasePhrase: function(skillExpr, difficulty) {
-            return getEasePhrase(skillExpr, this._getCheckCfg(difficulty));
+            return getEasePhrase(skillExpr, getCheckCfg(this, difficulty));
         },
         
         /*  Rolls a check of one skill against a difficulty. Returns the same as 
             checkSkillExpression. */
         checkSkill: function(skillName, difficulty) {
             return this.checkSkillExpression(CHECK_SKILL_EXPR_PREFIX + skillName, difficulty);
-        },
-        
-        /** @private */
-        _getCheckCfg: function(difficulty) {
-            return {agent:this, event:this.getEventModel(), difficulty};
         },
         
         
@@ -485,17 +482,62 @@
                 console.warn('doRecallToHQ: no eventModel');
             }
         },
-        doFollowExit: function(exitModel) {
+        doFollowExit: function(exitModel, btnView) {
             if (this.getEventModel() === exitModel.event) {
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
-                    this.setEvent(toEvent.id, {type:LOG_TYPE_EXIT, exit:exitModel});
+                    // Taking the exit always succeeds, but it may hurt on the way. The result
+                    // is shown before the damage since that rebuilds the views, btnView included.
+                    const injury = this.checkInjury(exitModel),
+                        logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
+                    if (injury) {
+                        showFloatingTextForSkillCheck(btnView, injury);
+                        this.takeDamage(injury.damage);
+                        logEntry.damage = injury.damage;
+                    }
+                    
+                    this.setEvent(toEvent.id, logEntry);
                     pkg.app.selectEventBox(toEvent);
                 }
             } else {
                 console.warn('Agent not at event for exit:', exitModel, this);
             }
         },
+        
+        /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 
+            apply the damage. Returns the check result plus the damage, or null if there's no
+            check. */
+        checkInjury: function(exitModel) {
+            if (!exitModel.hasInjuryCheck()) return null;
+            
+            const difficulty = exitModel.getActionSkillDifficulty(),
+                check = this.checkSkillExpression(exitModel.getActionSkillExpr(), difficulty);
+            let damage = 0;
+            if (!check.success) {
+                // Whole points only, and never healing. A broken expression does no damage.
+                const amount = rollAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty));
+                if (amount > 0) damage = Math.round(amount);
+            }
+            return {...check, damage};
+        },
+        
+        /*  Lowers health by a whole, positive amount of damage. */
+        takeDamage: function(damage) {
+            if (damage > 0) this[STAT_ID_HEALTH].adjValue(-damage);
+        },
+        
+        /*  Describes the risk of an exit's injury check, e.g. "Athletic · easy · injury: light",
+            or an empty string if there's none. The damage is its average, without rolling. */
+        getInjuryRiskPhrase: function(exitModel) {
+            if (!exitModel.hasInjuryCheck()) return '';
+            
+            const difficulty = exitModel.getActionSkillDifficulty(),
+                easePhrase = this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty),
+                averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
+                name = exitModel.getActionSkillName();
+            return (name ? name + ICON_SEPARATOR : '') + easePhrase + ICON_SEPARATOR + 'injury: ' + toDamagePhrase(averageDamage);
+        },
+        
         doAction: function(actionModel, btnView) {
             if (!this.canAct()) return;
             

@@ -8,7 +8,8 @@
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
-            isNoRollDifficulty
+            isNoRollDifficulty,
+            ICON_SEPARATOR
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
@@ -79,13 +80,9 @@
             return func;
         },
         
-        /*  Evaluates an expression to an ease, clamped to [minEase, maxEase], with die as the 
-            expression's d function. NaN if the expression throws or isn't a number, which fails 
-            any check. */
-        evaluateEase = (expr, {agent, event, difficulty=0, maxEase=0, minEase=-DIE_SIZE}, die) => {
-            // A no-roll check always succeeds, whatever the expression, and rolls no dice.
-            if (isNoRollDifficulty(difficulty)) return 0;
-            
+        /*  Evaluates an expression with die as its d function. NaN, with a warning, if the 
+            expression throws or isn't a number. */
+        evaluateExpr = (expr, {agent, event, difficulty=0}, die) => {
             let value;
             try {
                 value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty, die);
@@ -97,7 +94,19 @@
                 console.warn('Check expression is not a number (' + typeof value + '):', expr);
                 return NaN;
             }
-            return mathMax(minEase, mathMin(maxEase, value)); // NaN stays NaN.
+            return value;
+        },
+        
+        /*  Evaluates an expression to an ease, clamped to [minEase, maxEase], with die as the 
+            expression's d function. NaN if the expression throws or isn't a number, which fails 
+            any check. */
+        evaluateEase = (expr, cfg, die) => {
+            const {difficulty=0, maxEase=0, minEase=-DIE_SIZE} = cfg;
+            
+            // A no-roll check always succeeds, whatever the expression, and rolls no dice.
+            if (isNoRollDifficulty(difficulty)) return 0;
+            
+            return mathMax(minEase, mathMin(maxEase, evaluateExpr(expr, cfg, die))); // NaN stays NaN.
         },
         
         /*  The ease without rolling: any d(sides) counts as its average. */
@@ -128,6 +137,21 @@
             [-999, 'hopeless']   // 0.1%
         ],
         toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? 'impossible',
+        
+        /*  The phrase for an amount of damage, by the least damage that earns it. Against an 
+            Agent's normal health of 100. */
+        DAMAGE_PHRASES = [
+            [150, 'certain death'],
+            [100, 'deadly'],
+            [75,  'crippling'],
+            [50,  'critical'],
+            [25,  'grievous'],
+            [15,  'severe'],
+            [10,  'serious'],
+            [5,   'moderate'],
+            [1,   'light']
+        ],
+        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? 'harmless',
         
         /*  Evaluates check expressions for checks such as investigating. An expression is plain 
             JavaScript that evaluates to an ease: the number added to a roll of 0 to 999, where a 
@@ -171,6 +195,17 @@
                 return {success:result >= 0, result, roll:dieRoll, difficulty, ease};
             },
             
+            /*  Evaluates an amount, such as damage, rolling any dice. The same parameters as a 
+                check, but the result isn't an ease so it isn't clamped. NaN, with a warning, if 
+                the expression throws or isn't a number. */
+            rollAmount: (expr, cfg={}) => evaluateExpr(expr, cfg, rollDie),
+            
+            /*  An amount without rolling: any d(sides) counts as its average. */
+            getAverageAmount: (expr, cfg={}) => evaluateExpr(expr, cfg, averageDie),
+            
+            /*  Describes an amount of damage, e.g. 'light' or 'deadly'. */
+            toDamagePhrase,
+            
             /*  Rolls a skill check: success when roll + (skillExpr) - difficulty >= 0. Returns the
                 same as evaluate. */
             skill: (skillExpr, cfg) => CHECK.evaluate(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg)),
@@ -186,10 +221,12 @@
             
             showFloatingTextForSkillCheck: (btnView, checkResult) => {
                 if (btnView && checkResult) {
-                    const {success, roll, ease} = checkResult,
+                    const {success, roll, ease, damage} = checkResult,
                         // A no-roll check has no margin or roll to show.
-                        text = roll == null ? 'Succeeded' : 
-                            (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? pkg.ICON_SEPARATOR + '⚅' + roll : '');
+                        text = (roll == null ? 'Succeeded' : 
+                            (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
+                            // An injury check's damage, e.g. "Failed by 120 · -7♥".
+                            (damage > 0 ? ICON_SEPARATOR + '-' + damage + pkg.ICON_HEALTH : '');
                     pkg.showFloatingTextAboveView(
                         btnView, 
                         text, 

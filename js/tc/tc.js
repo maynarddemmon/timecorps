@@ -118,10 +118,6 @@
                 EVENT_ID_THE_VOID:'the_void',
                 EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
                 
-                TRAVEL_MODE_WAIT:'wait',
-                TRAVEL_MODE_WALK:'walk',
-                TRAVEL_MODE_SWIM:'swim',
-                
                 // The amount of chronal granted when reloading at HQ.
                 RELOAD_CHRONAL_AMOUNT:5,
                 
