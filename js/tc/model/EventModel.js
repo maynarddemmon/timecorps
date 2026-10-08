@@ -44,7 +44,7 @@
                     typeId = PREFIX_SKILL_TYPE + actionId,
                     exprId = PREFIX_SKILL_EXPR + actionId,
                     owner = self.getSkillCheckOwner(actionId),
-                    warn = msg => console.warn(owner, 'skill check', msg + ':', cfg);
+                    warn = msg => console.warn(owner, (actionId === ACTION_INJURY ? 'injury ' : '') + 'skill check', msg + ':', cfg);
                 
                 self[diffId] = self[typeId] = self[exprId] = undefined;
                 if (cfg == null) return;
@@ -295,8 +295,9 @@
             
             // Accessors ///////////////////////////////////////////////////////
             /** @overrides ActionCheckSupport */
-            getSkillCheckOwner: function(actionId) {
-                return this.callSuper(actionId) + ' exit to ' + this.to;
+            getSkillCheckOwner: function() {
+                // Not the default, which names an action.
+                return 'Event ' + this.event?.id + ' exit to ' + this.to;
             },
             
             setMode: function(mode) {this.set('mode', mode, true);},

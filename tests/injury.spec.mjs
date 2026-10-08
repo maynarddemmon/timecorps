@@ -50,8 +50,8 @@ test('an exit\'s injury check comes from the data, and one without damage is ign
                     has:exitModel.hasInjuryCheck(),
                     damageOnSuccess:exitModel.getInjuryDamage(true) ?? null,
                     damageOnFailure:exitModel.getInjuryDamage(false) ?? null,
-                    difficulty:exitModel.getActionSkillDifficulty(),
-                    name:exitModel.getActionSkillName()
+                    difficulty:exitModel.getActionSkillDifficulty(tc.ACTION_INJURY),
+                    name:exitModel.getActionSkillName(tc.ACTION_INJURY)
                 };
             };
             return {
@@ -324,7 +324,7 @@ test('a damage that isn\'t a non-empty string is ignored with a warning, and the
     expect(result).toEqual({oneBad:[true, null, '9'], oldKey:[false, null, null]});
     expect(problems.warnings).toEqual([
         'Event collision exit to casualties injury skill check damageOnSuccess must be a non-empty string (ignoring it): {damageOnSuccess: , damageOnFailure: 9}',
-        'Event collision exit to casualties skill check has unknown keys damage: {damage: 150}',
+        'Event collision exit to casualties injury skill check has unknown keys damage: {damage: 150}',
         'Event collision exit to casualties injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check): {damage: 150}'
     ]);
 });
@@ -365,9 +365,49 @@ test('the lifeboats are fatal on a failed injury check, and the crowded one hurt
     const lifeboats = readJson('data/titanic_scenario.json').events.casualties.exits.filter(exit => exit.mode === 'lifeboat');
     expect(lifeboats.map(exit => exit.injurySkillCheck)).toEqual([
         // When there aren't enough boats.
-        {difficulty:500, actionType:'athletic', damageOnFailure:'150', damageOnSuccess:'d(4,2)'},
+        {difficulty:500, check:'agent.skills.str', damageOnFailure:'150', damageOnSuccess:'d(4,2)'},
         // When there are.
         {difficulty:50, actionType:'athletic', damageOnFailure:'150'}
     ]);
+});
+
+test('an injury check rolls and is described by its own settings, not the exit\'s default skill check', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const vq = tc.model.getAgentModel('VQ'),
+                exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties'),
+                read = () => ({
+                    difficulty:exitModel.getActionSkillDifficulty(tc.ACTION_INJURY),
+                    expr:exitModel.getActionSkillExpr(tc.ACTION_INJURY),
+                    phrase:vq.getInjuryRiskPhrase(exitModel).replace(/\u00A0/g, ' ')
+                });
+            
+            // Its own difficulty and check: as sure as a skill check gets, so a roll of 1 passes,
+            // where it would fail the default check.
+            exitModel.setInjurySkillCheck({difficulty:0, check:'1000', actionType:'athletic', damageOnFailure:'5'});
+            const own = read();
+            tc.rng.queueRolls(1);
+            const ownCheck = vq.checkInjuryForExit(exitModel).success;
+            
+            // No actionType: no name, rather than the name of the slot it's stored in.
+            exitModel.setInjurySkillCheck({difficulty:0, check:'1000', damageOnFailure:'5'});
+            const untyped = read();
+            
+            return {own, ownCheck, untyped, slot:tc.ACTION_INJURY};
+        });
+    
+    expect(out.own).toEqual({difficulty:0, expr:'1000', phrase:'♥ Risking: moderate · Athletic / ensured'});
+    expect(out.ownCheck).toBe(true);
+    expect(out.untyped.phrase).toBe('♥ Risking: moderate · ensured');
+    expect(out.untyped.phrase).not.toContain(out.slot);
+    expect(problems.warnings).toEqual([]);
+});
+
+test('the lifeboats\' injury checks use their own difficulties', async ({page}) => {
+    await startGame(page);
+    const difficulties = await page.evaluate(() => tc.model.getEventModel('casualties').getExitModels()
+        .filter(exitModel => exitModel.mode === 'lifeboat')
+        .map(exitModel => exitModel.getActionSkillDifficulty(tc.ACTION_INJURY)));
+    expect(difficulties).toEqual([500, 50]);
 });
 
