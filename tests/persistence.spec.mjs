@@ -368,16 +368,17 @@ test('timeline paradox above the starting limit survives a save and reload', asy
     const problems = await startGame(page),
         read = () => page.evaluate(() => ({value:tc.model.paradox.value, max:tc.model.paradox.max}));
     
-    // More known Events raise the limit, and the paradox goes past the starting limit.
+    // More known Events raise the limit, and the paradox goes up to it, past the starting limit.
     const start = await read();
     await page.evaluate(() => {
-        tc.model.getEventModel('roster_reshuffle').attestation.setValue(10);
-        tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10);
-        tc.model.paradox.setValue(tc.model.paradox.max - 1);
+        for (const eventId of ['roster_reshuffle', 'ice_warnings', 'purser_spare', 'missing_binoculars', 'wireless_priority']) {
+            tc.model.getEventModel(eventId).attestation.setValue(10);
+        }
+        tc.model.paradox.setValue(tc.model.paradox.max);
         tc.persistence.save();
     });
     const saved = await read();
-    expect(saved.max).toBeGreaterThan(start.max + 1);
+    expect(saved.value).toBe(saved.max);
     expect(saved.value).toBeGreaterThan(start.max);
     
     await reloadGame(page);

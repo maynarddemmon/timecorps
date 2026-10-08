@@ -519,50 +519,71 @@ test('agent health comes from the data, with a constitution that can rise to the
     expect(problems.warnings).toEqual([]);
 });
 
+/*  The Timeline's paradox limit, what the formula says it should be, and the regular Events
+    that aren't hidden. */
+const readParadoxLimit = page => page.evaluate(() => {
+    const {TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT} = tc.cfg,
+        visibleCount = tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden()).length;
+    return {
+        max:tc.model.paradox.max,
+        expected:Math.floor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT*visibleCount),
+        visibleCount
+    };
+});
+
 test('the timeline paradox limit grows with each regular event that isn\'t hidden', async ({page}) => {
     const problems = await startGame(page),
-        read = () => page.evaluate(() => {
-            const {TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT} = tc.cfg,
-                visible = Object.values(tc.model.getEventModels()).filter(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden());
-            return {
-                max:tc.model.paradox.max,
-                expected:TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT*visible.length,
-                visibleCount:visible.length
-            };
-        }),
-        start = await read();
-    
+        start = await readParadoxLimit(page);
     expect(start.max).toBe(start.expected);
-    expect(await page.evaluate(() => tc.cfg.TIMELINE_PARADOX_LIMIT_PER_EVENT)).toBe(1);
     
     // The HQ and The Void aren't regular Events, so showing them doesn't count.
     await page.evaluate(() => {
         tc.model.getHQEventModel().setHidden(false);
         tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID).setHidden(false);
     });
-    expect(await read()).toEqual(start);
+    expect(await readParadoxLimit(page)).toEqual(start);
     
-    // Revealing an Event raises it, along with any Events that become known with it.
-    await page.evaluate(() => tc.model.getEventModel('roster_reshuffle').attestation.setValue(10));
-    const revealed = await read();
+    // Revealing Events raises it, and hiding them lowers it, by the formula with any fraction 
+    // dropped.
+    await page.evaluate(() => {
+        for (const eventId of ['roster_reshuffle', 'ice_warnings', 'purser_spare', 'missing_binoculars', 'wireless_priority']) {
+            tc.model.getEventModel(eventId).attestation.setValue(10);
+        }
+    });
+    const revealed = await readParadoxLimit(page);
     expect(revealed.visibleCount).toBeGreaterThan(start.visibleCount);
-    expect(revealed.max).toBe(start.max + (revealed.visibleCount - start.visibleCount));
+    expect(revealed.max).toBe(revealed.expected);
+    expect(revealed.max).toBeGreaterThan(start.max);
     
-    // Hiding it again lowers it by one.
     await page.evaluate(() => tc.model.getEventModel('roster_reshuffle').setHidden(true));
-    expect(await read()).toEqual({max:revealed.max - 1, expected:revealed.max - 1, visibleCount:revealed.visibleCount - 1});
+    const hidden = await readParadoxLimit(page);
+    expect(hidden.visibleCount).toBe(revealed.visibleCount - 1);
+    expect(hidden.max).toBe(hidden.expected);
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
 });
 
-test('hiding an event can drop the paradox limit below the paradox, destabilizing the timeline', async ({page}) => {
+test('hiding events can drop the paradox limit below the paradox, destabilizing the timeline', async ({page}) => {
     const problems = await startGame(page);
+    
+    // Enough Events revealed to raise the limit above its fixed part, and the paradox at the
+    // limit. None of these Events reveal an Agent, whose dossier would hold up the dialog.
     await page.evaluate(() => {
-        tc.model.getEventModel('roster_reshuffle').attestation.setValue(10);
+        for (const eventId of ['roster_reshuffle', 'ice_warnings', 'purser_spare', 'missing_binoculars', 'wireless_priority']) {
+            tc.model.getEventModel(eventId).attestation.setValue(10);
+        }
         tc.model.paradox.setValue(tc.model.paradox.max);
-        tc.model.getEventModel('roster_reshuffle').setHidden(true);
     });
+    expect(await page.evaluate(() => tc.model.paradox.value > tc.cfg.TIMELINE_PARADOX_LIMIT)).toBe(true);
+    
+    // Hiding them again brings the limit back down, below the paradox.
+    await page.evaluate(() => {
+        for (const eventId of ['roster_reshuffle', 'ice_warnings', 'purser_spare', 'missing_binoculars', 'wireless_priority']) {
+            tc.model.getEventModel(eventId).setHidden(true);
+        }
+    });
+    expect(await page.evaluate(() => tc.model.paradox.max)).toBeLessThan(await page.evaluate(() => tc.cfg.TIMELINE_PARADOX_LIMIT + 1));
     await expect(page.getByText('Timeline Destabilized', {exact:true}).filter({visible:true})).toBeVisible();
     expect(problems.pageErrors).toEqual([]);
 });
