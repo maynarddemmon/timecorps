@@ -364,3 +364,34 @@ test('a devoured agent stays devoured after a save and reload', async ({page}) =
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('timeline paradox above the starting limit survives a save and reload', async ({page}) => {
+    const problems = await startGame(page),
+        read = () => page.evaluate(() => ({value:tc.model.paradox.value, max:tc.model.paradox.max}));
+    
+    // More known Events raise the limit, and the paradox goes past the starting limit.
+    const start = await read();
+    await page.evaluate(() => {
+        tc.model.getEventModel('roster_reshuffle').attestation.setValue(10);
+        tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10);
+        tc.model.paradox.setValue(tc.model.paradox.max - 1);
+        tc.persistence.save();
+    });
+    const saved = await read();
+    expect(saved.max).toBeGreaterThan(start.max + 1);
+    expect(saved.value).toBeGreaterThan(start.max);
+    
+    await reloadGame(page);
+    expect(await read()).toEqual(saved);
+    
+    // A stale limit in the save, e.g. from before the data changed, is worked out again.
+    await page.evaluate(() => {
+        const record = JSON.parse(localStorage.getItem('tc.save'));
+        record.data.paradox.max = 99;
+        localStorage.setItem('tc.save', JSON.stringify(record));
+    });
+    await reloadGame(page);
+    expect(await read()).toEqual(saved);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+

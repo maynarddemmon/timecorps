@@ -434,6 +434,9 @@
             doHiddenChanged: function(_hidden) {
                 this.notifyCollectionOfUpdate();
                 pkg.app.getTimelineView().notifyEventVisibilityChange(this);
+                
+                // Each known Event raises the Timeline's paradox limit.
+                pkg.model.updateTimelineParadoxMax();
             },
             
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},

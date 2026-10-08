@@ -16,7 +16,7 @@
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
-                TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT,
+                TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
                 AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
@@ -137,6 +137,7 @@
         getHQEventModel: () => model.getEventModel(EVENT_ID_TIME_CORPS_HQ),
         getTheVoidEventModel: () => model.getEventModel(EVENT_ID_THE_VOID),
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
+        getEventModelsAsList: filterFunc => model[SCOPE_EVENTS].getAsList(filterFunc),
         
         getEventModelsInTimeOrder: () => model[SCOPE_EVENTS].getAsSortedList((a, b) => a.start - b.start),
         getOrderedEventsAndLocationsForTimeline: () => {
@@ -319,9 +320,22 @@
             if (this.inited) console.log('Stat Changed', statModel);
         },*/
         
+        /*  Sets the Timeline's maximum paradox: TIMELINE_PARADOX_LIMIT plus 
+            TIMELINE_PARADOX_LIMIT_PER_EVENT for each regular Event that isn't hidden. Lowering 
+            it below the current paradox clamps the paradox, which destabilizes the Timeline. */
+        updateTimelineParadoxMax: () => {
+            if (pkg.isAppReady()) {
+                const visCount = model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden()).length;
+                model[STAT_ID_PARADOX].setMax(
+                    Math.floor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT * visCount)
+                );
+            }
+        },
+        
         reset: isInit => {
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
+            model.updateTimelineParadoxMax();
             model.setScore(STARTING_SCORE);
             
             if (!isInit) {

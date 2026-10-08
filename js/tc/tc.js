@@ -162,8 +162,11 @@
                 // The amount of paradox the Timeline begins the game with.
                 TIMELINE_STARTING_PARADOX:0,
                 
-                // The starting maximum paradox for the Timeline.
+                // The maximum paradox for the Timeline is this fixed amount plus 
+                // TIMELINE_PARADOX_LIMIT_PER_EVENT for each regular Event that isn't hidden, so
+                // it grows as Events are revealed.
                 TIMELINE_PARADOX_LIMIT:9,
+                TIMELINE_PARADOX_LIMIT_PER_EVENT:0.25,
                 
                 
                 //// Timeline UI Config ////
