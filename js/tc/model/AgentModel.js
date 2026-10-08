@@ -662,7 +662,7 @@
                 averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
                 name = exitModel.getActionSkillName();
             return pkg.ICON_HEALTH + ' Risking:' + toDamagePhrase(averageDamage) + ICON_SEPARATOR +
-                (name ? name + '/' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty);
+                (name ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty);
         },
         
         /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 

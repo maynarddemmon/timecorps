@@ -25,21 +25,30 @@
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
-        getInvestigateBtnPhrase = (agentModel, eventModel) => {
+        getInvestigateBtnInfo = (agentModel, eventModel, agentCantActHere) => {
             const easePhrase = agentModel.getSkillEasePhrase(
-                eventModel.getInvestigateSkillExpr(),
-                eventModel.getInvestigateDifficulty()
-            );
-            return 'Investigate (' + easePhrase + ')';
+                    eventModel.getInvestigateSkillExpr(),
+                    eventModel.getInvestigateDifficulty()
+                ),
+                label = 'Investigate';
+            return {
+                text:label,
+                tooltip:label + ' / ' + easePhrase,
+                disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()
+            };
         },
         
-        getActionBtnPhrase = (agentModel, actionModel) => {
+        getActionBtnInfo = (agentModel, actionModel, agentCantActHere) => {
             const easePhrase = agentModel.getSkillEasePhrase(
-                actionModel.getActionSkillExpr(),
-                actionModel.getActionSkillDifficulty()
-            );
-            const name = actionModel.getActionSkillName();
-            return actionModel.label + ' (' + (name ? name + ICON_SEPARATOR : '') + easePhrase + ')';
+                    actionModel.getActionSkillExpr(),
+                    actionModel.getActionSkillDifficulty()
+                ),
+                label = actionModel.label;
+            return {
+                text:label,
+                tooltip:label + ICON_SEPARATOR + (actionModel.getActionSkillName() ?? '') + ' / ' + easePhrase,
+                disabled:agentCantActHere /*|| actionModel.done*/
+            };
         },
         
         AgentExitBtn = new JS.Module('AgentExitBtn', {
@@ -148,7 +157,7 @@
                 // Update Actions
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
                 new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                new UnderlineActionBtn(actionView, {text:getInvestigateBtnPhrase(agentModel, eventModel), disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()}, [{
+                new UnderlineActionBtn(actionView, getInvestigateBtnInfo(agentModel, eventModel, agentCantActHere), [{
                     doActivated: function() {agentModel.doInvestigate(this);}
                 }]);
                 const actionModels = eventModel.getActionModels();
@@ -156,10 +165,7 @@
                     const actionModel = actionModels[actionId];
                     if (!actionModel.isHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                        new UnderlineActionBtn(actionView, {
-                            text:getActionBtnPhrase(agentModel, actionModel),
-                            disabled:agentCantActHere /*|| actionModel.done*/
-                        }, [{
+                        new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel, agentCantActHere), [{
                             doActivated: function() {agentModel.doAction(actionModel, this);}
                         }]);
                     }
