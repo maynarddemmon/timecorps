@@ -320,11 +320,6 @@
                     case TRAVEL_MODE_LIFEBOAT: return 'Lifeboat to';
                     default: return 'To';
                 }
-            },
-            
-            getBtnLabel: function() {
-                const toEvent = this.getToEventModel();
-                return this.getModePhrase() + ' ' + (toEvent ? toEvent.name : this.to);
             }
         }),
         

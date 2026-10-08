@@ -84,7 +84,7 @@
             self.callSuper(parent, attrs);
             
             const connectorLine = 10;
-            self.btn = new UnderlineBtn(self, {paddingLeft:connectorLine, text, disabled}, [{doActivated: self.doActivated}]);
+            self.btn = new UnderlineBtn(self, {paddingLeft:connectorLine, text, disabled}, [{doActivated: self.doActivated.bind(self)}]);
             self.agentIcon = new pkg.SimpleAgentMarker(self, {disabled, model:agentModel});
             
             new M.SpacedLayout(self, {spacing:2 - connectorLine, collapseParent:true, reverse:true});

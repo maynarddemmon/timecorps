@@ -230,17 +230,11 @@
             // Misc Formatters
             formatAgentRisks: (chronal, paradox, hasInjuryRisk) => {
                 const THEME = TC.theme,
-                    hasChronal = chronal > 0,
-                    hasParadox = paradox > 0;
-                
-                if (!hasChronal && !hasParadox && !hasInjuryRisk) return '';
-                
-                return '[' + 
-                    (hasChronal ? wrapInStyledSpan(chronal + ICON_CHRONAL, THEME.colorChronal) : '') + 
-                    (hasChronal && hasParadox ? ' + ' : '') +
-                    (hasParadox ? wrapInStyledSpan(paradox + ICON_PARADOX, THEME.colorParadox) : '') + 
-                    (hasInjuryRisk === true ? wrapInStyledSpan(ICON_HEALTH, THEME.colorHealth) : '') + 
-                    ']';
+                    parts = [];
+                if (chronal > 0) parts.push(wrapInStyledSpan(chronal + ICON_CHRONAL, THEME.colorChronal));
+                if (paradox > 0) parts.push(wrapInStyledSpan(paradox + ICON_PARADOX, THEME.colorParadox));
+                if (hasInjuryRisk === true) parts.push(wrapInStyledSpan(ICON_HEALTH, THEME.colorHealth));
+                return parts.length > 0 ? ' [' + parts.join(' + ') + ']' : '';
             },
             
             // Chronal Util

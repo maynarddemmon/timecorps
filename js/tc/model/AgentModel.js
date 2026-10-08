@@ -18,7 +18,6 @@
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, toDamagePhrase, showFloatingTextForSkillCheck},
-            formatAgentRisks,
             ICON_HQ, ICON_SEPARATOR,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
@@ -40,17 +39,18 @@
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
                 chronalAvailable = -agentModel[STAT_ID_CHRONAL].getValueToMin(),
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
-                paradoxCost = agentModel.calculateParadoxForEntry(eventModel);
+                paradoxCost = agentModel.calculateParadoxForEntry(eventModel),
+                agentRisksPhrase = pkg.formatAgentRisks(chronalNeeded, paradoxCost);
             let disabled,
                 text,
                 visible = true;
             if (isHQ) {
                 disabled = !hasEnoughChronal;
-                text = 'Recall to ' + ICON_HQ + ' ' + formatAgentRisks(chronalNeeded, paradoxCost);
+                text = 'Recall to ' + ICON_HQ + agentRisksPhrase;
             } else {
                 const isAlreadyAtEvent = agentModel.isAtEvent(eventModel);
                 disabled = !hasEnoughChronal;
-                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + ' ' + formatAgentRisks(chronalNeeded, paradoxCost);
+                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + agentRisksPhrase;
             }
             
             if (agentModel.isDead()) visible = false;
@@ -659,10 +659,10 @@
             if (!exitModel.hasInjuryCheck()) return '';
             
             const difficulty = exitModel.getActionSkillDifficulty(),
-                easePhrase = this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty),
                 averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
                 name = exitModel.getActionSkillName();
-            return (name ? name + ICON_SEPARATOR : '') + easePhrase + ICON_SEPARATOR + 'injury: ' + toDamagePhrase(averageDamage);
+            return pkg.ICON_HEALTH + ' Risking:' + toDamagePhrase(averageDamage) + ICON_SEPARATOR +
+                (name ? name + '/' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty);
         },
         
         /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 

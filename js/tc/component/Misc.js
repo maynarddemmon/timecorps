@@ -197,15 +197,15 @@
             
             self.callSuper(parent, attrs);
             
-            const header = self._headerView = new DividerRow(self, {inset:padding, cursor:'pointer'}),
+            const header = self._headerView = new DividerRow(self, {inset:padding}, [M.Button, {
+                    doActivated: function() {self.setExpanded(!self.expanded);}
+                }]),
                 wrapper = self._wrapperView = new WideView(self, {y:header.height, overflow:'autoy'}),
                 content = self._contentView = new WideView(wrapper);
             new SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
             wrapper.addDomClass('hideScrollbar');
             wrapper.getIDS().overscrollBehavior = 'none';
-            
-            header.attachDomObserver(self, '_doClick', 'click');
             
             // Apply the initial state, which also sets the header text.
             self._applyExpanded();
@@ -255,12 +255,6 @@
         /** @private */
         _updateHeaderLabel: function() {
             this.getHeaderView().setLabel((this.expanded ? pkg.ICON_EXPANDED : pkg.ICON_COLLAPSED) + ' ' + this.label);
-        },
-        
-        /*  Clicks on buttons placed in the header (e.g. Deploy/Recall) don't toggle the row.
-            @private */
-        _doClick: function(event) {
-            if (!event.value.target.closest('button')) this.setExpanded(!this.expanded);
         }
     });
     

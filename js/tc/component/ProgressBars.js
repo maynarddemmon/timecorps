@@ -129,7 +129,7 @@
                 width:this.width - 2*trackInset,
                 height:this.height - 2*trackInset,
                 roundedCorners:roundedCorners - trackInset,
-                gradient:['linear', isHorizontal ? 'right' : 'top', '#f00', '#ff0', '#0f0']
+                gradient:['linear', isHorizontal ? 'right' : 'top', '#f00c', '#ff06', '#0f0c']
             });
             
             gradientView.sendToBack();

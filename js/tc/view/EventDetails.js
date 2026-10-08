@@ -17,8 +17,7 @@
                 fontSizeMedium, fontSizeLarge
             },
             cfg:{RELOAD_CHRONAL_AMOUNT},
-            formatAgentRisks,
-            ICON_EVENT, ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ, ICON_HEALTH,
+            ICON_EVENT, ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
@@ -34,16 +33,6 @@
             return 'Investigate (' + easePhrase + ')';
         },
         
-        /*  An exit's paradox cost and injury risk, if any, to follow its label. */
-        getExitBtnSuffix = (agentModel, exitModel, paradoxCost) => {
-            const riskPhrase = formatAgentRisks(0, paradoxCost, exitModel.hasInjuryCheck());
-            return riskPhrase ? ' ' + riskPhrase : '';
-        },
-        getExitBtnTooltip = (agentModel, exitModel, paradoxCost) => {
-            const injuryRisk = agentModel.getInjuryRiskPhrase(exitModel);
-            return injuryRisk ? ICON_HEALTH + ' ' + injuryRisk : '';
-        },
-        
         getActionBtnPhrase = (agentModel, actionModel) => {
             const easePhrase = agentModel.getSkillEasePhrase(
                 actionModel.getActionSkillExpr(),
@@ -52,6 +41,28 @@
             const name = actionModel.getActionSkillName();
             return actionModel.label + ' (' + (name ? name + ICON_SEPARATOR : '') + easePhrase + ')';
         },
+        
+        AgentExitBtn = new JS.Module('AgentExitBtn', {
+            configure: function(agentModel, exitModel, showTargetName) {
+                this.agentModel = agentModel;
+                this.exitModel = exitModel;
+                
+                const toEvent = exitModel.getToEventModel();
+                this.setText(
+                    exitModel.getModePhrase() + 
+                    (showTargetName ? ' ' + (toEvent?.name ?? exitModel.to) : '') + 
+                    pkg.formatAgentRisks(
+                        0, 
+                        agentModel.calculateParadoxForEntry(toEvent), 
+                        exitModel.hasInjuryCheck()
+                    )
+                );
+                this.setTooltip(agentModel.getInjuryRiskPhrase(exitModel));
+            },
+            doActivated: function() {
+                this.agentModel.doFollowExit(this.exitModel, this);
+            }
+        }),
         
         AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
             initNode: function(parent, attrs) {
@@ -162,12 +173,8 @@
                     if (!exitModel.isHidden()) {
                         const toEventModel = exitModel.getToEventModel();
                         if (!toEventModel.isHidden()) {
-                            const paradoxCost = agentModel.calculateParadoxForEntry(toEventModel);
                             if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
-                            new UnderlineBtn(exitView, {
-                                text:exitModel.getBtnLabel() + getExitBtnSuffix(agentModel, exitModel, paradoxCost),
-                                tooltip:getExitBtnTooltip(agentModel, exitModel, paradoxCost)
-                            }, [{
+                            const btn = new UnderlineBtn(exitView, {}, [AgentExitBtn, {
                                 setMouseOver: function(v) {
                                     if (this.inited && this.mouseOver !== v) {
                                         this.callSuper(v);
@@ -177,9 +184,9 @@
                                             pkg.app.scrollToEvent(eventModel, true);
                                         }
                                     }
-                                },
-                                doActivated: function() {agentModel.doFollowExit(exitModel, this);}
+                                }
                             }]);
+                            btn.configure(agentModel, exitModel, true);
                             addedCount++;
                         }
                     }
@@ -333,9 +340,7 @@
             row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
-            self.followExitBtn = new AgentBtn(headerView, {y:1}, [{
-                doActivated: function() {self.selectedAgentModel.doFollowExit(self.followExitModel, this);}
-            }]);
+            self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
             self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
@@ -473,10 +478,8 @@
                 const exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;
                 followExitBtn.setVisible(exitModel != null);
                 if (exitModel) {
-                    const paradoxCost = selectedAgentModel.calculateParadoxForEntry(eventModel);
+                    followExitBtn.configure(selectedAgentModel, exitModel, false);
                     followExitBtn.setBtnModel(selectedAgentModel);
-                    followExitBtn.setText(exitModel.getModePhrase() + getExitBtnSuffix(selectedAgentModel, exitModel, paradoxCost));
-                    followExitBtn.setTooltip(getExitBtnTooltip(selectedAgentModel, exitModel, paradoxCost));
                 }
                 recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
                 deployAgentBtn.setVisible(canDirectAgent && !eventModel.isHidden());
