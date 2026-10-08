@@ -123,3 +123,11 @@ export const getCurrentOperationId = page => page.evaluate(() => tc.model.getCur
 
 /*  Forces the next rolls of tc.rng, in order. After they're used, rolls are random again. */
 export const queueRolls = (page, ...values) => page.evaluate(values => tc.rng.queueRolls(...values), values);
+
+/*  The tooltip of the visible button with exactly this text, read from its view. Tooltips show
+    on hover after a delay, so this avoids waiting for one. */
+export const btnTooltip = (page, text) => page.evaluate(text => {
+    const elem = [...document.querySelectorAll('button')].find(btn => btn.textContent === text && btn.offsetParent !== null);
+    return elem ? elem.model.tooltip ?? '' : null;
+}, text);
+

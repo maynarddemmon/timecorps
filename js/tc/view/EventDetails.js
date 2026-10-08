@@ -43,10 +43,12 @@
                     actionModel.getActionSkillExpr(),
                     actionModel.getActionSkillDifficulty()
                 ),
-                label = actionModel.label;
+                label = actionModel.label,
+                name = actionModel.getActionSkillName();
             return {
                 text:label,
-                tooltip:label + ICON_SEPARATOR + (actionModel.getActionSkillName() ?? '') + ' / ' + easePhrase,
+                // An action without an actionType has no name to show.
+                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase,
                 disabled:agentCantActHere /*|| actionModel.done*/
             };
         },

@@ -94,6 +94,9 @@
         
         setDisabled: function(v) {if (this.inited) this.btn.setDisabled(v);},
         setText: function(v) {if (this.inited) this.btn.setText(v);},
+        // On the button itself, so it shows like the other buttons' tooltips rather than as a
+        // browser title on the whole row.
+        setTooltip: function(v) {if (this.inited) this.btn.setTooltip(v);},
         setBtnModel: function(v) {if (this.inited) this.agentIcon.setModel(v);}
     });
     

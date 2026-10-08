@@ -1,6 +1,6 @@
 // Injury checks on exits: taking an exit always succeeds, but a failed check costs health.
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, dialogTitle, dismissAgentDossier} from './helpers.mjs';
+import {startGame, readJson, dialogTitle, dismissAgentDossier, btnTooltip} from './helpers.mjs';
 
 const INJURY = {difficulty:300, actionType:'athletic', damage:'d(6)+4'},
 
@@ -140,34 +140,39 @@ test('amounts roll dice and aren\'t clamped, and damage has a phrase', async ({p
     });
 });
 
-test('exit buttons show the injury risk, and a failure floats the damage', async ({page}) => {
+test('exit buttons flag the injury risk and explain it in the tooltip, and a failure floats the damage', async ({page}) => {
     await routeScenarioWithInjuries(page);
     const problems = await startGame(page),
         // d(6)+4 averages 7.5: moderate.
-        risk = ' (Athletic · ' + await page.evaluate(ease => tc.checks.toEasePhrase(ease), vqAthleticEase) + ' · injury: moderate)';
-
+        risk = '♥ Risking: moderate\u00A0·\u00A0Athletic / ' + await page.evaluate(ease => tc.checks.toEasePhrase(ease), vqAthleticEase),
+        visibleText = text => page.getByText(text, {exact:true}).filter({visible:true});
+    
     // In the agent's list of exits.
-    const exitBtn = page.getByText('Walk to Loss of Life' + risk, {exact:true}).filter({visible:true});
+    const exitBtn = visibleText('Walk to Loss of Life [♥]');
     await expect(exitBtn).toBeVisible();
-
+    expect(await btnTooltip(page, 'Walk to Loss of Life [♥]')).toBe(risk);
+    
     // In the header, when viewing the Event the exit leads to.
     await page.evaluate(() => tc.app.selectEventBox('casualties'));
-    await expect(page.getByText('Walk to' + risk, {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(visibleText('Walk to [♥]')).toBeVisible();
+    expect(await btnTooltip(page, 'Walk to [♥]')).toBe(risk);
     await page.evaluate(() => tc.app.selectEventBox('collision'));
-
-    // Exits without a check are unchanged. Both Events are made known so the exit shows.
+    
+    // Exits without a check have no flag or tooltip. Both Events are made known so the exit shows.
     await page.evaluate(() => {
         tc.model.getEventModel('ice_warnings').attestation.setValue(10);
         tc.model.getEventModel('wireless_priority').attestation.setValue(10);
         tc.model.getAgentModel('VQ').setEvent('ice_warnings');
         tc.app.selectEventBox('ice_warnings');
     });
-    await expect(page.getByText('Wait til Marconi Traffic Backlog', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(visibleText('Wait til Marconi Traffic Backlog')).toBeVisible();
+    expect(await btnTooltip(page, 'Wait til Marconi Traffic Backlog')).toBe('');
     await page.evaluate(() => {
         tc.model.getAgentModel('VQ').setEvent('collision');
         tc.app.selectEventBox('collision');
     });
-
+    await expect(exitBtn).toBeVisible();
+    
     // Fails, then a 3 on the d(6): 7 damage.
     await page.evaluate(([fail, die]) => tc.rng.queueRolls(fail, die), [FAIL_ROLL, 2]);
     await exitBtn.click();

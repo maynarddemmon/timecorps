@@ -1,6 +1,6 @@
 // Regression tests for the constraint scopes, Describable and the causal links.
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, setCausator} from './helpers.mjs';
+import {startGame, readJson, setCausator, btnTooltip} from './helpers.mjs';
 
 test('agent, agents and operations scopes bind and update', async ({page}) => {
     const problems = await startGame(page);
@@ -306,7 +306,7 @@ test('an action\'s skill check comes from its actionType, with the action\'s own
     ]);
 });
 
-test('action buttons show the action type and how easy the check is', async ({page}) => {
+test('action button tooltips show the action type and how easy the check is', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => {
         const roster = tc.model.getEventModel('roster_reshuffle');
@@ -315,10 +315,14 @@ test('action buttons show the action type and how easy the check is', async ({pa
         tc.model.getAgentModel('VQ').doDeployToEvent(roster);
         tc.app.selectEventBox('roster_reshuffle');
     });
-    await expect(page.getByRole('button', {name:/Prevent Reshuffle \(Social · [a-z -]+\)/}).filter({visible:true})).toBeVisible();
+    await expect(page.getByRole('button', {name:'Prevent Reshuffle', exact:true}).filter({visible:true})).toBeVisible();
+    expect(await btnTooltip(page, 'Prevent Reshuffle')).toMatch(/^Prevent Reshuffle\u00A0·\u00A0Social \/ [a-z -]+$/);
     
     // Without an actionType there's no type to show.
-    await expect(page.getByRole('button', {name:/Unchecked \([a-z -]+\)$/}).filter({visible:true})).toBeVisible();
+    expect(await btnTooltip(page, 'Unchecked')).toMatch(/^Unchecked\u00A0·\u00A0[a-z -]+$/);
+    
+    // Investigating just has its ease.
+    expect(await btnTooltip(page, 'Investigate')).toMatch(/^Investigate \/ [a-z -]+$/);
     expect(problems.pageErrors).toEqual([]);
 });
 

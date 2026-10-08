@@ -661,7 +661,7 @@
             const difficulty = exitModel.getActionSkillDifficulty(),
                 averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
                 name = exitModel.getActionSkillName();
-            return pkg.ICON_HEALTH + ' Risking:' + toDamagePhrase(averageDamage) + ICON_SEPARATOR +
+            return pkg.ICON_HEALTH + ' Risking: ' + toDamagePhrase(averageDamage) + ICON_SEPARATOR +
                 (name ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty);
         },
         
