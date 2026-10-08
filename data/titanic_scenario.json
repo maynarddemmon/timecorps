@@ -630,7 +630,7 @@
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":50, "actionType":"athletic", "damageOnFailure":"150", "damageOnSuccess":"d(4,2)"}
+					"injurySkillCheck":{"difficulty":500, "actionType":"athletic", "damageOnFailure":"150", "damageOnSuccess":"d(4,2)"}
 				},
 				{
 					"mode":"lifeboat",

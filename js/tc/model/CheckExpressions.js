@@ -16,33 +16,31 @@
         PARAM_DIE = 'd',
         FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE],
         
-        /*  The d(sides) function an expression sees. A die needs a whole number of sides, 1 or 
-            more, so anything else throws and fails the check. */
-        checkSides = sides => {
+        // An arbitrary limit on the number of dice in one d(sides, count).
+        MAX_DICE = 99,
+        
+        /*  The d(sides, count) function an expression sees. A die needs a whole number of sides,
+            1 or more, and there must be a whole number of dice from 1 to MAX_DICE, so anything 
+            else throws and fails the check. */
+        checkDice = (sides, count) => {
             if (!Number.isInteger(sides) || sides < 1) throw new RangeError('d(' + sides + ') needs a whole number of sides, 1 or more');
+            if (!Number.isInteger(count) || count < 1 || count > MAX_DICE) throw new RangeError('d(' + sides + ', ' + count + ') needs a whole number of dice from 1 to ' + MAX_DICE);
         },
         
-        // Rolls the die: 1 to sides. A queued roll is the die's value minus 1.
+        // Rolls the dice and totals them, each 1 to sides. A queued roll is a die's value minus 1.
         rollDie = (sides, count=1) => {
-            checkSides(sides);
-            if (count > 1 && count < 100) { // 100 is an arbitrary limit on the number of dice to be rolled.
-                let accum = 0;
-                while (count > 0) {
-                    count--;
-                    accum += roll(sides) + 1;
-                }
-                return accum;
-            } else {
-                return roll(sides) + 1;
-            }
+            checkDice(sides, count);
+            let total = 0;
+            for (let i = 0; i < count; i++) total += roll(sides) + 1;
+            return total;
         },
         
-        /*  The die's average, (1 + sides) / 2, for working out an ease without rolling. Success
-            is linear in the ease, so a check's chance at the average ease is its true chance, 
-            unless the ease gets clamped. */
-        averageDie = sides => {
-            checkSides(sides);
-            return (1 + sides) / 2;
+        /*  The dice's average total, count * (1 + sides) / 2, for working out an ease without 
+            rolling. Success is linear in the ease, so a check's chance at the average ease is its
+            true chance, unless the ease gets clamped. */
+        averageDie = (sides, count=1) => {
+            checkDice(sides, count);
+            return count * (1 + sides) / 2;
         },
         
         // Compiled check functions by expression text. The parameters are the same for every
@@ -170,10 +168,10 @@
                 event - The EventModel the check happens at.
                 timeline - The root Model.
                 difficulty - The check's difficulty.
-                d(sides) - Rolls a die: a whole number from 1 to sides, e.g. 
-                    "agent.skills.str + d(12) - difficulty". Use d(13) - 1 for 0 to 12. Only a
-                    real check rolls. Working out the ease without rolling, e.g. for an ease 
-                    phrase, uses the die's average.
+                d(sides, count) - Rolls count dice, 1 by default, each a whole number from 1 to 
+                    sides, and totals them, e.g. "agent.skills.str + d(12) - difficulty" or 
+                    "d(6, 3)". Use d(13) - 1 for 0 to 12. Only a real check rolls. Working out 
+                    the ease without rolling, e.g. for an ease phrase, uses the dice's average.
             For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
             difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             

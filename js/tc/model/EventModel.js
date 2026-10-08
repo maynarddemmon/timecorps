@@ -28,6 +28,8 @@
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
         
+        ACTION_ID_INJURY = 'inj',
+        
         /*  Skill checks for the actions of an Event (e.g. investigate) or for an action itself.
             Checks are stored by action ID, so an Event can have one per action it offers. */
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
@@ -99,6 +101,52 @@
             getActionSkillType: function(actionId=ACTION_TYPE_SINGULAR) {
                 return this[PREFIX_SKILL_TYPE + actionId] ?? actionId;
             }
+        }),
+        
+        InjuryCheckSupport = new JSModule('InjuryCheckSupport', {
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                // Applied after the other attrs so any warnings can name the exit.
+                const injurySkillCheck = attrs.injurySkillCheck;
+                delete attrs.injurySkillCheck;
+                
+                this.callSuper(attrs);
+                
+                this.setInjurySkillCheck(injurySkillCheck);
+            },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
+            setInjurySkillCheck: function(cfg) {
+                const self = this;
+                self.injuryDamageOnSuccess = self.injuryDamageOnFailure = undefined;
+                
+                if (cfg == null) {
+                    self.addSkillCheck(ACTION_ID_INJURY);
+                    return;
+                }
+                
+                const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
+                    {damageOnSuccess, damageOnFailure, ...checkCfg} = isObj ? cfg : {};
+                if (self.addSkillCheck(ACTION_ID_INJURY, isObj ? checkCfg : cfg)) {
+                    const owner = self.getSkillCheckOwner(ACTION_ID_INJURY),
+                        toDamage = (key, damage) => {
+                            if (damage === undefined) return undefined;
+                            if (typeof damage === 'string' && damage.trim() !== '') return damage;
+                            console.warn(owner, 'injury skill check', key, 'must be a non-empty string (ignoring it):', cfg);
+                            return undefined;
+                        };
+                    self.injuryDamageOnSuccess = toDamage('damageOnSuccess', damageOnSuccess);
+                    self.injuryDamageOnFailure = toDamage('damageOnFailure', damageOnFailure);
+                    
+                    if (!self.hasInjuryCheck()) {
+                        console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
+                        self.addSkillCheck(ACTION_ID_INJURY);
+                    }
+                }
+            },
+            hasInjuryCheck: function() {return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;},
+            getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;}
         }),
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
@@ -244,70 +292,13 @@
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport],
-            
-            
-            // Life Cycle //////////////////////////////////////////////////////
-            init: function(attrs) {
-                // Applied after the other attrs so any warnings can name the exit.
-                const injurySkillCheck = attrs.injurySkillCheck;
-                delete attrs.injurySkillCheck;
-                
-                this.callSuper(attrs);
-                
-                this.setInjurySkillCheck(injurySkillCheck);
-            },
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, InjuryCheckSupport],
             
             
             // Accessors ///////////////////////////////////////////////////////
-            /*  Taking an exit always succeeds, but it can risk injury. cfg is a skill check, as for
-                an action, plus the damage taken when it passes and when it fails:
-                    {difficulty:<integer>, check:<skill expression>, actionType:<skill check id>,
-                     damageOnSuccess:<amount expression>, damageOnFailure:<amount expression>}
-                e.g. {"actionType":"athletic", "damageOnFailure":"d(6)+4"}. A damage left out is 
-                none. At least one is required, so a cfg without either is ignored, with a 
-                warning. */
-            setInjurySkillCheck: function(cfg) {
-                const self = this;
-                self.injuryDamageOnSuccess = self.injuryDamageOnFailure = undefined;
-                
-                if (cfg == null) {
-                    self.addSkillCheck(null);
-                    return;
-                }
-                
-                const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
-                    {damageOnSuccess, damageOnFailure, ...checkCfg} = isObj ? cfg : {};
-                if (self.addSkillCheck(null, isObj ? checkCfg : cfg)) {
-                    const owner = self.getSkillCheckOwner(),
-                        toDamage = (key, damage) => {
-                            if (damage === undefined) return undefined;
-                            if (typeof damage === 'string' && damage.trim() !== '') return damage;
-                            console.warn(owner, 'injury skill check', key, 'must be a non-empty string (ignoring it):', cfg);
-                            return undefined;
-                        };
-                    self.injuryDamageOnSuccess = toDamage('damageOnSuccess', damageOnSuccess);
-                    self.injuryDamageOnFailure = toDamage('damageOnFailure', damageOnFailure);
-                    
-                    if (!self.hasInjuryCheck()) {
-                        console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
-                        self.addSkillCheck(null);
-                    }
-                }
-            },
-            
-            /*  True if taking this exit risks injury. */
-            hasInjuryCheck: function() {return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;},
-            
-            /*  The damage expression for when the injury check passes or fails, or undefined if 
-                there's none for that case. */
-            getInjuryDamage: function(success) {
-                return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;
-            },
-            
             /** @overrides ActionCheckSupport */
-            getSkillCheckOwner: function() {
-                return 'Event ' + this.event?.id + ' exit to ' + this.to;
+            getSkillCheckOwner: function(actionId) {
+                return this.callSuper(actionId) + ' exit to ' + this.to;
             },
             
             setMode: function(mode) {this.set('mode', mode, true);},

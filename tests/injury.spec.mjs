@@ -361,12 +361,13 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('the lifeboats only hurt on a failed injury check, and then fatally', () => {
+test('the lifeboats are fatal on a failed injury check, and the crowded one hurts even on a pass', () => {
     const lifeboats = readJson('data/titanic_scenario.json').events.casualties.exits.filter(exit => exit.mode === 'lifeboat');
-    expect(lifeboats.length).toBe(2);
-    for (const exit of lifeboats) {
-        expect(exit.injurySkillCheck.damageOnSuccess).toBeUndefined();
-        expect(exit.injurySkillCheck.damageOnFailure).toBe('150');
-    }
+    expect(lifeboats.map(exit => exit.injurySkillCheck)).toEqual([
+        // When there aren't enough boats.
+        {difficulty:500, actionType:'athletic', damageOnFailure:'150', damageOnSuccess:'d(4,2)'},
+        // When there are.
+        {difficulty:50, actionType:'athletic', damageOnFailure:'150'}
+    ]);
 });
 

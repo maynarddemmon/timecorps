@@ -214,6 +214,36 @@ test.describe('dice in check expressions', () => {
         expect(out).toEqual({success:true, queued:1});
     });
     
+    test('d(sides, count) totals count dice, and averages count times one die', async ({page}) => {
+        const problems = await startGame(page),
+            out = await page.evaluate(cfg => {
+                tc.rng.queueRolls(5, 0, 2, 3);
+                const rolled = tc.checks.rollAmount('d(6, 3)', cfg),
+                    left = tc.rng.getQueuedRollCount();
+                tc.rng.clearQueuedRolls();
+                return {
+                    rolled, left,
+                    average:tc.checks.getAverageAmount('d(4, 2)', cfg),
+                    oneDie:tc.checks.getAverageAmount('d(4, 1)', cfg),
+                    // An ease preview uses the same average.
+                    ease:tc.checks.getEase('d(10, 3) - 50', cfg)
+                };
+            }, WIDE);
+        // 6 + 1 + 3 from the queue; the fourth queued roll is left over.
+        expect(out).toEqual({rolled:10, left:1, average:5, oneDie:2.5, ease:16.5 - 50});
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('dice without a whole count from 1 to 99 fail the check with a warning', async ({page}) => {
+        const problems = await startGame(page);
+        for (const count of ['0', '-1', '2.5', '100', '"two"']) {
+            expect((await evaluateCheck(page, 'd(6, ' + count + ') + 1000', {roll:999})).success, count).toBe(false);
+        }
+        expect(await page.evaluate(() => tc.checks.rollAmount('d(6, 99)') >= 99)).toBe(true);
+        expect(problems.warnings).toHaveLength(5);
+        for (const warning of problems.warnings) expect(warning).toContain('needs a whole number of dice from 1 to 99');
+    });
+    
     test('a die without a whole number of sides, 1 or more, fails the check with a warning', async ({page}) => {
         const problems = await startGame(page);
         for (const sides of ['0', '-3', '2.5', '"six"', '']) {
