@@ -60,6 +60,13 @@
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
+        /*  An exit's damage for when its injury check passes or fails: rolled, or its average. 
+            None if there's no damage for that case. */
+        getInjuryAmount = (agentModel, exitModel, success, amountFunc) => {
+            const damageExpr = exitModel.getInjuryDamage(success);
+            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, exitModel.getActionSkillDifficulty())) : 0;
+        },
+        
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
             const skillFactor = agentModel.getSkillInvestigation() / 25,
                 skillFactorLesser = skillFactor / 2;
@@ -653,33 +660,33 @@
         
         
         // Health, Injury, Death //
-        /*  Describes the risk of an exit's injury check, e.g. "Athletic · easy · injury: light",
-            or an empty string if there's none. The damage is its average, without rolling. */
+        /*  Describes the risk of an exit's injury check, e.g. 
+            "♥ Risking: deadly (light if passed) · Athletic / even", or an empty string if 
+            there's none. The damage is its average, without rolling: on a failure, then on a 
+            pass if that hurts too and reads differently. */
         getInjuryRiskPhrase: function(exitModel) {
             if (!exitModel.hasInjuryCheck()) return '';
             
-            const difficulty = exitModel.getActionSkillDifficulty(),
-                averageDamage = getAverageAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty)),
+            const failPhrase = toDamagePhrase(getInjuryAmount(this, exitModel, false, getAverageAmount)),
+                passDamage = getInjuryAmount(this, exitModel, true, getAverageAmount),
+                passPhrase = toDamagePhrase(passDamage),
                 name = exitModel.getActionSkillName();
-            return pkg.ICON_HEALTH + ' Risking: ' + toDamagePhrase(averageDamage) + ICON_SEPARATOR +
-                (name ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), difficulty);
+            return pkg.ICON_HEALTH + ' Risking: ' + failPhrase + 
+                (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '') + ICON_SEPARATOR +
+                (name ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), exitModel.getActionSkillDifficulty());
         },
         
-        /*  Rolls an exit's injury check, if it has one, and the damage if it fails. Doesn't 
-            apply the damage. Returns the check result plus the damage, or null if there's no
-            check. */
+        /*  Rolls an exit's injury check, if it has one, then the damage for whether it passed 
+            or failed. Doesn't apply the damage. Returns the check result plus the damage, or 
+            null if there's no check. */
         checkInjuryForExit: function(exitModel) {
             if (!exitModel.hasInjuryCheck()) return null;
             
-            const difficulty = exitModel.getActionSkillDifficulty(),
-                check = this.checkSkillExpression(exitModel.getActionSkillExpr(), difficulty);
-            let damage = 0;
-            if (!check.success) {
-                // Whole points only, and never healing. A broken expression does no damage.
-                const amount = rollAmount(exitModel.getInjuryDamage(), getCheckCfg(this, difficulty));
-                if (amount > 0) damage = Math.round(amount);
-            }
-            return {...check, damage};
+            const check = this.checkSkillExpression(exitModel.getActionSkillExpr(), exitModel.getActionSkillDifficulty()),
+                amount = getInjuryAmount(this, exitModel, check.success, rollAmount);
+            
+            // Whole points only, and never healing. A broken expression does no damage.
+            return {...check, damage:amount > 0 ? Math.round(amount) : 0};
         },
         
         /*  Lowers health by a whole, positive amount of damage. */

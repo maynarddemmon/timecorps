@@ -176,10 +176,13 @@ test('every investigate, action and exit injury skill check is valid', () => {
         for (const exit of event.exits ?? []) {
             if (exit.injurySkillCheck !== undefined) {
                 const where = eventId + ' exit to ' + exit.to + ' injurySkillCheck',
-                    {damage, ...checkCfg} = exit.injurySkillCheck ?? {};
+                    {damageOnSuccess, damageOnFailure, ...checkCfg} = exit.injurySkillCheck ?? {};
                 problems.push(...checkSkillCheckCfg(where, checkCfg));
-                const error = getAmountCompileError(damage);
-                if (error) problems.push(where + ' damage ' + error);
+                if (damageOnSuccess === undefined && damageOnFailure === undefined) problems.push(where + ' has no damageOnSuccess or damageOnFailure');
+                for (const [key, damage] of [['damageOnSuccess', damageOnSuccess], ['damageOnFailure', damageOnFailure]]) {
+                    const error = damage === undefined ? null : getAmountCompileError(damage);
+                    if (error) problems.push(where + ' ' + key + ' ' + error);
+                }
             }
         }
     }

@@ -23,9 +23,18 @@
         },
         
         // Rolls the die: 1 to sides. A queued roll is the die's value minus 1.
-        rollDie = sides => {
+        rollDie = (sides, count=1) => {
             checkSides(sides);
-            return roll(sides) + 1;
+            if (count > 1 && count < 100) { // 100 is an arbitrary limit on the number of dice to be rolled.
+                let accum = 0;
+                while (count > 0) {
+                    count--;
+                    accum += roll(sides) + 1;
+                }
+                return accum;
+            } else {
+                return roll(sides) + 1;
+            }
         },
         
         /*  The die's average, (1 + sides) / 2, for working out an ease without rolling. Success

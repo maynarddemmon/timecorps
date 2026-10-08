@@ -2,7 +2,7 @@
 import {test, expect} from '@playwright/test';
 import {startGame, readJson, dialogTitle, dismissAgentDossier, btnTooltip} from './helpers.mjs';
 
-const INJURY = {difficulty:300, actionType:'athletic', damage:'d(6)+4'},
+const INJURY = {difficulty:300, actionType:'athletic', damageOnFailure:'d(6)+4'},
 
     /*  Serves the Titanic scenario with injury checks added to some exits, as if they were in the
         data: a good one from the collision to the casualties, and one with no damage from the
@@ -48,7 +48,8 @@ test('an exit\'s injury check comes from the data, and one without damage is ign
                 const exitModel = tc.model.getEventModel(eventId).getExitModels().find(exit => exit.to === toId);
                 return {
                     has:exitModel.hasInjuryCheck(),
-                    damage:exitModel.getInjuryDamage() ?? null,
+                    damageOnSuccess:exitModel.getInjuryDamage(true) ?? null,
+                    damageOnFailure:exitModel.getInjuryDamage(false) ?? null,
                     difficulty:exitModel.getActionSkillDifficulty(),
                     name:exitModel.getActionSkillName()
                 };
@@ -59,13 +60,13 @@ test('an exit\'s injury check comes from the data, and one without damage is ign
                 none:describe('roster_reshuffle', 'titanic_departs')
             };
         });
-    expect(checks.good).toEqual({has:true, damage:'d(6)+4', difficulty:300, name:'Athletic'});
+    expect(checks.good).toEqual({has:true, damageOnSuccess:null, damageOnFailure:'d(6)+4', difficulty:300, name:'Athletic'});
     expect(checks.noDamage.has).toBe(false);
     expect(checks.none.has).toBe(false);
 
     expect(problems.warnings).toHaveLength(2);
     expect(problems.warnings[0]).toMatch(/^Event lifeboat_capacity action argueFor skill check difficulty must be/);
-    expect(problems.warnings[1]).toMatch(/^Event ice_warnings exit to wireless_priority injury skill check needs a damage expression/);
+    expect(problems.warnings[1]).toMatch(/^Event ice_warnings exit to wireless_priority injury skill check needs a damageOnSuccess or damageOnFailure expression/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -103,7 +104,7 @@ test('damage is whole points, never heals, and a broken damage expression does n
             vq.getLog().length = 0;
             vq.paradox.setValue(0);
             vq.setEvent('collision');
-            exitModel.setInjurySkillCheck({difficulty:1000, check:'0', damage});
+            exitModel.setInjurySkillCheck({difficulty:1000, check:'0', damageOnFailure:damage});
             const before = vq.health.value;
             tc.rng.queueRolls(0);
             vq.doFollowExit(exitModel);
@@ -189,7 +190,7 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
 const killVQOnExit = page => page.evaluate(() => {
         const vq = tc.model.getAgentModel('VQ'),
             exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties');
-        exitModel.setInjurySkillCheck({difficulty:1000, check:'0', damage:'500'});
+        exitModel.setInjurySkillCheck({difficulty:1000, check:'0', damageOnFailure:'500'});
         tc.rng.queueRolls(0);
         vq.doFollowExit(exitModel);
         return {dead:vq.isDead(), health:vq.health.value};
@@ -264,5 +265,108 @@ test('a dead agent can\'t act or travel, and an agent with no chronal still coun
     await expect(page.getByText(/^Lifeboat to/).filter({visible:true})).toHaveCount(1);
     
     expect(problems.pageErrors).toEqual([]);
+});
+
+
+/*  Takes VQ's exit from the collision with this injury check's damage and the rolls queued: 
+    the check passes on a roll of 999 and fails on 0. Returns the damage, what was logged and 
+    the rolls left over. */
+const damageWith = (page, damages, ...rolls) => page.evaluate(([damages, rolls]) => {
+        const vq = tc.model.getAgentModel('VQ'),
+            exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties');
+        // Back to the start with full health and no visits, so the trips don't build up paradox.
+        vq.getLog().length = 0;
+        vq.paradox.setValue(0);
+        vq.health.setValue(vq.health.max);
+        vq.setEvent('collision');
+        exitModel.setInjurySkillCheck({difficulty:0, check:'0', ...damages});
+        const before = vq.health.value;
+        tc.rng.queueRolls(...rolls);
+        vq.doFollowExit(exitModel);
+        const log = vq.getLog(),
+            queued = tc.rng.getQueuedRollCount();
+        tc.rng.clearQueuedRolls();
+        return {damage:before - vq.health.value, logged:log[log.length - 1].damage, queued};
+    }, [damages, rolls]),
+    PASS = 999,
+    FAIL = 0;
+
+test('an injury check does its success damage on a pass and its failure damage on a failure', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Only on a failure. A pass rolls nothing more.
+    expect(await damageWith(page, {damageOnFailure:'d(6)+4'}, PASS, 2)).toEqual({damage:0, logged:0, queued:1});
+    expect(await damageWith(page, {damageOnFailure:'d(6)+4'}, FAIL, 2)).toEqual({damage:7, logged:7, queued:0});
+    
+    // Only on a pass.
+    expect(await damageWith(page, {damageOnSuccess:'3'}, PASS)).toEqual({damage:3, logged:3, queued:0});
+    expect(await damageWith(page, {damageOnSuccess:'3'}, FAIL)).toEqual({damage:0, logged:0, queued:0});
+    
+    // Light on a pass, heavy on a failure. Each case rolls only its own dice, after the check.
+    const both = {damageOnSuccess:'d(10)', damageOnFailure:'50'};
+    expect(await damageWith(page, both, PASS, 3)).toEqual({damage:4, logged:4, queued:0});
+    expect(await damageWith(page, both, FAIL, 3)).toEqual({damage:50, logged:50, queued:1});
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a damage that isn\'t a non-empty string is ignored with a warning, and the old damage key is unknown', async ({page}) => {
+    const problems = await startGame(page),
+        result = await page.evaluate(() => {
+            const exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties'),
+                read = () => [exitModel.hasInjuryCheck(), exitModel.getInjuryDamage(true) ?? null, exitModel.getInjuryDamage(false) ?? null];
+            exitModel.setInjurySkillCheck({damageOnSuccess:'', damageOnFailure:'9'});
+            const oneBad = read();
+            exitModel.setInjurySkillCheck({damage:'150'});
+            return {oneBad, oldKey:read()};
+        });
+    expect(result).toEqual({oneBad:[true, null, '9'], oldKey:[false, null, null]});
+    expect(problems.warnings).toEqual([
+        'Event collision exit to casualties injury skill check damageOnSuccess must be a non-empty string (ignoring it): {damageOnSuccess: , damageOnFailure: 9}',
+        'Event collision exit to casualties skill check has unknown keys damage: {damage: 150}',
+        'Event collision exit to casualties injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check): {damage: 150}'
+    ]);
+});
+
+test('a pass that still hurts floats its damage, and the risk tooltip gives both cases', async ({page}) => {
+    const problems = await startGame(page),
+        riskFor = damages => page.evaluate(damages => {
+            const vq = tc.model.getAgentModel('VQ'),
+                exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties');
+            exitModel.setInjurySkillCheck({difficulty:0, check:'0', ...damages});
+            return vq.getInjuryRiskPhrase(exitModel).replace(/\u00A0/g, ' ');
+        }, damages);
+    
+    // A failure's damage first, then a pass's when it hurts and reads differently.
+    expect(await riskFor({damageOnFailure:'150'})).toBe('♥ Risking: certain death · ensured');
+    expect(await riskFor({damageOnSuccess:'d(10)', damageOnFailure:'150'})).toBe('♥ Risking: certain death (moderate if passed) · ensured');
+    expect(await riskFor({damageOnSuccess:'150', damageOnFailure:'150'})).toBe('♥ Risking: certain death · ensured');
+    expect(await riskFor({damageOnSuccess:'0.5', damageOnFailure:'20'})).toBe('♥ Risking: severe · ensured');
+    expect(await riskFor({damageOnSuccess:'d(10)'})).toBe('♥ Risking: harmless (moderate if passed) · ensured');
+    
+    // Passing, but still hurt by the d(10): 4.
+    await page.evaluate(() => {
+        const exitModel = tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties');
+        exitModel.setInjurySkillCheck({difficulty:0, check:'1000', damageOnSuccess:'d(10)', damageOnFailure:'150'});
+        tc.app.selectEventBox('casualties');
+        tc.app.selectEventBox('collision');
+        tc.rng.queueRolls(500, 3);
+    });
+    await page.getByText('Walk to Loss of Life [♥]', {exact:true}).filter({visible:true}).click();
+    await expect.poll(() => page.evaluate(() => tc.app.getSubviews()
+        .filter(sv => sv.isA(tc.FloatingText) && sv.visible)
+        .map(floatingText => floatingText.text.replace(/\u00A0/g, ' ')))).toEqual([expect.stringMatching(/^Succeeded by [\d.]+ · -4♥$/)]);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('the lifeboats only hurt on a failed injury check, and then fatally', () => {
+    const lifeboats = readJson('data/titanic_scenario.json').events.casualties.exits.filter(exit => exit.mode === 'lifeboat');
+    expect(lifeboats.length).toBe(2);
+    for (const exit of lifeboats) {
+        expect(exit.injurySkillCheck.damageOnSuccess).toBeUndefined();
+        expect(exit.injurySkillCheck.damageOnFailure).toBe('150');
+    }
 });
 
