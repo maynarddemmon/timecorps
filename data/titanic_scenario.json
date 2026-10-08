@@ -503,9 +503,10 @@
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
-					"skillCheck":{"difficulty":175, "actionType":"social"},
+					"skillCheck":{"difficulty":175, "actionType":"cha"},
 					"set":{"countermandAstern":"true"},
-					"hidden":"event.values.countermandAstern.value"
+					"hidden":"event.values.countermandAstern.value",
+					"injurySkillCheck":{"difficulty":500, "actionType":"athletic", "damageOnFailure":"d(6,5)", "damageOnSuccess":"d(4)"}
 				},
 				"allow":{
 					"label":"Allow Astern Order",
@@ -630,7 +631,7 @@
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":500, "actionType":"athletic", "damageOnFailure":"150", "damageOnSuccess":"d(4,2)"}
+					"injurySkillCheck":{"difficulty":500, "check":"agent.skills.str", "damageOnFailure":"150", "damageOnSuccess":"d(4,2)"}
 				},
 				{
 					"mode":"lifeboat",

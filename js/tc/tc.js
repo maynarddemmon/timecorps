@@ -337,7 +337,7 @@
             SKILL_ID_DECEPTION:'deception',
             
             // Action Types
-            ACTION_ATHLETIC:'athletic',
+            ACTION_INJURY:'inj',
             ACTION_INVESTIGATE:'investigate',
             
             // Text Constants

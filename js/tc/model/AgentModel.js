@@ -21,7 +21,8 @@
             ICON_HQ, ICON_SEPARATOR,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
+            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
+            ACTION_INJURY
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
@@ -64,7 +65,7 @@
             None if there's no damage for that case. */
         getInjuryAmount = (agentModel, exitModel, success, amountFunc) => {
             const damageExpr = exitModel.getInjuryDamage(success);
-            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, exitModel.getActionSkillDifficulty())) : 0;
+            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, exitModel.getActionSkillDifficulty(ACTION_INJURY))) : 0;
         },
         
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
@@ -670,10 +671,10 @@
             const failPhrase = toDamagePhrase(getInjuryAmount(this, exitModel, false, getAverageAmount)),
                 passDamage = getInjuryAmount(this, exitModel, true, getAverageAmount),
                 passPhrase = toDamagePhrase(passDamage),
-                name = exitModel.getActionSkillName();
+                name = exitModel.getActionSkillName(ACTION_INJURY);
             return pkg.ICON_HEALTH + ' Risking: ' + failPhrase + 
                 (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '') + ICON_SEPARATOR +
-                (name ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(), exitModel.getActionSkillDifficulty());
+                (name && name !== ACTION_INJURY ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(ACTION_INJURY), exitModel.getActionSkillDifficulty(ACTION_INJURY));
         },
         
         /*  Rolls an exit's injury check, if it has one, then the damage for whether it passed 
@@ -682,7 +683,7 @@
         checkInjuryForExit: function(exitModel) {
             if (!exitModel.hasInjuryCheck()) return null;
             
-            const check = this.checkSkillExpression(exitModel.getActionSkillExpr(), exitModel.getActionSkillDifficulty()),
+            const check = this.checkSkillExpression(exitModel.getActionSkillExpr(ACTION_INJURY), exitModel.getActionSkillDifficulty(ACTION_INJURY)),
                 amount = getInjuryAmount(this, exitModel, check.success, rollAmount);
             
             // Whole points only, and never healing. A broken expression does no damage.

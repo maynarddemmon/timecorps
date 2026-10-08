@@ -15,7 +15,7 @@
             },
             ICON_SEPARATOR, ICON_NIL,
             SCOPE_EVENT,
-            ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL, toDifficulty
+            ACTION_INVESTIGATE, ACTION_INJURY, DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
         TRAVEL_MODE_WAIT ='wait',
@@ -27,8 +27,6 @@
         PREFIX_SKILL_DIFF = '_SkDff_',
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
-        
-        ACTION_ID_INJURY = 'inj',
         
         /*  Skill checks for the actions of an Event (e.g. investigate) or for an action itself.
             Checks are stored by action ID, so an Event can have one per action it offers. */
@@ -122,14 +120,14 @@
                 self.injuryDamageOnSuccess = self.injuryDamageOnFailure = undefined;
                 
                 if (cfg == null) {
-                    self.addSkillCheck(ACTION_ID_INJURY);
+                    self.addSkillCheck(ACTION_INJURY);
                     return;
                 }
                 
                 const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
                     {damageOnSuccess, damageOnFailure, ...checkCfg} = isObj ? cfg : {};
-                if (self.addSkillCheck(ACTION_ID_INJURY, isObj ? checkCfg : cfg)) {
-                    const owner = self.getSkillCheckOwner(ACTION_ID_INJURY),
+                if (self.addSkillCheck(ACTION_INJURY, isObj ? checkCfg : cfg)) {
+                    const owner = self.getSkillCheckOwner(ACTION_INJURY),
                         toDamage = (key, damage) => {
                             if (damage === undefined) return undefined;
                             if (typeof damage === 'string' && damage.trim() !== '') return damage;
@@ -141,7 +139,7 @@
                     
                     if (!self.hasInjuryCheck()) {
                         console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
-                        self.addSkillCheck(ACTION_ID_INJURY);
+                        self.addSkillCheck(ACTION_INJURY);
                     }
                 }
             },
