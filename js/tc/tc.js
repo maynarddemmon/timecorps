@@ -210,6 +210,9 @@
                 
                 DEFAULT_SKILL_DIFFICULTY:250, // 75% for a skill of 0.
                 DEFAULT_SKILL_EXPR:'0', // Default to no skill
+                
+                DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL: 15,
+                DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL: 25,
             },
             
             /*  The game's single source of randomness, so tests can force outcomes. Game code 

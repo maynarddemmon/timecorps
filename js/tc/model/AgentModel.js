@@ -142,7 +142,7 @@
         but not "event...". */
     // FIXME: support event... as the Event the agent is currently in?
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
-        include: [pkg.ConstrainableAttrSupport, pkg.Hideable, pkg.Describable, pkg.MediaSupport],
+        include: [pkg.DescribableHideable, pkg.MediaSupport],
         
         /** @overrides ConstrainableAttrSupport */
         getConstraintScopeName: () => SCOPE_AGENT,

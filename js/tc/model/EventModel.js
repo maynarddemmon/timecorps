@@ -6,7 +6,7 @@
         {stableStringify, BaseModel} = myt,
         
         {
-            NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg, ConstrainableAttrSupport, Hideable, Describable,
+            NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             cfg:{
@@ -171,7 +171,7 @@
         },
         
         ConstrainableToParentEvent = new JSModule('ConstrainableToParentEvent', {
-            include: [ConstrainableAttrSupport],
+            include: [pkg.ConstrainableAttrSupport],
             
             init: function(attrs) {
                 this.event = attrs.event;
@@ -183,7 +183,7 @@
         }),
         
         HideableEventPart = new JSModule('HideableEventPart', {
-            include: [Hideable],
+            include: [pkg.Hideable],
             
             init: function(attrs) {
                 this.hidden = false;
@@ -194,7 +194,7 @@
         }),
         
         DescribableEventPart = new JSModule('DescribableEventPart', {
-            include: [Describable],
+            include: [pkg.Describable],
             
             doDescriptionChanged: function() {this.event.notifyCollectionOfUpdate();}
         }),
@@ -378,7 +378,7 @@
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
-            include: [ConstrainableAttrSupport, Hideable, Describable, ActionCheckSupport],
+            include: [pkg.DescribableHideable, ActionCheckSupport],
             
             /** @overrides ConstrainableAttrSupport */
             getConstraintScopeName: () => SCOPE_EVENT,
@@ -414,10 +414,10 @@
                 self.exits = [];
                 self.hideAffectedBy = {};
                 
-                // Default to hidden if nothing is known about this Event.
-                // FIXME: ideally this will take into account the descendant Events with a default
-                // attestation/historicty check of say 15.
-                attrs.hidden ??= "event.attestation.value === 0 && event.historicity.value === 0";
+                if (attrs.hidden == null) {
+                    pkg.registerEventForHiddenAttrSetup(self);
+                    delete attrs.hidden;
+                }
                 
                 // Applied after the other attrs so any warnings, including those about the skill 
                 // checks of actions and exits, can name the Event by its id.
