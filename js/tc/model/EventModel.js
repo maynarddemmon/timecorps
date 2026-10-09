@@ -137,15 +137,17 @@
                     self.injuryDamageOnSuccess = toDamage('damageOnSuccess', damageOnSuccess);
                     self.injuryDamageOnFailure = toDamage('damageOnFailure', damageOnFailure);
                     
-                    if (!self.hasInjuryCheck()) {
-                        console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
-                        self.addSkillCheck(ACTION_INJURY);
-                    }
+                    if (self.hasInjuryCheck()) return true;
                     
-                    return true;
+                    console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
+                    self.addSkillCheck(ACTION_INJURY);
                 }
+                return false;
             },
-            hasInjuryCheck: function(additionalInjuryCheckContext) {
+            
+            /*  True if doing this risks injury. A model can narrow that down given more context, 
+                e.g. whether an action's own check succeeded. */
+            hasInjuryCheck: function(_context) {
                 return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;
             },
             getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;}
@@ -224,38 +226,45 @@
                 this.addSkillCheck(null, cfg);
             },
             
-            /** @overrides InjuryCheckSupport */
+            /*  An action's injury check can also say when it applies, by whether the action's own
+                check succeeds: {enabledForActionSkillCheck:"success"|"failure"|"both"}. Both if 
+                left out. Anything else is also both, with a warning.
+                @overrides InjuryCheckSupport */
             setInjurySkillCheck: function(cfg) {
-                const retval = this.callSuper(cfg);
+                const isObj = cfg != null && typeof cfg === 'object' && !Array.isArray(cfg),
+                    {enabledForActionSkillCheck, ...injuryCfg} = isObj ? cfg : {},
+                    retval = this.callSuper(isObj ? injuryCfg : cfg);
+                
+                this.enabledForActionSkillCheck = undefined;
                 if (retval) {
-                    let enabledForActionSkillCheck = cfg.enabledForActionSkillCheck;
                     switch (enabledForActionSkillCheck) {
                         case 'success':
                         case 'failure':
                         case 'both':
-                            // Expected Values
+                            this.enabledForActionSkillCheck = enabledForActionSkillCheck;
                             break;
                         default:
-                            // Unexpected Values or empty
-                            enabledForActionSkillCheck = 'both';
+                            if (enabledForActionSkillCheck !== undefined) {
+                                console.warn(this.getSkillCheckOwner(ACTION_INJURY), 'injury skill check enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"):', cfg);
+                            }
+                            this.enabledForActionSkillCheck = 'both';
                     }
-                    this.enabledForActionSkillCheck = enabledForActionSkillCheck;
                 }
                 return retval;
             },
             
-            /** @overrides InjuryCheckSupport */
-            hasInjuryCheck: function(additionalInjuryCheckContext) {
-                if (additionalInjuryCheckContext) {
-                    const success = additionalInjuryCheckContext.success;
+            /*  Given the action's check result as context, also true only if the injury check 
+                applies to that result.
+                @overrides InjuryCheckSupport */
+            hasInjuryCheck: function(context) {
+                if (!this.callSuper(context)) return false;
+                if (context) {
                     switch (this.enabledForActionSkillCheck) {
-                        case 'success': return success === true;
-                        case 'failure': return success === false;
-                        case 'both':
-                            // Fall through to callSuper
+                        case 'success': return context.success === true;
+                        case 'failure': return context.success === false;
                     }
                 }
-                return this.callSuper(additionalInjuryCheckContext);
+                return true;
             },
             
             /*setDone: function(done) {

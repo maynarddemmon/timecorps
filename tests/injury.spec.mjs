@@ -135,8 +135,9 @@ test('amounts roll dice and aren\'t clamped, and damage has a phrase', async ({p
         rolled:2006,
         average:2003.5,
         phrases:[
-            'harmless', 'harmless', 'light', 'light', 'moderate', 'serious', 'severe', 'grievous',
-            'critical', 'crippling', 'crippling', 'deadly', 'deadly', 'certain death', 'certain death'
+            'harmless', 'harmless', 'light injury', 'light injury', 'moderate injury', 'serious injury', 
+            'severe injury', 'grievous injury', 'critical injury', 'crippling injury', 'crippling injury', 
+            'deadly injury', 'deadly injury', 'certain death', 'certain death'
         ]
     });
 });
@@ -145,7 +146,7 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
     await routeScenarioWithInjuries(page);
     const problems = await startGame(page),
         // d(6)+4 averages 7.5: moderate.
-        risk = '♥ Risking: moderate\u00A0·\u00A0Athletic / ' + await page.evaluate(ease => tc.checks.toEasePhrase(ease), vqAthleticEase),
+        risk = '♥ Risking: moderate injury\u00A0·\u00A0Athletic / ' + await page.evaluate(ease => tc.checks.toEasePhrase(ease), vqAthleticEase),
         visibleText = text => page.getByText(text, {exact:true}).filter({visible:true});
     
     // In the agent's list of exits.
@@ -340,10 +341,10 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
     
     // A failure's damage first, then a pass's when it hurts and reads differently.
     expect(await riskFor({damageOnFailure:'150'})).toBe('♥ Risking: certain death · ensured');
-    expect(await riskFor({damageOnSuccess:'d(10)', damageOnFailure:'150'})).toBe('♥ Risking: certain death (moderate if passed) · ensured');
+    expect(await riskFor({damageOnSuccess:'d(10)', damageOnFailure:'150'})).toBe('♥ Risking: certain death (moderate injury if passed) · ensured');
     expect(await riskFor({damageOnSuccess:'150', damageOnFailure:'150'})).toBe('♥ Risking: certain death · ensured');
-    expect(await riskFor({damageOnSuccess:'0.5', damageOnFailure:'20'})).toBe('♥ Risking: severe · ensured');
-    expect(await riskFor({damageOnSuccess:'d(10)'})).toBe('♥ Risking: harmless (moderate if passed) · ensured');
+    expect(await riskFor({damageOnSuccess:'0.5', damageOnFailure:'20'})).toBe('♥ Risking: severe injury · ensured');
+    expect(await riskFor({damageOnSuccess:'d(10)'})).toBe('♥ Risking: harmless (moderate injury if passed) · ensured');
     
     // Passing, but still hurt by the d(10): 4.
     await page.evaluate(() => {
@@ -387,7 +388,7 @@ test('an injury check rolls and is described by its own settings, not the exit\'
             exitModel.setInjurySkillCheck({difficulty:0, check:'1000', actionType:'athletic', damageOnFailure:'5'});
             const own = read();
             tc.rng.queueRolls(1);
-            const ownCheck = vq.checkInjuryForExit(exitModel).success;
+            const ownCheck = vq.checkInjuryFor(exitModel).success;
             
             // No actionType: no name, rather than the name of the slot it's stored in.
             exitModel.setInjurySkillCheck({difficulty:0, check:'1000', damageOnFailure:'5'});
@@ -396,10 +397,10 @@ test('an injury check rolls and is described by its own settings, not the exit\'
             return {own, ownCheck, untyped, slot:tc.ACTION_INJURY};
         });
     
-    expect(out.own).toEqual({difficulty:0, expr:'1000', phrase:'♥ Risking: moderate · Athletic / ensured'});
+    expect(out.own).toEqual({difficulty:0, expr:'1000', phrase:'♥ Risking: moderate injury · Athletic / ensured'});
     expect(out.ownCheck).toBe(true);
-    expect(out.untyped.phrase).toBe('♥ Risking: moderate · ensured');
-    expect(out.untyped.phrase).not.toContain(out.slot);
+    expect(out.untyped.phrase).toBe('♥ Risking: moderate injury · ensured');
+    expect(out.untyped.phrase).not.toContain(out.slot + ' /');
     expect(problems.warnings).toEqual([]);
 });
 
@@ -409,5 +410,123 @@ test('the lifeboats\' injury checks use their own difficulties', async ({page}) 
         .filter(exitModel => exitModel.mode === 'lifeboat')
         .map(exitModel => exitModel.getActionSkillDifficulty(tc.ACTION_INJURY)));
     expect(difficulties).toEqual([500, 50]);
+});
+
+
+/*  Gives the collision a test action VQ can take. Its own check passes on a roll of 999 and 
+    fails on 0, and so does its injury check, which does d(6)+2 on a failure and 1 on a pass. */
+const addRiskyAction = (page, injuryCfg) => page.evaluate(injuryCfg => {
+        tc.model.getEventModel('collision').setActions({risky:{
+            label:'Risky', skillCheck:{difficulty:0, check:'0'}, set:{},
+            ...(injuryCfg === null ? {} : {injurySkillCheck:{difficulty:1000, check:'0', damageOnFailure:'d(6)+2', damageOnSuccess:'1', ...injuryCfg}})
+        }});
+        tc.app.selectEventBox('casualties');
+        tc.app.selectEventBox('collision');
+    }, injuryCfg),
+    
+    // Has VQ take the risky action with the rolls queued, and returns what happened.
+    takeRiskyAction = (page, ...rolls) => page.evaluate(rolls => {
+        const vq = tc.model.getAgentModel('VQ'),
+            actionModel = tc.model.getEventModel('collision').getActionModels().risky,
+            before = vq.health.value;
+        vq.setActionExecCount(0);
+        tc.rng.queueRolls(...rolls);
+        vq.doAction(actionModel);
+        const entry = vq.getLog()[vq.getLog().length - 1],
+            queued = tc.rng.getQueuedRollCount();
+        tc.rng.clearQueuedRolls();
+        return {success:entry.success, damage:before - vq.health.value, logged:entry.damage, queued};
+    }, rolls),
+    ACTION_PASS = 999,
+    ACTION_FAIL = 0;
+
+test('actions get injury checks from the data, including when they apply', async ({page}) => {
+    const problems = await startGame(page),
+        checks = await page.evaluate(() => {
+            const {countermand, allow} = tc.model.getEventModel('engine_order').getActionModels(),
+                describe = actionModel => ({
+                    when:actionModel.enabledForActionSkillCheck,
+                    difficulty:actionModel.getActionSkillDifficulty(tc.ACTION_INJURY),
+                    name:actionModel.getActionSkillName(tc.ACTION_INJURY),
+                    damage:[actionModel.getInjuryDamage(true), actionModel.getInjuryDamage(false)],
+                    // The action's own check is separate.
+                    actionName:actionModel.getActionSkillName()
+                });
+            return {countermand:describe(countermand), allow:describe(allow)};
+        });
+    expect(checks.countermand).toEqual({when:'both', difficulty:250, name:'Athletic', damage:['d(4)', 'd(6,5)'], actionName:'Charisma'});
+    expect(checks.allow).toEqual({when:'failure', difficulty:250, name:'Athletic', damage:['1', '5'], actionName:'Social'});
+    expect(problems.warnings).toEqual([]);
+});
+
+test('an action\'s injury check rolls after its own check, when its result calls for one', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Both: whatever the action's result. Fails the injury check: a 4 on the d(6), plus 2.
+    await addRiskyAction(page, {});
+    expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:6, logged:6, queued:0});
+    expect(await takeRiskyAction(page, ACTION_FAIL, 999)).toEqual({success:false, damage:1, logged:1, queued:0});
+    
+    // Only when the action fails. A success rolls nothing more and logs no damage.
+    await addRiskyAction(page, {enabledForActionSkillCheck:'failure'});
+    expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:0, logged:undefined, queued:2});
+    expect(await takeRiskyAction(page, ACTION_FAIL, 0, 3)).toEqual({success:false, damage:6, logged:6, queued:0});
+    
+    // Only when the action succeeds.
+    await addRiskyAction(page, {enabledForActionSkillCheck:'success'});
+    expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:6, logged:6, queued:0});
+    expect(await takeRiskyAction(page, ACTION_FAIL, 0, 3)).toEqual({success:false, damage:0, logged:undefined, queued:2});
+    
+    // No injury check at all.
+    await addRiskyAction(page, null);
+    expect(await takeRiskyAction(page, ACTION_PASS, 0)).toEqual({success:true, damage:0, logged:undefined, queued:1});
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a bad enabledForActionSkillCheck warns and applies either way, and a check without damage never applies', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const collision = tc.model.getEventModel('collision'),
+                make = injurySkillCheck => {
+                    collision.setActions({risky:{label:'Risky', set:{}, injurySkillCheck}});
+                    const actionModel = collision.getActionModels().risky;
+                    return {
+                        when:actionModel.enabledForActionSkillCheck ?? null,
+                        onFail:actionModel.hasInjuryCheck({success:false}),
+                        onPass:actionModel.hasInjuryCheck({success:true})
+                    };
+                };
+            return {
+                typo:make({enabledForActionSkillCheck:'fail', damageOnFailure:'5'}),
+                noDamage:make({enabledForActionSkillCheck:'failure'})
+            };
+        });
+    expect(out).toEqual({
+        typo:{when:'both', onFail:true, onPass:true},
+        noDamage:{when:null, onFail:false, onPass:false}
+    });
+    expect(problems.warnings).toEqual([
+        'Event collision action risky injury skill check enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"): {enabledForActionSkillCheck: fail, damageOnFailure: 5}',
+        'Event collision action risky injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check): {}'
+    ]);
+});
+
+test('action buttons flag the injury risk, and the action\'s result floats with its damage', async ({page}) => {
+    const problems = await startGame(page);
+    await addRiskyAction(page, {});
+    
+    const btn = page.getByText('Risky [♥]', {exact:true}).filter({visible:true});
+    await expect(btn).toBeVisible();
+    expect(await btnTooltip(page, 'Risky [♥]')).toMatch(/^Risky\u00A0·\u00A0[a-z ]+\u00A0·\u00A0♥ Risking: moderate injury \(light injury if passed\)\u00A0·\u00A0hopeless$/);
+    
+    await page.evaluate(() => tc.rng.queueRolls(999, 0, 3));
+    await btn.click();
+    await expect.poll(() => page.evaluate(() => tc.app.getSubviews()
+        .filter(sv => sv.isA(tc.FloatingText) && sv.visible)
+        .map(floatingText => floatingText.text.replace(/\u00A0/g, ' ')))).toEqual([expect.stringMatching(/^Succeeded by [\d.]+ · -6♥$/)]);
+    
+    expect(problems.pageErrors).toEqual([]);
 });
 

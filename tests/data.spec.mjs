@@ -166,24 +166,31 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         return problems;
     };
 
-test('every investigate, action and exit injury skill check is valid', () => {
+test('every investigate, action, and action and exit injury skill check is valid', () => {
     const problems = [];
     for (const [eventId, event] of Object.entries(events)) {
         if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
+        const checkInjurySkillCheck = (where, {damageOnSuccess, damageOnFailure, ...checkCfg} = {}) => {
+            problems.push(...checkSkillCheckCfg(where, checkCfg));
+            if (damageOnSuccess === undefined && damageOnFailure === undefined) problems.push(where + ' has no damageOnSuccess or damageOnFailure');
+            for (const [key, damage] of [['damageOnSuccess', damageOnSuccess], ['damageOnFailure', damageOnFailure]]) {
+                const error = damage === undefined ? null : getAmountCompileError(damage);
+                if (error) problems.push(where + ' ' + key + ' ' + error);
+            }
+        };
         for (const [actionId, action] of Object.entries(event.actions ?? {})) {
             if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(eventId + '.' + actionId + ' skillCheck', action.skillCheck));
+            if (action.injurySkillCheck !== undefined) {
+                const where = eventId + '.' + actionId + ' injurySkillCheck',
+                    {enabledForActionSkillCheck, ...injuryCfg} = action.injurySkillCheck ?? {};
+                if (enabledForActionSkillCheck !== undefined && !['success', 'failure', 'both'].includes(enabledForActionSkillCheck)) {
+                    problems.push(where + ' enabledForActionSkillCheck is not "success", "failure" or "both"');
+                }
+                checkInjurySkillCheck(where, injuryCfg);
+            }
         }
         for (const exit of event.exits ?? []) {
-            if (exit.injurySkillCheck !== undefined) {
-                const where = eventId + ' exit to ' + exit.to + ' injurySkillCheck',
-                    {damageOnSuccess, damageOnFailure, ...checkCfg} = exit.injurySkillCheck ?? {};
-                problems.push(...checkSkillCheckCfg(where, checkCfg));
-                if (damageOnSuccess === undefined && damageOnFailure === undefined) problems.push(where + ' has no damageOnSuccess or damageOnFailure');
-                for (const [key, damage] of [['damageOnSuccess', damageOnSuccess], ['damageOnFailure', damageOnFailure]]) {
-                    const error = damage === undefined ? null : getAmountCompileError(damage);
-                    if (error) problems.push(where + ' ' + key + ' ' + error);
-                }
-            }
+            if (exit.injurySkillCheck !== undefined) checkInjurySkillCheck(eventId + ' exit to ' + exit.to + ' injurySkillCheck', exit.injurySkillCheck);
         }
     }
     expect(problems).toEqual([]);

@@ -44,7 +44,8 @@
                     actionModel.getActionSkillDifficulty()
                 ),
                 label = actionModel.label,
-                name = actionModel.getActionSkillName();
+                name = actionModel.getActionSkillName(),
+                injuryRisk = agentModel.getInjuryRiskPhrase(actionModel);
             return {
                 text:label + pkg.formatAgentRisks(
                     0, 
@@ -52,7 +53,8 @@
                     actionModel.hasInjuryCheck()
                 ),
                 // An action without an actionType has no name to show.
-                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + ICON_SEPARATOR + agentModel.getInjuryRiskPhrase(actionModel),
+                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
+                    (injuryRisk ? ICON_SEPARATOR + injuryRisk : ''),
                 disabled:agentCantActHere /*|| actionModel.done*/
             };
         },
