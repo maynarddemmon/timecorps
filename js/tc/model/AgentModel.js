@@ -561,11 +561,15 @@
                     actionModel.getActionSkillExpr(),
                     actionModel.getActionSkillDifficulty()
                 ),
-                injury = this.checkInjuryFor(actionModel, check),
+                injury = this.checkInjuryFor(actionModel, {check, allowHealing:actionModel.allowHealing()}),
                 logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
             
             // Copy the damage onto the check result so there's only one floating text.
-            if (injury) check.damage = logEntry.damage = injury.damage;
+            if (injury) {
+                // Adjust by no more than the Agent's health permits.
+                const {adj} = this[STAT_ID_HEALTH].getAllowedAdj(-injury.damage);
+                check.damage = logEntry.damage = injury.damage = -adj || 0; // Not -0
+            }
             
             // Now show floating panel. (must be before anything that triggers a rerender of 
             // EventDetails such as takeDamage or incrementActionExecCount, since that destroys 
@@ -692,18 +696,20 @@
             or failed. Doesn't apply the damage. Returns the check result plus the damage, or 
             null if there's no check. */
         checkInjuryFor: function(targetModel, additionalInjuryCheckContext) {
-            if (targetModel.hasInjuryCheck(additionalInjuryCheckContext)) {
+            if (targetModel.hasInjuryCheck(additionalInjuryCheckContext?.check)) {
                 const check = this.checkSkillExpression(targetModel.getActionSkillExpr(ACTION_INJURY), targetModel.getActionSkillDifficulty(ACTION_INJURY)),
                     amount = getInjuryAmount(this, targetModel, check.success, rollAmount);
                 
-                // Whole points only, and never healing. A broken expression does no damage.
-                return {...check, damage:amount > 0 ? Math.round(amount) : 0};
+                // Whole points only, and healing allowed only if so indicated. A broken 
+                // expression (NaN) does nothing.
+                const damage = Number.isFinite(amount) && (amount > 0 || additionalInjuryCheckContext?.allowHealing) ? Math.round(amount) : 0;
+                return {...check, damage};
             }
         },
         
         /*  Lowers health by a whole, positive amount of damage. */
         takeDamage: function(damage) {
-            if (damage > 0) this[STAT_ID_HEALTH].adjValue(-damage);
+            this[STAT_ID_HEALTH].adjValue(-damage);
         },
         
         isDead: function() {

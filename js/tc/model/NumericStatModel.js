@@ -113,46 +113,36 @@
                 return this.adjValue(adj, cfg);
             },
             
-            adjValue: function(adj, cfg) {
-                if (adj === 0) return 0;
+            /*  How much of adj would actually apply, without changing anything. Returns 
+                {adj, clamp} where clamp is 'max' or 'min' if the stat's own limit cut it 
+                short (not a caller's upperLimit), else null. */
+            getAllowedAdj: function(adj, cfg) {
+                // NaN would otherwise fall through to the clamp to min.
+                if (adj === 0 || Number.isNaN(adj)) return {adj:0, clamp:null};
                 
                 const curValue = this.getValue();
-                
                 if (adj > 0) {
                     const realMax = this.getMax(),
                         upperLimit = cfg?.upperLimit,
                         max = upperLimit != null ? mathMax(mathMin(realMax, upperLimit), this.getMin()) : realMax,
                         allowedAdj = mathMax(0, max - curValue);
-                    if (adj <= allowedAdj) {
-                        this.setValue(curValue + adj);
-                        return adj;
-                    } else if (cfg?.allOrNothing) {
-                        // Change would exceed max so do not change.
-                        return 0;
-                    } else {
-                        if (allowedAdj > 0) this.setValue(curValue + allowedAdj);
-                        // Only a true max clamp should trigger. Hitting a caller supplied 
-                        // upperLimit is not the stat reaching its max.
-                        if (max === realMax) this.triggerValueClampedToMax();
-                        return allowedAdj;
-                    }
+                    if (adj <= allowedAdj) return {adj, clamp:null};
+                    if (cfg?.allOrNothing) return {adj:0, clamp:null};
+                    return {adj:allowedAdj, clamp:max === realMax ? 'max' : null};
                 } else {
-                    const min = this.getMin(),
-                        allowedAdj = min - curValue;
-                    if (adj >= allowedAdj) {
-                        this.setValue(curValue + adj);
-                        return adj;
-                    } else {
-                        if (cfg?.allOrNothing) {
-                            // Change would preceed min so do not change.
-                            return 0;
-                        } else {
-                            this.setValue(curValue + allowedAdj);
-                            this.triggerValueClampedToMin();
-                            return allowedAdj;
-                        }
-                    }
+                    const allowedAdj = this.getMin() - curValue;
+                    if (adj >= allowedAdj) return {adj, clamp:null};
+                    if (cfg?.allOrNothing) return {adj:0, clamp:null};
+                    return {adj:allowedAdj, clamp:'min'};
                 }
+            },
+            
+            adjValue: function(adj, cfg) {
+                const allowed = this.getAllowedAdj(adj, cfg);
+                if (allowed.adj !== 0) this.setValue(this.getValue() + allowed.adj);
+                if (allowed.clamp === 'max') this.triggerValueClampedToMax();
+                if (allowed.clamp === 'min') this.triggerValueClampedToMin();
+                return allowed.adj;
             },
             
             getValueToMin: function() {return this.getMin() - this.getValue();},

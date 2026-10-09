@@ -1,7 +1,7 @@
 (pkg => {
     'use strict';
     
-    const {min:mathMin, max:mathMax, abs:mathAbs} = Math,
+    const {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
@@ -19,17 +19,19 @@
         // An arbitrary limit on the number of dice in one d(sides, count).
         MAX_DICE = 99,
         
-        /*  The d(sides, count) function an expression sees. A die needs a whole number of sides,
-            1 or more, and there must be a whole number of dice from 1 to MAX_DICE, so anything 
-            else throws and fails the check. */
-        checkDice = (sides, count) => {
-            if (!Number.isInteger(sides) || sides < 1) throw new RangeError('d(' + sides + ') needs a whole number of sides, 1 or more');
-            if (!Number.isInteger(count) || count < 1 || count > MAX_DICE) throw new RangeError('d(' + sides + ', ' + count + ') needs a whole number of dice from 1 to ' + MAX_DICE);
+        /*  The d(sides, count) function an expression sees. Sides and count must be numbers, so
+            anything else throws and fails the check. Numbers are cleaned up so a computed count, 
+            e.g. from an Event's duration, still rolls: both are rounded, sides to at least 1 and 
+            count to 1 to MAX_DICE. Returns [sides, count]. */
+        cleanDice = (sides, count) => {
+            if (!Number.isFinite(sides)) throw new RangeError('d(' + sides + ') needs a number of sides');
+            if (!Number.isFinite(count)) throw new RangeError('d(' + sides + ', ' + count + ') needs a number of dice');
+            return [mathMax(1, mathRound(sides)), mathMin(MAX_DICE, mathMax(1, mathRound(count)))];
         },
         
         // Rolls the dice and totals them, each 1 to sides. A queued roll is a die's value minus 1.
         rollDie = (sides, count=1) => {
-            checkDice(sides, count);
+            [sides, count] = cleanDice(sides, count);
             let total = 0;
             for (let i = 0; i < count; i++) total += roll(sides) + 1;
             return total;
@@ -39,7 +41,7 @@
             rolling. Success is linear in the ease, so a check's chance at the average ease is its
             true chance, unless the ease gets clamped. */
         averageDie = (sides, count=1) => {
-            checkDice(sides, count);
+            [sides, count] = cleanDice(sides, count);
             return count * (1 + sides) / 2;
         },
         
@@ -172,6 +174,7 @@
                     sides, and totals them, e.g. "agent.skills.str + d(12) - difficulty" or 
                     "d(6, 3)". Use d(13) - 1 for 0 to 12. Only a real check rolls. Working out 
                     the ease without rolling, e.g. for an ease phrase, uses the dice's average.
+                    Sides and count are rounded, sides to at least 1 and count to 1 to 99.
             For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
             difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             
@@ -233,7 +236,7 @@
                         text = (roll == null ? 'Succeeded' : 
                             (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
                             // An injury check's damage, e.g. "Failed by 120 · -7♥".
-                            (damage > 0 ? ICON_SEPARATOR + '-' + damage + pkg.ICON_HEALTH : '');
+                            (damage ? ICON_SEPARATOR + (damage < 0 ? '+' : '-') + mathAbs(damage) + pkg.ICON_HEALTH : '');
                     pkg.showFloatingTextAboveView(
                         btnView, 
                         text, 

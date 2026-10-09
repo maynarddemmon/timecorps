@@ -234,23 +234,47 @@ test.describe('dice in check expressions', () => {
         expect(problems.warnings).toEqual([]);
     });
     
-    test('dice without a whole count from 1 to 99 fail the check with a warning', async ({page}) => {
-        const problems = await startGame(page);
-        for (const count of ['0', '-1', '2.5', '100', '"two"']) {
-            expect((await evaluateCheck(page, 'd(6, ' + count + ') + 1000', {roll:999})).success, count).toBe(false);
-        }
-        expect(await page.evaluate(() => tc.checks.rollAmount('d(6, 99)') >= 99)).toBe(true);
-        expect(problems.warnings).toHaveLength(5);
-        for (const warning of problems.warnings) expect(warning).toContain('needs a whole number of dice from 1 to 99');
+    test('dice sides and counts are rounded, sides to at least 1 and count to 1 to 99', async ({page}) => {
+        const problems = await startGame(page),
+            out = await page.evaluate(() => {
+                const average = expr => tc.checks.getAverageAmount(expr, {}),
+                    out = {};
+                for (const expr of ['d(6, 2.5)', 'd(6, 2.4)', 'd(6, 0)', 'd(6, -1)', 'd(6, 100)', 'd(2.5)', 'd(0)', 'd(-3)']) out[expr] = average(expr);
+                
+                // A computed count rolls the rounded number of dice: one queued roll for 0.4.
+                tc.rng.queueRolls(5, 2);
+                out.rolled = tc.checks.rollAmount('d(6, 0.4)');
+                out.left = tc.rng.getQueuedRollCount();
+                tc.rng.clearQueuedRolls();
+                
+                const many = tc.checks.rollAmount('d(6, 1000)');
+                out.many = many >= 99 && many <= 594;
+                return out;
+            });
+        expect(out).toEqual({
+            'd(6, 2.5)':10.5, 'd(6, 2.4)':7, 'd(6, 0)':3.5, 'd(6, -1)':3.5, 'd(6, 100)':346.5,
+            'd(2.5)':2, 'd(0)':1, 'd(-3)':1,
+            rolled:6, left:1, many:true
+        });
+        expect(problems.warnings).toEqual([]);
     });
     
-    test('a die without a whole number of sides, 1 or more, fails the check with a warning', async ({page}) => {
+    test('dice with a count that isn\'t a number fail the check with a warning', async ({page}) => {
         const problems = await startGame(page);
-        for (const sides of ['0', '-3', '2.5', '"six"', '']) {
-            expect((await evaluateCheck(page, 'd(' + sides + ') + 1000', {roll:999})).success, sides).toBe(false);
+        for (const count of ['"two"', '"3"', 'NaN', 'Infinity', 'null']) {
+            expect((await evaluateCheck(page, 'd(6, ' + count + ') + 1000', {roll:999})).success, count).toBe(false);
         }
         expect(problems.warnings).toHaveLength(5);
-        for (const warning of problems.warnings) expect(warning).toContain('whole number of sides');
+        for (const warning of problems.warnings) expect(warning).toContain('needs a number of dice');
+    });
+    
+    test('a die with sides that aren\'t a number fails the check with a warning', async ({page}) => {
+        const problems = await startGame(page);
+        for (const sides of ['"six"', '', 'NaN', '-Infinity']) {
+            expect((await evaluateCheck(page, 'd(' + sides + ') + 1000', {roll:999})).success, sides).toBe(false);
+        }
+        expect(problems.warnings).toHaveLength(4);
+        for (const warning of problems.warnings) expect(warning).toContain('needs a number of sides');
     });
 });
 

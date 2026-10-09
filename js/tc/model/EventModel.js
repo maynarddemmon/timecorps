@@ -104,6 +104,8 @@
         InjuryCheckSupport = new JSModule('InjuryCheckSupport', {
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
+                this._allowHealing = false;
+                
                 // Applied after the other attrs so any warnings can name the exit.
                 const injurySkillCheck = attrs.injurySkillCheck;
                 delete attrs.injurySkillCheck;
@@ -125,7 +127,7 @@
                 }
                 
                 const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
-                    {damageOnSuccess, damageOnFailure, ...checkCfg} = isObj ? cfg : {};
+                    {damageOnSuccess, damageOnFailure, allowHealing, ...checkCfg} = isObj ? cfg : {};
                 if (self.addSkillCheck(ACTION_INJURY, isObj ? checkCfg : cfg)) {
                     const owner = self.getSkillCheckOwner(ACTION_INJURY),
                         toDamage = (key, damage) => {
@@ -136,6 +138,8 @@
                         };
                     self.injuryDamageOnSuccess = toDamage('damageOnSuccess', damageOnSuccess);
                     self.injuryDamageOnFailure = toDamage('damageOnFailure', damageOnFailure);
+                    
+                    if (allowHealing != null) self._allowHealing = !!allowHealing;
                     
                     if (self.hasInjuryCheck()) return true;
                     
@@ -150,7 +154,9 @@
             hasInjuryCheck: function(_context) {
                 return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;
             },
-            getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;}
+            getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;},
+            
+            allowHealing: function() {return this._allowHealing;}
         }),
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
@@ -431,6 +437,8 @@
                 self.setInvestigate(investigate);
                 if (actions) self.setActions(actions);
                 if (exits) self.setExits(exits);
+                
+                pkg.model.applyCommonEventActionsToEventModel(self);
             },
             
             getAsObj: function(cfg) {
@@ -453,9 +461,6 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
-            setTimeOrdering: function(v) {this._tiOr = v;},
-            getTimeOrdering: function() {return this._tiOr;},
-            
             isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ;},
             isTheVoid: function() {return this.id === EVENT_ID_THE_VOID;},
             isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},
@@ -463,6 +468,11 @@
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
+            
+            // Time
+            setTimeOrdering: function(v) {this._tiOr = v;},
+            getTimeOrdering: function() {return this._tiOr;},
+            
             setStart: function(start) {
                 if (typeof start !== 'number') start = stringToMillis(start);
                 if (this.start !== start) {
@@ -481,6 +491,7 @@
             },
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
             
+            // Hidden
             doHiddenChanged: function(_hidden) {
                 this.notifyCollectionOfUpdate();
                 pkg.app.getTimelineView().notifyEventVisibilityChange(this);
@@ -489,8 +500,10 @@
                 pkg.model.updateTimelineParadoxMax();
             },
             
+            // Description
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
             
+            // Action Limits
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
             getActionLimit: function() {return this.actionLimit;},
             
@@ -536,12 +549,18 @@
             },
             
             // Actions
-            setActions: function(actions) {
-                for (const id in actions) {
-                    const datum = actions[id];
-                    datum.id = id;
-                    datum.event = this;
-                    this.actions[id] = new EventActionModel(datum);
+            setActions: function(actions, clone=false) {
+                for (const id in actions) this.addAction(id, actions[id], clone);
+            },
+            addAction: function(id, actionDatum, clone=true) {
+                const actions = this.actions;
+                if (actions[id] == null) {
+                    if (clone) actionDatum = structuredClone(actionDatum);
+                    actionDatum.id = id;
+                    actionDatum.event = this;
+                    actions[id] = new EventActionModel(actionDatum);
+                } else {
+                    console.warn('Attempt to clobber existing event action', id);
                 }
             },
             getActionModels: function() {return this.actions;},
@@ -599,7 +618,7 @@
                 return accum;
             },
             
-            // Hide Affected By
+            // Hide Affected By (hides the connections to precursors)
             setHideAffectedBy: function(hideAffectedBy) {
                 for (const id in hideAffectedBy) {
                     this.hideAffectedBy[id] = new HideAffectedByModel({

@@ -3,7 +3,7 @@
 		"sure_thing":{
 			"name":"Sure Thing",
 			"check":"1000",
-			"difficulty":0
+			"difficulty":"no-roll"
 		},
 		"impossible":{
 			"name":"Impossible",
@@ -100,9 +100,22 @@
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters",
 			"start":"2174-10-14T00:00:00",
-			"duration":{"s":0},
+			"duration":{"d":1},
 			"location":"_nexus",
 			"hidden":"true"
+		}
+	},
+	
+	"defaultEventActions":{
+		"_rest":{
+			"label":"Rest",
+			"skillCheck":{"actionType":"sure_thing"},
+			"hidden":"event.duration < 1000 * 60 * 60",
+			"injurySkillCheck":{
+				"actionType":"sure_thing",
+				"allowHealing":true, 
+				"damageOnSuccess":"-d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
+			}
 		}
 	}
 }

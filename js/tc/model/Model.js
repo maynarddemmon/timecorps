@@ -4,7 +4,9 @@
     let model,
         skillCfgs = {},
         skillIds = [],
-        skillCheckDefaults = {};
+        skillCheckDefaults = {},
+        
+        commonEventActions = {};
     
     pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
     
@@ -360,6 +362,12 @@
             const moreSkillChecks = json[DATA_KEY_SKILL_CHECKS];
             if (moreSkillChecks) skillCheckDefaults = {...skillCheckDefaults, ...moreSkillChecks};
             
+            // Default Event Actions
+            const defaultEventActions = json.defaultEventActions ?? {};
+            for (const actionId in defaultEventActions) {
+                commonEventActions[actionId] = defaultEventActions[actionId];
+            }
+            
             for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
@@ -446,6 +454,10 @@
                 hiddenExpr += AND_EVENTS_DOT + precursorEvent.id + PREC_SUFFIX;
             }
             eventModel.setHidden(hiddenExpr);
+        },
+        
+        applyCommonEventActionsToEventModel: eventModel => {
+            if (eventModel) eventModel.setActions(commonEventActions, true);
         }
     });
     

@@ -414,9 +414,12 @@ test('the lifeboats\' injury checks use their own difficulties', async ({page}) 
 
 
 /*  Gives the collision a test action VQ can take. Its own check passes on a roll of 999 and 
-    fails on 0, and so does its injury check, which does d(6)+2 on a failure and 1 on a pass. */
+    fails on 0, and so does its injury check, which does d(6)+2 on a failure and 1 on a pass. 
+    Replaces any earlier one, since adding an action never replaces one with the same ID. */
 const addRiskyAction = (page, injuryCfg) => page.evaluate(injuryCfg => {
-        tc.model.getEventModel('collision').setActions({risky:{
+        const collision = tc.model.getEventModel('collision');
+        delete collision.getActionModels().risky;
+        collision.setActions({risky:{
             label:'Risky', skillCheck:{difficulty:0, check:'0'}, set:{},
             ...(injuryCfg === null ? {} : {injurySkillCheck:{difficulty:1000, check:'0', damageOnFailure:'d(6)+2', damageOnSuccess:'1', ...injuryCfg}})
         }});
@@ -490,6 +493,7 @@ test('a bad enabledForActionSkillCheck warns and applies either way, and a check
         out = await page.evaluate(() => {
             const collision = tc.model.getEventModel('collision'),
                 make = injurySkillCheck => {
+                    delete collision.getActionModels().risky;
                     collision.setActions({risky:{label:'Risky', set:{}, injurySkillCheck}});
                     const actionModel = collision.getActionModels().risky;
                     return {
@@ -530,3 +534,82 @@ test('action buttons flag the injury risk, and the action\'s result floats with 
     expect(problems.pageErrors).toEqual([]);
 });
 
+
+test('every regular event offers Rest, hidden when the event is under an hour', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const out = {missing:[], wrongHidden:[]};
+            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent())) {
+                const rest = eventModel.getActionModels()._rest;
+                if (!rest) {
+                    out.missing.push(eventModel.id);
+                } else if (rest.isHidden() !== eventModel.duration < 60 * 60 * 1000) {
+                    out.wrongHidden.push(eventModel.id);
+                }
+            }
+            out.collisionHidden = tc.model.getEventModel('collision').getActionModels()._rest.isHidden();
+            out.lifeboatsHidden = tc.model.getEventModel('lifeboat_capacity').getActionModels()._rest.isHidden();
+            return out;
+        });
+    expect(out).toEqual({missing:[], wrongHidden:[], collisionHidden:true, lifeboatsHidden:false});
+    expect(problems.warnings).toEqual([]);
+});
+
+test('resting heals, but never past the agent\'s max health', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const vq = tc.model.getAgentModel('VQ'),
+                health = vq.health,
+                rest = tc.model.getEventModel('collision').getActionModels()._rest,
+                
+                // The rest check, its injury check, then a 4 on the d(4). The collision lasts a
+                // minute, which rounds up to one die.
+                restFrom = value => {
+                    health.setValue(value);
+                    vq.setActionExecCount(0);
+                    tc.rng.queueRolls(999, 999, 3);
+                    vq.doAction(rest);
+                    tc.rng.clearQueuedRolls();
+                    return {health:health.value, logged:vq.getLog()[vq.getLog().length - 1].damage};
+                };
+            return {
+                max:health.max,
+                hurt:restFrom(40),
+                nearFull:restFrom(health.max - 2),
+                full:restFrom(health.max)
+            };
+        });
+    expect(out.hurt).toEqual({health:44, logged:-4});
+    expect(out.nearFull).toEqual({health:out.max, logged:-2});
+    expect(out.full).toEqual({health:out.max, logged:0});
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('negative damage heals only when allowed, and a broken healing expression does nothing', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const vq = tc.model.getAgentModel('VQ'),
+                collision = tc.model.getEventModel('collision'),
+                healFrom = (injurySkillCheck, value) => {
+                    delete collision.getActionModels().heal;
+                    collision.setActions({heal:{label:'Heal', skillCheck:{difficulty:0, check:'1000'}, set:{}, injurySkillCheck:{difficulty:0, check:'1000', ...injurySkillCheck}}});
+                    vq.health.setValue(value);
+                    vq.setActionExecCount(0);
+                    tc.rng.queueRolls(999, 999);
+                    vq.doAction(collision.getActionModels().heal);
+                    tc.rng.clearQueuedRolls();
+                    return vq.health.value;
+                };
+            return {
+                allowed:healFrom({allowHealing:true, damageOnSuccess:'-5'}, 40),
+                notAllowed:healFrom({damageOnSuccess:'-5'}, 40),
+                broken:healFrom({allowHealing:true, damageOnSuccess:'-nope'}, 40),
+                notANumber:healFrom({allowHealing:true, damageOnSuccess:'-Math.sqrt(-1)'}, 40)
+            };
+        });
+    expect(out).toEqual({allowed:45, notAllowed:40, broken:40, notANumber:40});
+    expect(problems.warnings.length).toBeGreaterThan(0);
+    for (const warning of problems.warnings) expect(warning).toContain('nope is not defined');
+    expect(problems.pageErrors).toEqual([]);
+});
