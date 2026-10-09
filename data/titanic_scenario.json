@@ -506,13 +506,14 @@
 					"skillCheck":{"difficulty":175, "actionType":"cha"},
 					"set":{"countermandAstern":"true"},
 					"hidden":"event.values.countermandAstern.value",
-					"injurySkillCheck":{"difficulty":500, "actionType":"athletic", "damageOnFailure":"d(6,5)", "damageOnSuccess":"d(4)"}
+					"injurySkillCheck":{"difficulty":250, "actionType":"athletic", "damageOnFailure":"d(6,5)", "damageOnSuccess":"d(4)"}
 				},
 				"allow":{
 					"label":"Allow Astern Order",
 					"skillCheck":{"difficulty":165, "actionType":"social"},
 					"set":{"countermandAstern":"false"},
-					"hidden":"!event.values.countermandAstern.value"
+					"hidden":"!event.values.countermandAstern.value",
+					"injurySkillCheck":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "damageOnFailure":"5", "damageOnSuccess":"1"}
 				}
 			},
 			"exits":[

@@ -5,6 +5,11 @@
 			"check":"1000",
 			"difficulty":0
 		},
+		"impossible":{
+			"name":"Impossible",
+			"check":"0",
+			"difficulty":1000
+		},
 		"social":{
 			"name":"Social",
 			"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"

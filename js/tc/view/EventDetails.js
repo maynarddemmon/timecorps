@@ -46,9 +46,13 @@
                 label = actionModel.label,
                 name = actionModel.getActionSkillName();
             return {
-                text:label,
+                text:label + pkg.formatAgentRisks(
+                    0, 
+                    0, 
+                    actionModel.hasInjuryCheck()
+                ),
                 // An action without an actionType has no name to show.
-                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase,
+                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + ICON_SEPARATOR + agentModel.getInjuryRiskPhrase(actionModel),
                 disabled:agentCantActHere /*|| actionModel.done*/
             };
         },

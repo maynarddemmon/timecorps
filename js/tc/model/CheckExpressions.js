@@ -149,14 +149,14 @@
             Agent's normal health of 100. */
         DAMAGE_PHRASES = [
             [150, 'certain death'],
-            [100, 'deadly'],
-            [75,  'crippling'],
-            [50,  'critical'],
-            [25,  'grievous'],
-            [15,  'severe'],
-            [10,  'serious'],
-            [5,   'moderate'],
-            [1,   'light']
+            [100, 'deadly injury'],
+            [75,  'crippling injury'],
+            [50,  'critical injury'],
+            [25,  'grievous injury'],
+            [15,  'severe injury'],
+            [10,  'serious injury'],
+            [5,   'moderate injury'],
+            [1,   'light injury']
         ],
         toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? 'harmless',
         

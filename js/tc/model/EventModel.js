@@ -121,7 +121,7 @@
                 
                 if (cfg == null) {
                     self.addSkillCheck(ACTION_INJURY);
-                    return;
+                    return false;
                 }
                 
                 const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
@@ -141,9 +141,13 @@
                         console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
                         self.addSkillCheck(ACTION_INJURY);
                     }
+                    
+                    return true;
                 }
             },
-            hasInjuryCheck: function() {return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;},
+            hasInjuryCheck: function(additionalInjuryCheckContext) {
+                return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;
+            },
             getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;}
         }),
         
@@ -194,7 +198,7 @@
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, InjuryCheckSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -218,7 +222,41 @@
             
             setSkillCheck: function(cfg) {
                 this.addSkillCheck(null, cfg);
-            }
+            },
+            
+            /** @overrides InjuryCheckSupport */
+            setInjurySkillCheck: function(cfg) {
+                const retval = this.callSuper(cfg);
+                if (retval) {
+                    let enabledForActionSkillCheck = cfg.enabledForActionSkillCheck;
+                    switch (enabledForActionSkillCheck) {
+                        case 'success':
+                        case 'failure':
+                        case 'both':
+                            // Expected Values
+                            break;
+                        default:
+                            // Unexpected Values or empty
+                            enabledForActionSkillCheck = 'both';
+                    }
+                    this.enabledForActionSkillCheck = enabledForActionSkillCheck;
+                }
+                return retval;
+            },
+            
+            /** @overrides InjuryCheckSupport */
+            hasInjuryCheck: function(additionalInjuryCheckContext) {
+                if (additionalInjuryCheckContext) {
+                    const success = additionalInjuryCheckContext.success;
+                    switch (this.enabledForActionSkillCheck) {
+                        case 'success': return success === true;
+                        case 'failure': return success === false;
+                        case 'both':
+                            // Fall through to callSuper
+                    }
+                }
+                return this.callSuper(additionalInjuryCheckContext);
+            },
             
             /*setDone: function(done) {
                 this.set('done', done, true);

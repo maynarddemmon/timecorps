@@ -61,11 +61,11 @@
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
-        /*  An exit's damage for when its injury check passes or fails: rolled, or its average. 
+        /*  Damage for when its injury check passes or fails: rolled, or its average. 
             None if there's no damage for that case. */
-        getInjuryAmount = (agentModel, exitModel, success, amountFunc) => {
-            const damageExpr = exitModel.getInjuryDamage(success);
-            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, exitModel.getActionSkillDifficulty(ACTION_INJURY))) : 0;
+        getInjuryAmount = (agentModel, targetModel, success, amountFunc) => {
+            const damageExpr = targetModel.getInjuryDamage(success);
+            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, targetModel.getActionSkillDifficulty(ACTION_INJURY))) : 0;
         },
         
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
@@ -524,7 +524,7 @@
                 if (toEvent) {
                     // Taking the exit always succeeds, but it may hurt on the way. The result
                     // is shown before the damage since that rebuilds the views, btnView included.
-                    const injury = this.checkInjuryForExit(exitModel),
+                    const injury = this.checkInjuryFor(exitModel),
                         logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
                     if (injury) {
                         showFloatingTextForSkillCheck(btnView, injury);
@@ -558,12 +558,23 @@
             
             // A failed check still uses the action.
             const check = this.checkSkillExpression(
-                actionModel.getActionSkillExpr(),
-                actionModel.getActionSkillDifficulty()
-            );
+                    actionModel.getActionSkillExpr(),
+                    actionModel.getActionSkillDifficulty()
+                ),
+                injury = this.checkInjuryFor(actionModel, check),
+                logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
+            
+            // Copy the damage onto the check result so there's only one floating text.
+            if (injury) check.damage = logEntry.damage = injury.damage;
+            
+            // Now show floating panel. (must be before anything that triggers a rerender of 
+            // EventDetails such as takeDamage or incrementActionExecCount, since that destroys 
+            // the btnView)
             showFloatingTextForSkillCheck(btnView, check);
             
+            if (injury) this.takeDamage(injury.damage);
             this.incrementActionExecCount();
+            
             if (check.success) {
                 for (const key in setObj) {
                     const value = setObj[key],
@@ -576,7 +587,7 @@
                 }
                 //actionModel.setDone(true);
             }
-            this.pushOntoLog({type:LOG_TYPE_ACTION, action:actionModel, success:check.success});
+            this.pushOntoLog(logEntry);
         },
         
         
@@ -661,33 +672,33 @@
         
         
         // Health, Injury, Death //
-        /*  Describes the risk of an exit's injury check, e.g. 
+        /*  Describes the risk of an action's/exit's injury check, e.g. 
             "♥ Risking: deadly (light if passed) · Athletic / even", or an empty string if 
             there's none. The damage is its average, without rolling: on a failure, then on a 
             pass if that hurts too and reads differently. */
-        getInjuryRiskPhrase: function(exitModel) {
-            if (!exitModel.hasInjuryCheck()) return '';
+        getInjuryRiskPhrase: function(targetModel) {
+            if (!targetModel.hasInjuryCheck()) return '';
             
-            const failPhrase = toDamagePhrase(getInjuryAmount(this, exitModel, false, getAverageAmount)),
-                passDamage = getInjuryAmount(this, exitModel, true, getAverageAmount),
+            const failPhrase = toDamagePhrase(getInjuryAmount(this, targetModel, false, getAverageAmount)),
+                passDamage = getInjuryAmount(this, targetModel, true, getAverageAmount),
                 passPhrase = toDamagePhrase(passDamage),
-                name = exitModel.getActionSkillName(ACTION_INJURY);
+                name = targetModel.getActionSkillName(ACTION_INJURY);
             return pkg.ICON_HEALTH + ' Risking: ' + failPhrase + 
                 (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '') + ICON_SEPARATOR +
-                (name && name !== ACTION_INJURY ? name + ' / ' : '') + this.getSkillEasePhrase(exitModel.getActionSkillExpr(ACTION_INJURY), exitModel.getActionSkillDifficulty(ACTION_INJURY));
+                (name && name !== ACTION_INJURY ? name + ' / ' : '') + this.getSkillEasePhrase(targetModel.getActionSkillExpr(ACTION_INJURY), targetModel.getActionSkillDifficulty(ACTION_INJURY));
         },
         
-        /*  Rolls an exit's injury check, if it has one, then the damage for whether it passed 
+        /*  Rolls an action's/exit's injury check, if it has one, then the damage for whether it passed 
             or failed. Doesn't apply the damage. Returns the check result plus the damage, or 
             null if there's no check. */
-        checkInjuryForExit: function(exitModel) {
-            if (!exitModel.hasInjuryCheck()) return null;
-            
-            const check = this.checkSkillExpression(exitModel.getActionSkillExpr(ACTION_INJURY), exitModel.getActionSkillDifficulty(ACTION_INJURY)),
-                amount = getInjuryAmount(this, exitModel, check.success, rollAmount);
-            
-            // Whole points only, and never healing. A broken expression does no damage.
-            return {...check, damage:amount > 0 ? Math.round(amount) : 0};
+        checkInjuryFor: function(targetModel, additionalInjuryCheckContext) {
+            if (targetModel.hasInjuryCheck(additionalInjuryCheckContext)) {
+                const check = this.checkSkillExpression(targetModel.getActionSkillExpr(ACTION_INJURY), targetModel.getActionSkillDifficulty(ACTION_INJURY)),
+                    amount = getInjuryAmount(this, targetModel, check.success, rollAmount);
+                
+                // Whole points only, and never healing. A broken expression does no damage.
+                return {...check, damage:amount > 0 ? Math.round(amount) : 0};
+            }
         },
         
         /*  Lowers health by a whole, positive amount of damage. */
