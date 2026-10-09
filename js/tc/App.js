@@ -4,8 +4,6 @@
     let readyToHandleEvents = false, // Prevents the notifyX methods from firing too early during startup.
         ready = false,
         
-        eventsForHiddenAttrSetup = [],
-        
         appView,
         model,
         persistence,
@@ -29,10 +27,6 @@
     
     pkg.isAppReady = () => ready;
     
-    pkg.registerEventForHiddenAttrSetup = eventModel => {
-        eventsForHiddenAttrSetup.push(eventModel);
-    };
-    
     const JSClass = JS.Class,
         
         M = myt,
@@ -46,67 +40,11 @@
                 colorUltraLight, colorLight, colorMedium, colorUltraDark,
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
-            cfg:{
-                DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
-            },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
-            STAT_ID_ATTESTATION, STAT_ID_HISTORICITY,
             ICON_SEPARATOR
         } = pkg,
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
-        
-        // Default to hidden if nothing is known about this Event.
-        HIDDEN_ATTR_EXPR_PREFIX = 'event.' + STAT_ID_ATTESTATION + '.value === 0 && event.' + STAT_ID_HISTORICITY + '.value === 0',
-        processHiddenAttrSetupForEvent = eventModel => {
-            // If any descendants have an attestation of at least a minimum attestation the event
-            // is unhidden.
-            let hiddenExpr = HIDDEN_ATTR_EXPR_PREFIX;
-            for (const descendantEvent of eventModel.getDescendants()) {
-                hiddenExpr += ' && events.' + descendantEvent.id + '.' + STAT_ID_ATTESTATION + '.value < ' + DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL;
-            }
-            for (const precursorEvent of eventModel.getPrecursors()) {
-                hiddenExpr += ' && events.' + precursorEvent.id + '.' + STAT_ID_ATTESTATION + '.value < ' + DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL;
-            }
-            eventModel.setHidden(hiddenExpr);
-        },
-        
-        /* An alternative mechanism that uses an average.
-        
-        // Default to hidden if nothing is known about this Event.
-        HIDDEN_ATTR_EXPR_PREFIX = 'event.attestation.value === 0 && event.historicity.value === 0',
-        DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL = 10,
-        DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL = 50,
-        processHiddenAttrSetupForEvent = eventModel => {
-            let hiddenExpr = HIDDEN_ATTR_EXPR_PREFIX;
-            
-            // If the average attestation of the descendants is at least a minimum value the event
-            // is unhidden.
-            const descendants = eventModel.getDescendants(),
-                descSize = descendants.size;
-            if (descSize > 0) {
-                hiddenExpr += ' && ((0';
-                for (const descendantEvent of descendants) {
-                    hiddenExpr += ' + events.' + descendantEvent.id + '.attestation.value';
-                }
-                hiddenExpr += ')/' + descSize + ' < ' + DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL + ')';
-            }
-            
-            // If the average attestation of the precursors is at least a minimum value the event
-            // is unhidden.
-            const precursors = eventModel.getPrecursors(),
-                preSize = precursors.size;
-            if (preSize > 0) {
-                hiddenExpr += ' && ((0';
-                for (const precursorEvent of precursors) {
-                    hiddenExpr += ' + events.' + precursorEvent.id + '.attestation.value';
-                }
-                hiddenExpr += ')/' + preSize + ' < ' + DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL + ')';
-            }
-            
-            eventModel.setHidden(hiddenExpr);
-        },
-        */
         
         checkForActiveRoster = () => {
             const activeAgents = pkg.model.getActiveAgentsAsList();
@@ -195,11 +133,9 @@
                     } else {
                         pkg.resumeConstraintBinding();
                         
-                        pkg.pauseConstraintBinding();
-                        // The precursors and descendants won't be setup unless contraints have
+                        // The precursors and descendants won't be setup unless constraints have
                         // run at least once.
-                        for (const eventModel of eventsForHiddenAttrSetup) processHiddenAttrSetupForEvent(eventModel);
-                        pkg.resumeConstraintBinding();
+                        model.processHiddenAttrSetup();
                         
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         if (eventsValid) {

@@ -589,3 +589,66 @@ test('hiding events can drop the paradox limit below the paradox, destabilizing 
     expect(problems.pageErrors).toEqual([]);
 });
 
+
+test('an event without a hidden expression is revealed by its causal neighbors\' attestation', async ({page}) => {
+    const problems = await startGame(page);
+    const result = await page.evaluate(() => {
+        const model = tc.model,
+            {DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL:descReveal, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL:preReveal} = tc.cfg,
+            ev = id => model.getEventModel(id),
+            hiddenWith = (watchedId, value, targetId) => {
+                const stat = ev(watchedId).attestation,
+                    prior = stat.value;
+                stat.setValue(value);
+                const hidden = ev(targetId).isHidden();
+                stat.setValue(prior);
+                return hidden;
+            },
+            binoculars = ev('missing_binoculars');
+        return {
+            descReveal, preReveal,
+            precursorIds: [...binoculars.getPrecursors()].map(e => e.id).sort(),
+            descendantIds: [...binoculars.getDescendants()].map(e => e.id).sort(),
+            startsHidden: binoculars.isHidden(),
+            
+            // A descendant reveals it at the descendant threshold.
+            belowDesc: hiddenWith('lookout_sights_berg', descReveal - 1, 'missing_binoculars'),
+            atDesc: hiddenWith('lookout_sights_berg', descReveal, 'missing_binoculars'),
+            
+            // A precursor reveals it at the precursor threshold.
+            belowPre: hiddenWith('purser_spare', preReveal - 1, 'missing_binoculars'),
+            atPre: hiddenWith('purser_spare', preReveal, 'missing_binoculars'),
+            
+            // An unrelated event doesn't.
+            unrelated: hiddenWith('wireless_priority', 100, 'missing_binoculars'),
+            
+            // An expression from the data is kept as is.
+            dataExpr: tc.getConstrainedValueCfg(ev('lifeboat_capacity'), 'hidden'),
+            
+            // Nothing known about the event itself still hides it, and something known shows it.
+            ownAttestation: (() => {
+                binoculars.attestation.setValue(1);
+                const hidden = binoculars.isHidden();
+                binoculars.attestation.setValue(0);
+                return hidden;
+            })(),
+            endsHidden: binoculars.isHidden()
+        };
+    });
+    
+    expect(result.precursorIds).toEqual(['purser_spare', 'roster_reshuffle']);
+    expect(result.descendantIds).toEqual(['lookout_sights_berg']);
+    expect(result.descReveal).toBeLessThan(result.preReveal);
+    expect(result.startsHidden).toBe(true);
+    expect(result.belowDesc).toBe(true);
+    expect(result.atDesc).toBe(false);
+    expect(result.belowPre).toBe(true);
+    expect(result.atPre).toBe(false);
+    expect(result.unrelated).toBe(true);
+    expect(result.dataExpr).toBe(readJson('data/titanic_scenario.json').events.lifeboat_capacity.hidden);
+    expect(result.ownAttestation).toBe(false);
+    expect(result.endsHidden).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});

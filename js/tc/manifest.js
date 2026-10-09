@@ -37,7 +37,8 @@ JS.Packages(file => {
         'tc.NumericStatModel','tc.NotifyingNumericStatModel'
     ).requires('tc');
     file(MODEL_ROOT + 'ConstrainableAttrs.js').provides(
-        'tc.ConstrainableAttrSupport','tc.Hideable','tc.Describable','tc.DescriptionPhraseModel'
+        'tc.ConstrainableAttrSupport','tc.Hideable','tc.Describable','tc.DescriptionPhraseModel',
+        'tc.DescribableHideable'
     ).requires('tc.setConstrainedValue');
     
     file(MODEL_ROOT + 'MediaSupport.js').provides('tc.MediaSupport').requires('tc');

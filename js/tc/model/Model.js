@@ -1,28 +1,33 @@
 (pkg => {
     'use strict';
     
-    const JSClass = JS.Class;
-    
     let model,
         skillCfgs = {},
         skillIds = [],
         skillCheckDefaults = {};
     
-    // The data key for default skill checks by action type.
-    const DATA_KEY_SKILL_CHECKS = 'skillChecks';
+    pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
     
-    const {
+    const JSClass = JS.Class,
+        
+        {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
-                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR
+                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
+                DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS, SCOPE_SKILLS,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             CHECK_SKILL_EXPR_PREFIX
         } = pkg,
+        
+        // The data key for default skill checks by action type.
+        DATA_KEY_SKILL_CHECKS = 'skillChecks',
+        
+        eventsForHiddenAttrSetup = [],
         
         STARTING_SCORE = 0,
         
@@ -409,6 +414,38 @@
                 }
             }
             return isValid;
+        },
+        
+        processHiddenAttrSetup: () => {
+            for (const eventModel of eventsForHiddenAttrSetup) {
+                model.processHiddenAttrSetupForEvent(eventModel);
+            }
+            eventsForHiddenAttrSetup.length = 0;
+        },
+        
+        processHiddenAttrSetupForEvent: eventModel => {
+            // Default to hidden if nothing is known about this Event.
+            const DOT = '.',
+                ATTEST_DOT = STAT_ID_ATTESTATION + DOT,
+                EVENT_DOT = SCOPE_EVENT + DOT,
+                AND_EVENTS_DOT = ' && ' + SCOPE_EVENTS + '.',
+                DESC_SUFFIX = DOT + ATTEST_DOT + 'value < ' + DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL,
+                PREC_SUFFIX = DOT + ATTEST_DOT + 'value < ' + DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL;
+            
+            // event.attestation.value === 0 && event.historicty.value === 0
+            let hiddenExpr = EVENT_DOT + ATTEST_DOT + 'value === 0 && ' + EVENT_DOT + STAT_ID_HISTORICITY + '.value === 0';
+            
+            // If any descendants have an attestation of at least a minimum attestation the event
+            // is unhidden.
+            for (const descendantEvent of eventModel.getDescendants()) {
+                // && events.<event_id>.attestation.value < <default_value>
+                hiddenExpr += AND_EVENTS_DOT + descendantEvent.id + DESC_SUFFIX;
+            }
+            for (const precursorEvent of eventModel.getPrecursors()) {
+                // && events.<event_id>.attestation.value < <default_value>
+                hiddenExpr += AND_EVENTS_DOT + precursorEvent.id + PREC_SUFFIX;
+            }
+            eventModel.setHidden(hiddenExpr);
         }
     });
     
