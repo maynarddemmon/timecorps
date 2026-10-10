@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import {expect} from '@playwright/test';
 import path from 'node:path';
+import JSON5 from 'json5';
 import {fileURLToPath} from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
@@ -9,9 +10,10 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
     BASE_URL = 'http://localhost:' + PORT;
 
 /*  The data files that hold Events and Locations, in load order. */
-export const SCENARIO_FILES = ['data/init.json', 'data/titanic_scenario.json', 'data/lusitania_scenario.json'];
+export const SCENARIO_FILES = ['data/init.json5', 'data/titanic_scenario.json5', 'data/lusitania_scenario.json5'];
 
-export const readJson = relPath => JSON.parse(fs.readFileSync(path.join(ROOT, relPath), 'utf8'));
+/*  Reads a data file. The data files are JSON5, so they can have comments and trailing commas. */
+export const readJson = relPath => JSON5.parse(fs.readFileSync(path.join(ROOT, relPath), 'utf8'));
 export const fileExists = relPath => fs.existsSync(path.join(ROOT, relPath));
 
 /*  Loads the game and waits until it is ready to play. Returns an object that collects page

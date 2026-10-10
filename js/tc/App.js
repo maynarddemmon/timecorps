@@ -110,7 +110,8 @@
         loadDataIntoModel = (url, resultCallback) => {
             M.doFetch(url, {}, true,
                 response => {
-                    model.processData(JSON.parse(response));
+                    // JSON5 so the data files can have comments and trailing commas.
+                    model.processData(JSON5.parse(response));
                     resultCallback?.(true);
                 },
                 err => {
@@ -129,7 +130,7 @@
                 if (success) {
                     const namePart = filesToLoad[idx++];
                     if (namePart) {
-                        loadDataIntoModel('./data/' + namePart + '.json', chainFunc);
+                        loadDataIntoModel('./data/' + namePart + '.json5', chainFunc);
                     } else {
                         pkg.resumeConstraintBinding();
                         

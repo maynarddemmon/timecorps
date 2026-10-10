@@ -7,8 +7,8 @@ const INJURY = {difficulty:300, actionType:'athletic', damageOnFailure:'d(6)+4'}
     /*  Serves the Titanic scenario with injury checks added to some exits, as if they were in the
         data: a good one from the collision to the casualties, and one with no damage from the
         ice warnings to the wireless backlog. */
-    routeScenarioWithInjuries = page => page.route('**/data/titanic_scenario.json', route => {
-        const json = readJson('data/titanic_scenario.json'),
+    routeScenarioWithInjuries = page => page.route('**/data/titanic_scenario.json5', route => {
+        const json = readJson('data/titanic_scenario.json5'),
             exitTo = (eventId, toId) => json.events[eventId].exits.find(exit => exit.to === toId);
         exitTo('collision', 'casualties').injurySkillCheck = INJURY;
         exitTo('ice_warnings', 'wireless_priority').injurySkillCheck = {actionType:'athletic'};
@@ -35,7 +35,7 @@ const INJURY = {difficulty:300, actionType:'athletic', damageOnFailure:'d(6)+4'}
     }, rolls),
 
     // VQ's athletic check, so tests can pick rolls that pass or fail it.
-    vqSkills = readJson('data/agents.json').agents.VQ.skills,
+    vqSkills = readJson('data/agents.json5').agents.VQ.skills,
     vqAthleticEase = 0.5*vqSkills.str + 0.5*vqSkills.agl - INJURY.difficulty,
     PASS_ROLL = 999,
     FAIL_ROLL = 0;
@@ -363,7 +363,7 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
 });
 
 test('the lifeboats are fatal on a failed injury check, and the crowded one hurts even on a pass', () => {
-    const lifeboats = readJson('data/titanic_scenario.json').events.casualties.exits.filter(exit => exit.mode === 'lifeboat');
+    const lifeboats = readJson('data/titanic_scenario.json5').events.casualties.exits.filter(exit => exit.mode === 'lifeboat');
     expect(lifeboats.map(exit => exit.injurySkillCheck)).toEqual([
         // When there aren't enough boats.
         {difficulty:500, check:'agent.skills.str', damageOnFailure:'150', damageOnSuccess:'d(4,2)'},
@@ -555,38 +555,51 @@ test('every regular event offers Rest, hidden when the event is under an hour', 
     expect(problems.warnings).toEqual([]);
 });
 
-test('resting always succeeds and heals, but never past the agent\'s max health', async ({page}) => {
+test('resting is likelier to work the healthier the agent is, and never heals past max health', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const vq = tc.model.getAgentModel('VQ'),
                 health = vq.health,
                 rest = tc.model.getEventModel('collision').getActionModels()._rest,
                 
-                // Neither of Rest's checks rolls, so the only roll is a 4 on the d(4). The 
-                // collision lasts a minute, which rounds up to one die.
-                restFrom = value => {
+                // Rest's own check rolls, then on a pass its injury check heals with a d(4), 
+                // since it doesn't roll itself. The collision lasts a minute, which rounds up
+                // to one die. A failed rest rolls nothing more.
+                restFrom = (value, ...rolls) => {
                     health.setValue(value);
                     vq.setActionExecCount(0);
-                    tc.rng.queueRolls(3);
+                    tc.rng.queueRolls(...rolls);
                     vq.doAction(rest);
                     const left = tc.rng.getQueuedRollCount(),
                         entry = vq.getLog()[vq.getLog().length - 1];
                     tc.rng.clearQueuedRolls();
                     return {health:health.value, logged:entry.damage, success:entry.success, left};
+                },
+                phraseAt = value => {
+                    health.setValue(value);
+                    return vq.getSkillEasePhrase(rest.getActionSkillExpr(), rest.getActionSkillDifficulty());
                 };
             return {
                 max:health.max,
-                difficulty:rest.getActionSkillDifficulty(),
-                injuryDifficulty:rest.getActionSkillDifficulty(tc.ACTION_INJURY),
-                hurt:restFrom(40),
-                nearFull:restFrom(health.max - 2),
-                full:restFrom(health.max)
+                injuryNoRoll:rest.getActionSkillDifficulty(tc.ACTION_INJURY) === tc.toDifficulty(tc.DIFFICULTY_NO_ROLL),
+                
+                // VQ has 85 max health. At half or less it's hopeless, and at 90% or more 
+                // it's ensured.
+                phrases:[phraseAt(42), phraseAt(60), phraseAt(77)],
+                
+                // At 60 of 85 the ease is round(2500 * 60 / 85) - 1250 - 1000 = -485.
+                failAt60:restFrom(60, 484, 3),
+                passAt60:restFrom(60, 485, 3),
+                
+                // Near full health even a roll of 1 passes, and the healing is capped.
+                nearFull:restFrom(health.max - 2, 1, 3),
+                full:restFrom(health.max, 1, 3)
             };
         });
-    const noRoll = await page.evaluate(() => tc.toDifficulty(tc.DIFFICULTY_NO_ROLL));
-    expect(out.difficulty).toBe(noRoll);
-    expect(out.injuryDifficulty).toBe(noRoll);
-    expect(out.hurt).toEqual({health:44, logged:-4, success:true, left:0});
+    expect(out.injuryNoRoll).toBe(true);
+    expect(out.phrases).toEqual(['hopeless', 'even', 'ensured']);
+    expect(out.failAt60).toEqual({health:60, logged:undefined, success:false, left:1});
+    expect(out.passAt60).toEqual({health:64, logged:-4, success:true, left:0});
     expect(out.nearFull).toEqual({health:out.max, logged:-2, success:true, left:0});
     expect(out.full).toEqual({health:out.max, logged:0, success:true, left:0});
     expect(problems.warnings).toEqual([]);

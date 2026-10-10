@@ -5,6 +5,7 @@ JS.Packages(file => {
         VIEW_ROOT = TC_ROOT + 'view/';
     
     file(TC_ROOT + '../../lib/myt.min.js').provides('myt.all');
+    file(TC_ROOT + '../../lib/json5.min.js').provides('JSON5');
     file(TC_ROOT + 'tc.js').provides('tc').requires('myt.all');
     file(TC_ROOT + 'timeUtil.js').provides('tc.timeUtil').requires('tc');
     
@@ -85,7 +86,7 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
+        'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
         'tc.AgentDossier','tc.AreaBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
     );

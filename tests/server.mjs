@@ -9,7 +9,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
     PORT = Number(process.argv[2] ?? 8765),
     TYPES = {
         '.html':'text/html', '.js':'text/javascript', '.mjs':'text/javascript', '.css':'text/css',
-        '.json':'application/json', '.txt':'text/plain; charset=utf-8', '.map':'application/json',
+        '.json':'application/json', '.json5':'application/json5; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.map':'application/json',
         '.jpg':'image/jpeg', '.png':'image/png', '.svg':'image/svg+xml', '.webm':'video/webm',
         '.ttf':'font/ttf', '.woff':'font/woff', '.woff2':'font/woff2'
     };

@@ -1,10 +1,13 @@
 // Checks the game data on disk. These tests don't need a browser.
 import {test, expect} from '@playwright/test';
-import {readJson, fileExists, SCENARIO_FILES} from './helpers.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import JSON5 from 'json5';
+import {readJson, fileExists, SCENARIO_FILES, ROOT} from './helpers.mjs';
 
 const scenarios = SCENARIO_FILES.map(readJson),
-    agentsJson = readJson('data/agents.json'),
-    operationsJson = readJson('data/operations.json'),
+    agentsJson = readJson('data/agents.json5'),
+    operationsJson = readJson('data/operations.json5'),
     
     locations = Object.assign({}, ...scenarios.map(s => s.locations ?? {})),
     events = Object.assign({}, ...scenarios.map(s => s.events ?? {})),
@@ -238,4 +241,33 @@ test('every operation has a mission briefing, and an image if it says it has one
         }
     }
     expect(missing).toEqual([]);
+});
+
+test('the data files are JSON5, but plain JSON apart from comments and trailing commas', () => {
+    // Every data file was moved to JSON5.
+    expect(fs.readdirSync(path.join(ROOT, 'data')).filter(name => name.endsWith('.json'))).toEqual([]);
+    
+    // Drops comments and trailing commas, keeping strings intact so a "//" or "," inside one 
+    // isn't touched.
+    const COMMENT = String.raw`\/\/[^\n]*|\/\*(?:[^*]|\*(?!\/))*\*\/`,
+        TOKENS = new RegExp(String.raw`"(?:[^"\\]|\\.)*"|` + COMMENT + String.raw`|,(?=(?:\s|` + COMMENT + String.raw`)*[}\]])`, 'g'),
+        toPlainJson = text => text.replace(TOKENS, token => token[0] === '"' ? token : '');
+    
+    const problems = [];
+    for (const file of [...SCENARIO_FILES, 'data/agents.json5', 'data/operations.json5']) {
+        const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
+        let plain;
+        try {
+            plain = JSON.parse(toPlainJson(text));
+        } catch (err) {
+            // e.g. an unquoted key, a single-quoted string or a hex number.
+            problems.push(file + ' uses JSON5 beyond comments and trailing commas: ' + err.message);
+            continue;
+        }
+        expect(plain, file).toEqual(JSON5.parse(text));
+    }
+    expect(problems).toEqual([]);
+    
+    // The stripping itself: comments and trailing commas go, strings stay as they are.
+    expect(JSON.parse(toPlainJson('{\n// a\n"a":"x // y, z",/* b */"b":[1, 2, /* c */],\n}'))).toEqual({a:'x // y, z', b:[1, 2]});
 });

@@ -332,7 +332,7 @@
             STAT_ID_HISTORICITY:'historicity',
             STAT_ID_ATTESTATION:'attestation',
             
-            // Skill IDS: these should match up to the ID of skills defined in init.json.
+            // Skill IDS: these should match up to the ID of skills defined in init.json5.
             SKILL_ID_CHRONOGATION:'chronogation',
             SKILL_ID_INVESTIGATION:'investigation',
             SKILL_ID_STEALTH:'stealth',

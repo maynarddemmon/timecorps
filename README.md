@@ -60,8 +60,8 @@ Requests to other sites are stubbed out, so the tests don't need a network conne
 |---|---|
 | `index.html` | Entry point, global styles and fonts |
 | `js/tc/` | Game code: `model/` (events, agents, locations, operations, constraints), `view/` (panels and dialogs), `component/` (shared UI) |
-| `lib/` | The myt JavaScript framework the game is built on |
-| `data/*.json` | Scenarios, agents and operations |
+| `lib/` | The myt JavaScript framework the game is built on, and json5 for reading the data |
+| `data/*.json5` | Scenarios, agents and operations |
 | `data/location/`, `data/dossiers/` | Area briefs and agent dossiers |
 | `data/help.txt` | The in-game field manual |
 | `img/` | Agent portraits and location photographs |
@@ -70,7 +70,7 @@ Requests to other sites are stubbed out, so the tests don't need a network conne
 
 ### Scenario data
 
-Scenarios are plain JSON. Visibility, causator values and description phrases can all be written as constraint expressions that are re-evaluated as the timeline changes, for example:
+Scenarios are [JSON5](https://json5.org): JSON plus `//` and `/* */` comments and trailing commas. Keep keys quoted and strings in double quotes, so the files stay plain JSON apart from the comments. Visibility, causator values and description phrases can all be written as constraint expressions that are re-evaluated as the timeline changes, for example:
 
 ```json
 "hidden":"event.attestation.value < 15 || !events.collision.values.struck.value"

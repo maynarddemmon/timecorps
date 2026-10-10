@@ -181,7 +181,7 @@ test.describe('dice in check expressions', () => {
                     ...cfg, agent:tc.model.getAgentModel('VQ'), difficulty:100
                 });
             }, WIDE),
-            str = readJson('data/agents.json').agents.VQ.skills.str;
+            str = readJson('data/agents.json5').agents.VQ.skills.str;
         expect(result).toMatchObject({ease:str + 12 + 1 - 100, roll:500, result:500 + str + 13 - 100});
         expect(problems.warnings).toEqual([]);
     });
@@ -385,7 +385,7 @@ test('every skill named in the data is a known skill', async ({page}) => {
     }
     
     // Skills given to agents.
-    for (const [agentId, agent] of Object.entries(readJson('data/agents.json').agents)) {
+    for (const [agentId, agent] of Object.entries(readJson('data/agents.json5').agents)) {
         for (const skillId of Object.keys(agent.skills ?? {})) {
             if (!knownIds.includes(skillId)) unknown.add(agentId + ': ' + skillId);
         }
@@ -393,7 +393,7 @@ test('every skill named in the data is a known skill', async ({page}) => {
     
     // Skills used in expressions, e.g. agent.skills.stealth in an investigate config. A typo
     // would otherwise quietly count as 0.
-    for (const file of [...SCENARIO_FILES, 'data/operations.json', 'data/agents.json']) {
+    for (const file of [...SCENARIO_FILES, 'data/operations.json5', 'data/agents.json5']) {
         for (const [, skillId] of JSON.stringify(readJson(file)).matchAll(/\bskills\.(\w+)/g)) {
             if (!knownIds.includes(skillId)) unknown.add(file + ': ' + skillId);
         }

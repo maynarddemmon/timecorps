@@ -12,6 +12,7 @@ export default [
                 ...globals.es2021,
                 
                 JS: 'readonly',
+                JSON5: 'readonly',
                 myt: 'readonly',
                 tc: 'readonly'
             }

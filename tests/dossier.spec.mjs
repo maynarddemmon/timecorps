@@ -3,7 +3,7 @@ import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, d
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
-    videoAgentIds = idsWithVideo(readJson('data/agents.json').agents),
+    videoAgentIds = idsWithVideo(readJson('data/agents.json5').agents),
     locations = Object.assign({}, ...SCENARIO_FILES.map(file => readJson(file).locations ?? {})),
     videoLocationIds = idsWithVideo(locations),
     
@@ -136,8 +136,8 @@ test('the dossier lists every configured skill by name, with its description as 
     const problems = await startGame(page);
     await openDossier(page, 'VQ');
     
-    const skillsJson = readJson('data/init.json').skills,
-        skills = readJson('data/agents.json').agents.VQ.skills;
+    const skillsJson = readJson('data/init.json5').skills,
+        skills = readJson('data/agents.json5').agents.VQ.skills;
     for (const [skillId, cfg] of Object.entries(skillsJson)) {
         // Skills the agent wasn't given show as 0. Each skill's bar carries the description.
         const label = cfg.name + ' : ' + (skills[skillId] ?? 0),

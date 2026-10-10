@@ -98,7 +98,7 @@ test('causator links together match each event\'s precursors and descendants', a
 /*  The default investigate check, [difficulty, skill expression], read from the data so the tests 
     don't need changing when it's tuned. */
 const getDefaultInvestigate = () => {
-    const {difficulty, check} = readJson('data/init.json').skillChecks.investigate;
+    const {difficulty, check} = readJson('data/init.json5').skillChecks.investigate;
     return [difficulty, check];
 };
 
@@ -268,7 +268,7 @@ test('an action succeeds or fails on its skill check, and a failure still uses t
 
 test('an action\'s skill check comes from its actionType, with the action\'s own parts first', async ({page}) => {
     const problems = await startGame(page);
-    const DEFAULTS = readJson('data/init.json').skillChecks;
+    const DEFAULTS = readJson('data/init.json5').skillChecks;
     const result = await page.evaluate(() => {
         const roster = tc.model.getEventModel('roster_reshuffle'),
             read = action => [action.getActionSkillType(), action.getActionSkillDifficulty(), action.getActionSkillExpr()];
@@ -346,7 +346,7 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
         };
     });
     const [defaultDifficulty, defaultExpr] = result.defaults,
-        initJson = readJson('data/init.json');
+        initJson = readJson('data/init.json5');
     expect(result.bySkillHarder).toEqual(['cha', initJson.skills.cha.name, 150, 'agent.skills.cha']);
     expect(result.bySkill).toEqual(['stealth', initJson.skills.stealth.name, defaultDifficulty, 'agent.skills.stealth']);
     
@@ -492,7 +492,7 @@ test('the ship that reaches New York, and who it lands, follow the night of the 
 
 test('agent health comes from the data, with a constitution that can rise to the absolute max', async ({page}) => {
     const problems = await startGame(page),
-        agentsJson = readJson('data/agents.json').agents,
+        agentsJson = readJson('data/agents.json5').agents,
         health = await page.evaluate(() => Object.fromEntries(Object.values(tc.model.getAgentModels()).map(agentModel => {
             const {value, max, absMax} = agentModel.health;
             return [agentModel.id, {value, max, absMax}];
@@ -649,7 +649,7 @@ test('an event without a hidden expression is revealed by its causal neighbors\'
     expect(result.belowPre).toBe(true);
     expect(result.atPre).toBe(false);
     expect(result.unrelated).toBe(true);
-    expect(result.dataExpr).toBe(readJson('data/titanic_scenario.json').events.lifeboat_capacity.hidden);
+    expect(result.dataExpr).toBe(readJson('data/titanic_scenario.json5').events.lifeboat_capacity.hidden);
     expect(result.ownAttestation).toBe(false);
     expect(result.endsHidden).toBe(true);
     
