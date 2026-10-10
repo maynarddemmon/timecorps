@@ -73,8 +73,6 @@
         },
         
         isHealthEffect = effectModel => effectModel.scopeName === SCOPE_AGENT && effectModel.statId === STAT_ID_HEALTH,
-        isParadoxEffect = effectModel => effectModel.statId === STAT_ID_PARADOX,
-        isChronalEffect = effectModel => effectModel.statId === STAT_ID_CHRONAL,
         
         /*  Names the stat an effect changes, e.g. "Health" or "Event Attestation". */
         describeEffectStat = effectModel => {
@@ -725,26 +723,19 @@
             }).join(ICON_SEPARATOR);
         },
         
-        /*  True if an action or exit could, on average, lower the agent's health. */
-        hasHealthChangeRiskFor: function(ownerModel) {
-            return ownerModel.getEffects().some(effectModel => isHealthEffect(effectModel) && 
-                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
+        /*  True if an action or exit could, on average, change a stat with this ID, whoever
+            has it: the agent, the Event or the timeline. A broken amount (NaN) doesn't count. */
+        hasStatChangeFor: function(ownerModel, statId) {
+            return ownerModel.getEffects().some(effectModel => effectModel.statId === statId && 
+                [true, false].some(success => {
+                    const amount = getEffectAmount(this, effectModel, success, getAverageAmount);
+                    return Number.isFinite(amount) && amount !== 0;
+                })
             );
         },
-        
-        /*  True if an action or exit could, on average, change chronal. */
-        hasChronalChangeRiskFor: function(ownerModel) {
-            return ownerModel.getEffects().some(effectModel => isChronalEffect(effectModel) && 
-                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
-            );
-        },
-        
-        /*  True if an action or exit could, on average, change paradox. */
-        hasParadoxChangeRiskFor: function(ownerModel) {
-            return ownerModel.getEffects().some(effectModel => isParadoxEffect(effectModel) && 
-                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
-            );
-        },
+        hasHealthChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_HEALTH);},
+        hasChronalChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_CHRONAL);},
+        hasParadoxChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_PARADOX);},
         
         /*  Rolls the effects of an action or exit that apply, given the action's own check if 
             it has one. Doesn't apply them. Returns an Array of 

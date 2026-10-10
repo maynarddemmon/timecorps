@@ -642,8 +642,9 @@ test('effects can change the event and the timeline too, each within its stat\'s
         tc.app.selectEventBox('collision');
     }, effects);
 
-    // No health risk, so no flag, and the tooltip gives each effect's amounts in order.
-    const btnText = 'Multi';
+    // Flagged for the chronal and paradox it changes, and the tooltip gives each effect's 
+    // amounts in order.
+    const btnText = 'Multi [⏲ + ⥁]';
     await expect(page.getByText(btnText, {exact:true}).filter({visible:true})).toBeVisible();
     expect((await btnTooltip(page, btnText)).replace(/\u00A0/g, ' ')).toMatch(
         /^Multi · [a-z ]+ · Event Attestation: ~\+5 if passed · Event Parad⥁x: ~\+1 if passed · Timeline Parad⥁x: ~\+2 if passed · Chr⏲nal: ~-3 if passed, ~-1 if failed$/
@@ -721,7 +722,7 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
                 max:health.max,
                 ownCheck:rest.getEffects()[0].hasOwnCheck(),
 
-                // Healing isn't a risk. A d(4) averages 2.5, rounded to 3.
+                // Healing still changes health. A d(4) averages 2.5, rounded to 3.
                 risk:vq.hasHealthChangeRiskFor(rest),
                 effectsPhrase:vq.getEffectsPhrase(rest),
 
@@ -739,7 +740,7 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
             };
         });
     expect(out.ownCheck).toBe(false);
-    expect(out.risk).toBe(false);
+    expect(out.risk).toBe(true);
     expect(out.effectsPhrase).toBe('Health: ~+3 if passed');
     expect(out.phrases).toEqual(['hopeless', 'even', 'ensured']);
     expect(out.failAt60).toEqual({health:60, logged:undefined, success:false, left:1});
@@ -750,7 +751,7 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('the Rest button has no risk flag, and a rest floats its healing', async ({page}) => {
+test('the Rest button is flagged for health, and a rest floats its healing', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => {
         const vq = tc.model.getAgentModel('VQ'),
@@ -760,7 +761,7 @@ test('the Rest button has no risk flag, and a rest floats its healing', async ({
         vq.health.setValue(vq.health.max - 10);
         tc.app.selectEventBox('ice_warnings');
     });
-    const btn = page.getByText('Rest', {exact:true}).filter({visible:true});
+    const btn = page.getByText('Rest [♥]', {exact:true}).filter({visible:true});
     await expect(btn).toBeVisible();
 
     // The rest check passes, then eight d(4)s for the 12 hour Event, capped at 8 hours: all 1s.
@@ -806,5 +807,31 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
     expect(out).toEqual({heals:45, hurts:35, broken:40, notANumber:40});
     expect(problems.warnings.length).toBeGreaterThan(0);
     for (const warning of problems.warnings) expect(warning).toContain('nope is not defined');
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('buttons flag each stat an effect could change, but not a broken amount', async ({page}) => {
+    const problems = await startGame(page),
+        exitTextWith = async effects => {
+            await page.evaluate(effects => {
+                tc.model.getEventModel('collision').getExitModels().find(exit => exit.to === 'casualties').setEffects(effects);
+                tc.app.selectEventBox('casualties');
+                tc.app.selectEventBox('collision');
+            }, effects);
+            // The exit's button in the agent's list of exits.
+            const btn = page.getByText(/^Walk to Loss of Life/).filter({visible:true});
+            await expect(btn).toHaveCount(1);
+            return btn.textContent();
+        };
+    
+    // Entering the casualties costs no paradox, so only the effects flag anything.
+    expect(await exitTextWith({})).toBe('Walk to Loss of Life');
+    expect(await exitTextWith({'timeline.paradox':{onSuccess:'1'}})).toBe('Walk to Loss of Life [⥁]');
+    expect(await exitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}})).toBe('Walk to Loss of Life [⏲ + ♥]');
+    
+    // Changes that average to nothing, or can't be worked out, aren't flagged.
+    expect(await exitTextWith({'agent.health':{onSuccess:'d(3) - 2'}})).toBe('Walk to Loss of Life');
+    expect(await exitTextWith({'agent.health':{onFailure:'nope'}})).toBe('Walk to Loss of Life');
+    for (const warning of problems.warnings) expect(warning).toBe('Check expression threw (nope is not defined): nope');
     expect(problems.pageErrors).toEqual([]);
 });

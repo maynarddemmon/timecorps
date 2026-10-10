@@ -71,7 +71,8 @@
                     (showTargetName ? ' ' + (toEvent?.name ?? exitModel.to) : '') + 
                     pkg.formatAgentRisks(
                         agentModel.hasChronalChangeRiskFor(exitModel), 
-                        agentModel.calculateParadoxForEntry(toEvent), 
+                        // The paradox for entering the Event, or else whether an effect changes it.
+                        agentModel.calculateParadoxForEntry(toEvent) || agentModel.hasParadoxChangeRiskFor(exitModel), 
                         agentModel.hasHealthChangeRiskFor(exitModel)
                     )
                 );
