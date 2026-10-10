@@ -231,12 +231,12 @@
             
             showFloatingTextForSkillCheck: (btnView, checkResult) => {
                 if (btnView && checkResult) {
-                    const {success, roll, ease, damage} = checkResult,
+                    const {success, roll, ease, effects=[]} = checkResult,
                         // A no-roll check has no margin or roll to show.
                         text = (roll == null ? 'Succeeded' : 
                             (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
-                            // An injury check's damage, e.g. "Failed by 120 · -7♥".
-                            (damage ? ICON_SEPARATOR + (damage < 0 ? '+' : '-') + mathAbs(damage) + pkg.ICON_HEALTH : '');
+                            // What any effects changed, e.g. "Failed by 120 · -7♥ · +2⥁".
+                            effects.filter(effect => effect.amount).map(effect => ICON_SEPARATOR + pkg.formatStatAdj(effect.statId, effect.amount)).join('');
                     pkg.showFloatingTextAboveView(
                         btnView, 
                         text, 

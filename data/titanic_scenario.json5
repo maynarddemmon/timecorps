@@ -500,14 +500,14 @@
 					"skillCheck":{"difficulty":175, "actionType":"cha"},
 					"set":{"countermandAstern":"true"},
 					"hidden":"event.values.countermandAstern.value",
-					"injurySkillCheck":{"difficulty":250, "actionType":"athletic", "damageOnFailure":"d(6,5)", "damageOnSuccess":"d(4)"}
+					"effects":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
 				},
 				"allow":{
 					"label":"Allow Astern Order",
 					"skillCheck":{"difficulty":165, "actionType":"social"},
 					"set":{"countermandAstern":"false"},
 					"hidden":"!event.values.countermandAstern.value",
-					"injurySkillCheck":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "damageOnFailure":"5", "damageOnSuccess":"1"}
+					"effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
 				}
 			},
 			"exits":[
@@ -624,13 +624,13 @@
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":500, "check":"agent.skills.str", "damageOnFailure":"150", "damageOnSuccess":"d(4,2)"}
+					"effects":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
 				},
 				{
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || event.values.massLossOfLife.value",
-					"injurySkillCheck":{"difficulty":50, "actionType":"athletic", "damageOnFailure":"150"}
+					"effects":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
 				}
 			],
 			"values":{

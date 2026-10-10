@@ -54,6 +54,35 @@
         ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
         ICON_HEALTH = '♥',
         
+        STAT_ID_PARADOX = 'paradox',
+        STAT_ID_CHRONAL = 'chronal',
+        STAT_ID_HEALTH = 'health',
+        STAT_ID_HISTORICITY = 'historicity',
+        STAT_ID_ATTESTATION = 'attestation',
+        
+        I18N_PARADOX = 'Parad' + ICON_PARADOX + 'x',
+        I18N_CHRONAL = 'Chr' + ICON_CHRONAL + 'nal',
+        I18N_HEALTH = 'Health',
+        I18N_HISTORICITY = 'Historicity',
+        I18N_ATTESTATION = 'Attestation',
+        
+        STAT_NAME_BY_ID = {
+            [STAT_ID_PARADOX]:I18N_PARADOX,
+            [STAT_ID_CHRONAL]:I18N_CHRONAL,
+            [STAT_ID_HEALTH]:I18N_HEALTH,
+            [STAT_ID_HISTORICITY]:I18N_HISTORICITY,
+            [STAT_ID_ATTESTATION]:I18N_ATTESTATION
+        },
+        
+        STAT_ICON_BY_ID = {
+            [STAT_ID_PARADOX]:ICON_PARADOX,
+            [STAT_ID_CHRONAL]:ICON_CHRONAL,
+            [STAT_ID_HEALTH]:ICON_HEALTH
+        },
+        
+        /*  A stat's name, e.g. for describing an effect on it. */
+        getStatName = statId => STAT_NAME_BY_ID[statId] ?? statId,
+        
         // A difficulty in the data that skips the roll, so the check always succeeds. It's
         // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
         DIFFICULTY_NO_ROLL = 'no-roll',
@@ -234,13 +263,27 @@
             },
             
             // Misc Formatters
-            formatAgentRisks: (chronal, paradox, hasInjuryRisk) => {
+            formatAgentRisks: (chronal, paradox, healthRisk) => {
                 const THEME = TC.theme,
                     parts = [];
-                if (chronal > 0) parts.push(wrapInStyledSpan(chronal + ICON_CHRONAL, THEME.colorChronal));
-                if (paradox > 0) parts.push(wrapInStyledSpan(paradox + ICON_PARADOX, THEME.colorParadox));
-                if (hasInjuryRisk === true) parts.push(wrapInStyledSpan(ICON_HEALTH, THEME.colorHealth));
+                for (const [value, icon, color] of [
+                    [chronal, ICON_CHRONAL, THEME.colorChronal],
+                    [paradox, ICON_PARADOX, THEME.colorParadox],
+                    [healthRisk, ICON_HEALTH, THEME.colorHealth]
+                ]) {
+                    if (value > 0) { // Works for boolean and number
+                        parts.push(wrapInStyledSpan((typeof value === 'number' ? value : '') + icon, color));
+                    }
+                }
                 return parts.length > 0 ? ' [' + parts.join(' + ') + ']' : '';
+            },
+            
+            getStatName,
+            
+            /*  An amount a stat changed by, e.g. "-7♥", "+2⥁" or "+5 Attestation". */
+            formatStatAdj: (statId, amount) => {
+                const label = STAT_ICON_BY_ID[statId] ?? ' ' + getStatName(statId);
+                return (amount < 0 ? '-' : '+') + mathAbs(amount) + label;
             },
             
             // Chronal Util
@@ -326,11 +369,11 @@
             SCOPE_SKILLS,
             
             // Stat IDs
-            STAT_ID_PARADOX:'paradox',
-            STAT_ID_CHRONAL:'chronal',
-            STAT_ID_HEALTH:'health',
-            STAT_ID_HISTORICITY:'historicity',
-            STAT_ID_ATTESTATION:'attestation',
+            STAT_ID_PARADOX,
+            STAT_ID_CHRONAL,
+            STAT_ID_HEALTH,
+            STAT_ID_HISTORICITY,
+            STAT_ID_ATTESTATION,
             
             // Skill IDS: these should match up to the ID of skills defined in init.json5.
             SKILL_ID_CHRONOGATION:'chronogation',
@@ -340,15 +383,14 @@
             SKILL_ID_DECEPTION:'deception',
             
             // Action Types
-            ACTION_INJURY:'inj',
             ACTION_INVESTIGATE:'investigate',
             
             // Text Constants
-            I18N_CHRONAL:'Chr' + ICON_CHRONAL + 'nal',
-            I18N_PARADOX:'Parad' + ICON_PARADOX + 'x',
-            I18N_HEALTH:'Health',
-            I18N_HISTORICITY:'Historicity',
-            I18N_ATTESTATION:'Attestation',
+            I18N_CHRONAL,
+            I18N_PARADOX,
+            I18N_HEALTH,
+            I18N_HISTORICITY,
+            I18N_ATTESTATION,
             
             // Icons
             ICON_SEPARATOR:'\u00A0·\u00A0',

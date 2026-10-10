@@ -170,38 +170,70 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         return problems;
     };
 
-test('every investigate, action, and action and exit injury skill check is valid, including the default event actions', () => {
-    const problems = [];
+/*  The stats an effect can change, by scope. Mirrors tc.EFFECT_STAT_IDS. */
+const EFFECT_STAT_IDS = {
+    agent:['health', 'chronal', 'paradox'],
+    event:['paradox', 'historicity', 'attestation'],
+    timeline:['paradox', 'chronal']
+};
+
+test('every investigate, action skill check and action and exit effect is valid, including the default event actions', () => {
+    const problems = [],
+        counts = {actionEffects:0, exitEffects:0},
+        
+        // Returns the problems with an action's or exit's effects.
+        checkEffects = (where, effects, isAction) => {
+            if (effects === null || typeof effects !== 'object' || Array.isArray(effects)) return [where + ' effects is not an object'];
+            const effectProblems = [];
+            for (const [key, cfg] of Object.entries(effects)) {
+                const at = where + ' effect ' + key,
+                    [scope, statId, ...rest] = key.split('.');
+                if (rest.length > 0 || !EFFECT_STAT_IDS[scope]?.includes(statId)) effectProblems.push(at + ' is not a stat of the agent, event or timeline');
+                if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+                    effectProblems.push(at + ' is not an object');
+                    continue;
+                }
+                const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg;
+                if (onSuccess === undefined && onFailure === undefined) effectProblems.push(at + ' has no onSuccess or onFailure');
+                for (const [name, amount] of [['onSuccess', onSuccess], ['onFailure', onFailure]]) {
+                    const error = amount === undefined ? null : getAmountCompileError(amount);
+                    if (error) effectProblems.push(at + ' ' + name + ' ' + error);
+                }
+                if (enabledForActionSkillCheck !== undefined) {
+                    if (!isAction) {
+                        effectProblems.push(at + ' has enabledForActionSkillCheck, which only applies to actions');
+                    } else if (!['success', 'failure', 'both'].includes(enabledForActionSkillCheck)) {
+                        effectProblems.push(at + ' enabledForActionSkillCheck is not "success", "failure" or "both"');
+                    }
+                }
+                // Anything else is the effect's own skill check.
+                if (Object.keys(checkCfg).length > 0) effectProblems.push(...checkSkillCheckCfg(at, checkCfg));
+                counts[isAction ? 'actionEffects' : 'exitEffects']++;
+            }
+            return effectProblems;
+        };
     
     // The default actions every Event gets are checked as if on an Event of their own.
     expect(Object.keys(defaultEventActions)).toContain('_rest');
     for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
         if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
-        const checkInjurySkillCheck = (where, {damageOnSuccess, damageOnFailure, allowHealing, ...checkCfg} = {}) => {
-            problems.push(...checkSkillCheckCfg(where, checkCfg));
-            if (allowHealing !== undefined && typeof allowHealing !== 'boolean') problems.push(where + ' allowHealing is not a boolean');
-            if (damageOnSuccess === undefined && damageOnFailure === undefined) problems.push(where + ' has no damageOnSuccess or damageOnFailure');
-            for (const [key, damage] of [['damageOnSuccess', damageOnSuccess], ['damageOnFailure', damageOnFailure]]) {
-                const error = damage === undefined ? null : getAmountCompileError(damage);
-                if (error) problems.push(where + ' ' + key + ' ' + error);
-            }
-        };
         for (const [actionId, action] of Object.entries(event.actions ?? {})) {
-            if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(eventId + '.' + actionId + ' skillCheck', action.skillCheck));
-            if (action.injurySkillCheck !== undefined) {
-                const where = eventId + '.' + actionId + ' injurySkillCheck',
-                    {enabledForActionSkillCheck, ...injuryCfg} = action.injurySkillCheck ?? {};
-                if (enabledForActionSkillCheck !== undefined && !['success', 'failure', 'both'].includes(enabledForActionSkillCheck)) {
-                    problems.push(where + ' enabledForActionSkillCheck is not "success", "failure" or "both"');
-                }
-                checkInjurySkillCheck(where, injuryCfg);
-            }
+            const where = eventId + '.' + actionId;
+            if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(where + ' skillCheck', action.skillCheck));
+            if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
+            if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
         }
         for (const exit of event.exits ?? []) {
-            if (exit.injurySkillCheck !== undefined) checkInjurySkillCheck(eventId + ' exit to ' + exit.to + ' injurySkillCheck', exit.injurySkillCheck);
+            const where = eventId + ' exit to ' + exit.to;
+            if (exit.effects !== undefined) problems.push(...checkEffects(where, exit.effects, false));
+            if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which effects replaced');
         }
     }
     expect(problems).toEqual([]);
+    
+    // So the checks above aren't vacuous.
+    expect(counts.actionEffects).toBeGreaterThan(0);
+    expect(counts.exitEffects).toBeGreaterThan(0);
 });
 
 test('every default skill check has a name and a skill expression that compiles', () => {

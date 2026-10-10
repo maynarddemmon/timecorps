@@ -8,14 +8,14 @@
         {
             NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
-            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL,
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT
             },
             ICON_SEPARATOR, ICON_NIL,
-            SCOPE_EVENT,
-            ACTION_INVESTIGATE, ACTION_INJURY, DIFFICULTY_NO_ROLL, toDifficulty
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
+            ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
         TRAVEL_MODE_WAIT ='wait',
@@ -44,7 +44,7 @@
                     typeId = PREFIX_SKILL_TYPE + actionId,
                     exprId = PREFIX_SKILL_EXPR + actionId,
                     owner = self.getSkillCheckOwner(actionId),
-                    warn = msg => console.warn(owner, (actionId === ACTION_INJURY ? 'injury ' : '') + 'skill check', msg + ':', cfg);
+                    warn = msg => console.warn(owner, 'skill check', msg + ':', cfg);
                 
                 self[diffId] = self[typeId] = self[exprId] = undefined;
                 if (cfg == null) return;
@@ -101,62 +101,167 @@
             }
         }),
         
-        InjuryCheckSupport = new JSModule('InjuryCheckSupport', {
+        /*  The stats an effect can change, by the scope that has them: the agent taking the 
+            action or exit, its Event, or the timeline. */
+        EFFECT_STAT_IDS = pkg.EFFECT_STAT_IDS = {
+            [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
+            [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
+            [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL]
+        },
+        
+        EFFECT_WHEN_SUCCESS = 'success',
+        EFFECT_WHEN_FAILURE = 'failure',
+        EFFECT_WHEN_BOTH = 'both',
+        
+        /*  One effect of an action or exit: a change to a stat, named by its key as 
+            "<scope>.<stat>", e.g. "agent.health", "event.attestation" or "timeline.paradox". 
+            See EFFECT_STAT_IDS. Configured as:
+                onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 
+                    positive amount raises the stat and a negative one lowers it, within the 
+                    stat's limits. An amount sees the same parameters as a check expression.
+                difficulty, check, actionType - Optional. The effect's own skill check, as for 
+                    an action. With one, the effect rolls it and uses onSuccess or onFailure by
+                    its result. Without one, it follows the action's own check, and taking an 
+                    exit counts as a success.
+                enabledForActionSkillCheck - Actions only. Whether the effect applies when the
+                    action's own check is a "success", a "failure" or "both", the default. */
+        StatEffectModel = pkg.StatEffectModel = new JSClass('StatEffectModel', BaseModel, {
+            include: [ActionCheckSupport],
+            
+            
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
-                this._allowHealing = false;
+                const {owner, key, cfg} = attrs;
+                delete attrs.owner;
+                delete attrs.key;
+                delete attrs.cfg;
                 
-                // Applied after the other attrs so any warnings can name the exit.
-                const injurySkillCheck = attrs.injurySkillCheck;
-                delete attrs.injurySkillCheck;
-                
+                this.owner = owner;
+                this.key = key;
                 this.callSuper(attrs);
                 
-                this.setInjurySkillCheck(injurySkillCheck);
+                this.valid = this.configure(cfg);
             },
             
             
             // Accessors ///////////////////////////////////////////////////////
-            setInjurySkillCheck: function(cfg) {
-                const self = this;
-                self.injuryDamageOnSuccess = self.injuryDamageOnFailure = undefined;
+            /** @overrides ActionCheckSupport */
+            getSkillCheckOwner: function() {
+                return this.owner.getSkillCheckOwner() + ' effect ' + this.key;
+            },
+            
+            hasOwnCheck: function() {return this.ownCheck;},
+            
+            /*  The amount expression for a result, or undefined if nothing happens then. */
+            getAmountExpr: function(success) {return success ? this.onSuccess : this.onFailure;},
+            
+            /*  The model whose stat changes: the agent, the owner's Event or the timeline. */
+            getTarget: function(agentModel) {
+                switch (this.scopeName) {
+                    case SCOPE_AGENT: return agentModel;
+                    case SCOPE_EVENT: return this.owner.event;
+                    case SCOPE_TIMELINE: return pkg.model;
+                }
+            },
+            getStat: function(agentModel) {return this.getTarget(agentModel)?.[this.statId];},
+            
+            
+            // Methods /////////////////////////////////////////////////////////
+            /*  Returns true if the config is usable. Problems are warned about. */
+            configure: function(cfg) {
+                const self = this,
+                    warn = msg => console.warn(self.getSkillCheckOwner(), msg + ':', cfg),
+                    [scopeName, statId, ...rest] = String(self.key).split('.');
                 
-                if (cfg == null) {
-                    self.addSkillCheck(ACTION_INJURY);
+                if (rest.length > 0 || !Object.hasOwn(EFFECT_STAT_IDS, scopeName) || !EFFECT_STAT_IDS[scopeName].includes(statId)) {
+                    warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health" (ignoring it)');
                     return false;
                 }
-                
-                const isObj = typeof cfg === 'object' && !Array.isArray(cfg),
-                    {damageOnSuccess, damageOnFailure, allowHealing, ...checkCfg} = isObj ? cfg : {};
-                if (self.addSkillCheck(ACTION_INJURY, isObj ? checkCfg : cfg)) {
-                    const owner = self.getSkillCheckOwner(ACTION_INJURY),
-                        toDamage = (key, damage) => {
-                            if (damage === undefined) return undefined;
-                            if (typeof damage === 'string' && damage.trim() !== '') return damage;
-                            console.warn(owner, 'injury skill check', key, 'must be a non-empty string (ignoring it):', cfg);
-                            return undefined;
-                        };
-                    self.injuryDamageOnSuccess = toDamage('damageOnSuccess', damageOnSuccess);
-                    self.injuryDamageOnFailure = toDamage('damageOnFailure', damageOnFailure);
-                    
-                    if (allowHealing != null) self._allowHealing = !!allowHealing;
-                    
-                    if (self.hasInjuryCheck()) return true;
-                    
-                    console.warn(owner, 'injury skill check needs a damageOnSuccess or damageOnFailure expression (ignoring the check):', cfg);
-                    self.addSkillCheck(ACTION_INJURY);
+                if (cfg == null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+                    warn('must be an object (ignoring it)');
+                    return false;
                 }
-                return false;
+                self.scopeName = scopeName;
+                self.statId = statId;
+                
+                const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg,
+                    toAmount = (name, amount) => {
+                        if (amount === undefined) return undefined;
+                        if (typeof amount === 'string' && amount.trim() !== '') return amount;
+                        warn(name + ' must be a non-empty string (ignoring it)');
+                    };
+                self.onSuccess = toAmount('onSuccess', onSuccess);
+                self.onFailure = toAmount('onFailure', onFailure);
+                
+                // Any other keys are the effect's own check, which warns about unknown ones.
+                self.ownCheck = ['difficulty', 'check', 'actionType'].some(name => name in checkCfg);
+                if (Object.keys(checkCfg).length > 0) self.addSkillCheck(null, checkCfg);
+                
+                self.enabledForActionSkillCheck = EFFECT_WHEN_BOTH;
+                if (enabledForActionSkillCheck !== undefined) {
+                    if (!self.owner.isGatedByActionSkillCheck()) {
+                        warn('enabledForActionSkillCheck only applies to actions (ignoring it)');
+                    } else if ([EFFECT_WHEN_SUCCESS, EFFECT_WHEN_FAILURE, EFFECT_WHEN_BOTH].includes(enabledForActionSkillCheck)) {
+                        self.enabledForActionSkillCheck = enabledForActionSkillCheck;
+                    } else {
+                        warn('enabledForActionSkillCheck must be "success", "failure" or "both" (using "both")');
+                    }
+                }
+                
+                if (self.onSuccess == null && self.onFailure == null) {
+                    warn('needs an onSuccess or onFailure amount (ignoring it)');
+                    return false;
+                }
+                return true;
             },
             
-            /*  True if doing this risks injury. A model can narrow that down given more context, 
-                e.g. whether an action's own check succeeded. */
-            hasInjuryCheck: function(_context) {
-                return this.injuryDamageOnSuccess != null || this.injuryDamageOnFailure != null;
+            /*  Whether the effect applies given the action's own check result, if any. */
+            appliesFor: function(actionCheck) {
+                if (actionCheck) {
+                    switch (this.enabledForActionSkillCheck) {
+                        case EFFECT_WHEN_SUCCESS: return actionCheck.success === true;
+                        case EFFECT_WHEN_FAILURE: return actionCheck.success === false;
+                    }
+                }
+                return true;
+            }
+        }),
+        
+        /*  Gives an action or exit "effects": an object of StatEffectModel configs by key. */
+        EffectsSupport = new JSModule('EffectsSupport', {
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                const effects = attrs.effects,
+                    hasInjurySkillCheck = 'injurySkillCheck' in attrs;
+                delete attrs.effects;
+                delete attrs.injurySkillCheck;
+                
+                // Applied after the other attrs so any warnings can name the owner.
+                this.callSuper(attrs);
+                
+                if (hasInjurySkillCheck) console.warn(this.getSkillCheckOwner(), 'injurySkillCheck is replaced by effects, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)');
+                this.setEffects(effects);
             },
-            getInjuryDamage: function(success) {return success ? this.injuryDamageOnSuccess : this.injuryDamageOnFailure;},
             
-            allowHealing: function() {return this._allowHealing;}
+            
+            // Accessors ///////////////////////////////////////////////////////
+            setEffects: function(cfg) {
+                const effects = this.effects = [];
+                if (cfg == null) return;
+                if (typeof cfg !== 'object' || Array.isArray(cfg)) {
+                    console.warn(this.getSkillCheckOwner(), 'effects must be an object of effects by stat, e.g. "agent.health" (ignoring them):', cfg);
+                    return;
+                }
+                for (const key in cfg) {
+                    const effectModel = new StatEffectModel({owner:this, key, cfg:cfg[key]});
+                    if (effectModel.valid) effects.push(effectModel);
+                }
+            },
+            getEffects: function() {return this.effects;},
+            hasEffects: function() {return this.effects.length > 0;},
+            
+            /*  True if the effects can depend on the result of the owner's own check. */
+            isGatedByActionSkillCheck: () => false
         }),
         
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
@@ -206,7 +311,7 @@
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, InjuryCheckSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -232,46 +337,8 @@
                 this.addSkillCheck(null, cfg);
             },
             
-            /*  An action's injury check can also say when it applies, by whether the action's own
-                check succeeds: {enabledForActionSkillCheck:"success"|"failure"|"both"}. Both if 
-                left out. Anything else is also both, with a warning.
-                @overrides InjuryCheckSupport */
-            setInjurySkillCheck: function(cfg) {
-                const isObj = cfg != null && typeof cfg === 'object' && !Array.isArray(cfg),
-                    {enabledForActionSkillCheck, ...injuryCfg} = isObj ? cfg : {},
-                    retval = this.callSuper(isObj ? injuryCfg : cfg);
-                
-                this.enabledForActionSkillCheck = undefined;
-                if (retval) {
-                    switch (enabledForActionSkillCheck) {
-                        case 'success':
-                        case 'failure':
-                        case 'both':
-                            this.enabledForActionSkillCheck = enabledForActionSkillCheck;
-                            break;
-                        default:
-                            if (enabledForActionSkillCheck !== undefined) {
-                                console.warn(this.getSkillCheckOwner(ACTION_INJURY), 'injury skill check enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"):', cfg);
-                            }
-                            this.enabledForActionSkillCheck = 'both';
-                    }
-                }
-                return retval;
-            },
-            
-            /*  Given the action's check result as context, also true only if the injury check 
-                applies to that result.
-                @overrides InjuryCheckSupport */
-            hasInjuryCheck: function(context) {
-                if (!this.callSuper(context)) return false;
-                if (context) {
-                    switch (this.enabledForActionSkillCheck) {
-                        case 'success': return context.success === true;
-                        case 'failure': return context.success === false;
-                    }
-                }
-                return true;
-            },
+            /** @overrides EffectsSupport */
+            isGatedByActionSkillCheck: () => true,
             
             /*setDone: function(done) {
                 this.set('done', done, true);
@@ -343,7 +410,7 @@
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, InjuryCheckSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport],
             
             
             // Accessors ///////////////////////////////////////////////////////

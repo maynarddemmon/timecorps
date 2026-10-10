@@ -118,13 +118,12 @@
 				"difficulty":1000, 
 				"check":"Math.round(2500 * (agent.health.value / agent.health.max)) - 1250"
 			},
-			"injurySkillCheck":{
-				"actionType":"sure_thing",
-				"enabledForActionSkillCheck":"success",
-				"allowHealing":true, 
-				
-				// Heals a d(4) per hour of the Event, up to 8 hours.
-				"damageOnSuccess":"-d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
+			"effects":{
+				// A successful rest heals a d(4) per hour of the Event, up to 8 hours. With no
+				// check of its own the effect follows Rest's check, so a failed rest does nothing.
+				"agent.health":{
+					"onSuccess":"d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
+				}
 			}
 		}
 	}

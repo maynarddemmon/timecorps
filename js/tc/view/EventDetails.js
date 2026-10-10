@@ -45,16 +45,17 @@
                 ),
                 label = actionModel.label,
                 name = actionModel.getActionSkillName(),
-                injuryRisk = agentModel.getInjuryRiskPhrase(actionModel);
+                effectsPhrase = agentModel.getEffectsPhrase(actionModel);
+            
             return {
                 text:label + pkg.formatAgentRisks(
-                    0, 
-                    0, 
-                    actionModel.hasInjuryCheck()
+                    agentModel.hasChronalChangeRiskFor(actionModel), 
+                    agentModel.hasParadoxChangeRiskFor(actionModel), 
+                    agentModel.hasHealthChangeRiskFor(actionModel)
                 ),
                 // An action without an actionType has no name to show.
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
-                    (injuryRisk ? ICON_SEPARATOR + injuryRisk : ''),
+                    (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : ''),
                 disabled:agentCantActHere /*|| actionModel.done*/
             };
         },
@@ -69,12 +70,12 @@
                     exitModel.getModePhrase() + 
                     (showTargetName ? ' ' + (toEvent?.name ?? exitModel.to) : '') + 
                     pkg.formatAgentRisks(
-                        0, 
+                        agentModel.hasChronalChangeRiskFor(exitModel), 
                         agentModel.calculateParadoxForEntry(toEvent), 
-                        exitModel.hasInjuryCheck()
+                        agentModel.hasHealthChangeRiskFor(exitModel)
                     )
                 );
-                this.setTooltip(agentModel.getInjuryRiskPhrase(exitModel));
+                this.setTooltip(agentModel.getEffectsPhrase(exitModel));
             },
             doActivated: function() {
                 this.agentModel.doFollowExit(this.exitModel, this);

@@ -463,7 +463,7 @@ test('the ship that reaches New York, and who it lands, follow the night of the 
                 // there aren't enough of them.
                 lifeboatDamageOnSuccess = exitsToNY('casualties', 'lifeboat')
                     .filter(exitModel => !exitModel.isHidden())
-                    .map(exitModel => exitModel.getInjuryDamage(true) ?? null);
+                    .map(exitModel => exitModel.getEffects().find(effect => effect.key === 'agent.health')?.getAmountExpr(true) ?? null);
             return {
                 ship:arrivingShip.value, landed:peopleLanded.value,
                 waitHidden:[...waitHidden('collision'), ...waitHidden('casualties')], lifeboatDamageOnSuccess
@@ -471,11 +471,11 @@ test('the ship that reaches New York, and who it lands, follow the night of the 
         });
     
     // History: she sinks, and the Carpathia lands the survivors.
-    expect(await arrival()).toEqual({ship:'Carpathia', landed:706, waitHidden:[true, true], lifeboatDamageOnSuccess:['d(4,2)']});
+    expect(await arrival()).toEqual({ship:'Carpathia', landed:706, waitHidden:[true, true], lifeboatDamageOnSuccess:['-d(4,2)']});
     
     // The Californian answers the call, but there aren't boats for everyone.
     await setCausator(page, 'wireless_priority', 'clearBacklogEarlier', true);
-    expect(await arrival()).toEqual({ship:'Californian', landed:706, waitHidden:[true, true], lifeboatDamageOnSuccess:['d(4,2)']});
+    expect(await arrival()).toEqual({ship:'Californian', landed:706, waitHidden:[true, true], lifeboatDamageOnSuccess:['-d(4,2)']});
     
     // With boats for everyone, the Californian lands almost everyone.
     await setCausator(page, 'lifeboat_capacity', 'fullDavits', true);

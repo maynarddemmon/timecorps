@@ -78,6 +78,24 @@ Scenarios are [JSON5](https://json5.org): JSON plus `//` and `/* */` comments an
 
 Expressions can refer to `event` (the event being described), `events.<id>` (any event) and `timeline` (the overall game state). The data is checked at startup: every precursor must end before its dependent begins, and no two events at the same location may overlap.
 
+### Effects
+
+Actions and exits can have `effects`: changes to a stat of the agent taking them, their event, or the timeline, keyed by `"<scope>.<stat>"`. The stats are `agent.health`, `agent.chronal`, `agent.paradox`, `event.attestation`, `event.historicity`, `event.paradox`, `timeline.paradox` and `timeline.chronal`.
+
+```json5
+"effects":{
+    // A hard climb: hurts a little on a pass and a lot on a failure.
+    "agent.health":{"difficulty":250, "actionType":"athletic", "onSuccess":"-d(4)", "onFailure":"-d(6, 5)"},
+    // Found evidence: only when the action itself succeeds.
+    "event.attestation":{"onSuccess":"5"},
+}
+```
+
+- `onSuccess` and `onFailure` are amount expressions, rolled with `d(sides, count)` like a check. A positive amount raises the stat and a negative one lowers it, within the stat's limits. At least one is needed.
+- `difficulty`, `check` and `actionType` give the effect its own skill check. Without them it follows the action's own check, and taking an exit counts as a success.
+- On an action, `enabledForActionSkillCheck` limits the effect to when the action's own check is a `"success"`, a `"failure"` or `"both"` (the default).
+- A change to `event.paradox` also changes `timeline.paradox`, as any change to an Event's paradox does.
+
 ## License & Credits
 
 - Fonts: [Advent Pro](https://github.com/googlefonts/Advent) and Space Mono (SIL Open Font License), and Rock Salt (Apache License 2.0). See `fonts/` for the license texts.

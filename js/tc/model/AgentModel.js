@@ -4,7 +4,7 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil} = Math,
+    const {max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil, round:mathRound, abs:mathAbs} = Math,
         
         M = myt,
         
@@ -18,11 +18,11 @@
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, toDamagePhrase, showFloatingTextForSkillCheck},
-            ICON_HQ, ICON_SEPARATOR,
+            ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
-            ACTION_INJURY
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
+            getStatName
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
@@ -61,11 +61,29 @@
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
-        /*  Damage for when its injury check passes or fails: rolled, or its average. 
-            None if there's no damage for that case. */
-        getInjuryAmount = (agentModel, targetModel, success, amountFunc) => {
-            const damageExpr = targetModel.getInjuryDamage(success);
-            return damageExpr ? amountFunc(damageExpr, getCheckCfg(agentModel, targetModel.getActionSkillDifficulty(ACTION_INJURY))) : 0;
+        /*  The difficulty an effect's amount expression sees: its own check's, or else the
+            action's or exit's. */
+        getEffectDifficulty = effectModel => (effectModel.hasOwnCheck() ? effectModel : effectModel.owner).getActionSkillDifficulty(),
+        
+        /*  An effect's amount for when its check passes or fails: rolled, or its average. 
+            Undefined if nothing happens in that case. */
+        getEffectAmount = (agentModel, effectModel, success, amountFunc) => {
+            const expr = effectModel.getAmountExpr(success);
+            return expr ? amountFunc(expr, getCheckCfg(agentModel, getEffectDifficulty(effectModel))) : undefined;
+        },
+        
+        isHealthEffect = effectModel => effectModel.scopeName === SCOPE_AGENT && effectModel.statId === STAT_ID_HEALTH,
+        isParadoxEffect = effectModel => effectModel.statId === STAT_ID_PARADOX,
+        isChronalEffect = effectModel => effectModel.statId === STAT_ID_CHRONAL,
+        
+        /*  Names the stat an effect changes, e.g. "Health" or "Event Attestation". */
+        describeEffectStat = effectModel => {
+            const name = getStatName(effectModel.statId);
+            switch (effectModel.scopeName) {
+                case SCOPE_AGENT: return name;
+                case SCOPE_EVENT: return 'Event ' + name;
+                default: return 'Timeline ' + name;
+            }
         },
         
         adjustMinMaxForInvestigation = (agentModel, min, max) => {
@@ -522,14 +540,16 @@
             if (this.getEventModel() === exitModel.event) {
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
-                    // Taking the exit always succeeds, but it may hurt on the way. The result
-                    // is shown before the damage since that rebuilds the views, btnView included.
-                    const injury = this.checkInjuryFor(exitModel),
+                    // Taking the exit always succeeds, but its effects may change things on the 
+                    // way, e.g. hurt. The result is shown before the effects apply since that can
+                    // rebuild the views, btnView included. The first effect with its own check 
+                    // gives the result.
+                    const effects = this.rollEffectsFor(exitModel),
                         logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
-                    if (injury) {
-                        showFloatingTextForSkillCheck(btnView, injury);
-                        this.takeDamage(injury.damage);
-                        logEntry.damage = injury.damage;
+                    if (effects.length > 0) {
+                        const shownCheck = effects.find(effect => effect.check)?.check ?? {success:true, roll:null};
+                        showFloatingTextForSkillCheck(btnView, {...shownCheck, effects});
+                        this.applyEffects(effects, logEntry);
                     }
                     
                     this.setEvent(toEvent.id, logEntry);
@@ -561,22 +581,15 @@
                     actionModel.getActionSkillExpr(),
                     actionModel.getActionSkillDifficulty()
                 ),
-                injury = this.checkInjuryFor(actionModel, {check, allowHealing:actionModel.allowHealing()}),
+                effects = this.rollEffectsFor(actionModel, check),
                 logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
             
-            // Copy the damage onto the check result so there's only one floating text.
-            if (injury) {
-                // Adjust by no more than the Agent's health permits.
-                const {adj} = this[STAT_ID_HEALTH].getAllowedAdj(-injury.damage);
-                check.damage = logEntry.damage = injury.damage = -adj || 0; // Not -0
-            }
+            // Now show floating panel, with the effects so there's only one. (must be before 
+            // anything that triggers a rerender of EventDetails such as applying the effects or
+            // incrementActionExecCount, since that destroys the btnView)
+            showFloatingTextForSkillCheck(btnView, {...check, effects});
             
-            // Now show floating panel. (must be before anything that triggers a rerender of 
-            // EventDetails such as takeDamage or incrementActionExecCount, since that destroys 
-            // the btnView)
-            showFloatingTextForSkillCheck(btnView, check);
-            
-            if (injury) this.takeDamage(injury.damage);
+            this.applyEffects(effects, logEntry);
             this.incrementActionExecCount();
             
             if (check.success) {
@@ -675,43 +688,102 @@
         isDevoured: function() {return this.devoured;},
         
         
-        // Health, Injury, Death //
-        /*  Describes the risk of an action's/exit's injury check, e.g. 
-            "♥ Risking: deadly (light if passed) · Athletic / even", or an empty string if 
-            there's none. The damage is its average, without rolling: on a failure, then on a 
-            pass if that hurts too and reads differently. */
-        getInjuryRiskPhrase: function(targetModel) {
-            if (!targetModel.hasInjuryCheck()) return '';
-            
-            const failPhrase = toDamagePhrase(getInjuryAmount(this, targetModel, false, getAverageAmount)),
-                passDamage = getInjuryAmount(this, targetModel, true, getAverageAmount),
-                passPhrase = toDamagePhrase(passDamage),
-                name = targetModel.getActionSkillName(ACTION_INJURY);
-            return pkg.ICON_HEALTH + ' Risking: ' + failPhrase + 
-                (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '') + ICON_SEPARATOR +
-                (name && name !== ACTION_INJURY ? name + ' / ' : '') + this.getSkillEasePhrase(targetModel.getActionSkillExpr(ACTION_INJURY), targetModel.getActionSkillDifficulty(ACTION_INJURY));
+        // Effects //
+        /*  Describes the effects of an action or exit, or an empty string if it has none. Each
+            gives its average amounts without rolling, then its own check if it has one. Harm 
+            to the agent's health reads as injury, e.g. 
+            "♥ Risking: deadly injury (light injury if passed) · Athletic / even", and anything 
+            else as amounts, e.g. "Event Attestation: ~+5 if passed, ~-2 if failed". */
+        getEffectsPhrase: function(ownerModel) {
+            return ownerModel.getEffects().map(effectModel => {
+                const failAmount = getEffectAmount(this, effectModel, false, getAverageAmount),
+                    passAmount = getEffectAmount(this, effectModel, true, getAverageAmount);
+                let phrase;
+                if (isHealthEffect(effectModel) && mathMin(failAmount ?? 0, passAmount ?? 0) < 0) {
+                    // A failure's damage first, then a pass's if that hurts too and reads 
+                    // differently.
+                    const failPhrase = toDamagePhrase(-(failAmount ?? 0)),
+                        passDamage = -(passAmount ?? 0),
+                        passPhrase = toDamagePhrase(passDamage);
+                    phrase = ICON_HEALTH + ' Risking: ' + failPhrase + (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '');
+                } else {
+                    const parts = [];
+                    for (const [amount, when] of [[passAmount, 'if passed'], [failAmount, 'if failed']]) {
+                        if (Number.isFinite(amount)) {
+                            const rounded = mathRound(amount);
+                            parts.push(ICON_APPROX + (rounded < 0 ? '-' : '+') + mathAbs(rounded) + ' ' + when);
+                        }
+                    }
+                    phrase = describeEffectStat(effectModel) + ': ' + parts.join(', ');
+                }
+                
+                if (effectModel.hasOwnCheck()) {
+                    const name = effectModel.getActionSkillName();
+                    phrase += ICON_SEPARATOR + (name ? name + ' / ' : '') + this.getSkillEasePhrase(effectModel.getActionSkillExpr(), effectModel.getActionSkillDifficulty());
+                }
+                return phrase;
+            }).join(ICON_SEPARATOR);
         },
         
-        /*  Rolls an action's/exit's injury check, if it has one, then the damage for whether it passed 
-            or failed. Doesn't apply the damage. Returns the check result plus the damage, or 
-            null if there's no check. */
-        checkInjuryFor: function(targetModel, additionalInjuryCheckContext) {
-            if (targetModel.hasInjuryCheck(additionalInjuryCheckContext?.check)) {
-                const check = this.checkSkillExpression(targetModel.getActionSkillExpr(ACTION_INJURY), targetModel.getActionSkillDifficulty(ACTION_INJURY)),
-                    amount = getInjuryAmount(this, targetModel, check.success, rollAmount);
+        /*  True if an action or exit could, on average, lower the agent's health. */
+        hasHealthChangeRiskFor: function(ownerModel) {
+            return ownerModel.getEffects().some(effectModel => isHealthEffect(effectModel) && 
+                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
+            );
+        },
+        
+        /*  True if an action or exit could, on average, change chronal. */
+        hasChronalChangeRiskFor: function(ownerModel) {
+            return ownerModel.getEffects().some(effectModel => isChronalEffect(effectModel) && 
+                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
+            );
+        },
+        
+        /*  True if an action or exit could, on average, change paradox. */
+        hasParadoxChangeRiskFor: function(ownerModel) {
+            return ownerModel.getEffects().some(effectModel => isParadoxEffect(effectModel) && 
+                [true, false].some(success => (getEffectAmount(this, effectModel, success, getAverageAmount) ?? 0) !== 0)
+            );
+        },
+        
+        /*  Rolls the effects of an action or exit that apply, given the action's own check if 
+            it has one. Doesn't apply them. Returns an Array of 
+            {effect, key, statId, stat, amount, check} where amount is what the stat will 
+            actually change by, in whole points within its limits, and check is the effect's 
+            own check if it has one. An effect with nothing to do in its case is left out, 
+            unless it rolled its own check. */
+        rollEffectsFor: function(ownerModel, actionCheck) {
+            const results = [];
+            for (const effectModel of ownerModel.getEffects()) {
+                if (!effectModel.appliesFor(actionCheck)) continue;
                 
-                // Whole points only, and healing allowed only if so indicated. A broken 
-                // expression (NaN) does nothing.
-                const damage = Number.isFinite(amount) && (amount > 0 || additionalInjuryCheckContext?.allowHealing) ? Math.round(amount) : 0;
-                return {...check, damage};
+                const check = effectModel.hasOwnCheck() ? this.checkSkillExpression(effectModel.getActionSkillExpr(), effectModel.getActionSkillDifficulty()) : null,
+                    // Without its own check an effect follows the action, and an exit succeeds.
+                    success = check ? check.success : (actionCheck?.success ?? true),
+                    amount = getEffectAmount(this, effectModel, success, rollAmount);
+                if (amount === undefined && !check) continue;
+                
+                // A broken expression (NaN) does nothing. || 0 so it's never -0.
+                const stat = effectModel.getStat(this),
+                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
+                results.push({effect:effectModel, key:effectModel.key, statId:effectModel.statId, stat, amount:adj, check});
+            }
+            return results;
+        },
+        
+        /*  Applies rolled effects and records them on the log entry by key. */
+        applyEffects: function(effects, logEntry) {
+            if (effects.length === 0) return;
+            
+            const logged = logEntry.effects = {};
+            for (const {key, stat, amount} of effects) {
+                logged[key] = amount;
+                if (amount !== 0) stat.adjValue(amount);
             }
         },
         
-        /*  Lowers health by a whole, positive amount of damage. */
-        takeDamage: function(damage) {
-            this[STAT_ID_HEALTH].adjValue(-damage);
-        },
         
+        // Death //
         isDead: function() {
             return this[STAT_ID_HEALTH].isAtMinValue();
         },
