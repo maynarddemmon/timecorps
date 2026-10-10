@@ -14,7 +14,8 @@
         
         PARAM_DIFFICULTY = 'difficulty',
         PARAM_DIE = 'd',
-        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE],
+        PARAM_MARGIN = 'margin',
+        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN],
         
         // An arbitrary limit on the number of dice in one d(sides, count).
         MAX_DICE = 99,
@@ -91,10 +92,10 @@
         
         /*  Evaluates an expression with die as its d function. NaN, with a warning, if the 
             expression throws or isn't a number. */
-        evaluateExpr = (expr, {agent, event, difficulty=0}, die) => {
+        evaluateExpr = (expr, {agent, event, difficulty=0, margin=0}, die) => {
             let value;
             try {
-                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty, die);
+                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty, die, margin);
             } catch (err) {
                 console.warn('Check expression threw (' + err.message + '):', expr);
                 return NaN;
@@ -175,6 +176,10 @@
                     "d(6, 3)". Use d(13) - 1 for 0 to 12. Only a real check rolls. Working out 
                     the ease without rolling, e.g. for an ease phrase, uses the dice's average.
                     Sides and count are rounded, sides to at least 1 and count to 1 to 99.
+                margin - For an amount, such as an effect's, the result of the check that decided
+                    it: roll + ease, so 0 or more on a pass and negative on a failure. 0 if 
+                    nothing was rolled. Working out an amount without rolling uses the average 
+                    margin for a pass or a failure. 0 in a check expression itself.
             For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
             difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             
@@ -192,6 +197,15 @@
             
             compile,
             getEase,
+            
+            /*  The average margin, roll + ease, of a check that passes or fails at this ease,
+                for working out an amount without rolling. Rolls run from 0 to DIE_SIZE - 1, so
+                a pass averages the passing results and a failure the failing ones. Meaningless 
+                for a result that can't happen at that ease. */
+            getAverageMargin: (ease, success) => {
+                const lowestPassingRoll = mathMax(0, -ease);
+                return success ? (lowestPassingRoll + DIE_SIZE - 1) / 2 + ease : (ease - 1) / 2;
+            },
             
             /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
                 Returns {success, result, roll, difficulty, ease} where result is roll + ease. A

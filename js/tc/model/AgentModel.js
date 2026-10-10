@@ -17,7 +17,8 @@
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
-            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, toDamagePhrase, showFloatingTextForSkillCheck},
+            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
+            isNoRollDifficulty,
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
@@ -65,12 +66,29 @@
             action's or exit's. */
         getEffectDifficulty = effectModel => (effectModel.hasOwnCheck() ? effectModel : effectModel.owner).getActionSkillDifficulty(),
         
-        /*  An effect's amount for when its check passes or fails: rolled, or its average. 
-            Undefined if nothing happens in that case. */
-        getEffectAmount = (agentModel, effectModel, success, amountFunc) => {
+        /*  An effect's amount for when its check passes or fails, given that check's margin: 
+            rolled, or its average. Undefined if nothing happens in that case. */
+        getEffectAmount = (agentModel, effectModel, success, amountFunc, margin) => {
             const expr = effectModel.getAmountExpr(success);
-            return expr ? amountFunc(expr, getCheckCfg(agentModel, getEffectDifficulty(effectModel))) : undefined;
+            return expr ? amountFunc(expr, {...getCheckCfg(agentModel, getEffectDifficulty(effectModel)), margin}) : undefined;
         },
+        
+        /*  The average margin of the check that decides an effect, for a pass or a failure: 
+            its own check, or else its action's. 0 if nothing is rolled, as for an exit without 
+            a check of its own or a no-roll check. */
+        getAverageEffectMargin = (agentModel, effectModel, success) => {
+            const decider = effectModel.hasOwnCheck() ? effectModel : (effectModel.owner.isGatedByActionSkillCheck() ? effectModel.owner : null);
+            if (!decider) return 0;
+            
+            const difficulty = decider.getActionSkillDifficulty();
+            if (isNoRollDifficulty(difficulty)) return 0;
+            return getAverageMargin(agentModel.getSkillExpressionEase(decider.getActionSkillExpr(), difficulty), success);
+        },
+        
+        /*  An effect's average amount for a pass or a failure, without rolling. */
+        getAverageEffectAmount = (agentModel, effectModel, success) => getEffectAmount(
+            agentModel, effectModel, success, getAverageAmount, getAverageEffectMargin(agentModel, effectModel, success)
+        ),
         
         isHealthEffect = effectModel => effectModel.scopeName === SCOPE_AGENT && effectModel.statId === STAT_ID_HEALTH,
         
@@ -694,8 +712,8 @@
             else as amounts, e.g. "Event Attestation: ~+5 if passed, ~-2 if failed". */
         getEffectsPhrase: function(ownerModel) {
             return ownerModel.getEffects().map(effectModel => {
-                const failAmount = getEffectAmount(this, effectModel, false, getAverageAmount),
-                    passAmount = getEffectAmount(this, effectModel, true, getAverageAmount);
+                const failAmount = getAverageEffectAmount(this, effectModel, false),
+                    passAmount = getAverageEffectAmount(this, effectModel, true);
                 let phrase;
                 if (isHealthEffect(effectModel) && mathMin(failAmount ?? 0, passAmount ?? 0) < 0) {
                     // A failure's damage first, then a pass's if that hurts too and reads 
@@ -728,7 +746,7 @@
         hasStatChangeFor: function(ownerModel, statId) {
             return ownerModel.getEffects().some(effectModel => effectModel.statId === statId && 
                 [true, false].some(success => {
-                    const amount = getEffectAmount(this, effectModel, success, getAverageAmount);
+                    const amount = getAverageEffectAmount(this, effectModel, success);
                     return Number.isFinite(amount) && amount !== 0;
                 })
             );
@@ -750,8 +768,10 @@
                 
                 const check = effectModel.hasOwnCheck() ? this.checkSkillExpression(effectModel.getActionSkillExpr(), effectModel.getActionSkillDifficulty()) : null,
                     // Without its own check an effect follows the action, and an exit succeeds.
-                    success = check ? check.success : (actionCheck?.success ?? true),
-                    amount = getEffectAmount(this, effectModel, success, rollAmount);
+                    // The margin is that of whichever check decided it, or 0 if none.
+                    decidingCheck = check ?? actionCheck,
+                    success = decidingCheck ? decidingCheck.success : true,
+                    amount = getEffectAmount(this, effectModel, success, rollAmount, decidingCheck?.result ?? 0);
                 if (amount === undefined && !check) continue;
                 
                 // A broken expression (NaN) does nothing. || 0 so it's never -0.

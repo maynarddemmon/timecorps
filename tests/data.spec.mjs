@@ -145,7 +145,7 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
     getAmountCompileError = amount => {
         if (typeof amount !== 'string' || amount.trim() === '') return 'is not a non-empty string';
         try {
-            new Function('agent', 'event', 'timeline', 'difficulty', 'd', '"use strict";return (' + amount + ');');
+            new Function('agent', 'event', 'timeline', 'difficulty', 'd', 'margin', '"use strict";return (' + amount + ');');
             return null;
         } catch (err) {
             return 'does not compile (' + err.message + ')';

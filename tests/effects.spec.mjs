@@ -835,3 +835,95 @@ test('buttons flag each stat an effect could change, but not a broken amount', a
     for (const warning of problems.warnings) expect(warning).toBe('Check expression threw (nope is not defined): nope');
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('an amount\'s margin is how well the check that decided it went', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const vq = tc.model.getAgentModel('VQ'),
+                collision = tc.model.getEventModel('collision'),
+                attestation = collision.attestation,
+                
+                // Has VQ take an action with this effect on the collision's attestation, and
+                // returns how much it changed.
+                actWith = (effectCfg, skillCheck, ...rolls) => {
+                    delete collision.getActionModels().measured;
+                    collision.setActions({measured:{label:'Measured', skillCheck, set:{}, effects:{'event.attestation':effectCfg}}});
+                    attestation.setValue(50);
+                    vq.setActionExecCount(0);
+                    tc.rng.queueRolls(...rolls);
+                    vq.doAction(collision.getActionModels().measured);
+                    tc.rng.clearQueuedRolls();
+                    return attestation.value - 50;
+                },
+                
+                // An ease of -500, so a roll of 500 or more passes.
+                HARD = {difficulty:500, check:'0'},
+                BY_MARGIN = {onSuccess:'Math.floor(margin / 100)', onFailure:'Math.ceil(margin / 100)'};
+            
+            // An exit without a check of its own has no margin.
+            const exitModel = collision.getExitModels().find(exit => exit.to === 'casualties');
+            exitModel.setEffects({'event.attestation':{onSuccess:'margin + 3'}});
+            attestation.setValue(50);
+            vq.doFollowExit(exitModel);
+            const exit = attestation.value - 50;
+            vq.setEvent('collision');
+            
+            return {
+                // Following the action's check: a roll of 799 passes by 299 and 99 fails by 401.
+                actionPass:actWith(BY_MARGIN, HARD, 799),
+                actionFail:actWith(BY_MARGIN, HARD, 99),
+                
+                // Its own check decides, not the action's: the action passes by 499, but the
+                // effect's own check passes by only 150.
+                own:actWith({...HARD, ...BY_MARGIN}, HARD, 999, 650),
+                
+                // A no-roll check has no margin.
+                noRoll:actWith({onSuccess:'margin + 3'}, {difficulty:'no-roll'}),
+                exit
+            };
+        });
+    expect(out).toEqual({actionPass:2, actionFail:-4, own:1, noRoll:3, exit:3});
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('without rolling, an amount uses the average margin of a pass or a failure', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const vq = tc.model.getAgentModel('VQ'),
+                collision = tc.model.getEventModel('collision'),
+                withAction = (effectCfg, skillCheck) => {
+                    delete collision.getActionModels().measured;
+                    collision.setActions({measured:{label:'Measured', skillCheck, set:{}, effects:{'event.attestation':effectCfg}}});
+                    const actionModel = collision.getActionModels().measured;
+                    return {
+                        phrase:vq.getEffectsPhrase(actionModel).replace(/\u00A0/g, ' '),
+                        flagged:vq.hasStatChangeFor(actionModel, 'attestation')
+                    };
+                },
+                HARD = {difficulty:500, check:'0'},
+                TENTH = {onSuccess:'margin / 10', onFailure:'margin / 10'},
+                exitModel = collision.getExitModels().find(exit => exit.to === 'casualties');
+            exitModel.setEffects({'event.attestation':{onSuccess:'margin + 3'}});
+            
+            return {
+                // At an ease of -500, passes run from 0 to 499 and failures from -500 to -1.
+                averages:[[-500, true], [-500, false], [-1, true], [-1, false]].map(([ease, success]) => tc.checks.getAverageMargin(ease, success)),
+                hard:withAction(TENTH, HARD),
+                
+                // An effect's own check is as sure as a check gets, so a pass averages 499.
+                own:withAction({difficulty:0, check:'1000', onSuccess:'margin / 10'}, HARD),
+                
+                // No margin without a roll, so an amount of just the margin is no change.
+                noRoll:withAction({onSuccess:'margin'}, {difficulty:'no-roll'}),
+                exit:vq.getEffectsPhrase(exitModel)
+            };
+        });
+    expect(out.averages).toEqual([249.5, -250.5, 499, -1]);
+    expect(out.hard).toEqual({phrase:'Event Attestation: ~+25 if passed, ~-25 if failed', flagged:true});
+    expect(out.own).toEqual({phrase:'Event Attestation: ~+50 if passed · ensured', flagged:true});
+    expect(out.noRoll).toEqual({phrase:'Event Attestation: ~+0 if passed', flagged:false});
+    expect(out.exit).toBe('Event Attestation: ~+3 if passed');
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

@@ -92,6 +92,7 @@ Actions and exits can have `effects`: changes to a stat of the agent taking them
 ```
 
 - `onSuccess` and `onFailure` are amount expressions, rolled with `d(sides, count)` like a check. A positive amount raises the stat and a negative one lowers it, within the stat's limits. At least one is needed.
+- An amount can use `margin`: how well the deciding check went, its roll plus its ease. It's 0 or more on a pass and negative on a failure, and 0 when nothing was rolled (an exit without its own check, or a no-roll check). For example `"onSuccess":"1 + Math.floor(margin / 200)"` rewards a strong pass. Tooltips use the average margin of a pass or a failure.
 - `difficulty`, `check` and `actionType` give the effect its own skill check. Without them it follows the action's own check, and taking an exit counts as a success.
 - On an action, `enabledForActionSkillCheck` limits the effect to when the action's own check is a `"success"`, a `"failure"` or `"both"` (the default).
 - A change to `event.paradox` also changes `timeline.paradox`, as any change to an Event's paradox does.
