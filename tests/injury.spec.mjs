@@ -555,33 +555,40 @@ test('every regular event offers Rest, hidden when the event is under an hour', 
     expect(problems.warnings).toEqual([]);
 });
 
-test('resting heals, but never past the agent\'s max health', async ({page}) => {
+test('resting always succeeds and heals, but never past the agent\'s max health', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const vq = tc.model.getAgentModel('VQ'),
                 health = vq.health,
                 rest = tc.model.getEventModel('collision').getActionModels()._rest,
                 
-                // The rest check, its injury check, then a 4 on the d(4). The collision lasts a
-                // minute, which rounds up to one die.
+                // Neither of Rest's checks rolls, so the only roll is a 4 on the d(4). The 
+                // collision lasts a minute, which rounds up to one die.
                 restFrom = value => {
                     health.setValue(value);
                     vq.setActionExecCount(0);
-                    tc.rng.queueRolls(999, 999, 3);
+                    tc.rng.queueRolls(3);
                     vq.doAction(rest);
+                    const left = tc.rng.getQueuedRollCount(),
+                        entry = vq.getLog()[vq.getLog().length - 1];
                     tc.rng.clearQueuedRolls();
-                    return {health:health.value, logged:vq.getLog()[vq.getLog().length - 1].damage};
+                    return {health:health.value, logged:entry.damage, success:entry.success, left};
                 };
             return {
                 max:health.max,
+                difficulty:rest.getActionSkillDifficulty(),
+                injuryDifficulty:rest.getActionSkillDifficulty(tc.ACTION_INJURY),
                 hurt:restFrom(40),
                 nearFull:restFrom(health.max - 2),
                 full:restFrom(health.max)
             };
         });
-    expect(out.hurt).toEqual({health:44, logged:-4});
-    expect(out.nearFull).toEqual({health:out.max, logged:-2});
-    expect(out.full).toEqual({health:out.max, logged:0});
+    const noRoll = await page.evaluate(() => tc.toDifficulty(tc.DIFFICULTY_NO_ROLL));
+    expect(out.difficulty).toBe(noRoll);
+    expect(out.injuryDifficulty).toBe(noRoll);
+    expect(out.hurt).toEqual({health:44, logged:-4, success:true, left:0});
+    expect(out.nearFull).toEqual({health:out.max, logged:-2, success:true, left:0});
+    expect(out.full).toEqual({health:out.max, logged:0, success:true, left:0});
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

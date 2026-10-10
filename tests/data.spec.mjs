@@ -8,6 +8,7 @@ const scenarios = SCENARIO_FILES.map(readJson),
     
     locations = Object.assign({}, ...scenarios.map(s => s.locations ?? {})),
     events = Object.assign({}, ...scenarios.map(s => s.events ?? {})),
+    defaultEventActions = Object.assign({}, ...scenarios.map(s => s.defaultEventActions ?? {})),
     agents = agentsJson.agents,
     operations = operationsJson.operations,
     
@@ -166,12 +167,16 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         return problems;
     };
 
-test('every investigate, action, and action and exit injury skill check is valid', () => {
+test('every investigate, action, and action and exit injury skill check is valid, including the default event actions', () => {
     const problems = [];
-    for (const [eventId, event] of Object.entries(events)) {
+    
+    // The default actions every Event gets are checked as if on an Event of their own.
+    expect(Object.keys(defaultEventActions)).toContain('_rest');
+    for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
         if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
-        const checkInjurySkillCheck = (where, {damageOnSuccess, damageOnFailure, ...checkCfg} = {}) => {
+        const checkInjurySkillCheck = (where, {damageOnSuccess, damageOnFailure, allowHealing, ...checkCfg} = {}) => {
             problems.push(...checkSkillCheckCfg(where, checkCfg));
+            if (allowHealing !== undefined && typeof allowHealing !== 'boolean') problems.push(where + ' allowHealing is not a boolean');
             if (damageOnSuccess === undefined && damageOnFailure === undefined) problems.push(where + ' has no damageOnSuccess or damageOnFailure');
             for (const [key, damage] of [['damageOnSuccess', damageOnSuccess], ['damageOnFailure', damageOnFailure]]) {
                 const error = damage === undefined ? null : getAmountCompileError(damage);

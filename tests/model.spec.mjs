@@ -358,7 +358,7 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
     expect(problems.warnings).toEqual([]);
 });
 
-test('a sure_thing check only fails on the lowest roll, whatever the agent\'s skills', async ({page}) => {
+test('a sure_thing check never rolls and never fails, whatever the agent\'s skills', async ({page}) => {
     const problems = await startGame(page);
     const result = await page.evaluate(() => {
         const vq = tc.model.getAgentModel('VQ'),
@@ -366,9 +366,13 @@ test('a sure_thing check only fails on the lowest roll, whatever the agent\'s sk
             original = vq.getSkills();
         roster.setActions({sure:{label:'Sure', skillCheck:{actionType:'sure_thing'}}});
         const sure = roster.getActionModels().sure,
+            // Whether it passed, and whether it left the queued roll alone.
             check = roll => {
                 tc.rng.queueRolls(roll);
-                return vq.checkSkillExpression(sure.getActionSkillExpr(), sure.getActionSkillDifficulty()).success;
+                const {success} = vq.checkSkillExpression(sure.getActionSkillExpr(), sure.getActionSkillDifficulty()),
+                    unrolled = tc.rng.getQueuedRollCount() === 1;
+                tc.rng.clearQueuedRolls();
+                return success && unrolled;
             },
             out = {};
         vq.doDeployToEvent(roster);
@@ -387,8 +391,8 @@ test('a sure_thing check only fails on the lowest roll, whatever the agent\'s sk
         return out;
     });
     
-    // MAX_SKILL_EASE keeps a 0.1% chance of failure.
-    const expected = {phrase:'ensured', roll0:false, roll1:true};
+    // It's a no-roll check, so even the lowest roll can't fail it.
+    const expected = {phrase:'certain', roll0:true, roll1:true};
     expect(result).toEqual({unskilled:expected, inept:expected});
     expect(problems.warnings).toEqual([]);
 });
@@ -651,4 +655,34 @@ test('an event without a hidden expression is revealed by its causal neighbors\'
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
+});
+
+test('a stat previews an adjustment without changing, and adjusts by the same amount', async ({page}) => {
+    await startGame(page);
+    const out = await page.evaluate(() => {
+        const stat = new tc.NumericStatModel({id:'test', absMin:0, min:0, value:50, max:80, absMax:100}),
+            fired = [];
+        stat.attachObserver({onFired: e => fired.push(e.type)}, 'onFired', 'valueClampedToMax');
+        stat.attachObserver({onFired: e => fired.push(e.type)}, 'onFired', 'valueClampedToMin');
+        const preview = (adj, cfg) => {
+                const allowed = stat.getAllowedAdj(adj, cfg);
+                return [allowed.adj, allowed.clamp, stat.value];
+            },
+            apply = (adj, cfg) => {
+                const before = stat.value, adjusted = stat.adjValue(adj, cfg), result = [adjusted, stat.value, fired.splice(0)];
+                stat.setValue(before);
+                return result;
+            };
+        return {
+            within:preview(10), overMax:preview(40), underMin:preview(-60),
+            upperLimit:preview(40, {upperLimit:60}), allOrNothing:preview(40, {allOrNothing:true}), nan:preview(NaN),
+            applyWithin:apply(10), applyOverMax:apply(40), applyUnderMin:apply(-60), applyUpperLimit:apply(40, {upperLimit:60}), applyNaN:apply(NaN)
+        };
+    });
+    expect(out).toEqual({
+        within:[10, null, 50], overMax:[30, 'max', 50], underMin:[-50, 'min', 50],
+        upperLimit:[10, null, 50], allOrNothing:[0, null, 50], nan:[0, null, 50],
+        applyWithin:[10, 60, []], applyOverMax:[30, 80, ['valueClampedToMax']], applyUnderMin:[-50, 0, ['valueClampedToMin']],
+        applyUpperLimit:[10, 60, []], applyNaN:[0, 50, []]
+    });
 });
