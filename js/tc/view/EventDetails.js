@@ -25,19 +25,6 @@
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
-        getInvestigateBtnInfo = (agentModel, eventModel, agentCantActHere) => {
-            const easePhrase = agentModel.getSkillEasePhrase(
-                    eventModel.getInvestigateSkillExpr(),
-                    eventModel.getInvestigateDifficulty()
-                ),
-                label = 'Investigate';
-            return {
-                text:label,
-                tooltip:label + ' / ' + easePhrase,
-                disabled:agentCantActHere || eventModel.attestation.isAtMaxValue()
-            };
-        },
-        
         getActionBtnInfo = (agentModel, actionModel, agentCantActHere) => {
             const easePhrase = agentModel.getSkillEasePhrase(
                     actionModel.getActionSkillExpr(),
@@ -166,10 +153,6 @@
                 
                 // Update Actions
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
-                new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                new UnderlineActionBtn(actionView, getInvestigateBtnInfo(agentModel, eventModel, agentCantActHere), [{
-                    doActivated: function() {agentModel.doInvestigate(this);}
-                }]);
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];

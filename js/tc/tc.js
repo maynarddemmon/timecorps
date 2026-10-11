@@ -175,9 +175,6 @@
                 // The starting maximum paradox an Agent can have.
                 AGENT_PARADOX_LIMIT:3,
                 
-                // The absolute maximum discovery per investigate.
-                MAX_DISCOVERY_PER_INVESTIGATE:25,
-                
                 // The starting maximum paradox an Event can have.
                 EVENT_PARADOX_LIMIT:4,
                 
@@ -381,9 +378,6 @@
             SKILL_ID_STEALTH:'stealth',
             SKILL_ID_DISGUISE:'disguise',
             SKILL_ID_DECEPTION:'deception',
-            
-            // Action Types
-            ACTION_INVESTIGATE:'investigate',
             
             // Text Constants
             I18N_CHRONAL,

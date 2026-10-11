@@ -102,83 +102,89 @@ const getDefaultInvestigate = () => {
     return [difficulty, check];
 };
 
-test('an event\'s investigate config is optional, validated and has defaults', async ({page}) => {
-    const problems = await startGame(page);
-    const DEFAULTS = getDefaultInvestigate();
-    const result = await page.evaluate(() => {
-        // An event with no investigate config in the data.
-        const eventModel = tc.model.getEventModel('roster_reshuffle'),
-            read = () => [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()],
-            out = {};
-        
-        out.none = read();
-        
-        eventModel.setInvestigate({difficulty:500, check:'Math.max(agent.skills.deception, agent.skills.disguise)'});
-        out.both = read();
-        
-        // Either part can be left out.
-        eventModel.setInvestigate({difficulty:700});
-        out.difficultyOnly = read();
-        
-        // Bad parts are dropped, good ones kept.
-        eventModel.setInvestigate({difficulty:'500', check:'agent.skills.stealth'});
-        out.badDifficulty = read();
-        eventModel.setInvestigate({difficulty:250.5, check:'  '});
-        out.badBoth = read();
-        eventModel.setInvestigate(['agent.skills.stealth']);
-        out.notObject = read();
-        
-        // The old name for check is an unknown key, so stale data is warned about.
-        eventModel.setInvestigate({skill:'agent.skills.stealth'});
-        out.oldKey = read();
-        
-        eventModel.setInvestigate(null);
-        out.cleared = read();
-        return out;
+test('every Event offers Investigate first, except the HQ and The Void, hidden once its attestation is at max', async ({page}) => {
+    const problems = await startGame(page),
+        DEFAULTS = getDefaultInvestigate(),
+        out = await page.evaluate(() => {
+            const out = {missing:[], notFirst:[]};
+            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent())) {
+                const actionIds = Object.keys(eventModel.getActionModels());
+                if (!actionIds.includes('_investigate')) out.missing.push(eventModel.id);
+                else if (actionIds[0] !== '_investigate') out.notFirst.push(eventModel.id);
+            }
+            out.special = [tc.model.getHQEventModel(), tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID)]
+                .map(eventModel => eventModel.getActionModels()._investigate ?? null);
+            
+            const roster = tc.model.getEventModel('roster_reshuffle'),
+                investigate = roster.getActionModels()._investigate;
+            out.check = [investigate.getActionSkillDifficulty(), investigate.getActionSkillExpr()];
+            out.label = investigate.label;
+            out.name = investigate.getActionSkillName();
+            out.hidden = [];
+            for (const value of [0, 99, 100]) {
+                roster.attestation.setValue(value);
+                out.hidden.push(investigate.isHidden());
+            }
+            return out;
+        });
+    expect(out).toEqual({
+        missing:[], notFirst:[], special:[null, null],
+        check:DEFAULTS, label:'Investigate', name:'Investigate', hidden:[false, false, true]
     });
-    expect(result).toEqual({
-        none:DEFAULTS,
-        both:[500, 'Math.max(agent.skills.deception, agent.skills.disguise)'],
-        difficultyOnly:[700, DEFAULTS[1]],
-        badDifficulty:[DEFAULTS[0], 'agent.skills.stealth'],
-        badBoth:DEFAULTS,
-        notObject:DEFAULTS,
-        oldKey:DEFAULTS,
-        cleared:DEFAULTS
-    });
-    
-    // One warning per bad part, naming the event.
-    const investigateWarnings = problems.warnings.filter(w => w.includes('investigate'));
-    expect(investigateWarnings.length).toBe(5);
-    expect(investigateWarnings.every(w => w.startsWith('Event roster_reshuffle investigate skill check'))).toBe(true);
+    expect(problems.warnings).toEqual([]);
 });
 
-test('investigate config in the event JSON reaches the model', async ({page}) => {
-    const problems = await startGame(page);
-    const [defaultDifficulty, defaultSkill] = getDefaultInvestigate();
+test('an Event\'s action merges over a default action of the same ID, and null leaves the default out', async ({page}) => {
+    const problems = await startGame(page),
+        [defaultDifficulty, defaultSkill] = getDefaultInvestigate();
     
-    // collision's data sets just the difficulty.
-    expect(await page.evaluate(() => {
-        const eventModel = tc.model.getEventModel('collision');
-        return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()];
-    })).toEqual([150, defaultSkill]);
+    // From the data: each overrides only part of the check.
+    expect(await page.evaluate(() => ['collision', 'lookout_sights_berg', 'casualties'].map(id => {
+        const actionModel = tc.model.getEventModel(id).getActionModels()._investigate;
+        return [actionModel.getActionSkillDifficulty(), actionModel.getActionSkillExpr()];
+    }))).toEqual([[150, defaultSkill], [defaultDifficulty, '2*agent.skills.investigation'], [-999999, defaultSkill]]);
     
-    const result = await page.evaluate(() => {
-        const build = investigate => {
-            // The id comes last, as when Events are loaded, so a warning can only name the
-            // Event if the config is applied after the other attrs.
-            const eventModel = new tc.EventModel({investigate, id:'investigate_test'});
-            try {
-                return [eventModel.getInvestigateDifficulty(), eventModel.getInvestigateSkillExpr()];
-            } finally {
-                eventModel.destroy();
-            }
+    const out = await page.evaluate(() => {
+        // The id comes last, as when Events are loaded, so warnings can name the Event.
+        const build = (actions, more) => new tc.EventModel({actions, ...more, id:'merge_test'}),
+            describe = eventModel => {
+                const actionModels = eventModel.getActionModels(),
+                    investigate = actionModels._investigate;
+                try {
+                    return {
+                        ids:Object.keys(actionModels),
+                        label:investigate?.label,
+                        check:investigate ? [investigate.getActionSkillDifficulty(), investigate.getActionSkillExpr()] : null,
+                        effects:investigate?.getEffects().map(effect => effect.key + ' ' + effect.getAmountExpr(true))
+                    };
+                } finally {
+                    eventModel.destroy();
+                }
+            };
+        return {
+            // Merged key by key, all the way down, with the Event's own actions after.
+            merged:describe(build({
+                own:{label:'Own', set:{}},
+                _investigate:{label:'Search', skillCheck:{difficulty:300}, effects:{'event.attestation':{onSuccess:'2'}}},
+                _rest:null,
+                // Null only means something for a default, so it's ignored.
+                ghost:null
+            })),
+            // An effect can be dropped too.
+            noEffect:describe(build({_investigate:{effects:{'event.attestation':null}}})),
+            // The defaults weren't changed by any of that.
+            untouched:describe(build({})),
+            // The old investigate config is warned about, and so is a bad override.
+            old:describe(build({_investigate:{skillCheck:{difficulty:3.5}}}, {investigate:{difficulty:150}}))
         };
-        return [build({difficulty:300, check:'agent.skills.stealth'}), build({difficulty:3.5})];
     });
-    expect(result).toEqual([[300, 'agent.skills.stealth'], [defaultDifficulty, defaultSkill]]);
-    expect(problems.warnings.filter(w => w.includes('investigate'))).toEqual([
-        'Event investigate_test investigate skill check difficulty must be an integer or "no-roll": {difficulty: 3.5}'
+    expect(out.merged).toEqual({ids:['_investigate', 'own'], label:'Search', check:[300, defaultSkill], effects:['event.attestation 2']});
+    expect(out.noEffect.effects).toEqual([]);
+    expect(out.untouched).toEqual({ids:['_investigate', '_rest'], label:'Investigate', check:[defaultDifficulty, defaultSkill], effects:['event.attestation d(Math.min(margin / 20, event.attestation.max - event.attestation.value))']});
+    expect(out.old.check).toEqual([defaultDifficulty, defaultSkill]);
+    expect(problems.warnings).toEqual([
+        'Event merge_test investigate is replaced by the _investigate action, e.g. {"actions":{"_investigate":{"skillCheck":{"difficulty":150}}}} (ignoring it): {difficulty: 150}',
+        'Event merge_test action _investigate skill check difficulty must be an integer or "no-roll": {actionType: investigate, difficulty: 3.5}'
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
@@ -188,10 +194,11 @@ test('the default investigate check gets harder as attestation rises', async ({p
     const result = await page.evaluate(() => {
         const vq = tc.model.getAgentModel('VQ'),
             roster = tc.model.getEventModel('roster_reshuffle'),
-            getEase = () => vq.getSkillExpressionEase(roster.getInvestigateSkillExpr(), roster.getInvestigateDifficulty());
+            investigate = roster.getActionModels()._investigate,
+            getEase = () => vq.getSkillExpressionEase(investigate.getActionSkillExpr(), investigate.getActionSkillDifficulty());
         vq.doDeployToEvent(roster);
         vq.setSkills({investigation:100});
-        const out = {difficulty:roster.getInvestigateDifficulty()};
+        const out = {difficulty:investigate.getActionSkillDifficulty()};
         roster.attestation.setValue(0);
         out.at0 = getEase();
         roster.attestation.setValue(20);
@@ -205,34 +212,44 @@ test('the default investigate check gets harder as attestation rises', async ({p
     expect(problems.warnings).toEqual([]);
 });
 
-test('investigating succeeds or fails on the check, and a failure still uses the action', async ({page}) => {
+test('investigating finds more the better the check goes, scores what it finds, and a failure still uses the action', async ({page}) => {
     const problems = await startGame(page);
     const result = await page.evaluate(() => {
         const vq = tc.model.getAgentModel('VQ'),
             roster = tc.model.getEventModel('roster_reshuffle'),
-            investigate = roll => {
-                const attestation = roster.attestation.value,
+            investigate = (roll, attestation=0) => {
+                roster.attestation.setValue(attestation);
+                const score = tc.model.getScore(),
                     actionCount = vq.getActionExecCount();
                 tc.rng.queueRolls(roll);
-                vq.doInvestigate();
+                vq.doAction(roster.getActionModels()._investigate);
                 const entry = vq.getLog().at(-1);
                 return {
                     gained:roster.attestation.value - attestation,
+                    scored:tc.model.getScore() - score,
                     actionsUsed:vq.getActionExecCount() - actionCount,
-                    logged:{type:entry.type, success:entry.success, amount:entry.amount}
+                    logged:{type:entry.type, success:entry.success, effects:entry.effects}
                 };
             };
         vq.doDeployToEvent(roster);
-        roster.setInvestigate({difficulty:500, check:'agent.skills.stealth'});
+        roster.getActionModels()._investigate.setSkillCheck({difficulty:500, check:'agent.skills.stealth'});
         vq.setSkills({stealth:100});
+        vq.setActionExecCount(-10); // Room for every try.
         
-        // An ease of -400: a roll of 399 fails and 400 succeeds.
-        return {failure:investigate(399), success:investigate(400)};
+        // An ease of -400: a roll of 399 fails, 400 passes by 0 and 999 by 599.
+        return {
+            failure:investigate(399),
+            bare:investigate(400),
+            best:investigate(999),
+            // Only as far as the record goes.
+            nearlyComplete:investigate(999, 95)
+        };
     });
-    expect(result.failure).toEqual({gained:0, actionsUsed:1, logged:{type:'investigate', success:false, amount:undefined}});
-    expect(result.success.actionsUsed).toBe(1);
-    expect(result.success.gained).toBeGreaterThan(0);
-    expect(result.success.logged).toEqual({type:'investigate', success:true, amount:result.success.gained});
+    const found = n => ({'event.attestation':n});
+    expect(result.failure).toEqual({gained:0, scored:0, actionsUsed:1, logged:{type:'action', success:false, effects:undefined}});
+    expect(result.bare).toEqual({gained:1, scored:3, actionsUsed:1, logged:{type:'action', success:true, effects:found(1)}});
+    expect(result.best).toEqual({gained:15, scored:45, actionsUsed:1, logged:{type:'action', success:true, effects:found(15)}});
+    expect(result.nearlyComplete).toEqual({gained:5, scored:15, actionsUsed:1, logged:{type:'action', success:true, effects:found(5)}});
     expect(problems.warnings).toEqual([]);
 });
 
@@ -321,8 +338,8 @@ test('action button tooltips show the action type and how easy the check is', as
     // Without an actionType there's no type to show.
     expect(await btnTooltip(page, 'Unchecked')).toMatch(/^Unchecked\u00A0·\u00A0[a-z -]+$/);
     
-    // Investigating just has its ease.
-    expect(await btnTooltip(page, 'Investigate')).toMatch(/^Investigate \/ [a-z -]+$/);
+    // Investigating is an action too, with what it finds on average.
+    expect(await btnTooltip(page, 'Investigate')).toMatch(/^Investigate\u00A0·\u00A0Investigate \/ [a-z -]+\u00A0·\u00A0Event Attestation: ~\+\d+ if passed$/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -423,7 +440,8 @@ test('a no-roll check succeeds without rolling, whatever the agent\'s skills', a
         vq.setSkills({cha:-5000, investigation:-5000});
         try {
             // From the data: investigating casualties is no-roll.
-            out.investigate = check(casualties.getInvestigateSkillExpr(), casualties.getInvestigateDifficulty());
+            const investigate = casualties.getActionModels()._investigate;
+            out.investigate = check(investigate.getActionSkillExpr(), investigate.getActionSkillDifficulty());
             out.byType = check(actions.byType.getActionSkillExpr(), actions.byType.getActionSkillDifficulty());
             out.byAction = check(actions.byAction.getActionSkillExpr(), actions.byAction.getActionSkillDifficulty());
         } finally {

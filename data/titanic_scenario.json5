@@ -534,7 +534,7 @@
 			"start":"1912-04-14T23:39:00",
 			"duration":{"m":1},
 			"location":"titanic.nest",
-			"investigate":{"check":"2*agent.skills.investigation"},
+			"actions":{"_investigate":{"skillCheck":{"check":"2*agent.skills.investigation"}}},
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
 			],
@@ -559,7 +559,7 @@
 			"start":"1912-04-14T23:40:00",
 			"duration":{"m":1},
 			"location":"titanic.bridge",
-			"investigate":{"difficulty":150},
+			"actions":{"_investigate":{"skillCheck":{"difficulty":150}}},
 			"exits":[
 				{"mode":"walk", "to":"casualties"},
 				{"mode":"wait", "to":"arrival_new_york", "hidden":"event.values.struck.value"}
@@ -613,7 +613,16 @@
 			"start":"1912-04-15T02:20:00",
 			"duration":{"h":1},
 			"location":"titanic.boatdeck",
-			"investigate":{"difficulty":"no-roll"},
+			"actions":{
+				"_investigate":{
+					"skillCheck":{"difficulty":"no-roll"},
+					"effects":{
+						"event.attestation":{
+							"onSuccess":"d(Math.min(15, event.attestation.max - event.attestation.value))"
+						}
+					}
+				}
+			},
 			"exits":[
 				{
 					"mode":"wait",

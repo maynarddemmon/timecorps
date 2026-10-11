@@ -110,7 +110,7 @@ test('several can show at once', async ({page}) => {
     expect(problems.warnings).toEqual([]);
 });
 
-test('investigating shows the check result above the investigate button', async ({page}) => {
+test('investigating shows the check result and what it found above the investigate button', async ({page}) => {
     const problems = await startGame(page);
     const investigateBtn = visibleButton(page, /Investigate/),
         investigate = async roll => {
@@ -122,7 +122,7 @@ test('investigating shows the check result above the investigate button', async 
     
     const box = await investigate(999);
     const [success] = await getShowing(page);
-    expect(success.text).toMatch(/^Succeeded by \d+$/);
+    expect(success.text.replace(/\u00A0/g, ' ')).toMatch(/^Succeeded by \d+ · \+\d+ Attestation$/);
     expect(success.bgColor).toBe(await computeColor(page, await page.evaluate(() => tc.theme.colorSuccess)));
     expect(Math.abs(success.centerX - (box.x + box.width / 2))).toBeLessThanOrEqual(1);
     expect(success.bottom).toBeLessThanOrEqual(Math.round(box.y));

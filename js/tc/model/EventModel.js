@@ -15,7 +15,7 @@
             },
             ICON_SEPARATOR, ICON_NIL,
             SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
-            ACTION_INVESTIGATE, DIFFICULTY_NO_ROLL, toDifficulty
+            DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
         TRAVEL_MODE_WAIT ='wait',
@@ -28,8 +28,8 @@
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
         
-        /*  Skill checks for the actions of an Event (e.g. investigate) or for an action itself.
-            Checks are stored by action ID, so an Event can have one per action it offers. */
+        /*  Skill checks for an action, exit or effect. Checks are stored by action ID, so a model
+            could have one per action it offers. */
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
             /*  Sets the skill check for an action. An actionId of null is the model's own check,
                 as for an EventActionModel. cfg is optional and so is each part of it:
@@ -253,6 +253,9 @@
                     return;
                 }
                 for (const key in cfg) {
+                    // Null leaves an effect out, e.g. to drop one from a default action.
+                    if (cfg[key] === null) continue;
+                    
                     const effectModel = new StatEffectModel({owner:this, key, cfg:cfg[key]});
                     if (effectModel.valid) effects.push(effectModel);
                 }
@@ -451,7 +454,7 @@
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
-            include: [pkg.DescribableHideable, ActionCheckSupport],
+            include: [pkg.DescribableHideable],
             
             /** @overrides ConstrainableAttrSupport */
             getConstraintScopeName: () => SCOPE_EVENT,
@@ -494,18 +497,14 @@
                 
                 // Applied after the other attrs so any warnings, including those about the skill 
                 // checks of actions and exits, can name the Event by its id.
-                const {investigate, actions, exits} = attrs;
-                delete attrs.investigate;
+                const {actions, exits} = attrs;
                 delete attrs.actions;
                 delete attrs.exits;
                 
                 self.callSuper(attrs);
                 
-                self.setInvestigate(investigate);
-                if (actions) self.setActions(actions);
+                self.setActions(pkg.model.getEventActionsWithDefaults(actions));
                 if (exits) self.setExits(exits);
-                
-                pkg.model.applyCommonEventActionsToEventModel(self);
             },
             
             getAsObj: function(cfg) {
@@ -701,17 +700,6 @@
             },
             isAffectedByHidden: function(affectorEventModelOrId) {
                 return this.getHideAffectedByModel(affectorEventModelOrId)?.isHidden() ?? false;
-            },
-            
-            // Investigate
-            setInvestigate: function(cfg) {
-                this.addSkillCheck(ACTION_INVESTIGATE, cfg);
-            },
-            getInvestigateDifficulty: function() {
-                return this.getActionSkillDifficulty(ACTION_INVESTIGATE);
-            },
-            getInvestigateSkillExpr: function() {
-                return this.getActionSkillExpr(ACTION_INVESTIGATE);
             },
             
             

@@ -96,6 +96,18 @@ Actions and exits can have `effects`: changes to a stat of the agent taking them
 - `difficulty`, `check` and `actionType` give the effect its own skill check. Without them it follows the action's own check, and taking an exit counts as a success.
 - On an action, `enabledForActionSkillCheck` limits the effect to when the action's own check is a `"success"`, a `"failure"` or `"both"` (the default).
 - A change to `event.paradox` also changes `timeline.paradox`, as any change to an Event's paradox does.
+- A change to `event.attestation` also changes the score, as investigating does.
+
+### Default actions
+
+`defaultEventActions` in `data/init.json5` are offered by every Event, before its own actions: Investigate (`_investigate`) and Rest (`_rest`). An Event can change part of one by giving an action with the same ID, which is merged over the default, or leave one out with `null`:
+
+```json5
+"actions":{
+    "_investigate":{"skillCheck":{"difficulty":150}}, // A harder investigation, otherwise the same.
+    "_rest":null,                                     // No time to rest here.
+}
+```
 
 ## License & Credits
 

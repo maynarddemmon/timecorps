@@ -95,18 +95,38 @@
 			"start":"0000-01-01T00:00:00",
 			"duration":{"s":0},
 			"location":"_nowhere",
-			"hidden":"true"
+			"hidden":"true",
+			// There's nothing to learn about The Void.
+			"actions":{"_investigate":null}
 		},
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters",
 			"start":"2174-10-14T00:00:00",
 			"duration":{"d":1},
 			"location":"_nexus",
-			"hidden":"true"
+			"hidden":"true",
+			// There's nothing to learn about HQ.
+			"actions":{"_investigate":null}
 		}
 	},
 	
+	// Actions every Event offers, before its own. An Event can override part of one by giving an
+	// action with the same ID, e.g. "_investigate":{"skillCheck":{"difficulty":150}}, or leave one
+	// out with null.
 	"defaultEventActions":{
+		"_investigate":{
+			"label":"Investigate",
+			"skillCheck":{"actionType":"investigate"},
+			// Nothing left to find once the record is complete.
+			"hidden":"event.attestation.value >= event.attestation.max",
+			"effects":{
+				// Finds more the better the check goes: 1 for a bare pass, and 1 more for every
+				// 40 the check passes by, so up to 25 at best.
+				"event.attestation":{
+					"onSuccess":"d(Math.min(margin / 20, event.attestation.max - event.attestation.value))"
+				}
+			}
+		},
 		"_rest":{
 			"label":"Rest",
 			// Only Events of an hour or more are long enough to rest in.

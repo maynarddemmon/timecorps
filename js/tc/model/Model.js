@@ -29,6 +29,18 @@
         // The data key for default skill checks by action type.
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
         
+        isPlainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value),
+        
+        /*  Merges a config over a base: objects key by key, all the way down, and anything else,
+            arrays included, replaces what's there. Changes and returns the base, or returns 
+            the config if the base isn't an object. */
+        mergeCfg = (base, cfg) => {
+            if (cfg === undefined) return base;
+            if (!isPlainObject(base) || !isPlainObject(cfg)) return cfg;
+            for (const key in cfg) base[key] = mergeCfg(base[key], cfg[key]);
+            return base;
+        },
+        
         eventsForHiddenAttrSetup = [],
         
         STARTING_SCORE = 0,
@@ -456,8 +468,20 @@
             eventModel.setHidden(hiddenExpr);
         },
         
-        applyCommonEventActionsToEventModel: eventModel => {
-            if (eventModel) eventModel.setActions(commonEventActions, true);
+        /*  An Event's actions from the data, with the default event actions first. An action
+            with a default's ID is merged over that default, so it need only give what differs,
+            e.g. {"_investigate":{"skillCheck":{"difficulty":150}}}, and null leaves the default
+            out. Returns a new object, leaving the defaults and the given actions unchanged. */
+        getEventActionsWithDefaults: actions => {
+            const retval = {};
+            for (const id in commonEventActions) {
+                const override = actions?.[id];
+                if (override !== null) retval[id] = mergeCfg(structuredClone(commonEventActions[id]), override);
+            }
+            for (const id in actions) {
+                if (!Object.hasOwn(commonEventActions, id) && actions[id] != null) retval[id] = actions[id];
+            }
+            return retval;
         }
     });
     

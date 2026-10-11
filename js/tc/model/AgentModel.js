@@ -4,23 +4,22 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil, round:mathRound, abs:mathAbs} = Math,
+    const {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs} = Math,
         
         M = myt,
         
         {
             NotifyingNumericStatModel, getConstrainedValueCfg,
-            rng:{randomInt},
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
-                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT, MAX_DISCOVERY_PER_INVESTIGATE,
+                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
             isNoRollDifficulty,
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_ATTESTATION,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
             getStatName
@@ -33,7 +32,6 @@
         LOG_TYPE_RECALL = 'recall',
         LOG_TYPE_EXIT = 'exit',
         LOG_TYPE_ACTION = 'action',
-        LOG_TYPE_INVESTIGATE = 'investigate',
         LOG_TYPE_DEVOURED = 'devoured',
         
         getInfoForTimeTravel = (agentModel, eventModel) => {
@@ -100,29 +98,6 @@
                 case SCOPE_EVENT: return 'Event ' + name;
                 default: return 'Timeline ' + name;
             }
-        },
-        
-        adjustMinMaxForInvestigation = (agentModel, min, max) => {
-            const skillFactor = agentModel.getSkillInvestigation() / 25,
-                skillFactorLesser = skillFactor / 2;
-            
-            // Positive skill raises the minimum and slightly raises the maximum.
-            if (skillFactor > 0) {
-                min += mathCeil(skillFactor);
-                max += mathCeil(skillFactorLesser);
-                max = mathMin(100, max); // Max attestation
-                min = mathMin(min, max);
-            }
-            
-            // Negative skill lowers the maximum and slightly lowers the minimum (if possible).
-            if (skillFactor < 0) {
-                max += mathFloor(skillFactor);
-                min += mathFloor(skillFactorLesser);
-                min = mathMax(1, min); // Always make some progress.
-                max = mathMax(min, max);
-            }
-            
-            return [min, max];
         },
         
         /*  Log entries hold model references which are saved as IDs. Exits have no ID so they 
@@ -624,41 +599,6 @@
         },
         
         
-        // Investigation //
-        doInvestigate: function(btnView) {
-            if (this.canAct()) {
-                const eventModel = this.getEventModel();
-                if (eventModel) {
-                    const attestationStat = eventModel.attestation;
-                    let discoverableAmt = mathMin(MAX_DISCOVERY_PER_INVESTIGATE, attestationStat.getValueToMax());
-                    if (discoverableAmt > 0) {
-                        // A failed check still uses the action.
-                        const check = this.checkSkillExpression(
-                            eventModel.getInvestigateSkillExpr(),
-                            eventModel.getInvestigateDifficulty()
-                        );
-                        
-                        showFloatingTextForSkillCheck(btnView, check);
-                        
-                        this.incrementActionExecCount();
-                        let adj;
-                        if (check.success) {
-                            let discovered = 1;
-                            if (eventModel.isRegularEvent() && discoverableAmt > discovered) {
-                                [discovered, discoverableAmt] = adjustMinMaxForInvestigation(this, discovered, discoverableAmt);
-                                discovered = randomInt(discoverableAmt, discovered);
-                            }
-                            
-                            adj = attestationStat.adjValue(discovered);
-                            pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
-                        }
-                        this.pushOntoLog({type:LOG_TYPE_INVESTIGATE, event:eventModel, success:check.success, amount:adj});
-                    }
-                }
-            }
-        },
-        
-        
         // Chronal //
         doReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
             if (this.canReloadChronal(requestedAmount)) {
@@ -787,9 +727,16 @@
             if (effects.length === 0) return;
             
             const logged = logEntry.effects = {};
-            for (const {key, stat, amount} of effects) {
+            for (const {effect, key, stat, amount} of effects) {
                 logged[key] = amount;
-                if (amount !== 0) stat.adjValue(amount);
+                if (amount !== 0) {
+                    stat.adjValue(amount);
+                    
+                    // An Event's attestation scores the same however it's gained, or lost.
+                    if (effect.scopeName === SCOPE_EVENT && effect.statId === STAT_ID_ATTESTATION) {
+                        pkg.model.adjScore(amount * SCORE_PER_ATTESTATION);
+                    }
+                }
             }
         },
         

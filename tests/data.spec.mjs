@@ -170,6 +170,29 @@ const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})
         return problems;
     };
 
+/*  Merges a config over a base as the game does for an Event's actions over the defaults: 
+    objects key by key, and anything else replaces. */
+const isPlainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value),
+    mergeCfg = (base, cfg) => {
+        if (cfg === undefined) return base;
+        if (!isPlainObject(base) || !isPlainObject(cfg)) return cfg;
+        for (const key in cfg) base[key] = mergeCfg(base[key], cfg[key]);
+        return base;
+    },
+    
+    // An Event's actions with the defaults first, merged with any of the same ID, and null 
+    // leaving a default out.
+    withDefaultActions = actions => {
+        const retval = {};
+        for (const id in defaultEventActions) {
+            if (actions?.[id] !== null) retval[id] = mergeCfg(structuredClone(defaultEventActions[id]), actions?.[id]);
+        }
+        for (const id in actions) {
+            if (!Object.hasOwn(defaultEventActions, id) && actions[id] !== null) retval[id] = actions[id];
+        }
+        return retval;
+    };
+
 /*  The stats an effect can change, by scope. Mirrors tc.EFFECT_STAT_IDS. */
 const EFFECT_STAT_IDS = {
     agent:['health', 'chronal', 'paradox'],
@@ -186,6 +209,8 @@ test('every investigate, action skill check and action and exit effect is valid,
             if (effects === null || typeof effects !== 'object' || Array.isArray(effects)) return [where + ' effects is not an object'];
             const effectProblems = [];
             for (const [key, cfg] of Object.entries(effects)) {
+                // Null leaves out an effect of a default action.
+                if (cfg === null) continue;
                 const at = where + ' effect ' + key,
                     [scope, statId, ...rest] = key.split('.');
                 if (rest.length > 0 || !EFFECT_STAT_IDS[scope]?.includes(statId)) effectProblems.push(at + ' is not a stat of the agent, event or timeline');
@@ -213,12 +238,20 @@ test('every investigate, action skill check and action and exit effect is valid,
             return effectProblems;
         };
     
-    // The default actions every Event gets are checked as if on an Event of their own.
-    expect(Object.keys(defaultEventActions)).toContain('_rest');
+    // The default actions every Event gets are checked as if on an Event of their own, and 
+    // each Event's actions as the game sees them: merged over the defaults.
+    expect(Object.keys(defaultEventActions)).toEqual(['_investigate', '_rest']);
     for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
-        if (event.investigate !== undefined) problems.push(...checkSkillCheckCfg(eventId + ' investigate', event.investigate));
+        if ('investigate' in event) problems.push(eventId + ' has investigate, which the _investigate action replaced');
         for (const [actionId, action] of Object.entries(event.actions ?? {})) {
+            if (action === null && !Object.hasOwn(defaultEventActions, actionId)) problems.push(eventId + '.' + actionId + ' is null, which only leaves out a default action');
+        }
+        for (const [actionId, action] of Object.entries(withDefaultActions(event.actions))) {
             const where = eventId + '.' + actionId;
+            if (action === null || typeof action !== 'object' || Array.isArray(action)) {
+                problems.push(where + ' is not an object');
+                continue;
+            }
             if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(where + ' skillCheck', action.skillCheck));
             if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
             if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
@@ -281,7 +314,7 @@ test('the data files are JSON5, but plain JSON apart from comments and trailing 
     
     // Drops comments and trailing commas, keeping strings intact so a "//" or "," inside one 
     // isn't touched.
-    const COMMENT = String.raw`\/\/[^\n]*|\/\*(?:[^*]|\*(?!\/))*\*\/`,
+    const COMMENT = String.raw`\/\/[^\n]*(?=\n|$)|\/\*(?:[^*]|\*(?!\/))*\*\/`,
         TOKENS = new RegExp(String.raw`"(?:[^"\\]|\\.)*"|` + COMMENT + String.raw`|,(?=(?:\s|` + COMMENT + String.raw`)*[}\]])`, 'g'),
         toPlainJson = text => text.replace(TOKENS, token => token[0] === '"' ? token : '');
     
@@ -302,4 +335,6 @@ test('the data files are JSON5, but plain JSON apart from comments and trailing 
     
     // The stripping itself: comments and trailing commas go, strings stay as they are.
     expect(JSON.parse(toPlainJson('{\n// a\n"a":"x // y, z",/* b */"b":[1, 2, /* c */],\n}'))).toEqual({a:'x // y, z', b:[1, 2]});
+    // A comment that has a } in it, between a comma and the next key.
+    expect(JSON.parse(toPlainJson('{"a":1,\n// e.g. {"b":2}, or\n"c":3}'))).toEqual({a:1, c:3});
 });
