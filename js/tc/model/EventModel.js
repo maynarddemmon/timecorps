@@ -322,12 +322,14 @@
                 //this.done = false;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
-                const skillCheck = attrs.skillCheck;
+                const {skillCheck, available} = attrs;
                 delete attrs.skillCheck;
+                delete attrs.available;
                 
                 this.callSuper(attrs);
                 
                 this.setSkillCheck(skillCheck);
+                this.setAvailable(available);
             },
             
             
@@ -335,6 +337,27 @@
             setLabel: function(label) {this.set('label', label, true);},
             
             setSet: function(set) {this.set('setObj', set, true);},
+            
+            /*  An optional condition on the agent who'd take the action, e.g.
+                "agent.health.value < agent.health.max". Unlike hidden, which is the same for
+                everyone at the Event, it's a check expression worked out per agent, so the
+                button can be disabled for one agent and not another. null for none. */
+            setAvailable: function(expr) {
+                if (expr == null || (typeof expr === 'string' && expr.trim() !== '')) {
+                    this.available = expr ?? null;
+                } else {
+                    console.warn('Event ' + this.event?.id + ' action ' + this.id + ': available must be a non-empty string (ignoring it):', expr);
+                    this.available = null;
+                }
+            },
+            getAvailable: function() {return this.available ?? null;},
+            
+            /*  Whether the agent can take the action, by its available condition. Doesn't
+                look at whether the agent has actions left. */
+            isAvailableFor: function(agentModel) {
+                const expr = this.getAvailable();
+                return expr == null || pkg.checks.isTrue(expr, {agent:agentModel, event:this.event});
+            },
             
             setSkillCheck: function(cfg) {
                 this.addSkillCheck(null, cfg);

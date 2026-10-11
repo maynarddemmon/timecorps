@@ -75,7 +75,7 @@ Only property paths are watched. A method call such as `event.isHidden()` is wor
 
 ### Check expressions
 
-Used for skill checks (`check`) and for effect amounts (`onSuccess`, `onFailure`). They're worked out once, when the check happens, and can use:
+Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`) and for an action's `available` condition. They're worked out when they're needed rather than watched, and can use:
 
 | Name | Is |
 |---|---|
@@ -88,7 +88,11 @@ Used for skill checks (`check`) and for effect amounts (`onSuccess`, `onFailure`
 
 `Math` is available as usual, e.g. `Math.max(agent.skills.deception, agent.skills.disguise)`.
 
-An expression that doesn't compile, throws or doesn't give a number fails its check, or does nothing as an amount, with a warning in the console.
+The result is taken as a number: `true` is 1 and `false` is 0. An expression that doesn't compile, throws or doesn't give a finite number (say `agent.skils.stealth`, misspelled, which gives NaN) fails its check, or does nothing as an amount, with a warning in the console.
+
+A check is the check expression minus the difficulty, so a comparison such as `agent.skills.stealth > 50` isn't caught: it's 1 or 0 minus the difficulty, which is a valid but nearly useless check. Write a check as an amount of skill, e.g. `agent.skills.stealth`.
+
+An `available` condition gives a boolean (a number counts as true unless it's 0). It never rolls: a `d()` in it counts as its average. A broken condition is false, with a warning, so the action shows as unavailable rather than quietly allowed.
 
 ## Stats
 
@@ -245,6 +249,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`skillCheck`**: see [Skill checks](#skill-checks). Leave it out for an even chance: difficulty 250 against no skill.
 - **`set`**: on success, sets the event's own values. Each new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
+- **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`effects`**: changes to stats. See [Effects](#effects).
 
 Taking an action uses one of the agent's actions at the event, whether the check passes or fails. The button shows the check's ease ("even", "tough"…) and any effects in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox.
@@ -343,6 +348,11 @@ An event changes one by giving an action with the same ID. It's merged over the 
 	// No time to rest.
 	"_rest":null
 }
+```
+
+```json5
+// Rest even at full health, by leaving out the default's condition.
+"_rest":{"available":null}
 ```
 
 ```json5

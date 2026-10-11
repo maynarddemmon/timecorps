@@ -258,6 +258,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     continue;
                 }
                 if (action.skillCheck !== undefined) problems.push(...checkSkillCheckCfg(where + ' skillCheck', action.skillCheck));
+                // A condition with the same parameters as an amount. null leaves out a default's.
+                if (action.available != null) {
+                    const error = getAmountCompileError(action.available);
+                    if (error) problems.push(where + ' available ' + error);
+                }
                 if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
                 if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }

@@ -67,6 +67,10 @@
             return view;
         },
         
+        /*  What compile gives for an expression that doesn't compile. NaN makes every check
+            with it fail, and evaluateExpr doesn't warn about it again. */
+        NOT_COMPILED = () => NaN,
+        
         /*  Returns the function, or throws if the expression doesn't compile. */
         build = expr => {
             if (typeof expr !== 'string' || expr.trim() === '') throw new TypeError('expression must be a non-empty string');
@@ -81,35 +85,40 @@
                 } catch (err) {
                     console.warn('Check expression does not compile (' + err.message + '):', expr);
                     // Stands in for an expression that doesn't compile. It's cached like any 
-                    // other, so the warning only happens once per expression. NaN makes every
-                    // check with it fail.
-                    func = () => NaN;
+                    // other, so the warning only happens once per expression.
+                    func = NOT_COMPILED;
                 }
                 COMPILED.set(expr, func);
             }
             return func;
         },
         
-        /*  Evaluates an expression with die as its d function. NaN, with a warning, if the 
-            expression throws or isn't a number. */
+        /*  Evaluates an expression with die as its d function, as a number: a boolean is 1
+            or 0, and anything else is converted as Number() does. NaN, with a warning, if the
+            expression throws or the result isn't a finite number, e.g. from a misspelled 
+            property. */
         evaluateExpr = (expr, {agent, event, difficulty=0, margin=0}, die) => {
+            const func = compile(expr);
+            if (func === NOT_COMPILED) return NaN; // Already warned about.
+            
             let value;
             try {
-                value = compile(expr)(getAgentView(agent), event, pkg.model, difficulty, die, margin);
+                value = func(getAgentView(agent), event, pkg.model, difficulty, die, margin);
             } catch (err) {
                 console.warn('Check expression threw (' + err.message + '):', expr);
                 return NaN;
             }
-            if (typeof value !== 'number') {
-                console.warn('Check expression is not a number (' + typeof value + '):', expr);
+            const number = Number(value);
+            if (!Number.isFinite(number)) {
+                console.warn('Check expression is not a finite number (' + value + '):', expr);
                 return NaN;
             }
-            return value;
+            return number;
         },
         
         /*  Evaluates an expression to an ease, clamped to [minEase, maxEase], with die as the 
-            expression's d function. NaN if the expression throws or isn't a number, which fails 
-            any check. */
+            expression's d function. NaN if the expression throws or isn't a finite number, 
+            which fails any check. */
         evaluateEase = (expr, cfg, die) => {
             const {difficulty=0, maxEase=0, minEase=-DIE_SIZE} = cfg;
             
@@ -226,6 +235,13 @@
             
             /*  An amount without rolling: any d(sides) counts as its average. */
             getAverageAmount: (expr, cfg={}) => evaluateExpr(expr, cfg, averageDie),
+            
+            /*  Evaluates a condition, such as whether an action is available, with the same
+                parameters as a check. Nothing is rolled: any d(sides) counts as its average.
+                A boolean is the usual result, and a number counts as true unless it's 0. A 
+                broken condition is false, with evaluateExpr's warning, so it shows up rather
+                than quietly allowing everything. */
+            isTrue: (expr, cfg={}) => !!CHECK.getAverageAmount(expr, cfg),
             
             /*  Describes an amount of damage, e.g. 'light' or 'deadly'. */
             toDamagePhrase,

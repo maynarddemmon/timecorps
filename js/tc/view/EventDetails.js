@@ -44,7 +44,7 @@
                 // An action without an actionType has no name to show.
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
                     (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : ''),
-                disabled:agentCantActHere /*|| actionModel.done*/
+                disabled:agentCantActHere || !actionModel.isAvailableFor(agentModel) /*|| actionModel.done*/
             };
         },
         

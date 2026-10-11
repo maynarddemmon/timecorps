@@ -130,9 +130,11 @@ test('amounts are whole points, a positive one heals, and a broken one does noth
     expect(await changeFor('nope + 1')).toEqual([0, 0]);
     expect(await changeFor('Math.sqrt(-1)')).toEqual([0, 0]);
     
-    // Warned about each time it's evaluated, e.g. for the exit button's tooltip too.
-    expect(problems.warnings.length).toBeGreaterThan(0);
-    for (const warning of problems.warnings) expect(warning).toBe('Check expression threw (nope is not defined): nope + 1');
+    // Both warned about each time they're evaluated, e.g. for the exit button's tooltip too.
+    expect(new Set(problems.warnings)).toEqual(new Set([
+        'Check expression threw (nope is not defined): nope + 1',
+        'Check expression is not a finite number (NaN): Math.sqrt(-1)'
+    ]));
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -684,7 +686,7 @@ test('every regular event offers Rest, hidden when the event is under an hour', 
     expect(problems.warnings).toEqual([]);
 });
 
-test('resting is likelier to work the healthier the agent is, and never heals past max health', async ({page}) => {
+test('resting is likelier to work the healthier the agent is, never heals past max health, and is unavailable at full health', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
@@ -700,9 +702,10 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
                     tc.rng.queueRolls(...rolls);
                     alpha.doAction(rest);
                     const left = tc.rng.getQueuedRollCount(),
-                        entry = alpha.getLog()[alpha.getLog().length - 1];
+                        acted = alpha.getActionExecCount(),
+                        entry = acted ? alpha.getLog()[alpha.getLog().length - 1] : null;
                     tc.rng.clearQueuedRolls();
-                    return {health:health.value, logged:entry.effects?.['agent.health'], success:entry.success, left};
+                    return {health:health.value, logged:entry?.effects?.['agent.health'], success:entry?.success, left, acted};
                 },
                 phraseAt = value => {
                     health.setValue(value);
@@ -726,6 +729,10 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
 
                 // Near full health even a roll of 1 passes, and the healing is capped.
                 nearFull:restFrom(health.max - 2, 1, 3),
+                
+                // At full health Rest isn't available, so it's refused without rolling or
+                // using an action.
+                availableAtFull:(health.setValue(health.max), rest.isAvailableFor(alpha)),
                 full:restFrom(health.max, 1, 3)
             };
         });
@@ -733,10 +740,11 @@ test('resting is likelier to work the healthier the agent is, and never heals pa
     expect(out.risk).toBe(true);
     expect(out.effectsPhrase).toBe('Health: ~+3 if passed');
     expect(out.phrases).toEqual(['hopeless', 'even', 'ensured']);
-    expect(out.failAt60).toEqual({health:60, logged:undefined, success:false, left:1});
-    expect(out.passAt60).toEqual({health:64, logged:4, success:true, left:0});
-    expect(out.nearFull).toEqual({health:out.max, logged:2, success:true, left:0});
-    expect(out.full).toEqual({health:out.max, logged:0, success:true, left:0});
+    expect(out.failAt60).toEqual({health:60, logged:undefined, success:false, left:1, acted:1});
+    expect(out.passAt60).toEqual({health:64, logged:4, success:true, left:0, acted:1});
+    expect(out.nearFull).toEqual({health:out.max, logged:2, success:true, left:0, acted:1});
+    expect(out.availableAtFull).toBe(false);
+    expect(out.full).toEqual({health:out.max, logged:undefined, success:undefined, left:2, acted:0});
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
@@ -760,15 +768,24 @@ test('the Rest button is flagged for health, and a rest floats its healing', asy
     await expect.poll(() => floatingTexts(page)).toEqual([expect.stringMatching(/^Succeeded by [\d.]+ · \+8♥$/)]);
     await expect.poll(() => floatingTexts(page)).toEqual([]);
     
-    // At full health there's nothing to heal, so no change floats.
+    // At full health there's nothing to heal, so Rest is disabled and a click does nothing.
     await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL');
         alpha.health.setValue(alpha.health.max);
         alpha.setActionExecCount(0);
-        tc.rng.queueRolls(999, 0, 0, 0, 0, 0, 0, 0, 0);
     });
-    await btn.click();
-    await expect.poll(() => floatingTexts(page)).toEqual([expect.stringMatching(/^Succeeded by [\d.]+$/)]);
+    await expect(btn).toHaveClass(/disabled/);
+    await btn.click({force:true});
+    await page.waitForTimeout(200);
+    expect(await floatingTexts(page)).toEqual([]);
+    expect(await page.evaluate(() => tc.model.getAgentModel('AL').getActionExecCount())).toBe(0);
+    
+    // Hurt again, it's back.
+    await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.health.setValue(alpha.health.max - 1);
+    });
+    await expect(btn).not.toHaveClass(/disabled/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -795,8 +812,10 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
             };
         });
     expect(out).toEqual({heals:45, hurts:35, broken:40, notANumber:40});
-    expect(problems.warnings.length).toBeGreaterThan(0);
-    for (const warning of problems.warnings) expect(warning).toContain('nope is not defined');
+    expect(new Set(problems.warnings)).toEqual(new Set([
+        'Check expression threw (nope is not defined): -nope',
+        'Check expression is not a finite number (NaN): -Math.sqrt(-1)'
+    ]));
     expect(problems.pageErrors).toEqual([]);
 });
 

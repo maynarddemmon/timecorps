@@ -89,6 +89,7 @@
 		"_rest":{
 			"label":"Rest",
 			"hidden":"event.duration < 1000 * 60 * 60",
+			"available":"agent.health.value < agent.health.max",
 			// Hopeless at half health or less, rising linearly to ensured at 90% or more.
 			"skillCheck":{
 				"difficulty":1000,

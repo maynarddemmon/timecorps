@@ -567,35 +567,38 @@
                 return;
             }
             
-            // A failed check still uses the action.
-            const check = this.checkSkillExpression(
-                    actionModel.getActionSkillExpr(),
-                    actionModel.getActionSkillDifficulty()
-                ),
-                effects = this.rollEffectsFor(actionModel, check),
-                logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
-            
-            // Now show floating panel, with the effects so there's only one. (must be before 
-            // anything that triggers a rerender of EventDetails such as applying the effects or
-            // incrementActionExecCount, since that destroys the btnView)
-            showFloatingTextForSkillCheck(btnView, {...check, effects});
-            
-            this.applyEffects(effects, logEntry);
-            this.incrementActionExecCount();
-            
-            if (check.success) {
-                for (const key in setObj) {
-                    const value = setObj[key],
-                        eventValueModel = event.values[key];
-                    if (eventValueModel) {
-                        eventValueModel.setValue(value, false);
-                    } else {
-                        console.warn('Missing Value in doIt:' + key);
+            // Don't proceed with an action this Agent doesn't have available.
+            if (actionModel.isAvailableFor(this)) {
+                // A failed check still uses the action.
+                const check = this.checkSkillExpression(
+                        actionModel.getActionSkillExpr(),
+                        actionModel.getActionSkillDifficulty()
+                    ),
+                    effects = this.rollEffectsFor(actionModel, check),
+                    logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
+                
+                // Now show floating panel, with the effects so there's only one. (must be before 
+                // anything that triggers a rerender of EventDetails such as applying the effects or
+                // incrementActionExecCount, since that destroys the btnView)
+                showFloatingTextForSkillCheck(btnView, {...check, effects});
+                
+                this.applyEffects(effects, logEntry);
+                this.incrementActionExecCount();
+                
+                if (check.success) {
+                    for (const key in setObj) {
+                        const value = setObj[key],
+                            eventValueModel = event.values[key];
+                        if (eventValueModel) {
+                            eventValueModel.setValue(value, false);
+                        } else {
+                            console.warn('Missing Value in doIt:' + key);
+                        }
                     }
+                    //actionModel.setDone(true);
                 }
-                //actionModel.setDone(true);
+                this.pushOntoLog(logEntry);
             }
-            this.pushOntoLog(logEntry);
         },
         
         

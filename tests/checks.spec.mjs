@@ -136,23 +136,33 @@ test.describe('checks', () => {
     test('a broken expression fails the check with a warning, even on the best roll', async ({page}) => {
         const problems = await startGame(page);
         
-        // Doesn't compile.
+        // Doesn't compile. Warned about once, however often it's used.
         expect(await page.evaluate(() => tc.checks.getCompileError('difficulty +'))).not.toBeNull();
+        expect((await evaluateCheck(page, 'difficulty +', {roll:999})).success).toBe(false);
         expect((await evaluateCheck(page, 'difficulty +', {roll:999})).success).toBe(false);
         
         // Throws while running.
         expect((await evaluateCheck(page, 'agent.nothing.here - difficulty', {roll:999})).success).toBe(false);
         
-        // Isn't a number, e.g. a leftover boolean success expression.
-        expect((await evaluateCheck(page, 'true', {roll:999})).success).toBe(false);
-        
         // Is NaN, e.g. a misspelled property.
         expect((await evaluateCheck(page, 'agent.skils - difficulty', {roll:999})).success).toBe(false);
         
-        expect(problems.warnings).toHaveLength(3);
+        // Isn't a number at all.
+        expect((await evaluateCheck(page, '"hard"', {roll:999})).success).toBe(false);
+        
+        expect(problems.warnings).toHaveLength(4);
         expect(problems.warnings[0]).toContain('does not compile');
         expect(problems.warnings[1]).toContain('threw');
-        expect(problems.warnings[2]).toContain('is not a number');
+        expect(problems.warnings[2]).toContain('is not a finite number (NaN)');
+        expect(problems.warnings[3]).toContain('is not a finite number (hard)');
+    });
+    
+    test('a result is converted to a number, so a boolean is 1 or 0', async ({page}) => {
+        const problems = await startGame(page);
+        expect(await page.evaluate(() => [
+            tc.checks.rollAmount('true'), tc.checks.rollAmount('false'), tc.checks.rollAmount('"7"')
+        ])).toEqual([1, 0, 7]);
+        expect(problems.warnings).toEqual([]);
     });
     
     test('valid expressions have no compile error', async ({page}) => {
@@ -407,4 +417,45 @@ test('every skill named in the data is a known skill', async ({page}) => {
     }
     
     expect([...unknown]).toEqual([]);
+});
+
+test.describe('conditions', () => {
+    const isTrue = (page, expr, {agentId='AL', eventId='origin'} = {}) => page.evaluate(
+        ([expr, agentId, eventId]) => tc.checks.isTrue(expr, {agent:tc.model.getAgentModel(agentId), event:tc.model.getEventModel(eventId)}),
+        [expr, agentId, eventId]
+    );
+    
+    test('a condition sees the agent, event and timeline, and is true or false', async ({page}) => {
+        const problems = await startGame(page);
+        expect(await isTrue(page, 'agent.health.value < agent.health.max')).toBe(true);
+        expect(await isTrue(page, 'agent.health.value > agent.health.max')).toBe(false);
+        expect(await isTrue(page, 'event.id === "origin" && timeline.paradox.value === 0')).toBe(true);
+        
+        // A number counts as true unless it's 0.
+        expect(await isTrue(page, 'agent.health.max - agent.health.value')).toBe(true);
+        expect(await isTrue(page, 'agent.paradox.value')).toBe(false);
+        
+        // Nothing is rolled: a die counts as its average.
+        expect(await page.evaluate(() => {
+            tc.rng.queueRolls(0);
+            const result = tc.checks.isTrue('d(6) === 3.5');
+            return [result, tc.rng.getQueuedRollCount()];
+        })).toEqual([true, 1]);
+        
+        expect(problems.warnings).toEqual([]);
+    });
+    
+    test('a broken condition is false, with a warning', async ({page}) => {
+        const problems = await startGame(page);
+        expect(await isTrue(page, 'agent.health.value <')).toBe(false);
+        expect(await isTrue(page, 'agent.nothing.here')).toBe(false);
+        expect(await isTrue(page, '"yes"')).toBe(false);
+        expect(await isTrue(page, 'agent.skils / 2')).toBe(false); // NaN
+        
+        expect(problems.warnings).toHaveLength(4);
+        expect(problems.warnings[0]).toContain('does not compile');
+        expect(problems.warnings[1]).toContain('threw');
+        expect(problems.warnings[2]).toContain('is not a finite number (yes)');
+        expect(problems.warnings[3]).toContain('is not a finite number (NaN)');
+    });
 });

@@ -134,6 +134,9 @@
 			"label":"Rest",
 			// Only Events of an hour or more are long enough to rest in.
 			"hidden":"event.duration < 1000 * 60 * 60",
+			// Nothing to heal at full health, so don't let an agent waste an action on it. We also
+			// disable for less than 50% health since the skill check provides no benefit.
+			"available":"(agent.health.value < agent.health.max) && (agent.health.value / agent.health.max) > 0.5",
 			
 			// Rest helps light injuries but not serious ones: hopeless at half health or less,
 			// rising linearly to ensured at 90% or more.

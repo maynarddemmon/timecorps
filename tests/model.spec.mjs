@@ -697,3 +697,46 @@ test('a stat previews an adjustment without changing, and adjusts by the same am
         applyUpperLimit:[10, 60, []], applyNaN:[0, 50, []]
     });
 });
+
+test('an action\'s available condition is worked out per agent, and can be overridden or left out', async ({page}) => {
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const alpha = tc.model.getAgentModel('AL'),
+                bravo = tc.model.getAgentModel('BR'),
+                build = actions => new tc.EventModel({actions, id:'available_test'}),
+                availability = (eventModel, actionId) => {
+                    const actionModel = eventModel.getActionModels()[actionId];
+                    return [alpha, bravo].map(agent => actionModel.isAvailableFor(agent));
+                },
+                out = {};
+            
+            alpha.health.setValue(alpha.health.max);
+            bravo.health.setValue(bravo.health.max - 1);
+            
+            // The default Rest is only available to the hurt agent.
+            let eventModel = build({});
+            out.rest = availability(eventModel, '_rest');
+            eventModel.destroy();
+            
+            // An override replaces the condition, and null leaves it out.
+            eventModel = build({_rest:{available:'agent.id === "AL"'}});
+            out.overridden = availability(eventModel, '_rest');
+            eventModel.destroy();
+            eventModel = build({_rest:{available:null}});
+            out.removed = availability(eventModel, '_rest');
+            eventModel.destroy();
+            
+            // An action without one is available to everyone, and a bad one is ignored.
+            eventModel = build({plain:{label:'Plain', set:{}}, bad:{label:'Bad', set:{}, available:7}});
+            out.plain = availability(eventModel, 'plain');
+            out.bad = availability(eventModel, 'bad');
+            eventModel.destroy();
+            return out;
+        });
+    expect(out).toEqual({
+        rest:[false, true], overridden:[true, false], removed:[true, true],
+        plain:[true, true], bad:[true, true]
+    });
+    expect(problems.warnings).toEqual(['Event available_test action bad: available must be a non-empty string (ignoring it): 7']);
+    expect(problems.pageErrors).toEqual([]);
+});
