@@ -102,8 +102,13 @@
 	/* Timeline: an Event the current mission's Objectives depend on. A box-shadow ring rather
 	   than a border or outline, so it doesn't change the box's size and still shows alongside
 	   the selected box's outline, which is set inline. */
-	.entangled {box-shadow:0 0 0 4px #ff96;}
-
+	@keyframes strobeEntangled {
+		0% {box-shadow:0 0 0 4px #ff90;}
+		50% {box-shadow:0 0 0 4px #ff99;}
+		100% {box-shadow:0 0 0 4px #ff90;}
+	}
+	.entangled {animation: strobeEntangled 0.5s ease-in-out infinite;}
+	
 	/* Buttons */
 	.tc-Btn.disabled {opacity:0.35;}
 	
