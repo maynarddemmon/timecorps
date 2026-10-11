@@ -68,6 +68,34 @@
             },
             isSuccess: function() {return this.success;},
             
+            /*  The parts of Events that the success expression reads, so the player can see
+                what the Objective depends on. Each is {eventModel, valueModel, statId}: a
+                Causator has a valueModel, an Event stat (e.g. attestation) has a statId, and
+                anything else read from an Event has neither. One entry per Causator or stat,
+                in the order the expression first reads them. */
+            getPrecursors: function() {
+                const EventModel = pkg.EventModel,
+                    successFuncName = pkg.getConstraintFuncName('success'),
+                    retval = [];
+                // The constraint binds the expression's paths last to first, so reverse them.
+                const observables = [...this.getAllObservables((_observable, funcName) => funcName === successFuncName)].reverse();
+                for (const observable of observables) {
+                    if (observable.isA(EventModel)) {
+                        retval.push({eventModel:observable, valueModel:null, statId:null});
+                    } else if (observable.event?.isA(EventModel)) {
+                        retval.push({eventModel:observable.event, valueModel:observable, statId:null});
+                    } else if (observable.notifyTargets?.isA?.(EventModel)) {
+                        retval.push({eventModel:observable.notifyTargets, valueModel:null, statId:observable.id});
+                    }
+                }
+                return retval;
+            },
+            
+            /*  Whether the success expression reads anything from the Event. */
+            dependsOnEvent: function(eventModel) {
+                return this.getPrecursors().some(precursor => precursor.eventModel === eventModel);
+            },
+            
             doDescriptionChanged: function() {this.operation.notifyCollectionOfUpdate();}
         });
     
@@ -149,6 +177,11 @@
                 }
             }
             return {success, fail, total:success + fail, completed:fail === 0};
+        },
+        
+        /*  Whether any Objective's success expression reads anything from the Event. */
+        dependsOnEvent: function(eventModel) {
+            return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.dependsOnEvent(eventModel));
         },
         
         canProceed: function() {

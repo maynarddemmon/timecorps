@@ -28,6 +28,13 @@
 						"The Titanic must not hit the iceberg."
 					],
 					"success":"!events.collision.values.struck.value"
+				},
+				"paradox":{
+					"name":"No Paradox",
+					"description":[
+						"This timeline must remain perfectly during the original loss of life."
+					],
+					"success":"events.collision.paradox.value === 0 && events.casualties.paradox.value === 0 && events.californian_nearby.paradox.value === 0"
 				}
 			},
 			"onSuccess":{

@@ -383,6 +383,12 @@
         },
         // scrollToDebounced: setup in initNode
         
+        /*  Scrolls back to the selected Event, cancelling any pending scrollToDebounced,
+            e.g. once the mouse leaves a button that scrolled the timeline elsewhere. */
+        scrollToSelectedEvent: function() {
+            this.scrollToEvent(timelineView.getSelectedEventBox()?.model, true);
+        },
+        
         // Event Dispatching
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
@@ -403,6 +409,7 @@
                     break;
                 case SCOPE_EVENTS:
                     eventDetailsView.notifyEventModelChanged(instanceModel);
+                    opsView.notifyEventModelChanged(instanceModel);
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);

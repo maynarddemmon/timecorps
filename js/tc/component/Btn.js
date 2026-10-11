@@ -62,7 +62,45 @@
                 this.callSuper(parent, attrs);
             }
         });
+        
+    /*  Scrolls the timeline to an Event while the mouse is over the button, and back to the
+        selected Event when it leaves. The Event comes from getNavEventModel.
+        
+        Attributes:
+            navEventModel:EventModel - The Event to scroll to. */
+    const EventNavHover = pkg.EventNavHover = new JS.Module('EventNavHover', {
+        setNavEventModel: function(v) {this.navEventModel = v;},
+        getNavEventModel: function() {return this.navEventModel;},
+        
+        setMouseOver: function(v) {
+            if (this.inited && this.mouseOver !== v) {
+                this.callSuper(v);
+                const app = pkg.app;
+                if (this.mouseOver) {
+                    app.scrollToDebounced(this.getNavEventModel());
+                } else {
+                    app.scrollToSelectedEvent();
+                }
+            }
+        }
+    });
     
+    /*  A button that selects an Event, and scrolls the timeline to it on hover. The text
+        defaults to the Event's name followed by a forward arrow.
+        
+        Attributes:
+            navEventModel:EventModel - The Event to select. */
+    pkg.EventNavBtn = new JSClass('EventNavBtn', UnderlineBtn, {
+        include: [EventNavHover],
+        
+        initNode: function(parent, attrs) {
+            attrs.text ??= attrs.navEventModel.name + ' ' + pkg.ICON_NAV_FORWARD;
+            this.callSuper(parent, attrs);
+        },
+        
+        doActivated: function() {pkg.app.selectEventBox(this.getNavEventModel());}
+    });
+
     pkg.UnderlineActionBtn = new JSClass('UnderlineActionBtn', UnderlineBtn, {
         initNode: function(parent, attrs) {
             attrs.textColor ??= colorAction;

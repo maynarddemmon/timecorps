@@ -92,7 +92,7 @@
             const eventBox = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? null;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
-                pkg.app.scrollToEvent(pkg.app.getTimelineView().getSelectedEventBox()?.model, true);
+                pkg.app.scrollToSelectedEvent();
                 
                 // Run whatever was waiting for the animations to finish. Taken first since a
                 // callback could start more animations.

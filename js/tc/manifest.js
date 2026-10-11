@@ -14,7 +14,8 @@ JS.Packages(file => {
         'tc.SimpleAgentMarker','tc.SimpleAgentGridMarker'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Btn.js').provides(
-            'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn'
+            'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn','tc.EventNavHover',
+            'tc.EventNavBtn'
     ).requires('tc.SimpleAgentMarker');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
@@ -52,7 +53,9 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
     );
-    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires('tc.Describable','tc.MediaSupport');
+    file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires(
+        'tc.Describable','tc.MediaSupport'
+    );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
         'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
@@ -70,11 +73,11 @@ JS.Packages(file => {
         'tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.SimpleAgentMarker',
-        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.EventNavBtn',
+        'tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventNavBtn'
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires(
         'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow','tc.TallView',

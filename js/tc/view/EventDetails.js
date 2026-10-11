@@ -9,7 +9,7 @@
         } = myt,
         
         {
-            UnderlineBtn, UnderlineActionBtn, AgentBtn, SquareBtn, WideView, StatusAgentMarkerMedium,
+            UnderlineBtn, UnderlineActionBtn, EventNavBtn, EventNavHover, AgentBtn, SquareBtn, WideView, StatusAgentMarkerMedium,
             ContainerRow, Row, TextForFlow,
             theme:{
                 spacing, padding, btnHeight,
@@ -17,7 +17,7 @@
                 fontSizeMedium, fontSizeLarge
             },
             cfg:{RELOAD_CHRONAL_AMOUNT},
-            ICON_EVENT, ICON_SEPARATOR, ICON_NAV_FORWARD, ICON_VIEW, ICON_HQ,
+            ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
@@ -173,18 +173,7 @@
                         const toEventModel = exitModel.getToEventModel();
                         if (!toEventModel.isHidden()) {
                             if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
-                            const btn = new UnderlineBtn(exitView, {}, [AgentExitBtn, {
-                                setMouseOver: function(v) {
-                                    if (this.inited && this.mouseOver !== v) {
-                                        this.callSuper(v);
-                                        if (this.mouseOver) {
-                                            pkg.app.scrollToDebounced(toEventModel);
-                                        } else {
-                                            pkg.app.scrollToEvent(eventModel, true);
-                                        }
-                                    }
-                                }
-                            }]);
+                            const btn = new UnderlineBtn(exitView, {navEventModel:toEventModel}, [AgentExitBtn, EventNavHover]);
                             btn.configure(agentModel, exitModel, true);
                             addedCount++;
                         }
@@ -195,23 +184,6 @@
             }
         }),
         
-        /*  A button that selects another Event, and scrolls the timeline to it on hover. */
-        makeEventNavBtn = (parent, toEventModel, fromEventModel) => new UnderlineBtn(parent, {
-            text:toEventModel.name + ' ' + ICON_NAV_FORWARD
-        }, [{
-            setMouseOver: function(v) {
-                if (this.inited && this.mouseOver !== v) {
-                    this.callSuper(v);
-                    if (this.mouseOver) {
-                        pkg.app.scrollToDebounced(toEventModel);
-                    } else {
-                        pkg.app.scrollToEvent(fromEventModel, true);
-                    }
-                }
-            },
-            doActivated: () => {pkg.app.selectEventBox(toEventModel);}
-        }]),
-        
         CausatorLinkFlow = new JSClass('CausatorLinkFlow', WideView, {
             initNode: function(parent, attrs) {
                 attrs.x ??= padding;
@@ -221,14 +193,14 @@
             },
             
             /*  Shows the label and a nav button for each Event. Hides itself if there are none. */
-            update: function(label, eventModels, fromEventModel) {
+            update: function(label, eventModels) {
                 const self = this;
                 self.destroyAllSubviews();
                 if (eventModels.length > 0) {
                     new TextForFlow(self, {text:label});
                     eventModels.forEach((eventModel, idx) => {
                         if (idx > 0) new TextForFlow(self, {text:ICON_SEPARATOR});
-                        makeEventNavBtn(self, eventModel, fromEventModel);
+                        new EventNavBtn(self, {navEventModel:eventModel});
                     });
                 }
                 self.setVisible(eventModels.length > 0);
@@ -269,13 +241,11 @@
                 // Only show links the player is allowed to know about.
                 self.precursorsFlow.update(
                     'Precursors:\u00A0',
-                    [...valueModel.getPrecursors()].filter(precursor => !precursor.isHidden() && !eventModel.isAffectedByHidden(precursor)),
-                    eventModel
+                    [...valueModel.getPrecursors()].filter(precursor => !precursor.isHidden() && !eventModel.isAffectedByHidden(precursor))
                 );
                 self.descendantsFlow.update(
                     'Descendants:\u00A0',
-                    [...valueModel.getDescendants()].filter(descendant => !descendant.isHidden() && !descendant.isAffectedByHidden(eventModel)),
-                    eventModel
+                    [...valueModel.getDescendants()].filter(descendant => !descendant.isHidden() && !descendant.isAffectedByHidden(eventModel))
                 );
                 self.linksView.setVisible(self.precursorsFlow.visible || self.descendantsFlow.visible);
             }

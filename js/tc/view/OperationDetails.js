@@ -6,14 +6,23 @@
         {PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
         {
-            UnderlineBtn, WideView, MiniPanel, GrandWidthMixin, DetailRow,
+            UnderlineBtn, EventNavBtn, WideView, MiniPanel, GrandWidthMixin, DetailRow, 
+            DetailRowFlow, TextForFlow,
             theme:{
                 spacing, padding,
                 colorUltraLight, colorMegaDark, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_MISSION, ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED
+            ICON_MISSION, ICON_NEXT, ICON_CHECKED, ICON_UNCHECKED, ICON_SEPARATOR, ICON_NAV_FORWARD,
+            getStatName
         } = pkg,
+        
+        /*  The button text for one part of an Event that an Objective depends on, e.g.
+            "Collision: Struck ❯". */
+        getPrecursorText = ({eventModel, valueModel, statId}) => {
+            const partName = valueModel ? valueModel.getName() : statId ? getStatName(statId) : null;
+            return eventModel.name + (partName ? ': ' + partName : '') + ' ' + ICON_NAV_FORWARD;
+        },
         
         ObjectiveRow = new JSClass('ObjectiveRow', WideView, {
             initNode: function(parent, attrs) {
@@ -52,6 +61,7 @@
                 }]);
                 self.nameView = new DetailRow(self, {label:'Name', labelWidth});
                 self.descriptionView = new DetailRow(self, {label:'Description', labelWidth});
+                self.precursorsView = new DetailRowFlow(self, {label:'Entanglements', labelWidth});
                 
                 new SpacedLayout(self, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
                 
@@ -63,6 +73,35 @@
                 self.nameView.setValue(objectiveModel.getName());
                 self.descriptionView.setValue(objectiveModel.getDescription());
                 self.successView.setSuccess(objectiveModel.isSuccess());
+                self.updatePrecursors();
+            },
+            
+            /*  A nav button for each part of an Event the Objective depends on. Parts the
+                player doesn't know about yet, a hidden Event or Causator, are summed up as
+                "Unknown" so the row doesn't give them away. */
+            updatePrecursors: function() {
+                const precursorsView = this.precursorsView,
+                    precursors = this.objectiveModel.getPrecursors();
+                precursorsView.clearContent();
+                
+                let addedCount = 0,
+                    hasUnknown = false;
+                for (const precursor of precursors) {
+                    if (precursor.eventModel.isHidden() || precursor.valueModel?.isHidden()) {
+                        hasUnknown = true;
+                    } else {
+                        if (addedCount > 0) new TextForFlow(precursorsView, {text:ICON_SEPARATOR});
+                        new EventNavBtn(precursorsView, {
+                            navEventModel:precursor.eventModel, text:getPrecursorText(precursor)
+                        });
+                        addedCount++;
+                    }
+                }
+                if (hasUnknown) {
+                    if (addedCount > 0) new TextForFlow(precursorsView, {text:ICON_SEPARATOR});
+                    new TextForFlow(precursorsView, {text:'Unknown', fontStyle:'italic'});
+                }
+                precursorsView.setVisible(precursors.length > 0);
             }
         });
     
@@ -137,6 +176,12 @@
         
         notifyOperationModelChanged: function(operationModel) {
             if (operationModel && this.operationModel === operationModel) this.updateForOperationModel();
+        },
+        
+        /*  An Objective's precursors show only what the player knows about, so they're 
+            redone when one of their Events changes, e.g. is revealed. */
+        notifyEventModelChanged: function(eventModel) {
+            if (eventModel && this.operationModel?.dependsOnEvent(eventModel)) this.updateForOperationModel();
         },
         
         updateForOperationModel: function() {

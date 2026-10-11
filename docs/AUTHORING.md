@@ -428,6 +428,7 @@ HQ and The Void leave out `_investigate` this way.
 
 - **Setup.** When a mission starts, its setup is applied once: historicity raised, the Mission Brief opened, agents revealed and awarded, and the selection made.
 - **Completion.** A mission is complete when every objective's `success` is true. Then its rewards are granted once, and the debrief is shown, with phrases that can describe how it was won.
+- **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
 
