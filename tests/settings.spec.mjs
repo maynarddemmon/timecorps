@@ -11,8 +11,8 @@ const LABEL = 'Save on mission completion',
     // Completes the first mission by setting its Causators the way Actions do.
     completeFirstMission = page => page.evaluate(() => {
         const m = tc.model;
-        m.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue('true', false);
-        m.getEventModel('engine_order').getValueModels().countermandAstern.setValue('true', false);
+        m.getEventModel('plan').getValueModels().prepared.setValue('true', false);
+        m.getEventModel('lever').getValueModels().pulled.setValue('true', false);
     }),
     
     turnSettingOff = async page => {
@@ -30,12 +30,12 @@ test('completing a mission saves by default', async ({page}) => {
     
     await completeFirstMission(page);
     await expect(visibleText(page, 'Your progress has been saved.')).toBeVisible();
-    expect((await readSave(page)).data.operations.titanic_noCollision.successGranted).toBe(true);
+    expect((await readSave(page)).data.operations.first.successGranted).toBe(true);
     await expect(page.getByTitle(/^Last saved /)).toBeVisible();
     
     // The save restores to the completed mission without completing it again.
     await reloadGame(page);
-    expect(await getCurrentOperationId(page)).toBe('titanic_noCollision');
+    expect(await getCurrentOperationId(page)).toBe('first');
     await page.waitForTimeout(250);
     await expect(dialogTitle(page, 'Mission Complete')).toHaveCount(0);
     

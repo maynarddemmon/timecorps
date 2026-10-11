@@ -7,7 +7,7 @@
     } = pkg;
     
     /*  Briefs the player on a Location: its photo, field notes, and the report in 
-        data/location/<id>.txt. */
+        location/<id>.txt under cfg.DATA_BASE_DIR. */
     pkg.AreaBrief = new JS.Class('AreaBrief', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         
@@ -27,6 +27,6 @@
         getBriefTitle: briefModel => pkg.makeBriefTitle('Area Brief', briefModel.getName()),
         
         /** @overrides BriefSupport */
-        getBriefReportUrl: briefModel => './data/location/' + briefModel.id + '.txt'
+        getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'location/' + briefModel.id + '.txt'
     });
 })(tc);

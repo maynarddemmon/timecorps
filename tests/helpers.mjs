@@ -9,12 +9,34 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
     PORT = 8765,
     BASE_URL = 'http://localhost:' + PORT;
 
-/*  The data files that hold Events and Locations, in load order. */
-export const SCENARIO_FILES = ['data/init.json5', 'data/titanic_scenario.json5', 'data/lusitania_scenario.json5'];
-
-/*  Reads a data file. The data files are JSON5, so they can have comments and trailing commas. */
+/*  Reads a JSON5 file, relative to the project root. */
 export const readJson = relPath => JSON5.parse(fs.readFileSync(path.join(ROOT, relPath), 'utf8'));
 export const fileExists = relPath => fs.existsSync(path.join(ROOT, relPath));
+
+/*  The tests play the game with their own data, so the game's data can change without breaking
+    them. The game's data is still checked, by data.spec.mjs. */
+export const TEST_DATA_DIR = 'tests/data',
+    
+    /*  The files in a data directory that hold Events and Locations, in load order: init, then 
+        the scenarios it lists. */
+    getScenarioFiles = dataDir => {
+        const initFile = dataDir + '/init.json5';
+        return [initFile, ...(readJson(initFile).scenarios ?? []).map(id => dataDir + '/' + id + '.json5')];
+    },
+    SCENARIO_FILES = getScenarioFiles(TEST_DATA_DIR),
+    
+    /*  Reads a file of the test data, e.g. "agents.json5". */
+    readTestData = name => readJson(TEST_DATA_DIR + '/' + name),
+    
+    /*  Reads a text file of the test data, e.g. "dossiers/AL.txt". */
+    readTestText = name => fs.readFileSync(path.join(ROOT, TEST_DATA_DIR, name), 'utf8'),
+    
+    // Points the game at the test data, before it loads.
+    CFG_OVERRIDES = {
+        _TC_CFG_OVERRIDES_INFO:false,
+        DATA_BASE_DIR:'./' + TEST_DATA_DIR + '/',
+        IMAGE_BASE_DIR:'./' + TEST_DATA_DIR + '/img/'
+    };
 
 /*  Loads the game and waits until it is ready to play. Returns an object that collects page
     errors, console warnings and console errors for the rest of the test.
@@ -31,6 +53,7 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true} = {}) =
     });
     
     await page.route(url => url.origin !== BASE_URL, route => route.fulfill({status:200, body:''}));
+    await page.addInitScript(overrides => {globalThis.TC_CFG_OVERRIDES = overrides;}, CFG_OVERRIDES);
     
     if (skipHelp) {
         await page.addInitScript(() => {
@@ -57,7 +80,7 @@ export const waitForGame = page => page.waitForFunction(() =>
 );
 
 /*  A visible dialog title, e.g. "Mission Brief", including titles that go on to name something,
-    e.g. "Mission Brief : Avoid the Iceberg". Anchored at both ends so it only matches the title 
+    e.g. "Mission Brief : First Mission". Anchored at both ends so it only matches the title 
     itself, not the dialog that contains it. */
 export const dialogTitle = (page, title) => page.getByText(
     new RegExp('^' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '( : .*)?$')
@@ -87,11 +110,11 @@ export const dismissAgentDossier = async (page, agentName) => {
     reveals. */
 export const dismissCampaignStart = async page => {
     await dismissMissionBrief(page);
-    await dismissAgentDossier(page, 'Vasquez');
+    await dismissAgentDossier(page, 'Alpha');
 };
 
 /*  After a reload: without a save the game starts a fresh campaign, which opens the first 
-    Mission Brief and then Vasquez's dossier, so pass briefExpected:true to dismiss them. 
+    Mission Brief and then Alpha's dossier, so pass briefExpected:true to dismiss them. 
     Restoring a save never shows either, since the mission was already set up, so otherwise 
     that's checked. */
 const settleAfterReload = async (page, briefExpected) => {

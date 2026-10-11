@@ -1,0 +1,315 @@
+// The test world's events. Causal links, from the value expressions:
+//   plan, supply -> relay -> signal -> origin <- lever
+//   origin, boats -> aftermath -> finale
+// Alpha starts at origin, which exits to aftermath. Most events start hidden.
+{
+	"locationsBaseOrder":0,
+	
+	"locations":{
+		"office":{"name":"Office", "color":"#fcc9", "order":1},
+		"tower":{"name":"Tower", "color":"#cfc9", "order":2},
+		"deck":{"name":"Deck", "color":"#ccf9", "order":3, "video":true},
+		"yard":{"name":"Yard", "color":"#ffc9", "order":4},
+		"radio":{"name":"Radio Room", "color":"#cff9", "order":5},
+		"port":{"name":"Port", "color":"#fcf9", "order":6}
+	},
+	
+	"events":{
+		// Hidden until known, with a precondition for the chain and actions to set it.
+		"plan":{
+			"name":"Plan",
+			"start":"1900-01-01T09:00:00",
+			"duration":{"h":2},
+			"location":"office",
+			"actions":{
+				"prepare":{
+					"label":"Prepare",
+					"skillCheck":{"actionType":"social"},
+					"set":{"prepared":"true"},
+					"hidden":"event.values.prepared.value"
+				},
+				"unprepare":{
+					"label":"Unprepare",
+					"skillCheck":{"actionType":"social"},
+					"set":{"prepared":"false"},
+					"hidden":"!event.values.prepared.value"
+				},
+				"note":{
+					"label":"Take Note",
+					"skillCheck":{"actionType":"social"},
+					"set":{"noted":"true"},
+					"hidden":"event.values.noted.value"
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"supply"}
+			],
+			"values":{
+				"prepared":{
+					"name":"Prepared",
+					"value":"false",
+					"description":[
+						{"text":"Nothing is prepared.", "hidden":"event.values.prepared.value"},
+						{"text":"Everything is prepared.", "hidden":"!event.values.prepared.value"}
+					]
+				},
+				"noted":{
+					"name":"Noted",
+					"value":"false",
+					"description":[
+						{"text":"Nobody takes notes.", "hidden":"event.values.noted.value"},
+						{"text":"Someone takes notes.", "hidden":"!event.values.noted.value"}
+					]
+				}
+			},
+			"description":[
+				"A plan is made.",
+				{"text":" More is known about the plan.", "hidden":"event.attestation.value < 15"}
+			]
+		},
+		
+		"supply":{
+			"name":"Supply",
+			"start":"1900-01-01T12:00:00",
+			"duration":{"h":1},
+			"location":"office",
+			"values":{
+				"spare":{
+					"name":"Spare",
+					"value":"false",
+					"description":[
+						{"text":"There's no spare.", "hidden":"event.values.spare.value"},
+						{"text":"There's a spare.", "hidden":"!event.values.spare.value"}
+					]
+				}
+			},
+			"description":["Supplies arrive."]
+		},
+		
+		// No hidden expression, so the default reveal rule applies: precursors plan and supply,
+		// and descendant signal.
+		"relay":{
+			"name":"Relay",
+			"start":"1900-01-01T14:00:00",
+			"duration":{"h":2},
+			"location":"tower",
+			"values":{
+				"ready":{
+					"name":"Ready",
+					"value":"events.plan.values.prepared.value || events.supply.values.spare.value",
+					"description":[
+						{"text":"The relay isn't ready.", "hidden":"event.values.ready.value"},
+						{"text":"The relay is ready.", "hidden":"!event.values.ready.value"}
+					]
+				}
+			},
+			"description":["A message is relayed."]
+		},
+		
+		// Overrides part of the default investigate check.
+		"signal":{
+			"name":"Signal",
+			"start":"1900-01-01T16:30:00",
+			"duration":{"m":1},
+			"location":"tower",
+			"actions":{
+				"_investigate":{"skillCheck":{"check":"2*agent.skills.investigation"}}
+			},
+			"values":{
+				"seen":{
+					"name":"Seen",
+					"value":"events.relay.values.ready.value",
+					"description":[
+						{"text":"The signal goes unseen.", "hidden":"event.values.seen.value"},
+						{"text":"The signal is seen.", "hidden":"!event.values.seen.value"}
+					]
+				}
+			},
+			"description":["A signal is sent."]
+		},
+		
+		// Actions with effects from the data.
+		"lever":{
+			"name":"Lever",
+			"start":"1900-01-01T16:20:00",
+			"duration":{"m":10},
+			"location":"deck",
+			"actions":{
+				"pull":{
+					"label":"Pull Lever",
+					"skillCheck":{"difficulty":175, "actionType":"cha"},
+					"set":{"pulled":"true"},
+					"hidden":"event.values.pulled.value",
+					"effects":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
+				},
+				"release":{
+					"label":"Release Lever",
+					"skillCheck":{"difficulty":165, "actionType":"social"},
+					"set":{"pulled":"false"},
+					"hidden":"!event.values.pulled.value",
+					"effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"aftermath"}
+			],
+			"values":{
+				"pulled":{
+					"name":"Pulled",
+					"value":"false",
+					"description":[
+						{"text":"The lever is up.", "hidden":"event.values.pulled.value"},
+						{"text":"The lever is down.", "hidden":"!event.values.pulled.value"}
+					]
+				}
+			},
+			"description":["A lever waits."]
+		},
+		
+		// Where Alpha starts, a minute long, so Rest isn't offered.
+		"origin":{
+			"name":"Origin",
+			"start":"1900-01-01T16:40:00",
+			"duration":{"m":1},
+			"location":"deck",
+			"actions":{
+				"_investigate":{"skillCheck":{"difficulty":150}}
+			},
+			"exits":[
+				{"mode":"walk", "to":"aftermath"},
+				{"mode":"wait", "to":"finale", "hidden":"event.values.struck.value"}
+			],
+			"values":{
+				"struck":{
+					"name":"Struck",
+					"value":"!(events.signal.values.seen.value && events.lever.values.pulled.value)",
+					"description":[
+						{"text":"Nothing is struck.", "hidden":"event.values.struck.value"},
+						{"text":"Something is struck.", "hidden":"!event.values.struck.value"}
+					]
+				}
+			},
+			"description":["Everything starts here."]
+		},
+		
+		// Has a hidden expression of its own, and reveals Charlie.
+		"boats":{
+			"name":"Boats",
+			"start":"1899-12-30T09:00:00",
+			"duration":{"h":3},
+			"location":"yard",
+			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.aftermath.attestation.value < 25",
+			"values":{
+				"enough":{
+					"name":"Enough Boats",
+					"value":"false",
+					"description":[
+						{"text":"There aren't enough boats.", "hidden":"event.values.enough.value"},
+						{"text":"There are enough boats.", "hidden":"!event.values.enough.value"}
+					]
+				}
+			},
+			"description":["Boats are built."]
+		},
+		
+		// A no-roll investigation, whose amount can't use the margin, and exits with effects.
+		"aftermath":{
+			"name":"Aftermath",
+			"start":"1900-01-01T19:00:00",
+			"duration":{"h":1},
+			"location":"deck",
+			"actions":{
+				"_investigate":{
+					"skillCheck":{"difficulty":"no-roll"},
+					"effects":{
+						"event.attestation":{
+							"onSuccess":"d(Math.min(25, event.attestation.max - event.attestation.value))"
+						}
+					}
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"finale", "hidden":"events.origin.values.struck.value"},
+				{
+					"mode":"lifeboat",
+					"to":"finale",
+					"hidden":"!events.origin.values.struck.value || !event.values.lost.value",
+					"effects":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
+				},
+				{
+					"mode":"lifeboat",
+					"to":"finale",
+					"hidden":"!events.origin.values.struck.value || event.values.lost.value",
+					"effects":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
+				}
+			],
+			"values":{
+				"lost":{
+					"name":"Lost",
+					"value":"events.origin.values.struck.value && !events.boats.values.enough.value",
+					"description":[
+						{"text":"Nobody is lost.", "hidden":"event.values.lost.value"},
+						{"text":"Many are lost.", "hidden":"!event.values.lost.value"}
+					]
+				}
+			},
+			"description":["What happens after."]
+		},
+		
+		// Twelve hours, so Rest is offered, with an exit that has no effects.
+		"warnings":{
+			"name":"Warnings",
+			"start":"1899-12-31T20:00:00",
+			"duration":{"h":12},
+			"location":"radio",
+			"exits":[
+				{"mode":"wait", "to":"backlog"}
+			],
+			"description":["Warnings come in."]
+		},
+		
+		"backlog":{
+			"name":"Message Backlog",
+			"start":"1900-01-01T09:00:00",
+			"duration":{"h":1, "m":50},
+			"location":"radio",
+			"actions":{
+				"clear":{
+					"label":"Clear Backlog",
+					"skillCheck":{"actionType":"social"},
+					"set":{"cleared":"true"},
+					"hidden":"event.values.cleared.value"
+				}
+			},
+			"values":{
+				"cleared":{
+					"name":"Cleared",
+					"value":"false",
+					"description":[
+						{"text":"The backlog grows.", "hidden":"event.values.cleared.value"},
+						{"text":"The backlog is cleared.", "hidden":"!event.values.cleared.value"}
+					]
+				}
+			},
+			"description":["Messages pile up."]
+		},
+		
+		"finale":{
+			"name":"Finale",
+			"start":"1900-01-02T08:00:00",
+			"duration":{"h":39},
+			"location":"port",
+			"values":{
+				"arrivals":{
+					"name":"Arrivals",
+					"value":"events.aftermath.values.lost.value ? 'few' : 'many'",
+					"description":[
+						{"text":"Few arrive.", "hidden":"event.values.arrivals.value !== 'few'"},
+						{"text":"Many arrive.", "hidden":"event.values.arrivals.value !== 'many'"}
+					]
+				}
+			},
+			"description":["It all ends here."]
+		}
+	}
+}

@@ -1,9 +1,9 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame} from './helpers.mjs';
+import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText} from './helpers.mjs';
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
-    videoAgentIds = idsWithVideo(readJson('data/agents.json5').agents),
+    videoAgentIds = idsWithVideo(readTestData('agents.json5').agents),
     locations = Object.assign({}, ...SCENARIO_FILES.map(file => readJson(file).locations ?? {})),
     videoLocationIds = idsWithVideo(locations),
     
@@ -53,7 +53,7 @@ test('a video portrait that can\'t load falls back to the photo', async ({page})
     const problems = await startGame(page);
 
     // OK has no .webm, so claiming a video portrait makes the video fail to load.
-    await openDossier(page, 'OK', true);
+    await openDossier(page, 'BR', true);
     await expect.poll(() => mediaState(page, DOSSIER_PORTRAIT)).toEqual({visible:true, showingVideo:false, imageVisible:true, playing:false});
 
     expect(problems.pageErrors).toEqual([]);
@@ -68,6 +68,9 @@ test('an area brief shows its location photo, or hides it when there is none', a
     
     await openBrief(page, photoOnlyLocationId);
     await expect.poll(() => mediaState(page, BRIEF_PHOTO)).toEqual({visible:true, showingVideo:false, imageVisible:true, playing:false});
+    
+    // The report is the location's text file.
+    await expect(page.getByText(readTestText('location/' + photoOnlyLocationId + '.txt').trim(), {exact:false}).filter({visible:true})).toBeVisible();
     await page.keyboard.press('Escape');
     
     // The special _nexus location has no photo, so the report takes the whole dialog.
@@ -93,7 +96,7 @@ test('without a photo, an area brief\'s report moves up but a dossier\'s stays b
     await page.keyboard.press('Escape');
     
     await page.evaluate(() => {
-        const agentModel = tc.model.getAgentModel('OK');
+        const agentModel = tc.model.getAgentModel('BR');
         agentModel.getMediaUrls = () => ['./img/agent/missing.jpg', null];
         tc.app.openAgentDossier.lastDossier = tc.app.openAgentDossier(agentModel);
     });
@@ -134,10 +137,13 @@ test('a location video that can\'t load falls back to the photo', async ({page})
 
 test('the dossier lists every configured skill by name, with its description as the tooltip', async ({page}) => {
     const problems = await startGame(page);
-    await openDossier(page, 'VQ');
+    await openDossier(page, 'AL');
     
-    const skillsJson = readJson('data/init.json5').skills,
-        skills = readJson('data/agents.json5').agents.VQ.skills;
+    // The report is the agent's dossier file.
+    await expect(page.getByText(readTestText('dossiers/AL.txt').trim(), {exact:false}).filter({visible:true})).toBeVisible();
+    
+    const skillsJson = readTestData('init.json5').skills,
+        skills = readTestData('agents.json5').agents.AL.skills;
     for (const [skillId, cfg] of Object.entries(skillsJson)) {
         // Skills the agent wasn't given show as 0. Each skill's bar carries the description.
         const label = cfg.name + ' : ' + (skills[skillId] ?? 0),
@@ -156,14 +162,14 @@ test('revealing an agent shows their dossier, after a mission brief opened first
     // As a mission's setup does: open the brief, then reveal.
     await page.evaluate(() => {
         tc.app.openMissionBrief(tc.model.getCurrentOperation());
-        tc.model.revealAgents(['OK']);
+        tc.model.revealAgents(['BR']);
     });
     await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     await dismissMissionBrief(page);
-    await dismissAgentDossier(page, 'Okonjo');
+    await dismissAgentDossier(page, 'Bravo');
     
     // Agents who are already visible aren't announced again.
-    await page.evaluate(() => tc.model.revealAgents(['VQ', 'OK']));
+    await page.evaluate(() => tc.model.revealAgents(['AL', 'BR']));
     await page.waitForTimeout(300);
     await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     
@@ -172,12 +178,12 @@ test('revealing an agent shows their dossier, after a mission brief opened first
 
 test('an agent revealed during play has their dossier shown', async ({page}) => {
     const problems = await startGame(page);
-    const isHidden = () => page.evaluate(() => tc.model.getAgentModel('HW').isHidden());
+    const isHidden = () => page.evaluate(() => tc.model.getAgentModel('CH').isHidden());
     
-    // Halloway is hidden until his event is attested.
+    // Charlie is hidden until his event is attested.
     expect(await isHidden()).toBe(true);
-    await page.evaluate(() => tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10));
-    await dismissAgentDossier(page, 'Halloway');
+    await page.evaluate(() => tc.model.getEventModel('boats').attestation.setValue(10));
+    await dismissAgentDossier(page, 'Charlie');
     expect(await isHidden()).toBe(false);
     
     expect(problems.pageErrors).toEqual([]);
@@ -185,13 +191,13 @@ test('an agent revealed during play has their dossier shown', async ({page}) => 
 
 test('an agent already visible in a restored save has no dossier shown', async ({page}) => {
     const problems = await startGame(page);
-    await page.evaluate(() => tc.model.getEventModel('lifeboat_capacity').attestation.setValue(10));
-    await dismissAgentDossier(page, 'Halloway');
+    await page.evaluate(() => tc.model.getEventModel('boats').attestation.setValue(10));
+    await dismissAgentDossier(page, 'Charlie');
     await page.evaluate(() => tc.persistence.save());
     
     // The reload helper fails if any dossier shows.
     await reloadGame(page);
-    expect(await page.evaluate(() => tc.model.getAgentModel('HW').isHidden())).toBe(false);
+    expect(await page.evaluate(() => tc.model.getAgentModel('CH').isHidden())).toBe(false);
     await page.waitForTimeout(1500);
     await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
     
@@ -205,15 +211,15 @@ test('agent health shows in the dossier and the agents grid, and follows changes
         dossierHealth = (value, max) => page.locator('.myt-AgentDossier').locator(`[title="${healthTooltip(value, max)}"]`);
     
     await page.evaluate(() => {
-        const statHealth = tc.model.getAgentModel('VQ').health;
+        const statHealth = tc.model.getAgentModel('AL').health;
         statHealth.setMax(100);
         statHealth.setValue(100);
-        tc.app.openAgentDossier(tc.model.getAgentModel('VQ'));
+        tc.app.openAgentDossier(tc.model.getAgentModel('AL'));
     });
     await expect(dossierHealth(100, 100)).not.toHaveCount(0);
     
     // A change while the dossier is open shows at once.
-    await page.evaluate(() => tc.model.getAgentModel('VQ').health.adjValue(-40));
+    await page.evaluate(() => tc.model.getAgentModel('AL').health.adjValue(-40));
     await expect(dossierHealth(60, 100)).not.toHaveCount(0);
     await page.keyboard.press('Escape');
     

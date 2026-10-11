@@ -48,9 +48,9 @@ test('the whole header toggles, with a pointer cursor', async ({page}) => {
 test('a button in a section header does not collapse the section', async ({page}) => {
     const problems = await startGame(page);
     
-    await page.evaluate(() => tc.app.selectEventBox('casualties'));
+    await page.evaluate(() => tc.app.selectEventBox('aftermath'));
     await page.getByRole('button', {name:/Jump to/}).filter({visible:true}).click();
-    await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('VQ').event)).toBe('casualties');
+    await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('AL').event)).toBe('aftermath');
     expect(await expandedRows(page)).toEqual({agents:true, causators:true});
     
     expect(problems.pageErrors).toEqual([]);
@@ -62,30 +62,30 @@ test('exit routes to an event without a box yet are skipped rather than warned a
         const wait = ms => new Promise(resolve => setTimeout(resolve, ms)),
             timeline = tc.app.getTimelineView(),
             boxes = timeline.boxesByEventId,
-            collision = tc.model.getEventModel('collision'),
-            exit = collision.getExitModels()[0],
+            origin = tc.model.getEventModel('origin'),
+            exit = origin.getExitModels()[0],
             target = exit.getToEventModel();
         
-        // Both ends known, so the route would normally be drawn when collision is selected.
+        // Both ends known, so the route would normally be drawn when origin is selected.
         target.attestation.setValue(50);
-        tc.model.getEventModel('roster_reshuffle').attestation.setValue(50); // Something else to select.
+        tc.model.getEventModel('plan').attestation.setValue(50); // Something else to select.
         await wait(200);
-        if (!collision.getVisibleExitAndEntrances().includes(exit)) return 'route not visible';
+        if (!origin.getVisibleExitAndEntrances().includes(exit)) return 'route not visible';
         
         // As while the timeline is rebuilt during a restore.
         const box = boxes[target.id];
         delete boxes[target.id];
         try {
-            tc.app.selectEventBox('roster_reshuffle');
+            tc.app.selectEventBox('plan');
             await wait(100);
-            tc.app.selectEventBox('collision');
+            tc.app.selectEventBox('origin');
             await wait(300);
         } finally {
             boxes[target.id] = box;
         }
         return target.id;
     });
-    expect(skipped).toBe('casualties');
+    expect(skipped).toBe('aftermath');
     expect(problems.warnings).toEqual([]);
 });
 
@@ -94,28 +94,28 @@ const visibleButton = (page, name) => page.getByRole('button', {name}).filter({v
 test('an exit from the agent\'s event to the selected event can be taken from the header', async ({page}) => {
     const problems = await startGame(page);
     
-    // VQ starts at collision, which has an exit to casualties.
+    // Alpha starts at origin, which has an exit to aftermath.
     const exit = await page.evaluate(() => {
-        const exitModel = tc.model.getEventModel('collision').getExitModels().find(e => e.to === 'casualties');
-        return {phrase:exitModel.getModePhrase(), chronal:tc.model.getAgentModel('VQ').chronal.value};
+        const exitModel = tc.model.getEventModel('origin').getExitModels().find(e => e.to === 'aftermath');
+        return {phrase:exitModel.getModePhrase(), chronal:tc.model.getAgentModel('AL').chronal.value};
     });
-    await page.evaluate(() => tc.app.selectEventBox('casualties'));
+    await page.evaluate(() => tc.app.selectEventBox('aftermath'));
     const followBtn = visibleButton(page, new RegExp('^' + exit.phrase + '$'));
     await expect(followBtn).toBeVisible();
     await expect(visibleButton(page, /Jump to/)).toBeVisible(); // Still offered alongside.
     
     await followBtn.click();
-    await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('VQ').event)).toBe('casualties');
+    await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('AL').event)).toBe('aftermath');
     const after = await page.evaluate(() => {
-        const vq = tc.model.getAgentModel('VQ'),
-            entry = vq.getLog().at(-1);
-        return {type:entry.type, from:entry.exit.event.id, to:entry.exit.to, chronal:vq.chronal.value};
+        const alpha = tc.model.getAgentModel('AL'),
+            entry = alpha.getLog().at(-1);
+        return {type:entry.type, from:entry.exit.event.id, to:entry.exit.to, chronal:alpha.chronal.value};
     });
     
     // Taken as the exit, so it's logged as one and costs no chronal, unlike jumping.
-    expect(after).toEqual({type:'exit', from:'collision', to:'casualties', chronal:exit.chronal});
+    expect(after).toEqual({type:'exit', from:'origin', to:'aftermath', chronal:exit.chronal});
     
-    // Now at casualties, so there's no exit to offer for it.
+    // Now at aftermath, so there's no exit to offer for it.
     await expect(followBtn).toHaveCount(0);
     expect(problems.pageErrors).toEqual([]);
 });
@@ -123,40 +123,40 @@ test('an exit from the agent\'s event to the selected event can be taken from th
 test('no exit button without an exit from the agent\'s event to the selected event', async ({page}) => {
     const problems = await startGame(page);
     // The header button is just the phrase, plus any paradox cost. The agent's own list of 
-    // exits names the event too, e.g. "Walk to Loss of Life".
+    // exits names the event too, e.g. "Walk to Aftermath".
     const exitPhrases = /^(Walk to|Wait til|To)( \[.*\])?$/;
     
     // The agent's own event.
-    await page.evaluate(() => tc.app.selectEventBox('collision'));
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
     await expect(visibleButton(page, /Loop back/)).toBeVisible();
     await expect(page.getByRole('button', {name:exitPhrases}).filter({visible:true})).toHaveCount(0);
     
-    // An event with no exit leading to it from collision.
+    // An event with no exit leading to it from origin.
     expect(await page.evaluate(() => {
-        tc.model.getEventModel('roster_reshuffle').attestation.setValue(50);
-        return tc.model.getAgentModel('VQ').getExitTo(tc.model.getEventModel('roster_reshuffle'));
+        tc.model.getEventModel('plan').attestation.setValue(50);
+        return tc.model.getAgentModel('AL').getExitTo(tc.model.getEventModel('plan'));
     })).toBeNull();
     await page.waitForTimeout(300);
-    await page.evaluate(() => tc.app.selectEventBox('roster_reshuffle'));
+    await page.evaluate(() => tc.app.selectEventBox('plan'));
     await expect(visibleButton(page, /Jump to/)).toBeVisible();
     await expect(page.getByRole('button', {name:exitPhrases}).filter({visible:true})).toHaveCount(0);
     
     // Nor does an exit to a hidden event.
     expect(await page.evaluate(() => {
-        const casualties = tc.model.getEventModel('casualties');
-        casualties.setHidden(true);
+        const aftermath = tc.model.getEventModel('aftermath');
+        aftermath.setHidden(true);
         try {
-            return tc.model.getAgentModel('VQ').getExitTo(casualties);
+            return tc.model.getAgentModel('AL').getExitTo(aftermath);
         } finally {
-            casualties.setHidden(false);
+            aftermath.setHidden(false);
         }
     })).toBeNull();
     
     // A hidden exit doesn't count.
     expect(await page.evaluate(() => {
-        const exitModel = tc.model.getEventModel('collision').getExitModels().find(e => e.to === 'casualties');
+        const exitModel = tc.model.getEventModel('origin').getExitModels().find(e => e.to === 'aftermath');
         exitModel.setHidden(true);
-        return tc.model.getAgentModel('VQ').getExitTo(tc.model.getEventModel('casualties'));
+        return tc.model.getAgentModel('AL').getExitTo(tc.model.getEventModel('aftermath'));
     })).toBeNull();
     
     expect(problems.pageErrors).toEqual([]);

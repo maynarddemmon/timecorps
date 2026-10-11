@@ -45,12 +45,13 @@ npm run lint    # ESLint over the game code and the tests
 npm test        # Playwright tests in a headless browser
 ```
 
-The tests start their own static server, load the real `index.html`, and check that:
+The tests start their own static server and load the real `index.html`, but play the game with their own data in `tests/data/` rather than the game's (by setting `DATA_BASE_DIR` and `IMAGE_BASE_DIR`). So the game's data can change freely without breaking them, and the test data can be shaped to exercise whatever the engine does. They check that:
 
-- the game starts with no errors or warnings, and the scenario data passes its startup validation;
-- every constraint reference in the data resolves, and every location and agent has its image and text;
-- the whole campaign can be played through, with each mission completing and advancing;
-- the constraint scopes, Field Notes and causator links behave as intended.
+- the game starts with no errors or warnings, and the test data passes its startup validation;
+- the engine behaves as intended: checks, effects, actions and exits, constraints, missions, saving and the UI;
+- a whole campaign can be played through, with each mission completing and advancing.
+
+`tests/data.spec.mjs` also checks the game's own data: every constraint reference resolves, every location, agent and mission has its image and text, and the configs are valid.
 
 Requests to other sites are stubbed out, so the tests don't need a network connection. `npx playwright test --headed` shows the browser while they run, and `npx playwright test campaign` runs a single file.
 
@@ -61,12 +62,13 @@ Requests to other sites are stubbed out, so the tests don't need a network conne
 | `index.html` | Entry point, global styles and fonts |
 | `js/tc/` | Game code: `model/` (events, agents, locations, operations, constraints), `view/` (panels and dialogs), `component/` (shared UI) |
 | `lib/` | The myt JavaScript framework the game is built on, and json5 for reading the data |
-| `data/*.json5` | Scenarios, agents and operations |
+| `data/*.json5` | Scenarios, agents and operations. `init.json5` lists the scenario files to load |
 | `data/location/`, `data/dossiers/` | Area briefs and agent dossiers |
 | `data/help.txt` | The in-game field manual |
 | `img/` | Agent portraits and location photographs |
 | `fonts/` | Fonts and their licenses |
 | `tests/` | Playwright tests (`npm test`) |
+| `tests/data/` | The data the tests play with: a small scenario, agents and missions, and their text and media |
 
 ### Scenario data
 

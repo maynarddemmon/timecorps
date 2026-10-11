@@ -1,4 +1,7 @@
 {
+	// The scenario files loaded after this one, in order.
+	"scenarios":["titanic_scenario", "lusitania_scenario"],
+	
 	"skillChecks":{
 		"sure_thing":{
 			"name":"Sure Thing",

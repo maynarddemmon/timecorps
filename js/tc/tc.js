@@ -143,7 +143,9 @@
             
             // Game Config
             cfg: {
+                // Where the data files, and the media they refer to, are loaded from.
                 DATA_BASE_DIR:'./data/',
+                IMAGE_BASE_DIR:'./img/',
                 
                 STANDARD_DEBOUNCE_MILLIS:50,
                 

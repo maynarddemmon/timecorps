@@ -1,0 +1,98 @@
+// Three missions:
+//   first - origin not struck: prepare the plan and pull the lever.
+//   second - origin struck, but nobody lost: release the lever and build enough boats.
+//   third - clear the backlog.
+{
+	"initialOperation":"first",
+	
+	"operations":{
+		"first":{
+			"name":"First Mission",
+			"image":true,
+			"description":[
+				{
+					"text":"Many will be lost.",
+					"hidden":"events.aftermath.attestation.value < 20 || !events.aftermath.values.lost.value"
+				}
+			],
+			"onSetup":{
+				"awardAgents":"AL",
+				"revealAgents":"AL",
+				"initialAgentSelection":"AL",
+				"initialEventSelection":"origin",
+				"historicityAdjustments":{
+					"origin":75,
+					"aftermath":65
+				}
+			},
+			"objectives":{
+				"avoid":{
+					"name":"Not Struck",
+					"description":["Origin must not be struck."],
+					"success":"!events.origin.values.struck.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"The first mission is complete.",
+					{"text":" The plan was prepared.", "hidden":"!events.plan.values.prepared.value"}
+				],
+				"nextOperation":"second",
+				"awardHQChronal":15,
+				"awardScore":5000
+			}
+		},
+		
+		"second":{
+			"name":"Second Mission",
+			"image":true,
+			"description":["Struck, but nobody lost."],
+			"onSetup":{
+				"historicityAdjustments":{
+					"boats":25
+				}
+			},
+			"objectives":{
+				"struck":{
+					"name":"Struck",
+					"description":["Origin must be struck."],
+					"success":"events.origin.values.struck.value"
+				},
+				"saved":{
+					"name":"Saved",
+					"description":["Nobody may be lost."],
+					"success":"!events.aftermath.values.lost.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":["The second mission is complete."],
+				"nextOperation":"third",
+				"awardHQChronal":25,
+				"awardScore":8000,
+				"awardAgents":["DE"],
+				"revealAgents":["DE", "EC"]
+			}
+		},
+		
+		"third":{
+			"name":"Third Mission",
+			"image":true,
+			"description":["Clear the backlog."],
+			"onSetup":{
+				"awardAgents":["EC"]
+			},
+			"objectives":{
+				"cleared":{
+					"name":"Cleared",
+					"description":["The backlog must be cleared."],
+					"success":"events.backlog.values.cleared.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":["The third mission is complete. This concludes the current campaign."],
+				"awardHQChronal":30,
+				"awardScore":13000
+			}
+		}
+	}
+}

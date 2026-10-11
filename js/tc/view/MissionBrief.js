@@ -7,9 +7,9 @@
     } = pkg;
     
     /*  Briefs the player on an Operation: an optional photo, the Operation's Describable 
-        phrases as field notes, and the briefing in data/mission/<id>.txt. It opens when a 
-        mission is set up and from the Mission panel's title. It's acknowledged like an ack 
-        dialog, and takes its turn with them. */
+        phrases as field notes, and the briefing in mission/<id>.txt under cfg.DATA_BASE_DIR. 
+        It opens when a mission is set up and from the Mission panel's title. It's acknowledged 
+        like an ack dialog, and takes its turn with them. */
     pkg.MissionBrief = new JS.Class('MissionBrief', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         
@@ -29,7 +29,7 @@
         getBriefTitle: briefModel => pkg.makeBriefTitle('Mission Brief', briefModel.getName()),
         
         /** @overrides BriefSupport */
-        getBriefReportUrl: briefModel => './data/mission/' + briefModel.id + '.txt',
+        getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'mission/' + briefModel.id + '.txt',
         
         /** @overrides BriefSupport */
         getBriefReportLabel: () => 'Briefing'

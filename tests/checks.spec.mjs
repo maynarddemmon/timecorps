@@ -1,9 +1,9 @@
 import {test, expect} from '@playwright/test';
-import {startGame, queueRolls, readJson, SCENARIO_FILES} from './helpers.mjs';
+import {startGame, queueRolls, readJson, readTestData, getScenarioFiles, TEST_DATA_DIR} from './helpers.mjs';
 
 /*  Evaluates a check in the page against a real agent and event, after forcing the roll. The 
     agent's skills are replaced for the check and restored afterwards. */
-const evaluateCheck = (page, expr, {roll, difficulty=500, skills={}, agentId='VQ', eventId='collision'} = {}) => page.evaluate(
+const evaluateCheck = (page, expr, {roll, difficulty=500, skills={}, agentId='AL', eventId='origin'} = {}) => page.evaluate(
         ([expr, roll, difficulty, skills, agentId, eventId]) => {
             const agent = tc.model.getAgentModel(agentId),
                 original = agent.getSkills();
@@ -97,7 +97,7 @@ test.describe('checks', () => {
         
         // The agent's own data is untouched by the defaulting.
         expect(await page.evaluate(() => {
-            const agent = tc.model.getAgentModel('VQ'),
+            const agent = tc.model.getAgentModel('AL'),
                 original = agent.getSkills();
             agent.setSkills({});
             try {
@@ -120,9 +120,9 @@ test.describe('checks', () => {
         expect((await evaluateCheck(page, weighted, {roll:324, skills:{disguise:200, stealth:100}})).success).toBe(false);
         
         // The event and the full agent model are there too.
-        const usesEvent = '(event.id === "collision" && agent.id === "VQ" && agent.paradox.value >= 0) ? 0 : -1000';
+        const usesEvent = '(event.id === "origin" && agent.id === "AL" && agent.paradox.value >= 0) ? 0 : -1000';
         expect((await evaluateCheck(page, usesEvent, {roll:0})).success).toBe(true);
-        expect((await evaluateCheck(page, usesEvent, {roll:999, eventId:'roster_reshuffle'})).success).toBe(false);
+        expect((await evaluateCheck(page, usesEvent, {roll:999, eventId:'plan'})).success).toBe(false);
         
         expect(problems.warnings).toEqual([]);
     });
@@ -178,10 +178,10 @@ test.describe('dice in check expressions', () => {
             result = await page.evaluate(cfg => {
                 tc.rng.queueRolls(11, 0, 500); // d(12) of 12, d(4) of 1, then the check's roll.
                 return tc.checks.evaluate('agent.skills.str + d(12) + d(4) - difficulty', {
-                    ...cfg, agent:tc.model.getAgentModel('VQ'), difficulty:100
+                    ...cfg, agent:tc.model.getAgentModel('AL'), difficulty:100
                 });
             }, WIDE),
-            str = readJson('data/agents.json5').agents.VQ.skills.str;
+            str = readTestData('agents.json5').agents.AL.skills.str;
         expect(result).toMatchObject({ease:str + 12 + 1 - 100, roll:500, result:500 + str + 13 - 100});
         expect(problems.warnings).toEqual([]);
     });
@@ -279,10 +279,10 @@ test.describe('dice in check expressions', () => {
 });
 
 test.describe('skill checks', () => {
-    // Calls an AgentModel check method on VQ with the given skills and forced roll.
+    // Calls an AgentModel check method on Alpha with the given skills and forced roll.
     const callOnAgent = (page, method, args, {roll, skills={}}) => page.evaluate(
         ([method, args, roll, skills]) => {
-            const agent = tc.model.getAgentModel('VQ'),
+            const agent = tc.model.getAgentModel('AL'),
                 original = agent.getSkills();
             agent.setSkills(skills);
             try {
@@ -365,8 +365,8 @@ test.describe('skill checks', () => {
         // A queued roll is still there afterwards, so showing a phrase can't use up a roll.
         expect(await page.evaluate(() => {
             tc.rng.queueRolls(123);
-            tc.model.getAgentModel('VQ').getSkillEasePhrase('agent.skills.stealth', 500);
-            tc.model.getAgentModel('VQ').getSkillExpressionEase('agent.skills.stealth', 500);
+            tc.model.getAgentModel('AL').getSkillEasePhrase('agent.skills.stealth', 500);
+            tc.model.getAgentModel('AL').getSkillExpressionEase('agent.skills.stealth', 500);
             return tc.rng.roll();
         })).toBe(123);
         
@@ -374,28 +374,35 @@ test.describe('skill checks', () => {
     });
 });
 
+/*  For the game's data and the test data: the skills each data set configures (in its init) must
+    include every skill the code names, the agents are given and the expressions use. */
 test('every skill named in the data is a known skill', async ({page}) => {
     await startGame(page);
-    const knownIds = await page.evaluate(() => tc.getSkillIds()),
+    const codeSkills = await page.evaluate(() => Object.entries(tc).filter(([key]) => key.startsWith('SKILL_ID_'))),
         unknown = new Set();
     
-    // Skills the code names, e.g. tc.SKILL_ID_INVESTIGATION for the default investigate check.
-    for (const [key, skillId] of await page.evaluate(() => Object.entries(tc).filter(([key]) => key.startsWith('SKILL_ID_')))) {
-        if (!knownIds.includes(skillId)) unknown.add('tc.' + key + ': ' + skillId);
-    }
-    
-    // Skills given to agents.
-    for (const [agentId, agent] of Object.entries(readJson('data/agents.json5').agents)) {
-        for (const skillId of Object.keys(agent.skills ?? {})) {
-            if (!knownIds.includes(skillId)) unknown.add(agentId + ': ' + skillId);
+    for (const dataDir of ['data', TEST_DATA_DIR]) {
+        const [initFile, ...scenarioFiles] = getScenarioFiles(dataDir),
+            knownIds = Object.keys(readJson(initFile).skills ?? {});
+        
+        // Skills the code names, e.g. tc.SKILL_ID_INVESTIGATION.
+        for (const [key, skillId] of codeSkills) {
+            if (!knownIds.includes(skillId)) unknown.add(initFile + ': tc.' + key + ' ' + skillId);
         }
-    }
-    
-    // Skills used in expressions, e.g. agent.skills.stealth in an investigate config. A typo
-    // would otherwise quietly count as 0.
-    for (const file of [...SCENARIO_FILES, 'data/operations.json5', 'data/agents.json5']) {
-        for (const [, skillId] of JSON.stringify(readJson(file)).matchAll(/\bskills\.(\w+)/g)) {
-            if (!knownIds.includes(skillId)) unknown.add(file + ': ' + skillId);
+        
+        // Skills given to agents.
+        for (const [agentId, agent] of Object.entries(readJson(dataDir + '/agents.json5').agents)) {
+            for (const skillId of Object.keys(agent.skills ?? {})) {
+                if (!knownIds.includes(skillId)) unknown.add(dataDir + ' ' + agentId + ': ' + skillId);
+            }
+        }
+        
+        // Skills used in expressions, e.g. agent.skills.stealth in an action's check. A typo
+        // would otherwise quietly count as 0.
+        for (const file of [initFile, ...scenarioFiles, dataDir + '/operations.json5', dataDir + '/agents.json5']) {
+            for (const [, skillId] of JSON.stringify(readJson(file)).matchAll(/\bskills\.(\w+)/g)) {
+                if (!knownIds.includes(skillId)) unknown.add(file + ': ' + skillId);
+            }
         }
     }
     

@@ -1,8 +1,8 @@
 import {test, expect} from '@playwright/test';
 import {startGame, setCausator, reloadGame, dialogTitle} from './helpers.mjs';
 
-/*  Events from the first lookout chain, which are hidden at the start of the campaign. */
-const CHAIN = ['roster_reshuffle', 'missing_binoculars', 'lookout_sights_berg'],
+/*  A causal chain of Events, which are hidden at the start of the campaign. */
+const CHAIN = ['plan', 'relay', 'signal'],
     
     // Makes Events known, so their boxes show on the timeline, then lets the layout settle.
     reveal = async (page, eventIds) => {
@@ -40,7 +40,7 @@ test('a value change pops each affected box in turn, in causal order', async ({p
     await reveal(page, CHAIN);
     await recordAnims(page);
     
-    await setCausator(page, 'roster_reshuffle', 'preventReshuffle', 'true');
+    await setCausator(page, 'plan', 'prepared', 'true');
     
     // Queued right away in the order the change spread, each box only once.
     expect(await page.evaluate(() => tc.app.getTimelineView().getValueChangeAnimState())).toEqual({
@@ -60,8 +60,8 @@ test('a value change pops each affected box in turn, in causal order', async ({p
 test('setting a value to what it already is doesn\'t animate', async ({page}) => {
     const problems = await startGame(page);
     await reveal(page, CHAIN);
-    const current = await page.evaluate(() => tc.model.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.value);
-    await setCausator(page, 'roster_reshuffle', 'preventReshuffle', current);
+    const current = await page.evaluate(() => tc.model.getEventModel('plan').getValueModels().prepared.value);
+    await setCausator(page, 'plan', 'prepared', current);
     expect(await isIdle(page)).toBe(true);
     expect(problems.warnings).toEqual([]);
 });
@@ -71,7 +71,7 @@ test('hidden boxes are skipped', async ({page}) => {
     
     // The chain is still hidden, so nothing shows, and nothing is left waiting.
     await recordAnims(page);
-    await setCausator(page, 'roster_reshuffle', 'preventReshuffle', 'true');
+    await setCausator(page, 'plan', 'prepared', 'true');
     await expect.poll(() => isIdle(page)).toBe(true);
     expect((await getAnimRecord(page)).order).toEqual([]);
     
@@ -79,8 +79,8 @@ test('hidden boxes are skipped', async ({page}) => {
     await reveal(page, CHAIN);
     await recordAnims(page);
     await page.evaluate(() => {
-        tc.model.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue(false, true);
-        tc.model.getEventModel('missing_binoculars').setHidden(true);
+        tc.model.getEventModel('plan').getValueModels().prepared.setValue(false, true);
+        tc.model.getEventModel('relay').setHidden(true);
     });
     await expect.poll(() => isIdle(page), {timeout:5000}).toBe(true);
     expect((await getAnimRecord(page)).order).toEqual([CHAIN[0], CHAIN[2]]);
@@ -93,11 +93,11 @@ test('nothing animates while the campaign starts or a save is restored', async (
     
     // A save with the chain known and changed restores those values on reload.
     await reveal(page, CHAIN);
-    await page.evaluate(() => tc.model.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue('true', false));
+    await page.evaluate(() => tc.model.getEventModel('plan').getValueModels().prepared.setValue('true', false));
     await page.evaluate(() => tc.persistence.save());
     await reloadGame(page);
     
-    expect(await page.evaluate(() => tc.model.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.value)).toBe(true);
+    expect(await page.evaluate(() => tc.model.getEventModel('plan').getValueModels().prepared.value)).toBe(true);
     expect(await isIdle(page)).toBe(true);
     expect(await getScales(page, CHAIN)).toEqual([1, 1, 1]);
 });
@@ -105,7 +105,7 @@ test('nothing animates while the campaign starts or a save is restored', async (
 test('the Mission Complete dialog waits for the changes that completed the mission to finish animating', async ({page}) => {
     const problems = await startGame(page),
         missionComplete = dialogTitle(page, 'Mission Complete');
-    await reveal(page, [...CHAIN, 'engine_order']);
+    await reveal(page, [...CHAIN, 'lever']);
     await recordAnims(page);
     
     // Notes whether the dialog is ever showing while a box is still animating.
@@ -122,8 +122,8 @@ test('the Mission Complete dialog waits for the changes that completed the missi
     // Completes the first mission the way its Actions do.
     await page.evaluate(() => {
         const m = tc.model;
-        m.getEventModel('roster_reshuffle').getValueModels().preventReshuffle.setValue('true', false);
-        m.getEventModel('engine_order').getValueModels().countermandAstern.setValue('true', false);
+        m.getEventModel('plan').getValueModels().prepared.setValue('true', false);
+        m.getEventModel('lever').getValueModels().pulled.setValue('true', false);
     });
     
     await expect(missionComplete).toBeVisible({timeout:10000});

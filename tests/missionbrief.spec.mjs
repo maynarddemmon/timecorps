@@ -1,12 +1,12 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import {startGame, dismissMissionBrief, dialogTitle, ROOT} from './helpers.mjs';
+import {startGame, dismissMissionBrief, dialogTitle, ROOT, TEST_DATA_DIR} from './helpers.mjs';
 
 const brief = page => page.locator('.myt-MissionBrief'),
     
     // The first line of an Operation's briefing file.
-    briefingHeading = operationId => fs.readFileSync(path.join(ROOT, 'data/mission/' + operationId + '.txt'), 'utf8').split(/\r?\n/)[0],
+    briefingHeading = operationId => fs.readFileSync(path.join(ROOT, TEST_DATA_DIR, 'mission', operationId + '.txt'), 'utf8').split(/\r?\n/)[0],
     
     getBriefState = page => page.evaluate(() => {
         const dialog = tc.app.getSubviews().find(sv => sv.isA(tc.MissionBrief));
@@ -24,14 +24,14 @@ test('a new mission opens with its brief: the briefing file, and field notes fro
     const problems = await startGame(page, {dismissBrief:false});
     
     await expect(dialogTitle(page, 'Mission Brief')).toBeVisible();
-    await expect(page.getByText('Mission Brief : Titanic - Avoid the Iceberg', {exact:true}).filter({visible:true})).toBeVisible();
-    await expect(brief(page).getByText(briefingHeading('titanic_noCollision'), {exact:false})).toBeVisible();
+    await expect(page.getByText('Mission Brief : First Mission', {exact:true}).filter({visible:true})).toBeVisible();
+    await expect(brief(page).getByText(briefingHeading('first'), {exact:false})).toBeVisible();
     
     // The field notes are the mission's description. The row is hidden when there's none to 
     // show yet, as for the first mission at the start.
-    const description = await page.evaluate(() => tc.model.getOperationModel('titanic_noCollision').getDescription());
+    const description = await page.evaluate(() => tc.model.getOperationModel('first').getDescription());
     expect(await getBriefState(page)).toEqual({
-        visible:true, operationId:'titanic_noCollision', photoVisible:true,
+        visible:true, operationId:'first', photoVisible:true,
         fieldNotesVisible:description !== '', fieldNotes:description
     });
     
@@ -47,9 +47,9 @@ test('the Mission panel title opens the brief, and Esc closes it', async ({page}
     
     // The description now lives in the brief, not the panel.
     const panel = page.locator('.myt-OperationDetails');
-    await expect(panel.getByText('Prevent the Titanic from colliding with the iceberg', {exact:false})).toHaveCount(0);
+    await expect(panel.getByText('Many will be lost', {exact:false})).toHaveCount(0);
     
-    const title = panel.getByText(/Titanic - Avoid the Iceberg/).first();
+    const title = panel.getByText(/First Mission/).first();
     expect(await title.evaluate(elem => getComputedStyle(elem).cursor)).toBe('pointer');
     await title.click();
     await expect(dialogTitle(page, 'Mission Brief')).toBeVisible();
@@ -65,8 +65,8 @@ test('the field notes follow the mission\'s description as it changes', async ({
     expect(opened).toBe(true);
     const before = (await getBriefState(page)).fieldNotes;
     
-    // Learning enough about the casualties reveals another phrase of the description.
-    await page.evaluate(() => tc.model.getEventModel('casualties').attestation.setValue(50));
+    // Learning enough about the aftermath reveals another phrase of the description.
+    await page.evaluate(() => tc.model.getEventModel('aftermath').attestation.setValue(50));
     await expect.poll(async () => (await getBriefState(page)).fieldNotes).not.toBe(before);
     expect((await getBriefState(page)).fieldNotes).toBe(await page.evaluate(() => tc.model.getCurrentOperation().getDescription()));
     expect(problems.pageErrors).toEqual([]);
@@ -105,5 +105,5 @@ test('a mission image is only loaded when the mission has one', async ({page}) =
         } finally {
             operationModel.setImage(true);
         }
-    })).toEqual([[null, null], ['./img/mission/titanic_noCollision.jpg', null]]);
+    })).toEqual([[null, null], ['./tests/data/img/mission/first.jpg', null]]);
 });

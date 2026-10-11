@@ -27,7 +27,7 @@ test('Enter on a focused Cancel cancels rather than confirming', async ({page}) 
     await visibleButton(page, /Cancel/).focus();
     await page.keyboard.press('Enter');
     await expect(restartTitle(page)).toHaveCount(0);
-    expect(await page.evaluate(() => tc.model.getCurrentOperation()?.id)).toBe('titanic_noCollision'); // No reload happened.
+    expect(await page.evaluate(() => tc.model.getCurrentOperation()?.id)).toBe('first'); // No reload happened.
     
     expect(problems.pageErrors).toEqual([]);
 });

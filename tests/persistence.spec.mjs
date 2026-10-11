@@ -28,14 +28,14 @@ const exportModel = page => page.evaluate(() => JSON.parse(JSON.stringify(tc.mod
     // What a fresh campaign would save: only the first mission's setup.
     expectFreshCampaign = async page => {
         const diff = await page.evaluate(() => tc.persistence.exportDiff());
-        expect(diff.currentOperation).toBe('titanic_noCollision');
-        expect(diff.operations).toEqual({titanic_noCollision:{setupApplied:true}});
-        expect(Object.keys(diff.agents)).toEqual(['VQ']);
-        expect(diff.events?.roster_reshuffle).toBeUndefined();
+        expect(diff.currentOperation).toBe('first');
+        expect(diff.operations).toEqual({first:{setupApplied:true}});
+        expect(Object.keys(diff.agents)).toEqual(['AL']);
+        expect(diff.events?.plan).toBeUndefined();
     };
 
 /*  The baseline is taken before the first mission is set up, so a fresh campaign saves just 
-    that setup: the current mission, VQ revealed and awarded, and the setup's adjustments. */
+    that setup: the current mission, AL revealed and awarded, and the setup's adjustments. */
 test('a fresh campaign saves only the first mission\'s setup', async ({page}) => {
     const problems = await startGame(page);
     await expectFreshCampaign(page);
@@ -47,19 +47,19 @@ test('a fresh campaign saves only the first mission\'s setup', async ({page}) =>
 test('agent moves, actions and investigation survive a reload', async ({page}) => {
     const problems = await startGame(page);
 
-    // Jump VQ, act, investigate, follow an exit, then jump back for a second visit (which 
+    // Jump Alpha, act, investigate, follow an exit, then jump back for a second visit (which 
     // costs paradox), all through the game's own methods.
     await page.evaluate(() => {
         const m = tc.model,
-            vq = m.getAgentModel('VQ'),
-            roster = m.getEventModel('roster_reshuffle');
-        vq.doDeployToEvent(roster);
+            alpha = m.getAgentModel('AL'),
+            plan = m.getEventModel('plan');
+        alpha.doDeployToEvent(plan);
         tc.rng.queueRolls(999); // So the action's skill check succeeds.
-        vq.doAction(roster.getActionModels().prevent);
+        alpha.doAction(plan.getActionModels().prepare);
         tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
-        vq.doAction(roster.getActionModels()._investigate);
-        vq.doFollowExit(roster.getExitModels().find(exit => exit.to === 'titanic_departs'));
-        vq.doDeployToEvent(roster);
+        alpha.doAction(plan.getActionModels()._investigate);
+        alpha.doFollowExit(plan.getExitModels().find(exit => exit.to === 'supply'));
+        alpha.doDeployToEvent(plan);
     });
 
     await saveGame(page);
@@ -68,14 +68,14 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
     // Only what changed is saved: an untouched Event isn't in the save at all.
     const save = await readSave(page);
     expect(save.version).toBe(1);
-    expect(Object.keys(save.data.events)).toContain('roster_reshuffle');
-    expect(save.data.events.roster_reshuffle.values).toEqual({preventReshuffle:{value:'true'}});
-    expect(save.data.events.lusitania_sinks).toBeUndefined();
-    expect(save.data.agents.VQ.event).toBe('roster_reshuffle');
-    expect(save.data.agents.VQ.paradox.value).toBeGreaterThan(0);
-    expect(save.data.agents.VQ.log).toContainEqual({type:'exit', exit:['roster_reshuffle', 0]});
-    expect(save.data.agents.VQ.log).toContainEqual({type:'action', action:['roster_reshuffle', 'prevent'], success:true});
-    expect(save.data.agents.VQ.log).toContainEqual(expect.objectContaining({type:'action', action:['roster_reshuffle', '_investigate'], success:true}));
+    expect(Object.keys(save.data.events)).toContain('plan');
+    expect(save.data.events.plan.values).toEqual({prepared:{value:'true'}});
+    expect(save.data.events.finale).toBeUndefined();
+    expect(save.data.agents.AL.event).toBe('plan');
+    expect(save.data.agents.AL.paradox.value).toBeGreaterThan(0);
+    expect(save.data.agents.AL.log).toContainEqual({type:'exit', exit:['plan', 0]});
+    expect(save.data.agents.AL.log).toContainEqual({type:'action', action:['plan', 'prepare'], success:true});
+    expect(save.data.agents.AL.log).toContainEqual(expect.objectContaining({type:'action', action:['plan', '_investigate'], success:true}));
 
     const before = await exportModel(page);
     await reloadGame(page);
@@ -84,7 +84,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
     // The restored log still drives paradox pricing: a third visit costs 2.
     expect(await page.evaluate(() => {
         const m = tc.model;
-        return m.getAgentModel('VQ').calculateParadoxForEntry(m.getEventModel('roster_reshuffle'));
+        return m.getAgentModel('AL').calculateParadoxForEntry(m.getEventModel('plan'));
     })).toBe(2);
     await expect(page.getByTitle(/^Last saved /)).toBeVisible();
 
@@ -96,18 +96,18 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     const problems = await startGame(page),
         missionComplete = dialogTitle(page, 'Mission Complete');
 
-    await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
-    await setCausatorCfg(page, 'engine_order', 'countermandAstern', 'true');
+    await setCausatorCfg(page, 'plan', 'prepared', 'true');
+    await setCausatorCfg(page, 'lever', 'pulled', 'true');
     await expect(missionComplete).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
-    await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
+    await expect.poll(() => getCurrentOperationId(page)).toBe('second');
     await dismissMissionBrief(page);
 
     await saveGame(page);
     const before = await exportModel(page);
 
     await reloadGame(page);
-    expect(await getCurrentOperationId(page)).toBe('titanic_rescued');
+    expect(await getCurrentOperationId(page)).toBe('second');
     expect(await exportModel(page)).toEqual(before);
 
     // No second debrief, brief or award (score and HQ chronal are compared above).
@@ -121,7 +121,7 @@ test('a completed mission is not granted again after a reload', async ({page}) =
 test('restart campaign erases the save', async ({page}) => {
     const problems = await startGame(page);
 
-    await setCausatorCfg(page, 'roster_reshuffle', 'remindBlair', 'true');
+    await setCausatorCfg(page, 'plan', 'noted', 'true');
     await saveGame(page);
     expect(await readSave(page)).not.toBeNull();
 
@@ -159,13 +159,13 @@ test('an exported file imports back to the same campaign', async ({page}) => {
     
     await page.evaluate(() => {
         const m = tc.model,
-            vq = m.getAgentModel('VQ'),
-            roster = m.getEventModel('roster_reshuffle');
-        vq.doDeployToEvent(roster);
+            alpha = m.getAgentModel('AL'),
+            plan = m.getEventModel('plan');
+        alpha.doDeployToEvent(plan);
         tc.rng.queueRolls(999); // So the action's skill check succeeds.
-        vq.doAction(roster.getActionModels().prevent);
+        alpha.doAction(plan.getActionModels().prepare);
         tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
-        vq.doAction(roster.getActionModels()._investigate);
+        alpha.doAction(plan.getActionModels()._investigate);
     });
     const before = await exportModel(page);
     
@@ -173,7 +173,7 @@ test('an exported file imports back to the same campaign', async ({page}) => {
     expect(download.suggestedFilename()).toBe('timecorps-save.json');
     const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
     expect(exported.version).toBe(1);
-    expect(exported.data.agents.VQ.event).toBe('roster_reshuffle');
+    expect(exported.data.agents.AL.event).toBe('plan');
     
     // Start over, which also proves the import doesn't depend on the old save.
     await visibleButton(page, '⌫').click();
@@ -196,7 +196,7 @@ for (const [label, contents] of [
     test('importing ' + label + ' fails and leaves the save alone', async ({page}) => {
         const problems = await startGame(page);
         
-        await setCausatorCfg(page, 'roster_reshuffle', 'remindBlair', 'true');
+        await setCausatorCfg(page, 'plan', 'noted', 'true');
         await saveGame(page);
         const saveBefore = await readSave(page);
         
@@ -231,12 +231,12 @@ test('a restored save still selects the operation\'s initial event', async ({pag
     
     await page.evaluate(() => {
         const m = tc.model;
-        m.getAgentModel('VQ').doDeployToEvent(m.getEventModel('roster_reshuffle'));
+        m.getAgentModel('AL').doDeployToEvent(m.getEventModel('plan'));
     });
     await saveGame(page);
     
     await reloadGame(page);
-    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('collision');
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('origin');
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -251,20 +251,20 @@ const getSelection = page => page.evaluate(() => tc.app.getSelectionForSave()),
 
 test('a restored save keeps the selected event and agent', async ({page}) => {
     const problems = await startGame(page);
-    await expectSelection(page, {event:'collision', agent:'VQ'});
+    await expectSelection(page, {event:'origin', agent:'AL'});
     
     await page.evaluate(() => {
-        tc.model.getAgentModel('OK').setHidden(false);
-        tc.app.selectAgentRow('OK');
-        tc.app.selectEventBox('casualties');
+        tc.model.getAgentModel('BR').setHidden(false);
+        tc.app.selectAgentRow('BR');
+        tc.app.selectEventBox('aftermath');
     });
-    await dismissAgentDossier(page, 'Okonjo');
-    await expectSelection(page, {event:'casualties', agent:'OK'});
+    await dismissAgentDossier(page, 'Bravo');
+    await expectSelection(page, {event:'aftermath', agent:'BR'});
     await saveGame(page);
-    expect((await readSave(page)).data.selection).toEqual({event:'casualties', agent:'OK'});
+    expect((await readSave(page)).data.selection).toEqual({event:'aftermath', agent:'BR'});
     
     await reloadGame(page);
-    await expectSelection(page, {event:'casualties', agent:'OK'});
+    await expectSelection(page, {event:'aftermath', agent:'BR'});
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
@@ -276,26 +276,26 @@ test('a restored save keeps the selected event and agent', async ({page}) => {
 test('a selection on a later mission is restored', async ({page}) => {
     const problems = await startGame(page);
     
-    await setCausatorCfg(page, 'roster_reshuffle', 'preventReshuffle', 'true');
-    await setCausatorCfg(page, 'engine_order', 'countermandAstern', 'true');
+    await setCausatorCfg(page, 'plan', 'prepared', 'true');
+    await setCausatorCfg(page, 'lever', 'pulled', 'true');
     
     // Wait for the dialog, otherwise last() can match the Mission panel's own Next Mission
     // link, which the dialog's dimmer then covers.
     await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
     await visibleButton(page, 'Next Mission ➜').last().click();
-    await expect.poll(() => getCurrentOperationId(page)).toBe('titanic_rescued');
+    await expect.poll(() => getCurrentOperationId(page)).toBe('second');
     await dismissMissionBrief(page);
     
     await page.evaluate(() => {
-        tc.app.selectEventBox('collision');
-        tc.app.selectAgentRow('VQ');
+        tc.app.selectEventBox('origin');
+        tc.app.selectAgentRow('AL');
     });
-    await expectSelection(page, {event:'collision', agent:'VQ'});
+    await expectSelection(page, {event:'origin', agent:'AL'});
     await saveGame(page);
     
     await reloadGame(page);
-    expect(await getCurrentOperationId(page)).toBe('titanic_rescued');
-    await expectSelection(page, {event:'collision', agent:'VQ'});
+    expect(await getCurrentOperationId(page)).toBe('second');
+    await expectSelection(page, {event:'origin', agent:'AL'});
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -305,7 +305,7 @@ test('a selection on a later mission is restored', async ({page}) => {
     applies when it becomes current. */
 test('a cleared selection stays cleared after a reload', async ({page}) => {
     const problems = await startGame(page);
-    await expectSelection(page, {event:'collision', agent:'VQ'});
+    await expectSelection(page, {event:'origin', agent:'AL'});
     
     await page.evaluate(() => {
         tc.app.getTimelineView().deselectAll();
@@ -324,16 +324,16 @@ test('a cleared selection stays cleared after a reload', async ({page}) => {
 test('agent health and constitution survive a save and reload', async ({page}) => {
     const problems = await startGame(page),
         readHealth = () => page.evaluate(() => {
-            const {value, max} = tc.model.getAgentModel('VQ').health;
+            const {value, max} = tc.model.getAgentModel('AL').health;
             return {value, max};
         });
     await page.evaluate(() => {
-        const statHealth = tc.model.getAgentModel('VQ').health;
+        const statHealth = tc.model.getAgentModel('AL').health;
         statHealth.setMax(120);
         statHealth.setValue(70);
         tc.persistence.save();
     });
-    expect((await readSave(page)).data.agents.VQ.health).toMatchObject({value:70, max:120});
+    expect((await readSave(page)).data.agents.AL.health).toMatchObject({value:70, max:120});
     
     await reloadGame(page);
     expect(await readHealth()).toEqual({value:70, max:120});
@@ -345,22 +345,22 @@ test('agent health and constitution survive a save and reload', async ({page}) =
 test('a devoured agent stays devoured after a save and reload', async ({page}) => {
     const problems = await startGame(page);
     
-    // Okonjo joins and is devoured, so Vasquez keeps the campaign going.
+    // Bravo joins and is devoured, so Alpha keeps the campaign going.
     await page.evaluate(() => {
-        tc.model.revealAgents(['OK']);
-        tc.model.awardAgents(['OK']);
+        tc.model.revealAgents(['BR']);
+        tc.model.awardAgents(['BR']);
     });
-    await dismissAgentDossier(page, 'Okonjo');
-    await page.evaluate(() => tc.model.getAgentModel('OK').setDevoured(true));
+    await dismissAgentDossier(page, 'Bravo');
+    await page.evaluate(() => tc.model.getAgentModel('BR').setDevoured(true));
     await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
-    await dismissAgentDossier(page, 'Okonjo');
+    await dismissAgentDossier(page, 'Bravo');
     await page.evaluate(() => tc.persistence.save());
     
     await reloadGame(page);
     expect(await page.evaluate(() => {
-        const ok = tc.model.getAgentModel('OK');
+        const ok = tc.model.getAgentModel('BR');
         return {devoured:ok.isDevoured(), event:ok.event, active:tc.model.getActiveAgentsAsList().map(agentModel => agentModel.id)};
-    })).toEqual({devoured:true, event:'the_void', active:['VQ']});
+    })).toEqual({devoured:true, event:'the_void', active:['AL']});
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -372,7 +372,7 @@ test('timeline paradox above the starting limit survives a save and reload', asy
     // More known Events raise the limit, and the paradox goes up to it, past the starting limit.
     const start = await read();
     await page.evaluate(() => {
-        for (const eventId of ['roster_reshuffle', 'ice_warnings', 'purser_spare', 'missing_binoculars', 'wireless_priority']) {
+        for (const eventId of ['plan', 'warnings', 'supply', 'relay', 'backlog']) {
             tc.model.getEventModel(eventId).attestation.setValue(10);
         }
         tc.model.paradox.setValue(tc.model.paradox.max);

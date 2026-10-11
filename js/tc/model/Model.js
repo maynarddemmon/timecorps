@@ -5,6 +5,7 @@
         skillCfgs = {},
         skillIds = [],
         skillCheckDefaults = {},
+        scenarioIds = [],
         
         commonEventActions = {};
     
@@ -363,6 +364,16 @@
         },
         
         processData: json => {
+            // The scenario files to load after this one, e.g. ["titanic_scenario"].
+            const scenarios = json.scenarios;
+            if (scenarios !== undefined) {
+                if (Array.isArray(scenarios) && scenarios.every(id => typeof id === 'string' && id.trim() !== '')) {
+                    scenarioIds = [...scenarios];
+                } else {
+                    console.warn('scenarios must be an array of file names, e.g. ["titanic_scenario"] (ignoring it):', scenarios);
+                }
+            }
+            
             // Load any skills configurations found. Later files can add skills or replace one.
             const moreSkillConfigs = json[SCOPE_SKILLS];
             if (moreSkillConfigs) {
@@ -397,6 +408,8 @@
             const initialOperation = json.initialOperation;
             if (initialOperation !== undefined) model.setInitialOperation(initialOperation);
         },
+        
+        getScenarioIds: () => scenarioIds,
         
         validateAllEventDependencies: () => {
             const eventModels = model.getEventModels();

@@ -74,7 +74,7 @@
         getBriefTitle: briefModel => pkg.makeBriefTitle('Agent Dossier', briefModel.getName()),
         
         /** @overrides BriefSupport */
-        getBriefReportUrl: briefModel => './data/dossiers/' + briefModel.id + '.txt',
+        getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'dossiers/' + briefModel.id + '.txt',
         
         /** @overrides BriefSupport */
         getBriefReportLabel: () => 'Profile',

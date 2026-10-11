@@ -1,0 +1,85 @@
+{
+	"agentDefaults":{
+		"description":[
+			{"text":"No paradox.", "hidden":"agent.paradox.value !== 0"},
+			{"text":"One paradox.", "hidden":"agent.paradox.value !== 1"},
+			{"text":"Some paradox.", "hidden":"agent.paradox.value < 2 || agent.paradox.value >= agent.paradox.max"},
+			{"text":"Full of paradox.", "hidden":"agent.paradox.value < agent.paradox.max || agent.event === 'the_void'"},
+			{"text":"Devoured.", "hidden":"agent.event !== 'the_void'"}
+		]
+	},
+	
+	"agents":{
+		// Given and revealed by the first mission. Has a video portrait.
+		"AL":{
+			"name":"Alpha",
+			"video":true,
+			"event":"origin",
+			"health":{"value":65, "max":85},
+			"skills":{
+				"chronogation":-100,
+				"investigation":100,
+				"str":50,
+				"agl":25,
+				"dex":25,
+				"cha":0,
+				"stealth":25,
+				"disguise":0,
+				"deception":-25,
+				"persuasion":25
+			}
+		},
+		// Revealed and given by the tests. No chronal, and a paradox already.
+		"BR":{
+			"name":"Bravo",
+			"health":{"value":50, "max":90},
+			"chronal":0,
+			"paradox":1,
+			"skills":{
+				"chronogation":25,
+				"investigation":75,
+				"str":50,
+				"agl":50,
+				"dex":25,
+				"cha":25,
+				"stealth":75,
+				"disguise":50,
+				"deception":25,
+				"persuasion":25
+			}
+		},
+		// Revealed once the boats are known about.
+		"CH":{
+			"name":"Charlie",
+			"health":{"value":25},
+			"event":"boats",
+			"paradox":2,
+			"playerControlled":true,
+			"hidden":"events.boats.attestation.value < 5",
+			"skills":{
+				"investigation":100,
+				"dex":75,
+				"disguise":125
+			}
+		},
+		// Revealed and given by completing the second mission.
+		"DE":{
+			"name":"Delta",
+			"skills":{
+				"investigation":50,
+				"cha":150,
+				"persuasion":175
+			}
+		},
+		// Revealed by completing the second mission, and given by the third's setup. Has a 
+		// video portrait.
+		"EC":{
+			"name":"Echo",
+			"video":true,
+			"skills":{
+				"chronogation":200,
+				"dex":150
+			}
+		}
+	}
+}

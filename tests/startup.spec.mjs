@@ -32,7 +32,7 @@ test('shows the Field Manual on the first visit only, before the Mission Brief',
     await page.getByRole('button', {name:'X Close'}).filter({visible:true}).click();
     await expect(manualTitle).toHaveCount(0);
     await dismissMissionBrief(page);
-    await dismissAgentDossier(page, 'Vasquez');
+    await dismissAgentDossier(page, 'Alpha');
     
     await reloadGame(page, {briefExpected:true});
     await expect(manualTitle).toHaveCount(0);
@@ -42,6 +42,6 @@ test('shows the Field Manual on the first visit only, before the Mission Brief',
     before its EventBox exists. It must still end up selected. */
 test('selects the initial operation event', async ({page}) => {
     const problems = await startGame(page);
-    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('collision');
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventBox()?.model.id ?? null)).toBe('origin');
     expect(problems.pageErrors).toEqual([]);
 });

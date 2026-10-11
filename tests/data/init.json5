@@ -1,0 +1,105 @@
+// The test world. The tests load this instead of the game's data (see cfg.DATA_BASE_DIR), so
+// the game's data can change freely without breaking them. It's shaped to exercise the engine,
+// not to tell a story: change it when a test needs something different.
+{
+	"scenarios":["test_scenario"],
+	
+	"skillChecks":{
+		"sure_thing":{
+			"name":"Sure Thing",
+			"check":"1000",
+			"difficulty":"no-roll"
+		},
+		"impossible":{
+			"name":"Impossible",
+			"check":"0",
+			"difficulty":1000
+		},
+		"social":{
+			"name":"Social",
+			"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
+		},
+		"athletic":{
+			"name":"Athletic",
+			"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
+			"difficulty":175
+		},
+		"sneak":{
+			"name":"Sneak",
+			"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
+			"difficulty":275
+		},
+		"investigate":{
+			"name":"Investigate",
+			"check":"agent.skills.investigation -3*event.attestation.value",
+			"difficulty":200
+		}
+	},
+	
+	// Every skill the code names (tc.SKILL_ID_*) must be here.
+	"skills":{
+		"agl":{"name":"Agility", "description":"Agility for the tests."},
+		"dex":{"name":"Dexterity", "description":"Dexterity for the tests."},
+		"str":{"name":"Strength", "description":"Strength for the tests."},
+		"cha":{"name":"Charisma", "description":"Charisma for the tests."},
+		"chronogation":{"name":"Chronogation", "description":"Chronogation for the tests."},
+		"investigation":{"name":"Investigation", "description":"Investigation for the tests."},
+		"stealth":{"name":"Stealth", "description":"Stealth for the tests."},
+		"disguise":{"name":"Disguise", "description":"Disguise for the tests."},
+		"deception":{"name":"Deception", "description":"Deception for the tests."},
+		"persuasion":{"name":"Persuasion", "description":"Persuasion for the tests."}
+	},
+	
+	"locations":{
+		"_nexus":{"name":"The Nexus", "color":"#fff", "textColor":"#000", "order":-2},
+		"_nowhere":{"name":"Nowhere", "color":"#000", "textColor":"#fff", "order":-1}
+	},
+	
+	"events":{
+		"the_void":{
+			"name":"⦰ The Void",
+			"start":"0000-01-01T00:00:00",
+			"duration":{"s":0},
+			"location":"_nowhere",
+			"hidden":"true",
+			"actions":{"_investigate":null}
+		},
+		"time_corps_hq":{
+			"name":"❉ Time Corps Headquarters",
+			"start":"2174-10-14T00:00:00",
+			"duration":{"d":1},
+			"location":"_nexus",
+			"hidden":"true",
+			"actions":{"_investigate":null}
+		}
+	},
+	
+	"defaultEventActions":{
+		"_investigate":{
+			"label":"Investigate",
+			"skillCheck":{"actionType":"investigate"},
+			"hidden":"event.attestation.value >= event.attestation.max",
+			"effects":{
+				// Up to 1 per 20 of margin, and never past the attestation left.
+				"event.attestation":{
+					"onSuccess":"d(Math.min(margin / 20, event.attestation.max - event.attestation.value))"
+				}
+			}
+		},
+		"_rest":{
+			"label":"Rest",
+			"hidden":"event.duration < 1000 * 60 * 60",
+			// Hopeless at half health or less, rising linearly to ensured at 90% or more.
+			"skillCheck":{
+				"difficulty":1000,
+				"check":"Math.round(2500 * (agent.health.value / agent.health.max)) - 1250"
+			},
+			"effects":{
+				// A d(4) per hour of the Event, up to 8.
+				"agent.health":{
+					"onSuccess":"d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
+				}
+			}
+		}
+	}
+}

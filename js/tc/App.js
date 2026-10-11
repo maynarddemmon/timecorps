@@ -122,13 +122,13 @@
             );
         },
         
-        getScenarioIDsToLoad = () => ['titanic_scenario','lusitania_scenario'],
-        
         loadAllData = () => {
-            const filesToLoad = ['init', ...getScenarioIDsToLoad(), 'agents', 'operations'];
+            // The scenarios to load are listed in init, so they're queued once it's loaded.
+            const filesToLoad = ['init'];
             let idx = 0;
             const chainFunc = success => {
                 if (success) {
+                    if (idx === 1) filesToLoad.push(...model.getScenarioIds(), 'agents', 'operations');
                     const namePart = filesToLoad[idx++];
                     if (namePart) {
                         loadDataIntoModel(DATA_BASE_DIR + namePart + '.json5', chainFunc);
@@ -530,7 +530,7 @@
         
         /*  afterOpenFunc is called once the manual is open, or once loading it has failed. */
         openHelp: afterOpenFunc => {
-            pkg.loadTxt('./data/' + 'help.txt', (success, txt) => {
+            pkg.loadTxt(DATA_BASE_DIR + 'help.txt', (success, txt) => {
                 if (success) {
                     markHelpSeen();
                     openAckMsgDialog('Time Corps Field Manual', txt, null, null, I18N_CLOSE_BTN);
