@@ -253,6 +253,7 @@
             model.currentOperationModel = operationModel;
             operationModel?.doOnSetup();
             pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
+            pkg.app.getTimelineView().updateEntanglements();
             
             // Objectives may already be satisfied on arrival (e.g. the player completed
             // them while working an earlier op), so check now rather than waiting for

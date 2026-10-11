@@ -413,6 +413,8 @@
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);
+                    // An Objective's expression can change what's entangled.
+                    if (instanceModel.isCurrent()) timelineView.updateEntanglements();
                     missionBrief?.notifyBriefModelChanged(instanceModel);
                     break;
                 case SCOPE_LOCATIONS:

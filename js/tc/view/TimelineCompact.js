@@ -43,6 +43,9 @@
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         
+        // Marks the Event boxes the current Operation's Objectives depend on. See index.html.
+        DOM_CLASS_ENTANGLED = 'entangled',
+        
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
         SPLINE_ID_PREFIX_EXIT = 'exit-',
         
@@ -449,6 +452,7 @@
             
             eventBox.setTooltip(_label.text);
             eventBox.setVisible(!hidden);
+            eventBox.updateEntangled();
             
             // Update connections between boxes
             if (!hidden) {
@@ -580,6 +584,19 @@
                 
                 this.bringToFront();
                 refreshConnectionsForSelection(this);
+            },
+            
+            /*  Whether an Objective of the current Operation depends on this Event, as far
+                as the player knows. Shown with the "entangled" style. */
+            setEntangled: function(entangled) {
+                if (this.entangled !== entangled) {
+                    this.set('entangled', entangled, true);
+                    this[entangled ? 'addDomClass' : 'removeDomClass'](DOM_CLASS_ENTANGLED);
+                }
+            },
+            updateEntangled: function() {
+                const model = this.model;
+                this.setEntangled(model != null && (pkg.model?.getCurrentOperation()?.isEntangledWith(model) ?? false));
             },
             
             setAdjacentIsSelected: function(adjacentIsSelected) {
@@ -907,6 +924,12 @@
                 if (sv.isA(Selectable)) retval.push(sv);
             }
             return retval;
+        },
+        
+        /*  Redoes every box's entangled style, e.g. when the current Operation changes. A
+            box also redoes its own whenever its Event changes, which covers reveals. */
+        updateEntanglements: function() {
+            for (const eventBox of Object.values(this.boxesByEventId)) eventBox.updateEntangled();
         },
         
         getSelectedEventBox: function() {

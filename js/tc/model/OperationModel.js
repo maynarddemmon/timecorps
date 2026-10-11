@@ -72,20 +72,30 @@
                 what the Objective depends on. Each is {eventModel, valueModel, statId}: a
                 Causator has a valueModel, an Event stat (e.g. attestation) has a statId, and
                 anything else read from an Event has neither. One entry per Causator or stat,
-                in the order the expression first reads them. */
+                in the order the expression first reads them.
+                
+                Each also has "known", whether the player knows about it: false while its
+                Event or Causator is hidden. Worked out when this is called, so call again
+                after a reveal. */
             getPrecursors: function() {
                 const EventModel = pkg.EventModel,
                     successFuncName = pkg.getConstraintFuncName('success'),
                     retval = [];
                 // The constraint binds the expression's paths last to first, so reverse them.
                 const observables = [...this.getAllObservables((_observable, funcName) => funcName === successFuncName)].reverse();
+                const add = (eventModel, valueModel, statId) => {
+                    retval.push({
+                        eventModel, valueModel, statId,
+                        known:!eventModel.isHidden() && !valueModel?.isHidden()
+                    });
+                };
                 for (const observable of observables) {
                     if (observable.isA(EventModel)) {
-                        retval.push({eventModel:observable, valueModel:null, statId:null});
+                        add(observable, null, null);
                     } else if (observable.event?.isA(EventModel)) {
-                        retval.push({eventModel:observable.event, valueModel:observable, statId:null});
+                        add(observable.event, observable, null);
                     } else if (observable.notifyTargets?.isA?.(EventModel)) {
-                        retval.push({eventModel:observable.notifyTargets, valueModel:null, statId:observable.id});
+                        add(observable.notifyTargets, null, observable.id);
                     }
                 }
                 return retval;
@@ -94,6 +104,12 @@
             /*  Whether the success expression reads anything from the Event. */
             dependsOnEvent: function(eventModel) {
                 return this.getPrecursors().some(precursor => precursor.eventModel === eventModel);
+            },
+            
+            /*  Whether the success expression reads a part of the Event the player knows
+                about. */
+            isEntangledWith: function(eventModel) {
+                return this.getPrecursors().some(precursor => precursor.known && precursor.eventModel === eventModel);
             },
             
             doDescriptionChanged: function() {this.operation.notifyCollectionOfUpdate();}
@@ -182,6 +198,13 @@
         /*  Whether any Objective's success expression reads anything from the Event. */
         dependsOnEvent: function(eventModel) {
             return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.dependsOnEvent(eventModel));
+        },
+
+        /*  Whether any Objective is entangled with the Event, i.e. its success expression
+            reads a part of the Event the player knows about. The timeline marks these
+            Events. */
+        isEntangledWith: function(eventModel) {
+            return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.isEntangledWith(eventModel));
         },
         
         canProceed: function() {

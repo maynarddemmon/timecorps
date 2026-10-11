@@ -87,7 +87,7 @@
                 let addedCount = 0,
                     hasUnknown = false;
                 for (const precursor of precursors) {
-                    if (precursor.eventModel.isHidden() || precursor.valueModel?.isHidden()) {
+                    if (!precursor.known) {
                         hasUnknown = true;
                     } else {
                         if (addedCount > 0) new TextForFlow(precursorsView, {text:ICON_SEPARATOR});

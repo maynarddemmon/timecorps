@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame} from './helpers.mjs';
+import {startGame, dismissMissionBrief} from './helpers.mjs';
 
 const precursorBtn = (page, name) => page.locator('.myt-OperationDetails').getByRole('button', {name, exact:true}),
     precursorsRow = page => page.locator('.myt-OperationDetails').getByText('Entanglements', {exact:true}),
@@ -88,4 +88,39 @@ test('an objective that reads no events has no precursors row', async ({page}) =
     await expect(precursorsRow(page)).toBeHidden();
     
     expect(problems.pageErrors).toEqual([]);
+});
+
+/*  The ids of the Events whose timeline boxes have the entangled style, checked both on the
+    box and in the DOM. */
+const getEntangledEventIds = page => page.evaluate(() => {
+    const retval = [];
+    for (const [eventId, eventBox] of Object.entries(tc.app.getTimelineView().boxesByEventId)) {
+        const hasClass = eventBox.getIDE().classList.contains('entangled');
+        if (eventBox.entangled !== hasClass) return 'mismatch at ' + eventId;
+        if (hasClass) retval.push(eventId);
+    }
+    return retval.sort();
+});
+
+test('the timeline marks the events the objectives are entangled with', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // The first mission's objective reads origin.
+    await expect.poll(() => getEntangledEventIds(page)).toEqual(['origin']);
+    expect(await page.evaluate(() => getComputedStyle(tc.app.getTimelineView().getEventBox('origin').getIDE()).boxShadow))
+        .toContain('4px');
+    
+    // An event the player doesn't know about isn't marked until it's revealed.
+    await setObjectiveSuccess(page, 'events.plan.values.prepared.value && events.aftermath.attestation.value > 0');
+    await expect.poll(() => getEntangledEventIds(page)).toEqual(['aftermath']);
+    await page.evaluate(() => tc.model.getEventModel('plan').attestation.setValue(50));
+    await expect.poll(() => getEntangledEventIds(page)).toEqual(['aftermath', 'plan']);
+    
+    // The marks follow the current mission.
+    await page.evaluate(() => tc.model.setCurrentOperation(tc.model.getOperationModel('second')));
+    await dismissMissionBrief(page);
+    await expect.poll(() => getEntangledEventIds(page)).toEqual(['aftermath', 'origin']);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
 });
