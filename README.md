@@ -65,12 +65,15 @@ Requests to other sites are stubbed out, so the tests don't need a network conne
 | `data/*.json5` | Scenarios, agents and operations. `init.json5` lists the scenario files to load |
 | `data/location/`, `data/dossiers/` | Area briefs and agent dossiers |
 | `data/help.txt` | The in-game field manual |
+| `docs/AUTHORING.md` | How to write the data files: events, actions, effects, agents and missions |
 | `img/` | Agent portraits and location photographs |
 | `fonts/` | Fonts and their licenses |
 | `tests/` | Playwright tests (`npm test`) |
 | `tests/data/` | The data the tests play with: a small scenario, agents and missions, and their text and media |
 
 ### Scenario data
+
+The full reference for writing the data files, with examples, is [docs/AUTHORING.md](docs/AUTHORING.md).
 
 Scenarios are [JSON5](https://json5.org): JSON plus `//` and `/* */` comments and trailing commas. Keep keys quoted and strings in double quotes, so the files stay plain JSON apart from the comments. Visibility, causator values and description phrases can all be written as constraint expressions that are re-evaluated as the timeline changes, for example:
 
