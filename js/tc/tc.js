@@ -143,6 +143,8 @@
             
             // Game Config
             cfg: {
+                DATA_BASE_DIR:'./data/',
+                
                 STANDARD_DEBOUNCE_MILLIS:50,
                 
                 EVENT_ID_THE_VOID:'the_void',

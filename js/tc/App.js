@@ -40,6 +40,7 @@
                 colorUltraLight, colorLight, colorMedium, colorUltraDark,
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
+            cfg:{DATA_BASE_DIR},
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             ICON_SEPARATOR
         } = pkg,
@@ -130,7 +131,7 @@
                 if (success) {
                     const namePart = filesToLoad[idx++];
                     if (namePart) {
-                        loadDataIntoModel('./data/' + namePart + '.json5', chainFunc);
+                        loadDataIntoModel(DATA_BASE_DIR + namePart + '.json5', chainFunc);
                     } else {
                         pkg.resumeConstraintBinding();
                         
