@@ -74,7 +74,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
     expect(save.data.agents.AL.event).toBe('plan');
     expect(save.data.agents.AL.paradox.value).toBeGreaterThan(0);
     expect(save.data.agents.AL.log).toContainEqual({type:'exit', exit:['plan', 0]});
-    expect(save.data.agents.AL.log).toContainEqual({type:'action', action:['plan', 'prepare'], success:true});
+    expect(save.data.agents.AL.log).toContainEqual({type:'action', action:['plan', 'prepare'], success:true, costs:{'agent.action':1}});
     expect(save.data.agents.AL.log).toContainEqual(expect.objectContaining({type:'action', action:['plan', '_investigate'], success:true}));
 
     const before = await exportModel(page);

@@ -37,6 +37,8 @@
 				"note":{
 					"label":"Take Note",
 					"skillCheck":{"actionType":"social"},
+					// The default cost, given explicitly so the data tests check a cost.
+					"costs":{"agent.action":"1"},
 					"set":{"noted":"true"},
 					"hidden":"event.values.noted.value"
 				}

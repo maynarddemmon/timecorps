@@ -12,6 +12,7 @@ How to write the files in `data/` that make up the game: scenarios with their ev
 - [Exits](#exits)
 - [Skill checks](#skill-checks)
 - [Effects](#effects)
+- [Costs](#costs)
 - [Default actions](#default-actions)
 - [Agents](#agents)
 - [Operations (missions)](#operations-missions)
@@ -75,7 +76,7 @@ Only property paths are watched. A method call such as `event.isHidden()` is wor
 
 ### Check expressions
 
-Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`) and for an action's `available` condition. They're worked out when they're needed rather than watched, and can use:
+Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`), for an action's `costs` and for its `available` condition. They're worked out when they're needed rather than watched, and can use:
 
 | Name | Is |
 |---|---|
@@ -251,8 +252,9 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`effects`**: changes to stats. See [Effects](#effects).
+- **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
 
-Taking an action uses one of the agent's actions at the event, whether the check passes or fails. The button shows the check's ease ("even", "tough"…) and any effects in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox.
+Taking an action pays its costs, whether the check passes or fails. The button shows the check's ease ("even", "tough"…), any costs beyond the usual action and any effects in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox, by an effect or a cost.
 
 Every event also offers the [default actions](#default-actions), Investigate and Rest, before its own.
 
@@ -333,6 +335,39 @@ Each effect has:
 
 - Raising or lowering `event.attestation` changes the score by 3 per point, the same as investigating.
 - Any change to `event.paradox` also changes `timeline.paradox`. `agent.paradox` changes only the agent.
+
+## Costs
+
+Costs are what an agent pays to take an action. An action costs one of the agent's actions at the event unless it says otherwise. Costs are keyed by what's paid, and each is an amount [check expression](#check-expressions):
+
+```json5
+// Two actions, and 100 score, more for each point of the event's paradox.
+"costs":{
+	"agent.action":"2",
+	"timeline.score":"100 + 100 * event.paradox.value"
+}
+```
+
+| Key | Pays | Payable while |
+|---|---|---|
+| `agent.action` | The agent's actions at the event | It has that many left |
+| `agent.health` | The agent's health | It keeps at least 1 |
+| `agent.chronal` | The agent's chronal | It has that much |
+| `agent.paradox` | Adds to the agent's paradox | That stays within its limit |
+| `event.attestation`, `event.historicity` | The event's stat | It has that much |
+| `event.paradox` | Adds to the event's paradox | That stays within its limit |
+| `timeline.chronal` | HQ's chronal | It has that much |
+| `timeline.paradox` | Adds to the timeline's paradox | That stays within its limit |
+| `timeline.score` | The player's score | The score is at least that |
+
+- **Merged over the default.** Costs are merged over the default of one action, so `{"timeline.score":"100"}` costs an action and 100 score. To change the action cost, give `agent.action`, e.g. `"0"`. `null` leaves a cost out, so `{"agent.action":null}` is an action that uses no action, and `"costs":null` leaves them all out.
+- **Worked out when needed.** Amounts are worked out when the button is drawn and again when the action is taken, from the state at that moment, so `"agent.paradox.value"` costs as many actions as the agent has paradox. They never roll: a `d()` counts as its average. They're rounded to whole points.
+- **All or nothing.** The action can only be taken if every cost can be paid. Otherwise its button is disabled, and its tooltip marks the cost that can't be paid.
+- **Paid first.** Costs are worked out and checked before the action's check rolls, and paid whatever the result. Effects are worked out from the state before the costs are paid, then applied after them.
+- **Not gains.** A negative amount is a gain, which is what [effects](#effects) are for, so it pays nothing, with a warning. A broken amount can't be paid, with a warning, so the action shows as unavailable.
+- **Side effects.** As for effects: paying `event.attestation` lowers the score by 3 a point, and adding to `event.paradox` adds to `timeline.paradox` too.
+
+The tooltip lists costs, e.g. "Costs: 2 Actions, 100 Score", leaving out the usual single action, and says "Uses no action" for an action that doesn't use one.
 
 ## Default actions
 
@@ -496,13 +531,23 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "actionType":"athletic", "onFailure":"-5"}}
 ```
 
-**An action that also costs or causes something.** Effects without a check follow the action.
+**An action that costs more than an action.** Costs are merged over the default action.
 
 ```json5
-"effects":{
-	"agent.chronal":{"onSuccess":"-3", "onFailure":"-3"},   // Costs chronal either way.
-	"event.paradox":{"onSuccess":"1"}                        // A crude fix leaves a mark.
-}
+"costs":{"timeline.score":"250"}   // An action and 250 score.
+```
+
+**An action that uses no action.** Leave out the default.
+
+```json5
+"costs":{"agent.action":null}
+```
+
+**An action that costs chronal and leaves a mark.** A cost is paid either way, and only if the agent has it. Effects without a check follow the action.
+
+```json5
+"costs":{"agent.chronal":"3"},
+"effects":{"event.paradox":{"onSuccess":"1"}}   // A crude fix leaves a mark.
 ```
 
 **Evidence that rewards a good result.**

@@ -206,9 +206,33 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         timeline:['paradox', 'chronal']
     };
 
-    test('every investigate, action skill check and action and exit effect is valid, including the default event actions', () => {
+    /*  What an action can cost. Mirrors tc.COSTS. */
+    const COST_KEYS = [
+        'agent.action', 'agent.health', 'agent.chronal', 'agent.paradox',
+        'event.attestation', 'event.historicity', 'event.paradox',
+        'timeline.chronal', 'timeline.paradox', 'timeline.score'
+    ];
+
+    test('every investigate, action skill check, action cost and action and exit effect is valid, including the default event actions', () => {
         const problems = [],
-            counts = {actionEffects:0, exitEffects:0},
+            counts = {actionEffects:0, exitEffects:0, costs:0},
+            
+            // Returns the problems with an action's costs. null leaves them all out.
+            checkCosts = (where, costs) => {
+                if (costs === null) return [];
+                if (typeof costs !== 'object' || Array.isArray(costs)) return [where + ' costs is not an object'];
+                const costProblems = [];
+                for (const [key, amount] of Object.entries(costs)) {
+                    // Null leaves out a cost, including the default action.
+                    if (amount === null) continue;
+                    const at = where + ' cost ' + key;
+                    if (!COST_KEYS.includes(key)) costProblems.push(at + ' is not one of ' + COST_KEYS.join(', '));
+                    const error = getAmountCompileError(amount);
+                    if (error) costProblems.push(at + ' ' + error);
+                    counts.costs++;
+                }
+                return costProblems;
+            },
         
             // Returns the problems with an action's or exit's effects.
             checkEffects = (where, effects, isAction) => {
@@ -264,11 +288,13 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     if (error) problems.push(where + ' available ' + error);
                 }
                 if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
+                if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
                 if (exit.effects !== undefined) problems.push(...checkEffects(where, exit.effects, false));
+                if ('costs' in exit) problems.push(where + ' has costs, which only actions have');
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }
         }
@@ -278,6 +304,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         if (DATA_DIR === TEST_DATA_DIR) {
             expect(counts.actionEffects).toBeGreaterThan(0);
             expect(counts.exitEffects).toBeGreaterThan(0);
+            expect(counts.costs).toBeGreaterThan(0);
         }
     });
 

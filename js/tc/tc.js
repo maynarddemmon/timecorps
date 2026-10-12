@@ -131,7 +131,7 @@
                 colorBtnLight:'#f70',
                 
                 colorParadox:'#c0f',
-                colorChronal:'#39f',
+                colorChronal:'#36f',
                 colorHealth:'#f00',
                 colorHistoricity:'#da6',
                 colorAttestation:'#fc0',
@@ -151,9 +151,6 @@
                 
                 EVENT_ID_THE_VOID:'the_void',
                 EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
-                
-                // The amount of chronal granted when reloading at HQ.
-                RELOAD_CHRONAL_AMOUNT:5,
                 
                 // The absolute minimum chronal needed to deploy an Agent from HQ to an Event.
                 MIN_DEPLOY_CHRONAL:2,

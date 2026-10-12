@@ -17,7 +17,6 @@
                 colorUltraLight, colorLight, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
-            cfg:{RELOAD_CHRONAL_AMOUNT},
             ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_NIL,
             STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
@@ -26,13 +25,14 @@
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
-        getActionBtnInfo = (agentModel, actionModel, agentCantActHere) => {
+        getActionBtnInfo = (agentModel, actionModel) => {
             const easePhrase = agentModel.getSkillEasePhrase(
                     actionModel.getActionSkillExpr(),
                     actionModel.getActionSkillDifficulty()
                 ),
                 label = actionModel.label,
                 name = actionModel.getActionSkillName(),
+                costsPhrase = agentModel.getCostsPhrase(actionModel),
                 effectsPhrase = agentModel.getEffectsPhrase(actionModel);
             
             return {
@@ -43,8 +43,9 @@
                 ),
                 // An action without an actionType has no name to show.
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
+                    (costsPhrase ? ICON_SEPARATOR + costsPhrase : '') + 
                     (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : ''),
-                disabled:agentCantActHere || !actionModel.isAvailableFor(agentModel) /*|| actionModel.done*/
+                disabled:!agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel) /*|| actionModel.done*/
             };
         },
         
@@ -102,9 +103,6 @@
                 self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
                     doActivated: () => {self.agentModel.doRecallToHQ();}
                 }]);
-                self.reloadChronalBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
-                    doActivated: () => {self.agentModel.doReloadChronal();}
-                }]);
                 
                 self.actionView = new AgentRowFlow(self);
                 self.exitView = new AgentRowFlow(self);
@@ -119,15 +117,13 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, reloadChronalBtn, actionView, exitView} = self,
-                    agentCantActHere = !agentModel.canAct();
+                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionView, exitView} = self;
                 
                 markerView.setModel(agentModel);
                 vitaeBtn.setText(agentModel.name);
                 
                 if (!agentModel.isPlayerControlled()) {
                     recallBtn.setVisible(false);
-                    reloadChronalBtn.setVisible(false);
                     new TextForFlow(actionView, {paddingTop:3, text:'Not under Time Corps control'});
                     return;
                 }
@@ -135,22 +131,14 @@
                 // The dead can't act, travel or be resupplied.
                 if (agentModel.isDead()) {
                     recallBtn.setVisible(false);
-                    reloadChronalBtn.setVisible(false);
                     new TextForFlow(actionView, {paddingTop:3, text:'Deceased'});
                     return;
                 }
                 
                 const isHQ = eventModel.isHQ();
                 recallBtn.setVisible(!isHQ);
-                reloadChronalBtn.setVisible(isHQ);
                 
-                if (isHQ) {
-                    const reloadAmount = agentModel.getReloadChronalAmount() || RELOAD_CHRONAL_AMOUNT;
-                    reloadChronalBtn.setText('Reload Agent Chronal +' + reloadAmount);
-                    reloadChronalBtn.setDisabled(!agentModel.canReloadChronal());
-                } else {
-                    agentModel.updateBtnForTimeTravel(recallBtn, pkg.model.getHQEventModel());
-                }
+                if (!isHQ) agentModel.updateBtnForTimeTravel(recallBtn, pkg.model.getHQEventModel());
                 
                 // Update Actions
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
@@ -159,7 +147,7 @@
                     const actionModel = actionModels[actionId];
                     if (!actionModel.isHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                        new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel, agentCantActHere), [{
+                        new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel), [{
                             doActivated: function() {agentModel.doAction(actionModel, this);}
                         }]);
                     }

@@ -11,9 +11,9 @@
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL,
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
-                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT
+                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
-            ICON_SEPARATOR, ICON_NIL,
+            ICON_SEPARATOR, ICON_NIL, getStatName,
             SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
@@ -267,6 +267,185 @@
             isGatedByActionSkillCheck: () => false
         }),
         
+        /*  The model whose stat a cost or effect of an action changes: the agent, the action's
+            Event or the timeline. */
+        getScopeTarget = (scopeName, agentModel, actionModel) => {
+            switch (scopeName) {
+                case SCOPE_AGENT: return agentModel;
+                case SCOPE_EVENT: return actionModel.event;
+                case SCOPE_TIMELINE: return pkg.model;
+            }
+        },
+        
+        /*  A cost paid in a stat. Paying lowers it, except paradox, which a cost adds to. Either
+            way a cost can't take the stat past its limits, so it's only payable while there's
+            room. reserve is held back from what can be paid, e.g. so a health cost can't kill. */
+        makeStatCost = (scopeName, statId, reserve=0) => {
+            const accrues = statId === STAT_ID_PARADOX,
+                getStat = (agentModel, actionModel) => getScopeTarget(scopeName, agentModel, actionModel)?.[statId];
+            return {
+                scopeName, statId,
+                getName: () => (scopeName === SCOPE_EVENT ? 'Event ' : scopeName === SCOPE_TIMELINE ? 'Timeline ' : '') + getStatName(statId),
+                getAvailable: (agentModel, actionModel) => {
+                    const stat = getStat(agentModel, actionModel);
+                    if (!stat) return 0;
+                    return accrues ? stat.getValueToMax() : -stat.getValueToMin() - reserve;
+                },
+                pay: (agentModel, actionModel, amount) => {
+                    getStat(agentModel, actionModel).adjValue(accrues ? amount : -amount);
+                    
+                    // An Event's attestation scores the same however it's lost, as for effects.
+                    if (scopeName === SCOPE_EVENT && statId === STAT_ID_ATTESTATION) pkg.model.adjScore(-amount * SCORE_PER_ATTESTATION);
+                }
+            };
+        },
+        
+        COST_KEY_ACTION = SCOPE_AGENT + '.action',
+        
+        /*  What an action can cost, by key: "<scope>.<resource>". Each says how much of it can
+            be paid, and pays it. */
+        COSTS = pkg.COSTS = {
+            // The agent's actions at its Event. Every action costs one unless it says otherwise.
+            [COST_KEY_ACTION]:{
+                getName: amount => amount === 1 ? 'Action' : 'Actions',
+                getAvailable: agentModel => agentModel.getActionsRemaining(),
+                pay: (agentModel, _actionModel, amount) => {agentModel.setActionExecCount(agentModel.getActionExecCount() + amount);}
+            },
+            // A health cost can't take the agent's last point of health.
+            [SCOPE_AGENT + '.' + STAT_ID_HEALTH]:makeStatCost(SCOPE_AGENT, STAT_ID_HEALTH, 1),
+            [SCOPE_AGENT + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_AGENT, STAT_ID_CHRONAL),
+            [SCOPE_AGENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_AGENT, STAT_ID_PARADOX),
+            [SCOPE_EVENT + '.' + STAT_ID_ATTESTATION]:makeStatCost(SCOPE_EVENT, STAT_ID_ATTESTATION),
+            [SCOPE_EVENT + '.' + STAT_ID_HISTORICITY]:makeStatCost(SCOPE_EVENT, STAT_ID_HISTORICITY),
+            [SCOPE_EVENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_EVENT, STAT_ID_PARADOX),
+            [SCOPE_TIMELINE + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_TIMELINE, STAT_ID_CHRONAL),
+            [SCOPE_TIMELINE + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_TIMELINE, STAT_ID_PARADOX),
+            // The player's score. It can't be spent below 0.
+            [SCOPE_TIMELINE + '.score']:{
+                getName: () => 'Score',
+                getAvailable: () => pkg.model.getScore(),
+                pay: (_agentModel, _actionModel, amount) => {pkg.model.adjScore(-amount);}
+            }
+        },
+        
+        /*  The costs of an action when it doesn't give its own. */
+        DEFAULT_COSTS = {[COST_KEY_ACTION]:'1'},
+        
+        /*  One cost of an action: something the agent must pay to take it, named by its key,
+            e.g. "agent.action" or "timeline.score". See COSTS. Configured as an amount
+            expression, e.g. "2" or "100 + 100 * event.paradox.value", worked out like an
+            available condition: when it's needed, without rolling, so any d() is its average.
+            It's rounded to whole points, and can't be negative. */
+        ActionCostModel = pkg.ActionCostModel = new JSClass('ActionCostModel', BaseModel, {
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                const {owner, key, expr} = attrs;
+                delete attrs.owner;
+                delete attrs.key;
+                delete attrs.expr;
+                
+                this.owner = owner;
+                this.key = key;
+                this.callSuper(attrs);
+                
+                this.valid = this.configure(expr);
+            },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
+            getExpr: function() {return this.expr;},
+            
+            isActionCost: function() {return this.key === COST_KEY_ACTION;},
+            
+            /*  Names what's paid, e.g. "Actions" or "Timeline Chr⏲nal". */
+            getName: function(amount) {return COSTS[this.key].getName(amount);},
+            
+            
+            // Methods /////////////////////////////////////////////////////////
+            /*  Returns true if the config is usable. Problems are warned about. */
+            configure: function(expr) {
+                const warn = msg => console.warn(this.owner.getSkillCheckOwner() + ' cost ' + this.key, msg + ':', expr);
+                if (!Object.hasOwn(COSTS, this.key)) {
+                    warn('must be one of ' + Object.keys(COSTS).join(', ') + ' (ignoring it)');
+                    return false;
+                }
+                if (typeof expr !== 'string' || expr.trim() === '') {
+                    warn('must be a non-empty string (ignoring it)');
+                    return false;
+                }
+                this.expr = expr;
+                
+                // The stat it's paid in, if it's one, named as for an effect.
+                this.scopeName = COSTS[this.key].scopeName;
+                this.statId = COSTS[this.key].statId;
+                return true;
+            },
+            
+            /*  What the agent would pay now, in whole points. NaN, with a warning, if the
+                expression is broken. A negative amount is a gain, which is what effects are
+                for, so it's 0, with a warning the first time. */
+            getAmount: function(agentModel) {
+                const amount = Math.round(pkg.checks.getAverageAmount(this.expr, {agent:agentModel, event:this.owner.event}));
+                if (amount < 0) {
+                    if (!this.warnedNegative) {
+                        this.warnedNegative = true;
+                        console.warn(this.owner.getSkillCheckOwner() + ' cost ' + this.key + ' is negative (paying nothing):', this.expr);
+                    }
+                    return 0;
+                }
+                return amount === 0 ? 0 : amount; // Never -0, and NaN stays NaN.
+            },
+            
+            /*  How much of it the agent has to pay with. */
+            getAvailable: function(agentModel) {return COSTS[this.key].getAvailable(agentModel, this.owner);},
+            
+            /*  Whether the agent can pay an amount of it. A broken amount can't be paid. */
+            canPay: function(agentModel, amount) {
+                return Number.isFinite(amount) && (amount === 0 || amount <= this.getAvailable(agentModel));
+            },
+            
+            pay: function(agentModel, amount) {
+                if (amount > 0) COSTS[this.key].pay(agentModel, this.owner, amount);
+            }
+        }),
+        
+        /*  Gives an action "costs": an object of amount expressions by key, which the agent must
+            be able to pay to take it. They're merged over the default of one action, so
+            {"timeline.score":"100"} costs an action and 100 score. null leaves a cost out, e.g.
+            {"agent.action":null} for an action that uses no action, and "costs":null leaves
+            them all out. */
+        CostsSupport = new JSModule('CostsSupport', {
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                const costs = attrs.costs;
+                delete attrs.costs;
+                
+                // Applied after the other attrs so any warnings can name the owner.
+                this.callSuper(attrs);
+                
+                this.setCosts(costs);
+            },
+            
+            
+            // Accessors ///////////////////////////////////////////////////////
+            setCosts: function(cfg) {
+                const costs = this.costs = [];
+                if (cfg === null) return;
+                if (cfg !== undefined && (typeof cfg !== 'object' || Array.isArray(cfg))) {
+                    console.warn(this.getSkillCheckOwner(), 'costs must be an object of amounts by key, e.g. {"agent.action":"2"} (using the default):', cfg);
+                    cfg = undefined;
+                }
+                cfg = {...DEFAULT_COSTS, ...cfg};
+                for (const key in cfg) {
+                    if (cfg[key] === null) continue;
+                    
+                    const costModel = new ActionCostModel({owner:this, key, expr:cfg[key]});
+                    if (costModel.valid) costs.push(costModel);
+                }
+            },
+            getCosts: function() {return this.costs;}
+        }),
+        
         /*  Reduces a set of observables or observers to the EventModels they belong to. */
         toEventModels = (things, excludeEventModel) => {
             const retval = new Set();
@@ -314,7 +493,7 @@
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport, CostsSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -353,7 +532,7 @@
             getAvailable: function() {return this.available ?? null;},
             
             /*  Whether the agent can take the action, by its available condition. Doesn't
-                look at whether the agent has actions left. */
+                look at whether the agent can pay its costs. */
             isAvailableFor: function(agentModel) {
                 const expr = this.getAvailable();
                 return expr == null || pkg.checks.isTrue(expr, {agent:agentModel, event:this.event});

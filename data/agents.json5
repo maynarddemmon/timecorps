@@ -25,7 +25,7 @@
 			"name":"Vasquez",
 			"video":true,
 			"event":"collision",
-			"health":{"value":65, "max":85},
+			"health":{"value":35, "max":85},
 			"skills":{
 				"chronogation":-100,
 				"investigation":100,

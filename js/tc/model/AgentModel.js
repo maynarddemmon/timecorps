@@ -13,7 +13,7 @@
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
-                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, RELOAD_CHRONAL_AMOUNT
+                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
@@ -264,7 +264,6 @@
             }
         },
         getActionExecCount: function() {return this.actionExecCount;},
-        incrementActionExecCount: function() {this.setActionExecCount(this.actionExecCount + 1);},
         getEventActionLimit: function() {return this.getEventModel()?.getActionLimit() ?? 0;},
         getActionsRemaining: function() {
             if (this.isDead()) return 0;
@@ -552,7 +551,7 @@
         },
         
         doAction: function(actionModel, btnView) {
-            if (!this.canAct()) return;
+            if (this.isDead()) return;
             
             /*if (actionModel.isDone()) {
                 console.warn('Attemp to do a done action.', actionModel, this);
@@ -567,9 +566,11 @@
                 return;
             }
             
-            // Don't proceed with an action this Agent doesn't have available.
-            if (actionModel.isAvailableFor(this)) {
-                // A failed check still uses the action.
+            // Don't proceed with an action this Agent doesn't have available or can't pay for.
+            // The costs are worked out before anything changes, since they may depend on it.
+            const costs = this.getCostsFor(actionModel);
+            if (actionModel.isAvailableFor(this) && costs.every(cost => cost.canPay)) {
+                // A failed check still pays the costs.
                 const check = this.checkSkillExpression(
                         actionModel.getActionSkillExpr(),
                         actionModel.getActionSkillDifficulty()
@@ -578,12 +579,12 @@
                     logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
                 
                 // Now show floating panel, with the effects so there's only one. (must be before 
-                // anything that triggers a rerender of EventDetails such as applying the effects or
-                // incrementActionExecCount, since that destroys the btnView)
+                // anything that triggers a rerender of EventDetails such as paying the costs or
+                // applying the effects, since that destroys the btnView)
                 showFloatingTextForSkillCheck(btnView, {...check, effects});
                 
+                this.payCosts(costs, logEntry);
                 this.applyEffects(effects, logEntry);
-                this.incrementActionExecCount();
                 
                 if (check.success) {
                     for (const key in setObj) {
@@ -599,22 +600,6 @@
                 }
                 this.pushOntoLog(logEntry);
             }
-        },
-        
-        
-        // Chronal //
-        doReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
-            if (this.canReloadChronal(requestedAmount)) {
-                const amount = this.getReloadChronalAmount(requestedAmount);
-                pkg.model[STAT_ID_CHRONAL].adjValue(-amount);
-                this[STAT_ID_CHRONAL].adjValue(amount);
-            }
-        },
-        getReloadChronalAmount: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
-            return mathMin(requestedAmount, -pkg.model[STAT_ID_CHRONAL].getValueToMin(), this[STAT_ID_CHRONAL].getValueToMax());
-        },
-        canReloadChronal: function(requestedAmount=RELOAD_CHRONAL_AMOUNT) {
-            return !this.isDead() && this.getReloadChronalAmount(requestedAmount) > 0;
         },
         
         
@@ -645,6 +630,57 @@
             }
         },
         isDevoured: function() {return this.devoured;},
+        
+        
+        // Costs //
+        /*  Works out what taking an action would cost the agent now. Returns an Array of
+            {cost, key, amount, canPay} where amount is in whole points, or NaN if its
+            expression is broken, which can't be paid. */
+        getCostsFor: function(actionModel) {
+            return actionModel.getCosts().map(costModel => {
+                const amount = costModel.getAmount(this);
+                return {cost:costModel, key:costModel.key, amount, canPay:costModel.canPay(this, amount)};
+            });
+        },
+        
+        /*  Whether the agent can pay all of an action's costs. The dead can't pay anything. */
+        canPayCostsFor: function(actionModel) {
+            return !this.isDead() && this.getCostsFor(actionModel).every(cost => cost.canPay);
+        },
+        
+        /*  Pays costs from getCostsFor and records them on the log entry by key. */
+        payCosts: function(costs, logEntry) {
+            const logged = logEntry.costs = {};
+            let usedAction = false;
+            for (const {cost, key, amount} of costs) {
+                logged[key] = amount;
+                cost.pay(this, amount);
+                if (cost.isActionCost() && amount > 0) usedAction = true;
+            }
+            
+            // Using an action updates the Event's view, so make sure something does when an
+            // action is free.
+            if (!usedAction) this.getEventModel()?.notifyCollectionOfUpdate();
+        },
+        
+        /*  Describes an action's costs, e.g. "Costs: 2 Actions, 100 Score", or an empty string
+            if it only costs the usual one action. A cost the agent can't pay says so, and an
+            action that uses no action says that. */
+        getCostsPhrase: function(actionModel) {
+            const parts = [];
+            let actionCost = 0;
+            for (const {cost, amount, canPay} of this.getCostsFor(actionModel)) {
+                if (cost.isActionCost()) {
+                    actionCost = amount;
+                    if (amount === 1 && canPay) continue;
+                }
+                if (amount !== 0) parts.push((Number.isFinite(amount) ? amount : '?') + ' ' + cost.getName(amount) + (canPay ? '' : " (can't pay)"));
+            }
+            const phrases = [];
+            if (actionCost === 0) phrases.push('Uses no action');
+            if (parts.length > 0) phrases.push('Costs: ' + parts.join(', '));
+            return phrases.join(ICON_SEPARATOR);
+        },
         
         
         // Effects //
@@ -685,14 +721,15 @@
         },
         
         /*  True if an action or exit could, on average, change a stat with this ID, whoever
-            has it: the agent, the Event or the timeline. A broken amount (NaN) doesn't count. */
+            has it: the agent, the Event or the timeline. That's by an effect, or for an action
+            by a cost. A broken amount (NaN) doesn't count. */
         hasStatChangeFor: function(ownerModel, statId) {
             return ownerModel.getEffects().some(effectModel => effectModel.statId === statId && 
                 [true, false].some(success => {
                     const amount = getAverageEffectAmount(this, effectModel, success);
                     return Number.isFinite(amount) && amount !== 0;
                 })
-            );
+            ) || (ownerModel.getCosts?.() ?? []).some(costModel => costModel.statId === statId && costModel.getAmount(this) > 0);
         },
         hasHealthChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_HEALTH);},
         hasChronalChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_CHRONAL);},

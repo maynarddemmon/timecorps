@@ -109,7 +109,43 @@
 			"location":"_nexus",
 			"hidden":"true",
 			// There's nothing to learn about HQ.
-			"actions":{"_investigate":null}
+			"actions":{
+				"_investigate":null,
+				
+				// Agents can reload their chronal from the shared HQ pool.
+				"_reloadChronal":{
+					"label":"Reload Chronal +3",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"timeline.chronal.value <= 0",
+					"available":"agent.chronal.value < agent.chronal.max",
+					"costs":{
+						"agent.action":null
+					},
+					"effects":{
+						"agent.chronal":{
+							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+						},
+						"timeline.chronal":{
+							"onSuccess":"-Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+						}
+					}
+				},
+				
+				// Agents can heal critical health damage here.
+				"_heal":{
+					"label":"Infirmary Stay",
+					"available":"agent.health.value < agent.health.max",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"timeline.score":"50 * (agent.health.max - agent.health.value)"
+					},
+					"effects":{
+						"agent.health":{
+							"onSuccess":"d(8,6)"
+						}
+					}
+				}
+			}
 		}
 	},
 	
