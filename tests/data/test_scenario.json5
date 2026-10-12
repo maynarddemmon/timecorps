@@ -5,6 +5,9 @@
 {
 	"locationsBaseOrder":0,
 	
+	// Scratch entries, read and set as "scratch.<name>".
+	"scratch":{"plan_noteCount":0},
+	
 	"locations":{
 		"office":{"name":"Office", "color":"#fcc9", "order":1},
 		"tower":{"name":"Tower", "color":"#cfc9", "order":2},
@@ -39,7 +42,8 @@
 					"skillCheck":{"actionType":"social"},
 					// The default cost, given explicitly so the data tests check a cost.
 					"costs":{"agent.action":"1"},
-					"set":{"noted":"true"},
+					// And counts notes in a scratch entry, so they check a scratch set.
+					"set":{"noted":"true", "scratch.plan_noteCount":"scratch.plan_noteCount + 1"},
 					"hidden":"event.values.noted.value"
 				}
 			},

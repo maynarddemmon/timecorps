@@ -8,6 +8,7 @@ How to write the files in `data/` that make up the game: scenarios with their ev
 - [init.json5](#initjson5)
 - [Scenarios: locations and events](#scenarios-locations-and-events)
 - [Values (causators)](#values-causators)
+- [Scratch](#scratch)
 - [Actions](#actions)
 - [Exits](#exits)
 - [Skill checks](#skill-checks)
@@ -60,6 +61,7 @@ What an expression can refer to:
 | `agents.<id>` | Any agent | Everywhere |
 | `operations.<id>` | Any operation | Everywhere |
 | `timeline` | The overall game state, e.g. `timeline.paradox.value` | Everywhere |
+| `scratch.<name>` | A [scratch](#scratch) entry | Everywhere |
 
 Locations have none of the "self" names, so their phrases use `events.<id>` or `timeline`. Using a self name where it isn't available, e.g. `event` in an agent's expression, warns at load.
 
@@ -83,6 +85,7 @@ Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`), 
 | `agent` | The agent making the check. `agent.skills.<id>` is 0 for any skill the agent doesn't have |
 | `event` | The event the agent is at |
 | `timeline` | The overall game state |
+| `scratch.<name>` | A [scratch](#scratch) entry |
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
 | `margin` | Amounts only: how well the deciding check went. See [Effects](#effects) |
@@ -228,6 +231,23 @@ Values are the facts of an event that the player can change, and that other even
 - **`description`** gives the phrases for each state. Without one, the value itself is shown.
 - **`hidden`** hides the value's row.
 
+## Scratch
+
+Scratch entries are somewhere for the data to keep its own state, such as a count of how many times something has happened. Declare them, with their starting values, in a `"scratch"` at the top of any data file:
+
+```json5
+"scratch":{
+	"wireless_clearBacklogEarlier_flipCount":0
+}
+```
+
+- **One namespace.** Every entry is in the same scratch space, so start each name with the id of the event (or whatever) it belongs to. Names are identifiers: letters, digits and `_`.
+- **Values** start, and stay, a number, a boolean or a string.
+- **Declare before use.** A constraint can only follow an entry that's declared. Setting an undeclared entry is ignored, with a warning, and the data tests flag reading or setting one.
+- **Read** `scratch.<name>` in any expression, e.g. `"hidden":"scratch.wireless_clearBacklogEarlier_flipCount >= 3"`. Constraints update as soon as an entry changes.
+- **Set** them with an action's `set`. See [Actions](#actions).
+- **Saved** with the rest of the game.
+
 ## Actions
 
 Actions are what agents do at an event: a check, then changes to values and stats.
@@ -248,7 +268,9 @@ Actions are what agents do at an event: a check, then changes to values and stat
 
 - **`label`**: the button's text.
 - **`skillCheck`**: see [Skill checks](#skill-checks). Leave it out for an even chance: difficulty 250 against no skill.
-- **`set`**: on success, sets the event's own values. Each new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
+- **`set`**: on success, sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order.
+  - A key that's a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
+  - A `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's effects are worked out before its sets, so they see the entries as they were.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`effects`**: changes to stats. See [Effects](#effects).
@@ -511,6 +533,16 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 ```json5
 "plant":{"label":"Plant Key", "skillCheck":{"actionType":"sneak"}, "set":{"plantKey":"true"},  "hidden":"event.values.plantKey.value"},
 "unplant":{"label":"Remove Key", "skillCheck":{"actionType":"sneak"}, "set":{"plantKey":"false"}, "hidden":"!event.values.plantKey.value"}
+```
+
+**Something that costs more each time it's changed back.** Count the changes in a scratch entry. Effects see the count before this change, so the first change is free.
+
+```json5
+"set":{
+	"clearBacklogEarlier":"true",
+	"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
+},
+"effects":{"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}}
 ```
 
 **A value with several ways to make it true.** Join the ways in its expression. Each event it reads becomes a precursor.

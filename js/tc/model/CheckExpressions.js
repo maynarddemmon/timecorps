@@ -4,7 +4,7 @@
     const {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
         
         {
-            SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
+            SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH,
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
@@ -15,7 +15,7 @@
         PARAM_DIFFICULTY = 'difficulty',
         PARAM_DIE = 'd',
         PARAM_MARGIN = 'margin',
-        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN],
+        FUNC_PARAMS = [SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN, SCOPE_SCRATCH],
         
         // An arbitrary limit on the number of dice in one d(sides, count).
         MAX_DICE = 99,
@@ -93,21 +93,28 @@
             return func;
         },
         
+        /*  Evaluates an expression with die as its d function, as whatever it gives. 
+            undefined, with a warning, if it doesn't compile or throws. */
+        evaluateRaw = (expr, {agent, event, difficulty=0, margin=0}, die) => {
+            const func = compile(expr);
+            if (func === NOT_COMPILED) return undefined; // Already warned about.
+            
+            try {
+                const rootModel = pkg.model;
+                return func(getAgentView(agent), event, rootModel, difficulty, die, margin, rootModel[SCOPE_SCRATCH]);
+            } catch (err) {
+                console.warn('Check expression threw (' + err.message + '):', expr);
+                return undefined;
+            }
+        },
+        
         /*  Evaluates an expression with die as its d function, as a number: a boolean is 1
             or 0, and anything else is converted as Number() does. NaN, with a warning, if the
             expression throws or the result isn't a finite number, e.g. from a misspelled 
             property. */
-        evaluateExpr = (expr, {agent, event, difficulty=0, margin=0}, die) => {
-            const func = compile(expr);
-            if (func === NOT_COMPILED) return NaN; // Already warned about.
-            
-            let value;
-            try {
-                value = func(getAgentView(agent), event, pkg.model, difficulty, die, margin);
-            } catch (err) {
-                console.warn('Check expression threw (' + err.message + '):', expr);
-                return NaN;
-            }
+        evaluateExpr = (expr, cfg, die) => {
+            const value = evaluateRaw(expr, cfg, die);
+            if (value === undefined) return NaN; // Already warned about.
             const number = Number(value);
             if (!Number.isFinite(number)) {
                 console.warn('Check expression is not a finite number (' + value + '):', expr);
@@ -179,6 +186,7 @@
                     agent doesn't have.
                 event - The EventModel the check happens at.
                 timeline - The root Model.
+                scratch - The entries the data declares, e.g. "scratch.collision_lookoutWarned".
                 difficulty - The check's difficulty.
                 d(sides, count) - Rolls count dice, 1 by default, each a whole number from 1 to 
                     sides, and totals them, e.g. "agent.skills.str + d(12) - difficulty" or 
@@ -235,6 +243,11 @@
             
             /*  An amount without rolling: any d(sides) counts as its average. */
             getAverageAmount: (expr, cfg={}) => evaluateExpr(expr, cfg, averageDie),
+            
+            /*  Evaluates an expression for whatever it gives, e.g. a boolean or a string, 
+                rolling any dice. The same parameters as a check. undefined, with a warning, if 
+                it doesn't compile or throws. */
+            rollValue: (expr, cfg={}) => evaluateRaw(expr, cfg, rollDie),
             
             /*  Evaluates a condition, such as whether an action is available, with the same
                 parameters as a check. Nothing is rolled: any d(sides) counts as its average.

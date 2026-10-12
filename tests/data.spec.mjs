@@ -20,6 +20,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         defaultEventActions = Object.assign({}, ...scenarios.map(s => s.defaultEventActions ?? {})),
         agents = agentsJson.agents,
         operations = operationsJson.operations,
+        scratch = Object.assign({}, ...scenarios.map(s => s.scratch ?? {})),
     
         // Every string anywhere inside a JSON value.
         collectStrings = (value, accum=[]) => {
@@ -49,6 +50,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
             for (const [ref, operationId] of expr.matchAll(/\boperations\.(\w+)/g)) {
                 if (!operations[operationId]) bad.push(ref);
+            }
+            for (const [ref, name] of expr.matchAll(/(?<![\w.])scratch\.(\w+)/g)) {
+                if (!Object.hasOwn(scratch, name)) bad.push(ref);
             }
             return bad;
         };
@@ -213,9 +217,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         'timeline.chronal', 'timeline.paradox', 'timeline.score'
     ];
 
-    test('every investigate, action skill check, action cost and action and exit effect is valid, including the default event actions', () => {
+    test('every investigate, action skill check, action cost, action scratch set and action and exit effect is valid, including the default event actions', () => {
         const problems = [],
-            counts = {actionEffects:0, exitEffects:0, costs:0},
+            counts = {actionEffects:0, exitEffects:0, costs:0, scratchSets:0},
             
             // Returns the problems with an action's costs. null leaves them all out.
             checkCosts = (where, costs) => {
@@ -289,6 +293,14 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 }
                 if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
+                for (const [key, value] of Object.entries(action.set ?? {})) {
+                    if (!key.startsWith('scratch.')) continue;
+                    const name = key.slice('scratch.'.length),
+                        error = getAmountCompileError(value);
+                    if (!Object.hasOwn(scratch, name)) problems.push(where + ' sets ' + key + ', which is not declared');
+                    if (error) problems.push(where + ' set ' + key + ' ' + error);
+                    counts.scratchSets++;
+                }
                 if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }
             for (const exit of event.exits ?? []) {
@@ -305,7 +317,25 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             expect(counts.actionEffects).toBeGreaterThan(0);
             expect(counts.exitEffects).toBeGreaterThan(0);
             expect(counts.costs).toBeGreaterThan(0);
+            expect(counts.scratchSets).toBeGreaterThan(0);
         }
+    });
+
+    test('every scratch entry is named as an identifier and starts as a number, a boolean or a string', () => {
+        const problems = [];
+        SCENARIO_FILES.forEach((file, idx) => {
+            const cfg = scenarios[idx].scratch;
+            if (cfg === undefined) return;
+            if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+                problems.push(file + ' scratch is not an object');
+                return;
+            }
+            for (const [name, value] of Object.entries(cfg)) {
+                if (!/^[A-Za-z_$][\w$]*$/.test(name)) problems.push(file + ' scratch entry ' + name + ' is not an identifier');
+                if (!['boolean', 'string'].includes(typeof value) && !Number.isFinite(value)) problems.push(file + ' scratch entry ' + name + ' does not start as a number, a boolean or a string');
+            }
+        });
+        expect(problems).toEqual([]);
     });
 
     test('every default skill check has a name and a skill expression that compiles', () => {

@@ -1,5 +1,14 @@
 {
 	"locationsBaseOrder":0,
+	
+	// Scratch entries, read and set as "scratch.<name>". Names are global, so they start with
+	// the id of the Event they belong to.
+	"scratch":{
+		// How many times the backlog decision has been changed. Every change after the first
+		// costs the agent a paradox.
+		"wireless_clearBacklogEarlier_flipCount":0
+	},
+	
 	"locations":{
 		"southampton.harland_wolff":{
 			"name":"Harland & Wolff",
@@ -389,13 +398,26 @@
 				"clear":{
 					"label":"Clear Backlog Earlier",
 					"skillCheck":{"actionType":"social"},
-					"set":{"clearBacklogEarlier":"true"},
+					"set":{
+						"clearBacklogEarlier":"true",
+						"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
+					},
+					// Effects are worked out before the sets, so this sees the count before this flip.
+					"effects":{
+						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
+					},
 					"hidden":"event.values.clearBacklogEarlier.value"
 				},
 				"noClear":{
 					"label":"Delay Clearing Backlog",
 					"skillCheck":{"actionType":"social"},
-					"set":{"clearBacklogEarlier":"false"},
+					"set":{
+						"clearBacklogEarlier":"false",
+						"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
+					},
+					"effects":{
+						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
+					},
 					"hidden":"!event.values.clearBacklogEarlier.value"
 				}
 			},

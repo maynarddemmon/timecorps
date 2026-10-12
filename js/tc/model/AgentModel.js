@@ -16,16 +16,19 @@
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER
             },
             theme:{colorAction, fontFamilyMono},
-            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
+            checks:{rollValue, skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
             isNoRollDifficulty,
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_ATTESTATION,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, SCOPE_SCRATCH, CHECK_SKILL_EXPR_PREFIX,
             getStatName
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
+        
+        // An action's set key that names a scratch entry, e.g. "scratch.collision_lookoutWarned".
+        SCRATCH_PREFIX = SCOPE_SCRATCH + '.',
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -588,12 +591,19 @@
                 
                 if (check.success) {
                     for (const key in setObj) {
-                        const value = setObj[key],
-                            eventValueModel = event.values[key];
-                        if (eventValueModel) {
-                            eventValueModel.setValue(value, false);
+                        const value = setObj[key];
+                        if (key.startsWith(SCRATCH_PREFIX)) {
+                            // Worked out once, now, rather than kept up to date like a Causator,
+                            // so "scratch.x + 1" counts. Dice roll.
+                            const result = rollValue(value, getCheckCfg(this, actionModel.getActionSkillDifficulty()));
+                            if (result !== undefined) pkg.model.setScratch(key.slice(SCRATCH_PREFIX.length), result);
                         } else {
-                            console.warn('Missing Value in doIt:' + key);
+                            const eventValueModel = event.values[key];
+                            if (eventValueModel) {
+                                eventValueModel.setValue(value, false);
+                            } else {
+                                console.warn('Missing Value in doIt:' + key);
+                            }
                         }
                     }
                     //actionModel.setDone(true);

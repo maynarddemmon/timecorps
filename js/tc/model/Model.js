@@ -22,7 +22,7 @@
                 AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             CHECK_SKILL_EXPR_PREFIX
         } = pkg,
@@ -43,6 +43,10 @@
         },
         
         eventsForHiddenAttrSetup = [],
+        
+        // The names of the scratch entries the data declares.
+        scratchNames = new Set(),
+        isScratchValue = value => typeof value === 'boolean' || typeof value === 'string' || Number.isFinite(value),
         
         STARTING_SCORE = 0,
         
@@ -96,6 +100,11 @@
             model[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
                 notifyTargets:model, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT
             });
+            
+            // Entries the data declares, e.g. "wireless_clearBacklogEarlier_flipCount", read and
+            // set as "scratch.<name>". Setting one fires an event of its name, so constraints
+            // see it change.
+            model[SCOPE_SCRATCH] = new myt.Eventable();
             model[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
                 notifyTargets:model, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT
             }, [{
@@ -263,6 +272,22 @@
         getCurrentOperation: () => model.currentOperationModel,
         
         
+        // Scratch:Accessors & Methods /////////////////////////////////////////
+        isScratchName: name => scratchNames.has(name),
+        
+        /*  Sets a declared scratch entry. A name that isn't declared, or a value that isn't a
+            finite number, a boolean or a string, is ignored with a warning. */
+        setScratch: (name, value) => {
+            if (!scratchNames.has(name)) {
+                console.warn('No scratch entry', name, 'is declared (ignoring the set):', value);
+            } else if (!isScratchValue(value)) {
+                console.warn('Scratch entry', name, 'must be a number, a boolean or a string (ignoring the set):', value);
+            } else {
+                model[SCOPE_SCRATCH].set(name, value, true);
+            }
+        },
+        
+        
         // Score:Accessors & Methods ///////////////////////////////////////////
         setScore: function(v) {this.set('score', v, true);},
         adjScore: function(adj) {this.setScore(this.getScore() + adj);},
@@ -289,8 +314,12 @@
         /*  The full saveable state. Locations are pure data so they are not included. The 
             PersistenceManager diffs this against a baseline so only changes get saved. */
         exportToObj: () => {
+            const scratch = {};
+            for (const name of scratchNames) scratch[name] = model[SCOPE_SCRATCH][name];
+            
             const retval = {
                 score:model.score,
+                scratch,
                 currentOperation:model.getCurrentOperation()?.id ?? null,
                 selection:pkg.app.getSelectionForSave()
             };
@@ -302,6 +331,7 @@
         /*  First pass. Must run while constraint binding is paused (see PersistenceManager). */
         importFromObj: obj => {
             if ('score' in obj) model.setScore(obj.score);
+            for (const name in obj.scratch) model.setScratch(name, obj.scratch[name]);
             for (const statId of TIMELINE_STAT_IDS) {
                 if (obj[statId]) model[statId].importFromObj(obj[statId]);
             }
@@ -385,6 +415,25 @@
             // Default skill checks by action type, e.g. "social" or "investigate".
             const moreSkillChecks = json[DATA_KEY_SKILL_CHECKS];
             if (moreSkillChecks) skillCheckDefaults = {...skillCheckDefaults, ...moreSkillChecks};
+            
+            // Scratch entries and their starting values, e.g. {"wireless_clearBacklogEarlier_flipCount":0}.
+            const scratchCfg = json[SCOPE_SCRATCH];
+            if (isPlainObject(scratchCfg)) {
+                for (const name in scratchCfg) {
+                    const value = scratchCfg[name];
+                    if (!isScratchValue(value)) {
+                        console.warn('Scratch entry', name, 'must start as a number, a boolean or a string (ignoring it):', value);
+                    } else if (!scratchNames.has(name) && name in model[SCOPE_SCRATCH]) {
+                        console.warn('Scratch entry name', name, 'is already in use (ignoring it)');
+                    } else {
+                        if (scratchNames.has(name)) console.warn('Duplicate scratch entry', name, '(using the later value)');
+                        scratchNames.add(name);
+                        model[SCOPE_SCRATCH].set(name, value, true);
+                    }
+                }
+            } else if (scratchCfg !== undefined) {
+                console.warn('scratch must be an object of starting values by name (ignoring it):', scratchCfg);
+            }
             
             // Default Event Actions
             const defaultEventActions = json.defaultEventActions ?? {};

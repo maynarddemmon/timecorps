@@ -355,6 +355,7 @@
             
             // Constraint Scopes
             SCOPE_TIMELINE:'timeline',
+            SCOPE_SCRATCH:'scratch',
             SCOPE_LOCATIONS:'locations',
             SCOPE_OPERATIONS:'operations',
             SCOPE_OPERATION:'operation',
