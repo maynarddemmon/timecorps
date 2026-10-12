@@ -5,7 +5,8 @@
         
         {
             View, PaddedText, PaddedPlainText, SizeToParent, 
-            Layout, SpacedLayout, ResizeLayout, WrappingLayout
+            Layout, SpacedLayout, ResizeLayout, WrappingLayout,
+            debounce
         } = myt,
         
         {
@@ -45,7 +46,7 @@
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
                     (costsPhrase ? ICON_SEPARATOR + costsPhrase : '') + 
                     (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : ''),
-                disabled:!agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel) /*|| actionModel.done*/
+                disabled:!agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel)
             };
         },
         
@@ -356,7 +357,7 @@
             histNextBtn.setTooltip(nextBtnTooltip);
         },
         
-        updateForEventModel: function() {
+        updateForEventModel: debounce(function() {
             const self = this,
                 {eventModel, detailsContainer} = self,
                 hasModel = eventModel != null;
@@ -419,9 +420,9 @@
             
             self.updateTitle();
             self.updateForSelectedAgent();
-        },
+        }, 5),
         
-        updateForSelectedAgent: function() {
+        updateForSelectedAgent: debounce(function() {
             const self = this,
                 eventModel = self.eventModel,
                 hasEventModel = eventModel != null;
@@ -460,7 +461,7 @@
                 
                 agentsRowBtnSeparator.setVisible(sepIsVisible);
             }
-        },
+        }, 25),
         
         updateTitle: function() {
             const eventName = this.eventModel?.name ?? 'none';
