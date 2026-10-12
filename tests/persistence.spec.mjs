@@ -69,7 +69,7 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
     const save = await readSave(page);
     expect(save.version).toBe(1);
     expect(Object.keys(save.data.events)).toContain('plan');
-    expect(save.data.events.plan.values).toEqual({prepared:{value:'true'}});
+    expect(save.data.events.plan.values).toEqual({prepared:{value:'true', flipCount:1}});
     expect(save.data.events.finale).toBeUndefined();
     expect(save.data.agents.AL.event).toBe('plan');
     expect(save.data.agents.AL.paradox.value).toBeGreaterThan(0);

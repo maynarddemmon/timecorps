@@ -556,11 +556,6 @@
         doAction: function(actionModel, btnView) {
             if (this.isDead()) return;
             
-            /*if (actionModel.isDone()) {
-                console.warn('Attemp to do a done action.', actionModel, this);
-                return;
-            }*/
-            
             const eventModel = this.getEventModel(),
                 {setObj, event} = actionModel;
             
@@ -589,6 +584,9 @@
                 this.payCosts(costs, logEntry);
                 this.applyEffects(effects, logEntry);
                 
+                // After the effects are worked out, so they see the count before this is applied.
+                actionModel.setAttemptCount(actionModel.getAttemptCount() + 1);
+                
                 if (check.success) {
                     for (const key in setObj) {
                         const value = setObj[key];
@@ -600,13 +598,14 @@
                         } else {
                             const eventValueModel = event.values[key];
                             if (eventValueModel) {
-                                eventValueModel.setValue(value, false);
+                                eventValueModel.setValueByAction(value);
                             } else {
                                 console.warn('Missing Value in doIt:' + key);
                             }
                         }
                     }
-                    //actionModel.setDone(true);
+                    
+                    actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 }
                 this.pushOntoLog(logEntry);
             }

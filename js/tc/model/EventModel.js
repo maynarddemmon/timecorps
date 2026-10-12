@@ -498,7 +498,13 @@
             
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
-                //this.done = false;
+                // How many times the action has been attempted, pass or fail. Expressions read it as
+                // e.g. "event.actions.recover.attemptCount".
+                this.attemptCount = 0;
+                
+                // How many times the action has been performed successfully. Expressions read it as
+                // e.g. "event.actions.recover.doneCount".
+                this.doneCount = 0;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
                 const {skillCheck, available} = attrs;
@@ -545,15 +551,48 @@
             /** @overrides EffectsSupport */
             isGatedByActionSkillCheck: () => true,
             
-            /*setDone: function(done) {
-                this.set('done', done, true);
-                this.event.notifyCollectionOfUpdate();
+            setDoneCount: function(v) {
+                if (this.doneCount !== v) {
+                    this.set('doneCount', v, true);
+                    this.event.notifyCollectionOfUpdate();
+                }
             },
-            isDone: function() {return this.done;},*/
+            getDoneCount: function() {return this.doneCount;},
+            
+            setAttemptCount: function(v) {
+                if (this.attemptCount !== v) {
+                    this.set('attemptCount', v, true);
+                    this.event.notifyCollectionOfUpdate();
+                }
+            },
+            getAttemptCount: function() {return this.attemptCount;},
+            
+            
+            // Persistence /////////////////////////////////////////////////////
+            exportToObj: function() {
+                return {
+                    doneCount:this.doneCount, 
+                    attemptCount:this.attemptCount
+                };
+            },
+            importFromObj: function(obj) {
+                if ('doneCount' in obj) this.setDoneCount(obj.doneCount);
+                if ('attemptCount' in obj) this.setAttemptCount(obj.attemptCount);
+            }
         }),
         
         EventValueModel = new JSClass('EventValueModel', BaseModel, {
             include: [ConstrainableToParentEvent, HideableEventPart, DescribableEventPart],
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                // How many times an action has changed the value. Changes that follow from other
+                // Values don't count. Expressions read it as e.g.
+                // "event.values.relayToBridge.flipCount".
+                this.flipCount = 0;
+                this.callSuper(attrs);
+            },
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -572,6 +611,21 @@
                 }
             },
             getValue: function() {return this.value;},
+            
+            /*  Sets the value as an action does, counting a flip if that changes it. */
+            setValueByAction: function(value) {
+                const before = this.value;
+                this.setValue(value, false);
+                if (this.value !== before) this.setFlipCount(this.flipCount + 1);
+            },
+            
+            setFlipCount: function(v) {
+                if (this.flipCount !== v) {
+                    this.set('flipCount', v, true);
+                    this.event.notifyCollectionOfUpdate();
+                }
+            },
+            getFlipCount: function() {return this.flipCount;},
             
             /*  A player-facing name. Falls back to the id so unnamed Values still display. */
             setName: function(name) {this.set('name', name, true);},
@@ -607,10 +661,11 @@
             /*  Saves the literal or expression last given to setValue rather than the actual 
                 value, since an Action may have replaced a literal with an expression. */
             exportToObj: function() {
-                return {value:getConstrainedValueCfg(this, 'value')};
+                return {value:getConstrainedValueCfg(this, 'value'), flipCount:this.flipCount};
             },
             importFromObj: function(obj) {
                 if ('value' in obj) this.setValue(obj.value, false);
+                if ('flipCount' in obj) this.setFlipCount(obj.flipCount);
             }
         }),
         
@@ -936,6 +991,10 @@
                     values = this.values;
                 for (const statId of EVENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
                 for (const id in values) valuesObj[id] = values[id].exportToObj();
+                
+                const actionsObj = retval.actions = {},
+                    actions = this.actions;
+                for (const id in actions) actionsObj[id] = actions[id].exportToObj();
                 return retval;
             },
             
@@ -954,6 +1013,19 @@
                             valueModel.importFromObj(valuesObj[id]);
                         } else {
                             console.warn('Save has unknown Value', id, 'for Event', this.id, '(skipping)');
+                        }
+                    }
+                }
+                
+                const actionsObj = obj.actions;
+                if (actionsObj) {
+                    const actions = this.actions;
+                    for (const id in actionsObj) {
+                        const actionModel = actions[id];
+                        if (actionModel) {
+                            actionModel.importFromObj(actionsObj[id]);
+                        } else {
+                            console.warn('Save has unknown action', id, 'for Event', this.id, '(skipping)');
                         }
                     }
                 }

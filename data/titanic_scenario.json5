@@ -313,12 +313,20 @@
 					"label":"Relay to Bridge",
 					"skillCheck":{"actionType":"sure_thing"},
 					"set":{"relayToBridge":"true"},
+					// Every change of the value after the first costs the agent a paradox. Effects are
+					// worked out before the set, so they see the flipCount before this change.
+					"effects":{
+						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
+					},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
 				"noRelay":{
 					"label":"Don't relay to Bridge",
 					"skillCheck":{"actionType":"cha"},
 					"set":{"relayToBridge":"false"},
+					"effects":{
+						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
+					},
 					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
 				}
 			},
@@ -357,12 +365,26 @@
 					"label":"Spare Recovered",
 					"skillCheck":{"difficulty":300, "actionType":"social"},
 					"set":{"spareRecovered":"true"},
+					// Every attempt after the first, pass or fail, costs the agent a paradox. Effects
+					// are worked out before doneCount counts this attempt.
+					"effects":{
+						"agent.paradox":{
+							"onSuccess":"event.actions.recover.attemptCount >= 1 ? 1 : 0",
+							"onFailure":"event.actions.recover.attemptCount >= 1 ? 1 : 0"
+						}
+					},
 					"hidden":"event.values.spareRecovered.value"
 				},
 				"removeSpare":{
 					"label":"Spare Removed",
 					"skillCheck":{"difficulty":300, "actionType":"sneak"},
 					"set":{"spareRecovered":"false"},
+					"effects":{
+						"agent.paradox":{
+							"onSuccess":"event.actions.removeSpare.doneCount >= 1 ? 1 : 0",
+							"onFailure":"event.actions.removeSpare.doneCount >= 1 ? 1 : 0"
+						}
+					},
 					"hidden":"!event.values.spareRecovered.value"
 				}
 			},

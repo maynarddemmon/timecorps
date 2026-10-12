@@ -71,6 +71,7 @@ Useful things to read:
 - A value: `events.collision.values.struck.value`, or `event.values.struck.value` for the event's own.
 - An agent's current event: `agent.event === 'the_void'`.
 - An objective: `operations.titanic_noCollision.objectives.avoid.success`.
+- How many times an action has been taken, or a value changed by one: `event.actions.recover.doneCount`, `event.values.relayToBridge.flipCount`.
 
 Literal values are expressions too: `"true"`, `"false"`, `"0"`, and strings in single quotes, `"'Carpathia'"`.
 
@@ -230,6 +231,7 @@ Values are the facts of an event that the player can change, and that other even
 - **`value`** is a constraint expression. A literal like `"false"` is a starting point that actions can change. An expression is worked out from other values. A reference to another event's values (`events.<id>.values.<id>`) makes that event a precursor, which draws the link on the timeline and drives the default reveal rule.
 - **`description`** gives the phrases for each state. Without one, the value itself is shown.
 - **`hidden`** hides the value's row.
+- **`flipCount`** counts how many times an action's `set` has changed the value, e.g. `event.values.relayToBridge.flipCount`. Setting it to what it already is doesn't count, and nor do changes that follow from other values. Any expression can read it, and constraints update when it changes.
 
 ## Scratch
 
@@ -275,6 +277,8 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`effects`**: changes to stats. See [Effects](#effects).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
+
+Every action counts how many times it's been taken, pass or fail, as its `doneCount`, e.g. `event.actions.recover.doneCount`. Any expression can read it, and constraints update when it changes, so `"hidden":"event.actions.recover.doneCount >= 3"` allows three tries. An action's effects are worked out before its own `doneCount`, and the `flipCount` of the values it sets, go up, so they see the counts before this take.
 
 Taking an action pays its costs, whether the check passes or fails. The button shows the check's ease ("even", "tough"…), any costs beyond the usual action and any effects in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox, by an effect or a cost.
 
@@ -535,15 +539,23 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "unplant":{"label":"Remove Key", "skillCheck":{"actionType":"sneak"}, "set":{"plantKey":"false"}, "hidden":"!event.values.plantKey.value"}
 ```
 
-**Something that costs more each time it's changed back.** Count the changes in a scratch entry. Effects see the count before this change, so the first change is free.
+**Something that costs more each time it's changed back.** Read the value's `flipCount`. Effects see the count before this change, so the first change is free.
 
 ```json5
-"set":{
-	"clearBacklogEarlier":"true",
-	"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
-},
-"effects":{"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}}
+"set":{"relayToBridge":"true"},
+"effects":{"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}}
 ```
+
+**An action that costs more after the first try.** The same with its `doneCount`, which counts failures too, so the effect needs both cases.
+
+```json5
+"effects":{"agent.paradox":{
+	"onSuccess":"event.actions.recover.doneCount >= 1 ? 1 : 0",
+	"onFailure":"event.actions.recover.doneCount >= 1 ? 1 : 0"
+}}
+```
+
+**Counting something else.** Keep the count in a [scratch](#scratch) entry and add to it in a `set`, e.g. `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"`.
 
 **A value with several ways to make it true.** Join the ways in its expression. Each event it reads becomes a precursor.
 
