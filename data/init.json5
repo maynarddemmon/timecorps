@@ -118,15 +118,16 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"hidden":"timeline.chronal.value <= 0",
 					"available":"agent.chronal.value < agent.chronal.max",
+					// Takes no action, and the small amount lets the pool be shared out a little at a
+					// time. The cost and the effect are the same amount: up to 3, as much as the pool
+					// has and the agent has room for.
 					"costs":{
-						"agent.action":null
+						"agent.action":null,
+						"timeline.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
 					},
 					"effects":{
 						"agent.chronal":{
 							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
-						},
-						"timeline.chronal":{
-							"onSuccess":"-Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
 						}
 					}
 				},

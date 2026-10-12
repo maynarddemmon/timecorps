@@ -256,9 +256,9 @@ test('a dead agent can\'t act or travel, and an agent with no chronal still coun
         alpha.doRecallToHQ();
         alpha.doDeployToEvent(tc.model.getEventModel('origin'));
         alpha.doFollowExit(exitModel);
-        return {before, after:alpha.event, canAct:alpha.canAct(), canReload:alpha.canReloadChronal()};
+        return {before, after:alpha.event, canAct:alpha.canAct(), canPay:alpha.canPayCostsFor(aftermath.getActionModels()._investigate)};
     });
-    expect(moves).toEqual({before:'aftermath', after:'aftermath', canAct:false, canReload:false});
+    expect(moves).toEqual({before:'aftermath', after:'aftermath', canAct:false, canPay:false});
 
     // The agent's row says so, with no actions or exits, and the header offers no travel.
     await page.evaluate(() => {
