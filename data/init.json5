@@ -108,6 +108,7 @@
 			"duration":{"d":1},
 			"location":"_nexus",
 			"hidden":"true",
+			"actionLimit":5,
 			// There's nothing to learn about HQ.
 			"actions":{
 				"_investigate":null,
@@ -143,6 +144,21 @@
 					"effects":{
 						"agent.health":{
 							"onSuccess":"d(8,6)"
+						}
+					}
+				},
+				
+				// Agents can be treated to remove paradox, one point at a time.
+				"_stabilize":{
+					"label":"Causality Stabilization Treatment",
+					"available":"agent.paradox.value > 0",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"timeline.score":"3000"
+					},
+					"effects":{
+						"agent.paradox":{
+							"onSuccess":"-1"
 						}
 					}
 				}
