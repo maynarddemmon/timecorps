@@ -821,26 +821,25 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
 
 test('buttons flag each stat an effect could change, but not a broken amount', async ({page}) => {
     const problems = await startGame(page),
-        exitTextWith = async effects => {
+        // Waits for the exit's button in the agent's list of exits to read as expected, since
+        // Event Details redraws after a debounce.
+        expectExitTextWith = async (effects, expected) => {
             await page.evaluate(effects => {
                 tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath').setEffects(effects);
                 tc.app.selectEventBox('aftermath');
                 tc.app.selectEventBox('origin');
             }, effects);
-            // The exit's button in the agent's list of exits.
-            const btn = page.getByText(/^Walk to Aftermath/).filter({visible:true});
-            await expect(btn).toHaveCount(1);
-            return btn.textContent();
+            await expect(page.getByText(/^Walk to Aftermath/).filter({visible:true})).toHaveText(expected);
         };
     
     // Entering the aftermath costs no paradox, so only the effects flag anything.
-    expect(await exitTextWith({})).toBe('Walk to Aftermath');
-    expect(await exitTextWith({'timeline.paradox':{onSuccess:'1'}})).toBe('Walk to Aftermath [⥁]');
-    expect(await exitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}})).toBe('Walk to Aftermath [⏲ + ♥]');
+    await expectExitTextWith({}, 'Walk to Aftermath');
+    await expectExitTextWith({'timeline.paradox':{onSuccess:'1'}}, 'Walk to Aftermath [⥁]');
+    await expectExitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}}, 'Walk to Aftermath [⏲ + ♥]');
     
     // Changes that average to nothing, or can't be worked out, aren't flagged.
-    expect(await exitTextWith({'agent.health':{onSuccess:'d(3) - 2'}})).toBe('Walk to Aftermath');
-    expect(await exitTextWith({'agent.health':{onFailure:'nope'}})).toBe('Walk to Aftermath');
+    await expectExitTextWith({'agent.health':{onSuccess:'d(3) - 2'}}, 'Walk to Aftermath');
+    await expectExitTextWith({'agent.health':{onFailure:'nope'}}, 'Walk to Aftermath');
     for (const warning of problems.warnings) expect(warning).toBe('Check expression threw (nope is not defined): nope');
     expect(problems.pageErrors).toEqual([]);
 });

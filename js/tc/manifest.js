@@ -21,7 +21,7 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
         'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar',
         'tc.HealthBar','tc.SkillBar','tc.MiniStatBar','tc.BigStatBar'
-    ).requires('tc');
+    ).requires('tc.UnderlineBtn');
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue',
         'tc.CompactField','tc.CompactFieldRow','tc.TallView'

@@ -90,6 +90,8 @@
         }
     });
     
+    /*  A skill's value on a bar from red to green, labeled above. With showIncreaseBtn, a
+        button at the right of the label calls doIncrease, e.g. to buy points. */
     pkg.SkillBar = new JSClass('SkillBar', M.ProgressBar, {
         initNode: function(parent, attrs) {
             attrs.valueColor ??= colorUltraLight;
@@ -105,12 +107,14 @@
                 labelY = attrs.labelY ??= -12,
                 labelFontSize = attrs.labelFontSize ??= fontSizeMicro,
                 labelColor = attrs.labelColor ??= colorMedium;
+            const showIncreaseBtn = attrs.showIncreaseBtn;
             delete attrs.label;
             delete attrs.showLabel;
             delete attrs.labelX;
             delete attrs.labelY;
             delete attrs.labelFontSize;
             delete attrs.labelColor;
+            delete attrs.showIncreaseBtn;
             
             this.callSuper(parent, attrs);
             
@@ -136,8 +140,31 @@
             
             if (showLabel) this.labelView = new M.PlainText(this, {x:labelX, y:labelY, text:label, textColor:labelColor, fontSize:labelFontSize});
             
+            if (showIncreaseBtn) {
+                // Not focusable, since it can become disabled by its own click, e.g. when the
+                // last credit is spent, and focus would then jump elsewhere in the dialog.
+                this.increaseBtn = new pkg.UnderlineBtn(this, {
+                    align:'right', alignOffset:2*labelX, y:labelY - 1, height:14, fontSize:labelFontSize, text:'+', focusable:false
+                }, [{doActivated: () => {this.doIncrease();}}]);
+            }
+            
             this.updateValueView();
         },
+        
+        setLabelText: function(text) {this.labelView?.setText(text);},
+        
+        /*  Sets the increase button's text, whether it's disabled and its tooltip. */
+        updateIncreaseBtn: function(text, disabled, tooltip) {
+            const btn = this.increaseBtn;
+            if (btn) {
+                btn.setText(text);
+                btn.setDisabled(disabled);
+                btn.setTooltip(tooltip);
+            }
+        },
+        
+        /*  Called when the increase button is clicked. */
+        doIncrease: M.NOOP,
         
         updateValueView: function() {
             const isHorizontal = this.axis === 'x',

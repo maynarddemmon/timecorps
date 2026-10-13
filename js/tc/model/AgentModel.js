@@ -13,7 +13,7 @@
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
-                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER
+                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             theme:{colorAction, fontFamilyMono},
             checks:{rollValue, skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
@@ -128,6 +128,10 @@
             }
             return retval;
         },
+        
+        /*  What the next purchase of an Agent's skill gets and costs: {points, credits}. One 
+            credit for one point. Kept on its own so the pricing can be tuned. */
+        getSkillPurchase = pkg.getSkillPurchase = (_agentModel, _skillId) => ({points:1, credits:1}),
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
             const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, -1); // -1 because we will have just pushed an entry event of some kind onto the log.
@@ -361,6 +365,32 @@
         getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
         getSkillChronogation: function() {return this.getSkill(SKILL_ID_CHRONOGATION);},
         getSkillInvestigation: function() {return this.getSkill(SKILL_ID_INVESTIGATION);},
+        
+        /*  Why the Agent can't buy the next purchase of a skill now, e.g. "Only at HQ", or 
+            null if they can. */
+        getSkillPurchaseProblem: function(skillId) {
+            if (!pkg.isSkillId(skillId)) return 'No such skill';
+            if (!this.isPlayerControlled()) return 'Not under Time Corps control';
+            if (this.isDead()) return 'Deceased';
+            if (!this.isAtHQ()) return 'Only at HQ';
+            
+            const {points, credits} = getSkillPurchase(this, skillId);
+            if (this.getSkill(skillId) + points > MAX_SKILL_VALUE) return 'At its maximum';
+            if (credits > pkg.model.getCredits()) return 'Not enough credits';
+            return null;
+        },
+        canPurchaseSkill: function(skillId) {return this.getSkillPurchaseProblem(skillId) == null;},
+        
+        /*  Spends credits to raise a skill, by getSkillPurchase. Returns true if it was bought. */
+        purchaseSkill: function(skillId) {
+            if (!this.canPurchaseSkill(skillId)) return false;
+            
+            const {points, credits} = getSkillPurchase(this, skillId);
+            pkg.model.adjCredits(-credits);
+            this[SCOPE_SKILLS] = {...this[SCOPE_SKILLS], [skillId]:this.getSkill(skillId) + points};
+            this.notifyCollectionOfUpdate();
+            return true;
+        },
         
         getSkillInfo: function() {
             const accum = [];

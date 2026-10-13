@@ -169,6 +169,9 @@
                 AGENT_DEFAULT_HEALTH:100,
                 AGENT_HEALTH_LIMIT:150,
                 
+                // The most an Agent's skill can be raised to by purchasing it.
+                MAX_SKILL_VALUE:1000,
+                
                 // These ensure that any skill check has at least a 0.1% chance of success/failure.
                 MAX_SKILL_EASE:-1,
                 MIN_SKILL_EASE:-999,

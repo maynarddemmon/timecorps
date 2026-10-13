@@ -11,6 +11,8 @@
                 layoutSpacing, spacing, padding, cornerRadius, 
                 colorMedium, colorDark, colorMegaDark
             },
+            cfg:{MAX_SKILL_VALUE},
+            ICON_SEPARATOR,
             STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_HEALTH
         } = pkg,
         
@@ -66,6 +68,9 @@
             new SpacedLayout(skillsContainer, {axis:'y', inset:20, spacing:18, outset:12, collapseParent:true});
             
             new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, outset:spacing, collapseParent:true});
+            
+            // Credits decide which skills can be bought.
+            self.attachTo(pkg.model, '_handleCreditsChanged', 'credits');
         },
         
         
@@ -113,15 +118,20 @@
                     align:'center', y:16, width:1, bgColor:colorMedium, 
                     percentOfParentHeightOffset:-24, ignoreLayout:true
                 });
+                // Only the Corps' own agents can be trained, so only they get the buttons.
+                const showIncreaseBtn = agentModel.isPlayerControlled(),
+                    skillBars = self._skillBars = [];
                 for (const skillInfo of agentModel.getSkillInfo()) {
-                    const cfg = skillInfo.cfg,
-                        label = cfg.name + ' : ' + skillInfo.value;
-                    new SkillBar(skillsRow, {
-                        x:spacing, minValue:-1000, value:skillInfo.value, maxValue:1000,
+                    const skillId = skillInfo.id;
+                    skillBars.push(new SkillBar(skillsRow, {
+                        x:spacing, minValue:-MAX_SKILL_VALUE, value:skillInfo.value, maxValue:MAX_SKILL_VALUE,
                         percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
-                        label, tooltip:label + ' - ' + cfg.description
-                    }, [SizeToParent]);
+                        skillId, showIncreaseBtn
+                    }, [SizeToParent, {
+                        doIncrease: () => {agentModel.purchaseSkill(skillId);}
+                    }]));
                 }
+                self.updateSkills(agentModel);
             }
             
             self.callSuper(agentModel);
@@ -129,6 +139,32 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /*  Updates each skill's bar, label and purchase button. */
+        updateSkills: function(agentModel) {
+            for (const skillBar of this._skillBars ?? []) {
+                const skillId = skillBar.skillId,
+                    cfg = pkg.getSkillConfig(skillId),
+                    value = agentModel.getSkill(skillId),
+                    label = cfg.name + ' : ' + value,
+                    {points, credits} = pkg.getSkillPurchase(agentModel, skillId),
+                    problem = agentModel.getSkillPurchaseProblem(skillId),
+                    trainLabel = 'Train ' + cfg.name + ' +' + points;
+                skillBar.setValue(value);
+                skillBar.setLabelText(label);
+                skillBar.setTooltip(label + ' - ' + cfg.description);
+                skillBar.updateIncreaseBtn(
+                    trainLabel,
+                    problem != null,
+                    trainLabel + ' for ' + credits + (credits === 1 ? ' credit' : ' credits') + (problem ? ICON_SEPARATOR + problem : '')
+                );
+            }
+        },
+        
+        _handleCreditsChanged: function(_event) {
+            const agentModel = this.getBriefModel();
+            if (this.visible && agentModel) this.updateSkills(agentModel);
+        },
+        
         updateStats: function(agentModel) {
             this._chronalView.updateForStat(agentModel[STAT_ID_CHRONAL]);
             this._paradoxView.updateForStat(agentModel[STAT_ID_PARADOX]);
@@ -140,6 +176,7 @@
             this.callSuper(agentModel);
             if (this.visible && this.getBriefModel() === agentModel) {
                 this.updateStats(agentModel);
+                this.updateSkills(agentModel);
             }
         }
     });
