@@ -93,6 +93,7 @@
                     self._idTxt.setText(model.id);
                     
                     const statusTxt = self._statusTxt;
+                    statusTxt.setText('');
                     if (model.isDead()) {
                         self.addDomClass('agent-dead');
                         statusTxt.setText(pkg.ICON_DEATH);
@@ -100,7 +101,6 @@
                         statusTxt.setY(-4);
                     } else {
                         self.removeDomClass('agent-dead');
-                        statusTxt.setText('');
                     }
                     
                     if (model.isDevoured()) {
@@ -110,7 +110,6 @@
                         statusTxt.setY(-3);
                     } else {
                         self.removeDomClass('agent-devoured');
-                        statusTxt.setText('');
                     }
                 }
             },
