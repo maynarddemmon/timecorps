@@ -83,6 +83,16 @@
             for (const attrName in attrs) animateAttr(target, attrName, attrs[attrName]);
         },
         
+        SCROLL_TO_DEBOUNCE_MILLIS = 100,
+        scrollToBoundingBox = debounce((timeline, boundingBox, smoothly=true) => {
+            const flowContainer = timeline.flowContainer;
+            timeline.scrollCaptureView.scrollXYTo(
+                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
+                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
+                true, smoothly
+            );
+        }, SCROLL_TO_DEBOUNCE_MILLIS),
+        
         // Value Change Animation //
         /*  When a Value of an Event changes, its box pops: it grows, then bounces back. Boxes take 
             turns in the order their Values changed, so a change that cascades through the 
@@ -91,11 +101,12 @@
             and boxes that are hidden by the time their turn comes are skipped. */
         VALUE_CHANGE_SCALE = 1.5,
         VALUE_CHANGE_MILLIS = 500,
-        VALUE_CHANGE_MILLIS_CUTOFF = 50,
+        VALUE_CHANGE_MILLIS_CUTOFF = mathMax(50, SCROLL_TO_DEBOUNCE_MILLIS),
         valueChangeAnims = {queue:[], current:null, whenDone:[]},
         runNextValueChangeAnim = (scrollToImmediately) => {
-            const [eventBox, duration] = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? [null, 0],
+            const [eventBox, duration] = valueChangeAnims.queue.shift() ?? [null, 0],
                 isFastTracked = duration <= VALUE_CHANGE_MILLIS_CUTOFF;
+            valueChangeAnims.current = eventBox;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
                 pkg.app.scrollToSelectedEvent(scrollToImmediately);
@@ -123,22 +134,13 @@
         },
         queueValueChangeAnim = eventBox => {
             const {queue, current} = valueChangeAnims;
-            if (eventBox !== current && !queue.includes(eventBox)) {
+            if (eventBox !== current && !queue.some(([queuedBox]) => queuedBox === eventBox)) {
                 const newLen = queue.length + 1,
                     duration = VALUE_CHANGE_MILLIS *  4 / (newLen + 3); // About 37 animations by the time it reaches 50 millis.
                 queue.push([eventBox, duration]);
                 if (!current) runNextValueChangeAnim();
             }
         },
-        
-        scrollToBoundingBox = debounce((timeline, boundingBox, smoothly=true) => {
-            const flowContainer = timeline.flowContainer;
-            timeline.scrollCaptureView.scrollXYTo(
-                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
-                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
-                true, smoothly
-            );
-        }, 100),
         
         updateTimelineLayout = (timeline, isInitial) => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
@@ -1103,7 +1105,7 @@
             waiting their turn. For tests and debugging. */
         getValueChangeAnimState: () => ({
             current:valueChangeAnims.current?.model?.id ?? null,
-            queued:valueChangeAnims.queue.map(eventBox => eventBox.model?.id)
+            queued:valueChangeAnims.queue.map(([eventBox]) => eventBox.model?.id)
         }),
         
         notifyEventVisibilityChange: function(_eventModel) {
