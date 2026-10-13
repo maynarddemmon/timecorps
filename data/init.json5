@@ -113,6 +113,21 @@
 			"actions":{
 				"_investigate":null,
 				
+				"_restockChronal":{
+					"label":"Restock Chronal +1",
+					"skillCheck":{"difficulty":"no-roll"},
+					"available":"timeline.chronal.value < timeline.chronal.max",
+					"costs":{
+						"agent.action":null,
+						"timeline.credits":"1"
+					},
+					"effects":{
+						"timeline.chronal":{
+							"onSuccess":"1"
+						}
+					}
+				},
+				
 				// Agents can reload their chronal from the shared HQ pool.
 				"_reloadChronal":{
 					"label":"Reload Chronal +3",
