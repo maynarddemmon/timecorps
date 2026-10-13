@@ -282,3 +282,20 @@ test('a flooded Event\'s box takes the paradox color, darker under the mouse and
     await expect.poll(async () => (await colors()).bg).toBe(theme.colorParadoxLight);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('a devoured agent\'s markers are tinted the paradox color', async ({page}) => {
+    const problems = await startGame(page),
+        markerClasses = () => page.evaluate(() => [...document.querySelectorAll('.myt-SimpleAgentGridMarker, .myt-SimpleAgentMarker')]
+            .filter(marker => marker.getBoundingClientRect().x >= 0)
+            .map(marker => marker.classList.contains('agent-devoured')));
+    await expect.poll(markerClasses).not.toContain(true);
+    
+    await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.paradox.setValue(alpha.paradox.max);
+    });
+    // In the agents list, and in The Void on the timeline.
+    await expect.poll(markerClasses).toEqual([true, true]);
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('.agent-devoured'), '::after').mixBlendMode)).toBe('color');
+    expect(problems.pageErrors).toEqual([]);
+});

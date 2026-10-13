@@ -110,6 +110,12 @@
                 } else {
                     photo.removeDomClass('agent-dead');
                 }
+                if (agentModel.isDevoured()) {
+                    photo.addDomClass('agent-devoured');
+                    statusAttrs = {x:-8, y:-138, fontSize:'400px', textColor:'#fff3', text:pkg.ICON_THE_VOID};
+                } else {
+                    photo.removeDomClass('agent-devoured');
+                }
                 statusTxt.callSetters(statusAttrs);
                 
                 const skillsRow = self._skills;

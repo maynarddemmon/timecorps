@@ -4,7 +4,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, RadialGauge} = M,
+        {View, PlainText, RadialGauge} = M,
         
         {
             theme:{
@@ -43,10 +43,10 @@
                 self.attachDomObserver(self, '_doDblClick', 'dblclick');
                 
                 self._photo = new View(self, {imageSize:'contain'}, [M.ImageSupport]);
-                self._statusTxt = new M.PlainText(self, {
+                self._statusTxt = new PlainText(self, {
                     x:5, y:-4, fontSize:statusFontSize, textColor:colorLight
                 });
-                self._idTxt = new M.PlainText(self, {
+                self._idTxt = new PlainText(self, {
                     align:'center', valign:'middle', fontSize:idFontSize, textColor:colorUltraLight,
                     visible:false
                 });
@@ -86,17 +86,31 @@
             },
             
             _updateForAgentModel: function() {
-                const model = this.model;
+                const self = this,
+                    model = self.model;
                 if (model) {
-                    this._photo.setImageUrl(model.getImageUrl());
-                    this._idTxt.setText(model.id);
+                    self._photo.setImageUrl(model.getImageUrl());
+                    self._idTxt.setText(model.id);
                     
+                    const statusTxt = self._statusTxt;
                     if (model.isDead()) {
-                        this.addDomClass('agent-dead');
-                        this._statusTxt.setText(pkg.ICON_DEATH);
+                        self.addDomClass('agent-dead');
+                        statusTxt.setText(pkg.ICON_DEATH);
+                        statusTxt.setX(5);
+                        statusTxt.setY(-4);
                     } else {
-                        this.removeDomClass('agent-dead');
-                        this._statusTxt.setText('');
+                        self.removeDomClass('agent-dead');
+                        statusTxt.setText('');
+                    }
+                    
+                    if (model.isDevoured()) {
+                        self.addDomClass('agent-devoured');
+                        statusTxt.setText(pkg.ICON_THE_VOID);
+                        statusTxt.setX(4);
+                        statusTxt.setY(-3);
+                    } else {
+                        self.removeDomClass('agent-devoured');
+                        statusTxt.setText('');
                     }
                 }
             },
@@ -180,6 +194,25 @@
             this.callSuper(parent, attrs);
             
             this._statusTxt.callSetters({x:10, y:-9});
+        },
+        
+        _updateForAgentModel: function() {
+            const self = this,
+                model = self.model;
+            if (model) {
+                self.callSuper();
+                
+                const statusTxt = self._statusTxt;
+                if (model.isDead()) {
+                    statusTxt.setX(10);
+                    statusTxt.setY(-9);
+                }
+                
+                if (model.isDevoured()) {
+                    statusTxt.setX(8);
+                    statusTxt.setY(-7);
+                }
+            }
         }
     });
     

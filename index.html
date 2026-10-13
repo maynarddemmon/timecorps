@@ -28,6 +28,7 @@
 		--fgBtnBright:#a50;
 		--fgBtnSuperBright:#c60;
 		--colorAction:#6f0;
+		--colorParadox:#c0f; /* Matches theme.colorParadox. */
 	}
 	
 	html,body{height:100%;margin:0px;padding:0px;border:0px none;}
@@ -194,6 +195,20 @@
 	/* Status */
 	.agent-dead {
 		filter:grayscale(100%);
+	}
+	/* Tints the image, keeping its light and shade, in the paradox color. Over the element so
+	   it works on any view, and wins over agent-dead's grayscale. */
+	.agent-devoured {
+		filter:none;
+	}
+	.agent-devoured::after {
+		content:'';
+		position:absolute;
+		inset:0;
+		border-radius:inherit;
+		background-color:var(--colorParadox);
+		mix-blend-mode:color;
+		pointer-events:none;
 	}
 </style>
 <script>
