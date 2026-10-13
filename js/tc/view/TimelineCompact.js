@@ -91,19 +91,21 @@
             and boxes that are hidden by the time their turn comes are skipped. */
         VALUE_CHANGE_SCALE = 1.5,
         VALUE_CHANGE_MILLIS = 500,
+        VALUE_CHANGE_MILLIS_CUTOFF = 50,
         valueChangeAnims = {queue:[], current:null, whenDone:[]},
-        runNextValueChangeAnim = () => {
-            const eventBox = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? null;
+        runNextValueChangeAnim = (scrollToImmediately) => {
+            const [eventBox, duration] = valueChangeAnims.current = valueChangeAnims.queue.shift() ?? [null, 0],
+                isFastTracked = duration <= VALUE_CHANGE_MILLIS_CUTOFF;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
-                pkg.app.scrollToSelectedEvent();
+                pkg.app.scrollToSelectedEvent(scrollToImmediately);
                 
                 // Run whatever was waiting for the animations to finish. Taken first since a
                 // callback could start more animations.
                 const whenDone = valueChangeAnims.whenDone.splice(0);
                 for (const func of whenDone) func();
-            } else if (eventBox.destroyed || !eventBox.visible) {
-                runNextValueChangeAnim();
+            } else if (eventBox.destroyed || !eventBox.visible || isFastTracked) {
+                runNextValueChangeAnim(isFastTracked); // Next scroll is immediate if we're already at the limit.
             } else {
                 // Scroll to each event immediately before animating.
                 eventBox.timeline.scrollToEventBox(eventBox, false);
@@ -111,7 +113,7 @@
                 // The from values are needed because there's no "scale" attribute to read them from,
                 // just scaleX and scaleY.
                 eventBox.animate({
-                    attribute:'scale', from:1, to:VALUE_CHANGE_SCALE, duration:VALUE_CHANGE_MILLIS, easingFunction:'wiggle',
+                    attribute:'scale', from:1, to:VALUE_CHANGE_SCALE, duration, easingFunction:'wiggle',
                     callback:() => {
                         eventBox.setScale(1);
                         runNextValueChangeAnim();
@@ -122,10 +124,21 @@
         queueValueChangeAnim = eventBox => {
             const {queue, current} = valueChangeAnims;
             if (eventBox !== current && !queue.includes(eventBox)) {
-                queue.push(eventBox);
+                const newLen = queue.length + 1,
+                    duration = VALUE_CHANGE_MILLIS *  4 / (newLen + 3); // About 37 animations by the time it reaches 50 millis.
+                queue.push([eventBox, duration]);
                 if (!current) runNextValueChangeAnim();
             }
         },
+        
+        scrollToBoundingBox = debounce((timeline, boundingBox, smoothly=true) => {
+            const flowContainer = timeline.flowContainer;
+            timeline.scrollCaptureView.scrollXYTo(
+                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
+                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
+                true, smoothly
+            );
+        }, 100),
         
         updateTimelineLayout = (timeline, isInitial) => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
@@ -383,7 +396,7 @@
             
             // Sometimes the animation pushed the selected box off-screen.
             if (selectedBoxAnimatingToBounds) {
-                timeline.scrollToBoundingBox(selectedBoxAnimatingToBounds);
+                scrollToBoundingBox(timeline, selectedBoxAnimatingToBounds);
             }
             
             // Attempt to select an EventBox if the previous attempt failed. This is result of
@@ -881,12 +894,12 @@
             // Selected Event History Nav
             const btnY = (TL_COL_HEADER_HEIGHT - btnHeight) / 2;
             self.histPrevBtn = new SquareBtn(self, {
-                x:12, y:btnY, buttonType:'plain', disabled:true,
+                x:22, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge,
                 tooltip:'Select the last Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
-                x:39, y:btnY, buttonType:'plain', disabled:true,
+                x:49, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge,
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
@@ -1049,16 +1062,7 @@
         
         scrollToEventBox: function(thingy, smoothly=true) {
             const eventBox = thingy?.isA?.(EventBox) ? thingy : this.getEventBox(thingy);
-            if (eventBox?.visible) this.scrollToBoundingBox(eventBox, smoothly);
-        },
-        
-        scrollToBoundingBox: function(boundingBox, smoothly=true) {
-            const flowContainer = this.flowContainer;
-            this.scrollCaptureView.scrollXYTo(
-                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
-                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
-                true, smoothly
-            );
+            if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly);
         },
         
         scrollToLocation: function(locId, smoothly=true) {

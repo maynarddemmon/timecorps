@@ -207,7 +207,7 @@
                 // The curvature value used by Splines within the Timeline.
                 SPLINE_CURVATURE:0.25,
                 
-                TL_ROW_HEADER_WIDTH:76,
+                TL_ROW_HEADER_WIDTH:96,
                 TL_COL_WIDTH:120,
                 TL_COL_HEADER_HEIGHT:52,
                 TL_COL_SPACING:1,

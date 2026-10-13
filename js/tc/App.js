@@ -377,16 +377,16 @@
             timelineView.doSelectEvent(eventModelOrId);
         },
         
-        scrollToEvent: function(eventModel, clearDebounce) {
-            if (eventModel) timelineView.scrollToEventBox(eventModel);
+        scrollToEvent: function(eventModel, clearDebounce, immediate=false) {
+            if (eventModel) timelineView.scrollToEventBox(eventModel, !immediate);
             if (clearDebounce) this.scrollToDebounced();
         },
         // scrollToDebounced: setup in initNode
         
         /*  Scrolls back to the selected Event, cancelling any pending scrollToDebounced,
             e.g. once the mouse leaves a button that scrolled the timeline elsewhere. */
-        scrollToSelectedEvent: function() {
-            this.scrollToEvent(timelineView.getSelectedEventBox()?.model, true);
+        scrollToSelectedEvent: function(immediate=false) {
+            this.scrollToEvent(timelineView.getSelectedEventBox()?.model, true, immediate);
         },
         
         // Event Dispatching
