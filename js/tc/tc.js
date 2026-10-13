@@ -177,13 +177,13 @@
                 MIN_SKILL_EASE:-999,
                 
                 // The starting maximum paradox an Agent can have.
-                AGENT_PARADOX_LIMIT:3,
+                AGENT_PARADOX_LIMIT:5,
                 
                 // The starting maximum paradox an Event can have.
-                EVENT_PARADOX_LIMIT:4,
+                EVENT_PARADOX_LIMIT:6,
                 
                 // The default actions allowed by an Agent per visit within an Event.
-                DEFAULT_ACTION_LIMIT:1,
+                DEFAULT_ACTION_LIMIT:5,
                 
                 // This is the HQ chronal used to resupply Agents.
                 TIMELINE_STARTING_CHRONAL:25,
@@ -197,7 +197,6 @@
                 // it grows as Events are revealed.
                 TIMELINE_PARADOX_LIMIT:9,
                 TIMELINE_PARADOX_LIMIT_PER_EVENT:0.25,
-                
                 
                 //// Timeline UI Config ////
                 // The maximum length of the next/prev Event history.
