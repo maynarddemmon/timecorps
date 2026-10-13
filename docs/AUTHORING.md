@@ -116,6 +116,11 @@ Every stat has a value and a range, and changes stay within it.
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
 
+The timeline also has a score and credits, read as plain numbers:
+
+- **`timeline.score`**: the player's score. Missions award it (`awardScore`), attestation adds 3 a point, and each point of paradox an agent gains by revisiting an event takes away 500.
+- **`timeline.credits`**: what the Corps spends, e.g. on HQ actions' [costs](#costs). One credit is earned each time the score reaches a new multiple of `SCORE_TO_CREDITS_EARN_AMOUNT` (100) for the first time: a score of 78 earns none, and reaching 100 earns one. Losing score takes no credits away, and regaining it earns none until the score passes its highest yet. Missions can also award credits (`awardCredits`).
+
 ## init.json5
 
 ```json5
@@ -385,6 +390,7 @@ Costs are what an agent pays to take an action. An action costs one of the agent
 | `timeline.chronal` | HQ's chronal | It has that much |
 | `timeline.paradox` | Adds to the timeline's paradox | That stays within its limit |
 | `timeline.score` | The player's score | The score is at least that |
+| `timeline.credits` | The Corps' credits | There are at least that many |
 
 - **Merged over the default.** Costs are merged over the default of one action, so `{"timeline.score":"100"}` costs an action and 100 score. To change the action cost, give `agent.action`, e.g. `"0"`. `null` leaves a cost out, so `{"agent.action":null}` is an action that uses no action, and `"costs":null` leaves them all out.
 - **Worked out when needed.** Amounts are worked out when the button is drawn and again when the action is taken, from the state at that moment, so `"agent.paradox.value"` costs as many actions as the agent has paradox. They never roll: a `d()` counts as its average. They're rounded to whole points.
@@ -474,6 +480,7 @@ HQ and The Void leave out `_investigate` this way.
 				"awardAgents":"VQ",
 				"initialAgentSelection":"VQ",
 				"initialEventSelection":"collision",
+				"awardCredits":20,             // Optional. Credits to start the mission with.
 				// Raises each event's historicity to at least this.
 				"historicityAdjustments":{"collision":75, "casualties":65}
 			},
@@ -489,6 +496,7 @@ HQ and The Void leave out `_investigate` this way.
 				"nextOperation":"titanic_rescued",
 				"awardScore":5000,
 				"awardHQChronal":15,           // Added to timeline.chronal.
+				"awardCredits":10,             // Optional. On top of those the score earns.
 				"revealAgents":["GO", "PI"],
 				"awardAgents":["GO"]
 			}
@@ -497,8 +505,8 @@ HQ and The Void leave out `_investigate` this way.
 }
 ```
 
-- **Setup.** When a mission starts, its setup is applied once: historicity raised, the Mission Brief opened, agents revealed and awarded, and the selection made.
-- **Completion.** A mission is complete when every objective's `success` is true. Then its rewards are granted once, and the debrief is shown, with phrases that can describe how it was won.
+- **Setup.** When a mission starts, its setup is applied once: historicity raised, the Mission Brief opened, agents revealed and awarded, credits awarded, and the selection made.
+- **Completion.** A mission is complete when every objective's `success` is true. Then its rewards (score, chronal, credits and agents) are granted once, and the debrief is shown, with phrases that can describe how it was won.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
@@ -578,7 +586,7 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 **An action that costs more than an action.** Costs are merged over the default action.
 
 ```json5
-"costs":{"timeline.score":"250"}   // An action and 250 score.
+"costs":{"timeline.credits":"25"}   // An action and 25 credits.
 ```
 
 **An action that uses no action.** Leave out the default.

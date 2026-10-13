@@ -93,10 +93,13 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             const next = operation.onSuccess?.nextOperation;
             if (next && !operations[next]) problems.push(operationId + ': unknown nextOperation ' + next);
         
-            const setup = operation.setup ?? {},
+            const setup = operation.onSetup ?? {},
                 onSuccess = operation.onSuccess ?? {};
             for (const agentId of [setup.awardAgents, setup.revealAgents, onSuccess.awardAgents, onSuccess.revealAgents].flat()) {
                 if (agentId && !agents[agentId]) problems.push(operationId + ': unknown agent ' + agentId);
+            }
+            for (const [where, credits] of [['onSetup', setup.awardCredits], ['onSuccess', onSuccess.awardCredits]]) {
+                if (credits !== undefined && !(Number.isInteger(credits) && credits >= 0)) problems.push(operationId + ': ' + where + '.awardCredits is not a whole number of 0 or more');
             }
             for (const eventId of Object.keys(setup.historicityAdjustments ?? {})) {
                 if (!events[eventId]) problems.push(operationId + ': historicityAdjustments unknown event ' + eventId);
@@ -214,7 +217,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     const COST_KEYS = [
         'agent.action', 'agent.health', 'agent.chronal', 'agent.paradox',
         'event.attestation', 'event.historicity', 'event.paradox',
-        'timeline.chronal', 'timeline.paradox', 'timeline.score'
+        'timeline.chronal', 'timeline.paradox', 'timeline.score', 'timeline.credits'
     ];
 
     test('every investigate, action skill check, action cost, action scratch set and action and exit effect is valid, including the default event actions', () => {

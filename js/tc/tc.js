@@ -226,6 +226,9 @@
                 MISSION_SCORE_MULTIPLIER:1,
                 PARADOX_SCORE_MULTIPLIER:-500,
                 
+                // A credit is earned for each time the score reaches a new multiple of this.
+                SCORE_TO_CREDITS_EARN_AMOUNT:100,
+                
                 // Dialogs
                 DEFAULT_TALL_DIALOG_WIDTH:648,
                 DIALOG_FOOTER_HEIGHT:0, // Set programmatically below

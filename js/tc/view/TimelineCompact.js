@@ -816,6 +816,11 @@
             }]);
             scoreView.attachTo(pkg.model, 'update', 'score');
             
+            const creditsView = self.creditsView = new pkg.LabeledValue(header, {label:'Credits', paddingRight:32}, [{
+                update: function(_event) {this.callSuper(pkg.model.credits.toLocaleString());}
+            }]);
+            creditsView.attachTo(pkg.model, 'update', 'credits');
+            
             self.timelineParadoxBar = new pkg.ParadoxBar(header, {
                 valign:'middle', labelTemplate:'Timeline {label}'
             }, [pkg.BigStatBar]);

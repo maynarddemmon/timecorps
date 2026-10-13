@@ -13,12 +13,15 @@
     
     const JSClass = JS.Class,
         
+        {floor:mathFloor} = Math,
+        
         {
             NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
+                SCORE_TO_CREDITS_EARN_AMOUNT,
                 AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
@@ -49,6 +52,7 @@
         isScratchValue = value => typeof value === 'boolean' || typeof value === 'string' || Number.isFinite(value),
         
         STARTING_SCORE = 0,
+        STARTING_CREDITS = 0,
         
         TCModelCollection = pkg.TCModelCollection = new JSClass('TCModelCollection', myt.BaseModelCollection, {
             setScopeId: function(scopeId) {this.scopeId = scopeId;},
@@ -289,9 +293,31 @@
         
         
         // Score:Accessors & Methods ///////////////////////////////////////////
-        setScore: function(v) {this.set('score', v, true);},
+        /*  Raising the score past its highest so far earns a credit for each new multiple of 
+            SCORE_TO_CREDITS_EARN_AMOUNT it reaches. Lowering it takes no credits away, and 
+            raising it back up to a score already reached earns nothing again. */
+        setScore: function(v) {
+            this.set('score', v, true);
+            
+            const peakScore = this.peakScore;
+            if (v > peakScore) {
+                this.set('peakScore', v, true);
+                const earned = mathFloor(v / SCORE_TO_CREDITS_EARN_AMOUNT) - mathFloor(peakScore / SCORE_TO_CREDITS_EARN_AMOUNT);
+                if (earned > 0) this.adjCredits(earned);
+            }
+        },
         adjScore: function(adj) {this.setScore(this.getScore() + adj);},
         getScore: function() {return this.score;},
+        
+        /*  The highest the score has been, which credits have been earned up to. */
+        getPeakScore: function() {return this.peakScore;},
+        
+        
+        // Credits:Accessors & Methods /////////////////////////////////////////
+        /*  Credits are spent on things such as HQ actions. Read as "timeline.credits". */
+        setCredits: function(v) {this.set('credits', v, true);},
+        adjCredits: function(adj) {this.setCredits(this.getCredits() + adj);},
+        getCredits: function() {return this.credits;},
         
         
         // Historicity:Accessors & Methods /////////////////////////////////////
@@ -319,6 +345,8 @@
             
             const retval = {
                 score:model.score,
+                peakScore:model.peakScore,
+                credits:model.credits,
                 scratch,
                 currentOperation:model.getCurrentOperation()?.id ?? null,
                 selection:pkg.app.getSelectionForSave()
@@ -330,6 +358,9 @@
         
         /*  First pass. Must run while constraint binding is paused (see PersistenceManager). */
         importFromObj: obj => {
+            // The peak first, so restoring the score earns nothing.
+            if ('peakScore' in obj) model.set('peakScore', obj.peakScore, true);
+            if ('credits' in obj) model.setCredits(obj.credits);
             if ('score' in obj) model.setScore(obj.score);
             for (const name in obj.scratch) model.setScratch(name, obj.scratch[name]);
             for (const statId of TIMELINE_STAT_IDS) {
@@ -378,7 +409,7 @@
             if (pkg.isAppReady()) {
                 const visCount = model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden()).length;
                 model[STAT_ID_PARADOX].setMax(
-                    Math.floor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT * visCount)
+                    mathFloor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT * visCount)
                 );
             }
         },
@@ -387,6 +418,9 @@
             model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
             model.updateTimelineParadoxMax();
+            // The peak and credits first, so setting the score earns nothing.
+            model.set('peakScore', STARTING_SCORE, true);
+            model.setCredits(STARTING_CREDITS);
             model.setScore(STARTING_SCORE);
             
             if (!isInit) {

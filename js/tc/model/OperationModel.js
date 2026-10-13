@@ -28,6 +28,14 @@
             }
         }),
         
+        /*  Credits to award: a whole number of 0 or more. Anything else is 0, with a warning. */
+        validateCredits = (v, label) => {
+            if (v == null) return 0;
+            if (Number.isInteger(v) && v >= 0) return v;
+            console.warn(label, 'must be a whole number of 0 or more (using 0):', v);
+            return 0;
+        },
+        
         validateAgentIdList = (list, label) => {
             if (list) {
                 // Assume non-arrays are bare strings.
@@ -245,6 +253,8 @@
         },
         getInitialAgentSelection: function() {return this.initialAgentSelection;},
         
+        setAwardCreditsOnSetup: function(v) {this.set('awardCreditsOnSetup', validateCredits(v, 'onSetup.awardCredits'), true);},
+        
         setRevealAgentsOnSetup: function(agentIds) {this.set('revealAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.revealAgents'), true);},
         setAwardAgentsOnSetup: function(agentIds) {this.set('awardAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.awardAgents'), true);},
         
@@ -255,6 +265,7 @@
                 this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
                 this.setInitialEventSelection(onSetupCfg.initialEventSelection);
                 this.setInitialAgentSelection(onSetupCfg.initialAgentSelection);
+                this.setAwardCreditsOnSetup(onSetupCfg.awardCredits);
             }
         },
         
@@ -269,6 +280,8 @@
         grantScore: function() {
             pkg.model.adjScore((this.awardScore ?? 0) * MISSION_SCORE_MULTIPLIER);
         },
+        
+        setAwardCreditsOnSuccess: function(v) {this.set('awardCreditsOnSuccess', validateCredits(v, 'onSuccess.awardCredits'), true);},
         
         setAwardHQChronal: function(awardHQChronal) {this.set('awardHQChronal', awardHQChronal, true);},
         grantHQChronal: function() {
@@ -291,6 +304,7 @@
                 this.setNextOperation(onSuccessCfg.nextOperation);
                 this.setAwardScore(onSuccessCfg.awardScore);
                 this.setAwardHQChronal(onSuccessCfg.awardHQChronal);
+                this.setAwardCreditsOnSuccess(onSuccessCfg.awardCredits);
                 this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
                 this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
             }
@@ -330,6 +344,7 @@
                 pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
+                rootModel.adjCredits(this.awardCreditsOnSetup ?? 0);
                 this.setupApplied = true;
             }
         },
@@ -339,6 +354,7 @@
                 const rootModel = pkg.model;
                 this.grantScore();
                 this.grantHQChronal();
+                rootModel.adjCredits(this.awardCreditsOnSuccess ?? 0);
                 rootModel.revealAgents(this.revealAgentsOnSuccess);
                 rootModel.awardAgents(this.awardAgentsOnSuccess);
                 this.successGranted = true;

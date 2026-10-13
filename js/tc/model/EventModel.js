@@ -325,6 +325,12 @@
                 getName: () => 'Score',
                 getAvailable: () => pkg.model.getScore(),
                 pay: (_agentModel, _actionModel, amount) => {pkg.model.adjScore(-amount);}
+            },
+            // The Corps' credits, earned from score and missions.
+            [SCOPE_TIMELINE + '.credits']:{
+                getName: amount => amount === 1 ? 'Credit' : 'Credits',
+                getAvailable: () => pkg.model.getCredits(),
+                pay: (_agentModel, _actionModel, amount) => {pkg.model.adjCredits(-amount);}
             }
         },
         

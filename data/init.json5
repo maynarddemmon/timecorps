@@ -139,7 +139,7 @@
 					"available":"agent.health.value < agent.health.max",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
-						"timeline.score":"50 * (agent.health.max - agent.health.value)"
+						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
 					},
 					"effects":{
 						"agent.health":{
@@ -154,7 +154,7 @@
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
-						"timeline.score":"3000"
+						"timeline.credits":"30"
 					},
 					"effects":{
 						"agent.paradox":{
