@@ -24,6 +24,7 @@
                 spacing, cornerRadius, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
                 colorUltraDark, colorMegaDark, colorBtn,
+                colorParadox, colorParadoxDark, colorParadoxLight,
                 fontSizeLarge
             },
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
@@ -453,6 +454,7 @@
             eventBox.setTooltip(_label.text);
             eventBox.setVisible(!hidden);
             eventBox.updateEntangled();
+            eventBox.updateFlooded();
             
             // Update connections between boxes
             if (!hidden) {
@@ -599,6 +601,19 @@
                 this.setEntangled(model != null && (pkg.model?.getCurrentOperation()?.isEntangledWith(model) ?? false));
             },
             
+            /*  A flooded Event's box takes the paradox color: darker under the mouse and 
+                lighter when selected. */
+            updateFlooded: function() {
+                const flooded = this.model?.isFlooded() ?? false;
+                if (this.flooded !== flooded) {
+                    this.flooded = flooded;
+                    this.readyColor = flooded ? colorParadox : colorDark;
+                    this.hoverColor = flooded ? colorParadoxDark : colorUltraDark;
+                    this.activeColor = flooded ? colorParadoxDark : colorMegaDark;
+                    this.updateUI();
+                }
+            },
+            
             setAdjacentIsSelected: function(adjacentIsSelected) {
                 this.set('adjacentIsSelected', adjacentIsSelected, true);
                 this.updateUI();
@@ -619,10 +634,10 @@
                 
                 let barBgColor;
                 if (this.selected) {
-                    this.setBgColor(colorLight);
+                    this.setBgColor(this.flooded ? colorParadoxLight : colorLight);
                     this.setTextColor(colorDark);
                     barBgColor = colorMedium;
-                } else if (this.adjacentIsSelected) {
+                } else if (this.adjacentIsSelected && !this.flooded) {
                     this.setBgColor(colorMedium);
                     this.setTextColor(null);
                     barBgColor = colorMediumDark;

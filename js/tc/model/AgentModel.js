@@ -611,6 +611,11 @@
                 return;
             }
             
+            if (this.isActionBlockedByFlood(actionModel)) {
+                console.warn('Cannot take an action that could generate paradox in a flooded Event');
+                return;
+            }
+            
             // Don't proceed with an action this Agent doesn't have available or can't pay for.
             // The costs are worked out before anything changes, since they may depend on it.
             const costs = this.getCostsFor(actionModel);
@@ -787,6 +792,21 @@
                 })
             ) || (ownerModel.getCosts?.() ?? []).some(costModel => costModel.statId === statId && costModel.getAmount(this) > 0);
         },
+        /*  True if taking an action could raise anyone's paradox: an effect that adds to an 
+            agent's, Event's or the timeline's paradox, on average, if the check passes or if it
+            fails, or a cost paid in paradox. */
+        canGenerateParadoxFor: function(actionModel) {
+            return actionModel.getEffects().some(effectModel => effectModel.statId === STAT_ID_PARADOX &&
+                [true, false].some(success => getAverageEffectAmount(this, effectModel, success) > 0)
+            ) || actionModel.getCosts().some(costModel => costModel.statId === STAT_ID_PARADOX && costModel.getAmount(this) > 0);
+        },
+        
+        /*  True if the action's Event is flooded and the action could generate paradox, which
+            isn't allowed there. */
+        isActionBlockedByFlood: function(actionModel) {
+            return !!actionModel.event?.isFlooded() && this.canGenerateParadoxFor(actionModel);
+        },
+        
         hasHealthChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_HEALTH);},
         hasChronalChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_CHRONAL);},
         hasParadoxChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_PARADOX);},

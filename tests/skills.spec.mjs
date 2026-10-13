@@ -81,7 +81,7 @@ test('the dossier\'s buttons buy skill points, and say why when they can\'t', as
     await openAtHQ(page, 2);
 
     const agility = buyBtn(page, 'Agility');
-    await expect(agility).toHaveText('+1');
+    await expect(agility).toHaveText('Train Agility +1');
     await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit');
 
     await agility.click();

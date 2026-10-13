@@ -34,7 +34,8 @@
                 label = actionModel.label,
                 name = actionModel.getActionSkillName(),
                 costsPhrase = agentModel.getCostsPhrase(actionModel),
-                effectsPhrase = agentModel.getEffectsPhrase(actionModel);
+                effectsPhrase = agentModel.getEffectsPhrase(actionModel),
+                blockedByFlood = agentModel.isActionBlockedByFlood(actionModel);
             
             return {
                 text:label + pkg.formatAgentRisks(
@@ -45,8 +46,9 @@
                 // An action without an actionType has no name to show.
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
                     (costsPhrase ? ICON_SEPARATOR + costsPhrase : '') + 
-                    (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : ''),
-                disabled:!agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel)
+                    (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : '') +
+                    (blockedByFlood ? ICON_SEPARATOR + 'Could generate paradox, which a flooded event can\'t hold' : ''),
+                disabled:blockedByFlood || !agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel)
             };
         },
         

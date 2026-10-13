@@ -3,7 +3,7 @@
 // agent who has been there gains a paradox per visit. In the test data the origin leads to the
 // aftermath, which leads to the finale. The tests' limits are 4 for an Event and 3 for an agent.
 import {test, expect} from '@playwright/test';
-import {startGame, reloadGame} from './helpers.mjs';
+import {startGame, reloadGame, readTestData} from './helpers.mjs';
 
 const
     /*  Raises an Event's paradox to its limit. */
@@ -213,5 +213,72 @@ test('restoring a save with stats at their limits doesn\'t devour or flood again
 
     await reloadGame(page);
     expect(await snapshot()).toEqual(before);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('in a flooded Event, actions that could generate paradox can\'t be taken, but others can', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5'),
+            NO_ROLL = {difficulty:'no-roll'};
+        Object.assign(json.events.origin.actions, {
+            meddle:{label:'Meddle', skillCheck:NO_ROLL, effects:{'timeline.paradox':{onSuccess:'1'}}},
+            fumble:{label:'Fumble', skillCheck:NO_ROLL, effects:{'agent.paradox':{onFailure:'1'}}},
+            gamble:{label:'Gamble', skillCheck:NO_ROLL, costs:{'agent.paradox':'1'}},
+            calm:{label:'Calm', skillCheck:NO_ROLL, effects:{'agent.paradox':{onSuccess:'-1'}}},
+            look:{label:'Look', skillCheck:NO_ROLL}
+        });
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        take = actionId => page.evaluate(actionId => {
+            const alpha = tc.model.getAgentModel('AL'),
+                action = tc.model.getEventModel('origin').getActionModels()[actionId];
+            alpha.setActionExecCount(0);
+            const blocked = alpha.isActionBlockedByFlood(action);
+            alpha.doAction(action);
+            return {blocked, taken:action.attemptCount};
+        }, actionId);
+    
+    // Not flooded yet, so anything goes.
+    expect(await take('meddle')).toEqual({blocked:false, taken:1});
+    
+    await page.evaluate(() => {
+        tc.model.getEventModel('origin').setFlooded(true);
+        tc.app.selectEventBox('aftermath');
+        tc.app.selectEventBox('origin');
+    });
+    // Raising anyone's paradox, on a pass or a failure, or paying in paradox, is refused.
+    expect(await take('meddle')).toEqual({blocked:true, taken:1});
+    expect(await take('fumble')).toEqual({blocked:true, taken:0});
+    expect(await take('gamble')).toEqual({blocked:true, taken:0});
+    // Lowering paradox, or leaving it alone, is fine.
+    expect(await take('calm')).toEqual({blocked:false, taken:1});
+    expect(await take('look')).toEqual({blocked:false, taken:1});
+    
+    const meddleBtn = page.getByText(/^Meddle/).filter({visible:true});
+    await expect(meddleBtn).toHaveClass(/disabled/);
+    await expect(meddleBtn).toHaveAttribute('title', /Could generate paradox, which a flooded event can't hold$/);
+    await expect(page.getByText(/^Look/).filter({visible:true})).not.toHaveClass(/disabled/);
+    
+    expect(problems.warnings.filter(w => !w.startsWith('Cannot take an action'))).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a flooded Event\'s box takes the paradox color, darker under the mouse and lighter when selected', async ({page}) => {
+    const problems = await startGame(page),
+        colors = () => page.evaluate(() => {
+            const box = tc.app.getTimelineView().getEventBox(tc.model.getEventModel('origin'));
+            return {ready:box.readyColor, hover:box.hoverColor, active:box.activeColor, bg:box.bgColor};
+        }),
+        theme = await page.evaluate(() => tc.theme);
+    await page.evaluate(() => tc.app.getTimelineView().deselectAll());
+    const before = await colors();
+    expect(before.ready).toBe(theme.colorDark);
+    
+    await flood(page, 'origin');
+    await expect.poll(colors).toEqual({ready:theme.colorParadox, hover:theme.colorParadoxDark, active:theme.colorParadoxDark, bg:theme.colorParadox});
+    
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect.poll(async () => (await colors()).bg).toBe(theme.colorParadoxLight);
     expect(problems.pageErrors).toEqual([]);
 });

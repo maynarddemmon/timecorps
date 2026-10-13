@@ -121,6 +121,8 @@ Any paradox reaching its limit counts, however it gets there: revisiting, an eff
 **Flooding.** When an event's paradox reaches its limit, the event floods with paradox, once:
 
 - No agent can time travel into or out of it: deploying, jumping, looping back and recalling are all refused. Its exits still work, both ways.
+- No agent can take an action there that could generate paradox: one with an effect that raises an agent's, the event's or the timeline's paradox on average, if it passes or if it fails, or one that costs paradox. Its button is disabled, and its tooltip says why. Other actions, including ones that lower paradox, still work.
+- Its box on the timeline turns the paradox color.
 - Every agent who has ever been there gains a paradox for each visit, counted as for revisiting (their starting event counts). That can devour them.
 - Every descendant event, known or not, gains a paradox, which can flood it in turn.
 

@@ -131,6 +131,8 @@
                 colorBtnLight:'#f70',
                 
                 colorParadox:'#c0f',
+                colorParadoxDark:'#a0d',
+                colorParadoxLight:'#e6f',
                 colorChronal:'#36f',
                 colorHealth:'#f00',
                 colorHistoricity:'#da6',
