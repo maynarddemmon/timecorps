@@ -57,15 +57,14 @@ test('agent field notes follow the agent\'s paradox', async ({page}) => {
     const notes = await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL'),
             out = [];
+        // Reaching the limit, 3 in the tests, devours the agent.
         for (const paradox of [0, 1, 2, 3]) {
             alpha.paradox.setValue(paradox);
             out.push(alpha.getDescription());
         }
-        alpha.setDevoured(true);
-        out.push(alpha.getDescription());
         return out;
     });
-    expect(notes).toEqual(['No paradox.', 'One paradox.', 'Some paradox.', 'Full of paradox.', 'Devoured.']);
+    expect(notes).toEqual(['No paradox.', 'One paradox.', 'Some paradox.', 'Devoured.']);
 });
 
 test('causator links together match each event\'s precursors and descendants', async ({page}) => {

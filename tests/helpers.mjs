@@ -35,7 +35,12 @@ export const TEST_DATA_DIR = 'tests/data',
     CFG_OVERRIDES = {
         _TC_CFG_OVERRIDES_INFO:false,
         DATA_BASE_DIR:'./' + TEST_DATA_DIR + '/',
-        IMAGE_BASE_DIR:'./' + TEST_DATA_DIR + '/img/'
+        IMAGE_BASE_DIR:'./' + TEST_DATA_DIR + '/img/',
+        
+        // The tuning the tests were written against, so retuning the game doesn't break them.
+        DEFAULT_ACTION_LIMIT:3,
+        AGENT_PARADOX_LIMIT:3,
+        EVENT_PARADOX_LIMIT:4
     };
 
 /*  Loads the game and waits until it is ready to play. Returns an object that collects page

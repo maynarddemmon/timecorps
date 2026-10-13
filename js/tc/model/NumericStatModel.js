@@ -57,7 +57,7 @@
                 if (curMin !== newMin) {
                     this.set('min', newMin, true);
                     if (this.value < this.min && this.setValue(this.min)) {
-                        this.triggerValueClampedToMin();
+                        if (!this._restoring) this.triggerValueClampedToMin();
                         return true;
                     }
                     if (this.inited) this.notifyCollectionOfUpdate();
@@ -74,9 +74,11 @@
                 if (curMax !== newMax) {
                     this.set('max', newMax, true);
                     if (this.value > this.max && this.setValue(this.max)) {
-                        this.triggerValueClampedToMax();
+                        if (!this._restoring) this.triggerValueClampedToMax();
                         return true;
                     }
+                    // Lowering the max onto the value reaches it as surely as raising the value.
+                    if (newMax < curMax && this.isAtMaxValue() && !this._restoring) this.triggerValueAtMax();
                     if (this.inited) this.notifyCollectionOfUpdate();
                     return true;
                 }
@@ -91,11 +93,17 @@
                     changed = curValue !== newValue;
                 if (changed) {
                     this.setAndNotifyCollection('value', newValue, true);
-                    if (this.isAtMinValue()) this.triggerValueAtMin();
-                    if (this.isAtMaxValue()) this.triggerValueAtMax();
+                    // Restoring a saved value isn't reaching a limit: what reaching it did was
+                    // saved too.
+                    if (!this._restoring) {
+                        if (this.isAtMinValue()) this.triggerValueAtMin();
+                        if (this.isAtMaxValue()) this.triggerValueAtMax();
+                    }
                 }
-                if (newValue < v) this.triggerValueClampedToMax();
-                if (newValue > v) this.triggerValueClampedToMin();
+                if (!this._restoring) {
+                    if (newValue < v) this.triggerValueClampedToMax();
+                    if (newValue > v) this.triggerValueClampedToMin();
+                }
                 return changed;
             },
             getValue: function() {return this.value;},
@@ -221,10 +229,16 @@
             /*  Restores bounds before the value so the value isn't clamped by stale bounds. Uses
                 setValue rather than adjValue so nothing is forwarded (e.g. Event paradox to the
                 timeline). */
+            /*  Fires none of the limit triggers. */
             importFromObj: function(obj) {
-                if ('min' in obj) this.setMin(obj.min);
-                if ('max' in obj) this.setMax(obj.max);
-                if ('value' in obj) this.setValue(obj.value);
+                this._restoring = true;
+                try {
+                    if ('min' in obj) this.setMin(obj.min);
+                    if ('max' in obj) this.setMax(obj.max);
+                    if ('value' in obj) this.setValue(obj.value);
+                } finally {
+                    this._restoring = false;
+                }
             }
         }),
         

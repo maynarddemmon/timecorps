@@ -43,7 +43,8 @@
                 chronalAvailable = -agentModel[STAT_ID_CHRONAL].getValueToMin(),
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
                 paradoxCost = agentModel.calculateParadoxForEntry(eventModel),
-                agentRisksPhrase = pkg.formatAgentRisks(chronalNeeded, paradoxCost);
+                agentRisksPhrase = pkg.formatAgentRisks(chronalNeeded, paradoxCost),
+                floodedEventModel = agentModel.getFloodedEventBlocking(eventModel);
             let disabled,
                 text,
                 visible = true;
@@ -56,9 +57,12 @@
                 text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + agentRisksPhrase;
             }
             
+            if (floodedEventModel) disabled = true;
+            const tooltip = floodedEventModel ? floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.' : '';
+            
             if (agentModel.isDead()) visible = false;
             
-            return {disabled, text, visible};
+            return {disabled, text, tooltip, visible};
         },
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
@@ -182,12 +186,8 @@
             self[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
                 notifyTargets:self, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
             }, [{
+                // Reaching the limit, however it happens, gets the Agent devoured.
                 triggerValueAtMax: function() {
-                    this.callSuper();
-                    // FIXME: perhaps provide a warning in the UI.
-                    console.log('agent max paradox reached.');
-                },
-                triggerValueClampedToMax: function() {
                     this.callSuper();
                     self.setDevoured(true);
                 }
@@ -526,8 +526,21 @@
             return currentEventModel.getExitModels().find(exitModel => !exitModel.isHidden() && exitModel.getToEventModel() === eventModel) ?? null;
         },
         
+        /*  The flooded Event, if any, that keeps the Agent from time traveling to eventModel:
+            the one they'd leave, or the one they'd arrive at. null if neither is flooded. */
+        getFloodedEventBlocking: function(eventModel) {
+            const from = this.getEventModel();
+            if (from?.isFlooded()) return from;
+            if (eventModel?.isFlooded()) return eventModel;
+            return null;
+        },
+        
         doDeployToEvent: function(eventModel) {
             if (this.isDead()) return;
+            if (this.getFloodedEventBlocking(eventModel)) {
+                console.warn('Cannot time travel into or out of a flooded Event');
+                return;
+            }
             
             if (eventModel) {
                 const cost = pkg.getChronalToDeploy(this, eventModel);
@@ -545,6 +558,10 @@
             if (this.isDead()) return;
             
             const hqEventModel = pkg.model.getHQEventModel();
+            if (this.getFloodedEventBlocking(hqEventModel)) {
+                console.warn('Cannot time travel out of a flooded Event');
+                return;
+            }
             if (hqEventModel) {
                 const cost = pkg.getChronalToRecall(this);
                 if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {

@@ -112,12 +112,8 @@
             model[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
                 notifyTargets:model, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:TIMELINE_PARADOX_LIMIT
             }, [{
+                // Reaching the limit, however it happens, destabilizes the Timeline.
                 triggerValueAtMax: function() {
-                    this.callSuper();
-                    // FIXME: perhaps provide a warning in the UI.
-                    console.log('timeline max paradox reached.');
-                },
-                triggerValueClampedToMax: function() {
                     this.callSuper();
                     pkg.app.notifyTimelineParadoxExceeded();
                 }

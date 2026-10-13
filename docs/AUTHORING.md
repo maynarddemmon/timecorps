@@ -107,14 +107,24 @@ Every stat has a value and a range, and changes stay within it.
 |---|---|---|
 | `event.historicity` | 0–100 | How fixed the event is in history. Raised by mission setup (`historicityAdjustments`) |
 | `event.attestation` | 0–100 | How much the Corps knows about the event. Raised by investigating. Knowing more reveals more |
-| `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (4) | Raised when agents revisit. Any change also changes `timeline.paradox`. At the limit the event devours the agents in it |
+| `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (6) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
 | `agent.health` | 0–`max`, max up to 150 | Default 100. 0 is death |
 | `agent.chronal` | 0–100 | Spent to time travel. Default starting value 75 |
-| `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (3) | Raised by revisiting an event. Past the limit the agent is devoured |
+| `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (5) | Raised by revisiting an event. Reaching the limit devours the agent |
 | `timeline.chronal` | 0–100 | HQ's reserve, used to reload agents. Starts at 25 |
-| `timeline.paradox` | 0–limit | The limit is 9 plus 0.25 per known regular event. Past it the timeline destabilizes |
+| `timeline.paradox` | 0–limit | The limit is 9 plus 0.25 per known regular event. Reaching it destabilizes the timeline |
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
+
+Any paradox reaching its limit counts, however it gets there: revisiting, an effect, a cost, a flood. Effects and costs are cut to what a stat allows, so they can reach a limit but never pass it.
+
+**Flooding.** When an event's paradox reaches its limit, the event floods with paradox, once:
+
+- No agent can time travel into or out of it: deploying, jumping, looping back and recalling are all refused. Its exits still work, both ways.
+- Every agent who has ever been there gains a paradox for each visit, counted as for revisiting (their starting event counts). That can devour them.
+- Every descendant event, known or not, gains a paradox, which can flood it in turn.
+
+A flood's paradox doesn't cost score. Expressions can read `event.flooded`, e.g. for a description phrase.
 
 The timeline also has a score and credits, read as plain numbers:
 
@@ -384,11 +394,11 @@ Costs are what an agent pays to take an action. An action costs one of the agent
 | `agent.action` | The agent's actions at the event | It has that many left |
 | `agent.health` | The agent's health | It keeps at least 1 |
 | `agent.chronal` | The agent's chronal | It has that much |
-| `agent.paradox` | Adds to the agent's paradox | That stays within its limit |
+| `agent.paradox` | Adds to the agent's paradox | That stays below its limit |
 | `event.attestation`, `event.historicity` | The event's stat | It has that much |
-| `event.paradox` | Adds to the event's paradox | That stays within its limit |
+| `event.paradox` | Adds to the event's paradox | That stays below its limit |
 | `timeline.chronal` | HQ's chronal | It has that much |
-| `timeline.paradox` | Adds to the timeline's paradox | That stays within its limit |
+| `timeline.paradox` | Adds to the timeline's paradox | That stays below its limit |
 | `timeline.score` | The player's score | The score is at least that |
 | `timeline.credits` | The Corps' credits | There are at least that many |
 

@@ -279,7 +279,9 @@
         
         /*  A cost paid in a stat. Paying lowers it, except paradox, which a cost adds to. Either
             way a cost can't take the stat past its limits, so it's only payable while there's
-            room. reserve is held back from what can be paid, e.g. so a health cost can't kill. */
+            room. reserve is held back from what can be paid, e.g. so a health cost can't kill,
+            and a paradox cost can't reach the limit, which devours an agent, floods an Event or
+            destabilizes the timeline. */
         makeStatCost = (scopeName, statId, reserve=0) => {
             const accrues = statId === STAT_ID_PARADOX,
                 getStat = (agentModel, actionModel) => getScopeTarget(scopeName, agentModel, actionModel)?.[statId];
@@ -289,7 +291,7 @@
                 getAvailable: (agentModel, actionModel) => {
                     const stat = getStat(agentModel, actionModel);
                     if (!stat) return 0;
-                    return accrues ? stat.getValueToMax() : -stat.getValueToMin() - reserve;
+                    return (accrues ? stat.getValueToMax() : -stat.getValueToMin()) - reserve;
                 },
                 pay: (agentModel, actionModel, amount) => {
                     getStat(agentModel, actionModel).adjValue(accrues ? amount : -amount);
@@ -314,12 +316,12 @@
             // A health cost can't take the agent's last point of health.
             [SCOPE_AGENT + '.' + STAT_ID_HEALTH]:makeStatCost(SCOPE_AGENT, STAT_ID_HEALTH, 1),
             [SCOPE_AGENT + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_AGENT, STAT_ID_CHRONAL),
-            [SCOPE_AGENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_AGENT, STAT_ID_PARADOX),
+            [SCOPE_AGENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_AGENT, STAT_ID_PARADOX, 1),
             [SCOPE_EVENT + '.' + STAT_ID_ATTESTATION]:makeStatCost(SCOPE_EVENT, STAT_ID_ATTESTATION),
             [SCOPE_EVENT + '.' + STAT_ID_HISTORICITY]:makeStatCost(SCOPE_EVENT, STAT_ID_HISTORICITY),
-            [SCOPE_EVENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_EVENT, STAT_ID_PARADOX),
+            [SCOPE_EVENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_EVENT, STAT_ID_PARADOX, 1),
             [SCOPE_TIMELINE + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_TIMELINE, STAT_ID_CHRONAL),
-            [SCOPE_TIMELINE + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_TIMELINE, STAT_ID_PARADOX),
+            [SCOPE_TIMELINE + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_TIMELINE, STAT_ID_PARADOX, 1),
             // The player's score. It can't be spent below 0.
             [SCOPE_TIMELINE + '.score']:{
                 getName: () => 'Score',
@@ -726,7 +728,7 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
-                self.hidden = false;
+                self.hidden = self.flooded = false;
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -737,14 +739,10 @@
                         if (retval !== 0) pkg.model[STAT_ID_PARADOX].adjValue(retval);
                         return retval;
                     },
+                    // Reaching the limit, however it happens, floods the Event.
                     triggerValueAtMax: function() {
                         this.callSuper();
-                        // FIXME: perhaps provide a warning in the UI.
-                        console.log('event max paradox reached.');
-                    },
-                    triggerValueClampedToMax: function() {
-                        this.callSuper();
-                        self.doDevouredByChronovores();
+                        self.doFlood();
                     }
                 }]);
                 
@@ -831,6 +829,19 @@
             
             // Description
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
+            
+            // Flooded
+            /*  An Event floods when its paradox reaches its limit. Read as 
+                "event.flooded". Setting it has none of the consequences of doFlood, e.g. when
+                restoring a save. */
+            setFlooded: function(v) {
+                v = !!v;
+                if (this.flooded !== v) {
+                    this.set('flooded', v, true);
+                    this.notifyCollectionOfUpdate();
+                }
+            },
+            isFlooded: function() {return this.flooded;},
             
             // Action Limits
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
@@ -997,6 +1008,7 @@
                     values = this.values;
                 for (const statId of EVENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
                 for (const id in values) valuesObj[id] = values[id].exportToObj();
+                retval.flooded = this.flooded;
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1009,6 +1021,7 @@
                 for (const statId of EVENT_STAT_IDS) {
                     if (obj[statId]) this[statId].importFromObj(obj[statId]);
                 }
+                if ('flooded' in obj) this.setFlooded(obj.flooded);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {
@@ -1037,9 +1050,25 @@
                 }
             },
             
-            doDevouredByChronovores: function() {
-                console.log('Event devoured by chronovores', this);
-                // FIXME: disable the event or in some other way indicate the Event has been devoured.
+            /*  Called whenever the Event's paradox reaches its limit. The first time, the Event
+                floods with paradox:
+                    - No agent can time travel into or out of it. Its exits still work.
+                    - Every agent who has ever been there gains a paradox per visit, which may 
+                      devour them.
+                    - Every descendant Event, known or not, gains a paradox, which may flood it
+                      in turn. */
+            doFlood: function() {
+                if (this.flooded) return;
+                this.setFlooded(true);
+                
+                // FIXME: once there's an event log we should be able to search that to count
+                // Agent visits.
+                for (const agentModel of pkg.model.getAgentModelsAsList()) {
+                    const visits = agentModel.countVisitsToEvent(this);
+                    if (visits > 0) agentModel[STAT_ID_PARADOX].adjValue(visits);
+                }
+                
+                for (const descendant of this.getDescendants()) descendant[STAT_ID_PARADOX].adjValue(1);
             },
             
             formatAsTemporalExtent: function() {

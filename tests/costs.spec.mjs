@@ -138,12 +138,12 @@ test('stat costs are paid within the stat\'s limits, and a broken or negative co
             };
             return {
                 paid,
-                // Just enough of each, and just short. Health can't be spent to death, and
-                // paradox can't be pushed past the agent's limit.
-                enough:canSpendWith({chronal:10, health:11, paradox:alpha.paradox.max - 1, attestation:5}),
+                // Just enough of each, and just short. Health can't be spent to death, and a
+                // paradox cost can't reach the agent's limit, which would devour them.
+                enough:canSpendWith({chronal:10, health:11, paradox:alpha.paradox.max - 2, attestation:5}),
                 shortChronal:canSpendWith({chronal:9}),
                 shortHealth:canSpendWith({health:10}),
-                noParadoxRoom:canSpendWith({paradox:alpha.paradox.max}),
+                noParadoxRoom:canSpendWith({paradox:alpha.paradox.max - 1}),
                 shortAttestation:canSpendWith({attestation:4}),
 
                 broken:alpha.canPayCostsFor(actions.broken),

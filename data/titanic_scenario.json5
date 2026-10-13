@@ -416,6 +416,7 @@
 			"start":"1912-04-14T21:40:00",
 			"duration":{"h":1,"m":50},
 			"location":"titanic.wireless",
+			"paradox":5,
 			"actions":{
 				"clear":{
 					"label":"Clear Backlog Earlier",
@@ -426,7 +427,8 @@
 					},
 					// Effects are worked out before the sets, so this sees the count before this flip.
 					"effects":{
-						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
+						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
+						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"event.values.clearBacklogEarlier.value"
 				},
@@ -438,7 +440,8 @@
 						"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
 					},
 					"effects":{
-						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
+						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
+						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"!event.values.clearBacklogEarlier.value"
 				}
