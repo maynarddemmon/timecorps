@@ -1,6 +1,8 @@
 (pkg => {
     'use strict';
     
+    let isInitial = true; // Indicates this is the first time the timeline is being layed out.
+    
     const JSClass = JS.Class,
         
         {min:mathMin, max:mathMax, floor:mathFloor} = Math,
@@ -76,7 +78,11 @@
         animateAttr = (target, attrName, newValue, easingFunction='inOutQuad', duration=ANIM_DURATION) => {
             if (target[attrName] !== newValue) {
                 target.stopActiveAnimators(attrName);
-                return target.animate({attribute:attrName, to:newValue, duration, easingFunction});
+                if (isInitial) {
+                    target.set(attrName, newValue);
+                } else {
+                    target.animate({attribute:attrName, to:newValue, duration, easingFunction});
+                }
             }
         },
         animateAttrs = (target, attrs) => {
@@ -103,20 +109,19 @@
         VALUE_CHANGE_MILLIS = 500,
         VALUE_CHANGE_MILLIS_CUTOFF = mathMax(50, SCROLL_TO_DEBOUNCE_MILLIS),
         valueChangeAnims = {queue:[], current:null, whenDone:[]},
-        runNextValueChangeAnim = (scrollToImmediately) => {
-            const [eventBox, duration] = valueChangeAnims.queue.shift() ?? [null, 0],
-                isFastTracked = duration <= VALUE_CHANGE_MILLIS_CUTOFF;
+        runNextValueChangeAnim = () => {
+            const [eventBox, duration] = valueChangeAnims.queue.shift() ?? [null, 0];
             valueChangeAnims.current = eventBox;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
-                pkg.app.scrollToSelectedEvent(scrollToImmediately);
+                pkg.app.scrollToSelectedEvent(true, false);
                 
                 // Run whatever was waiting for the animations to finish. Taken first since a
                 // callback could start more animations.
                 const whenDone = valueChangeAnims.whenDone.splice(0);
                 for (const func of whenDone) func();
-            } else if (eventBox.destroyed || !eventBox.visible || isFastTracked) {
-                runNextValueChangeAnim(isFastTracked); // Next scroll is immediate if we're already at the limit.
+            } else if (eventBox.destroyed || !eventBox.visible || duration <= VALUE_CHANGE_MILLIS_CUTOFF) {
+                runNextValueChangeAnim();
             } else {
                 // Scroll to each event immediately before animating.
                 eventBox.timeline.scrollToEventBox(eventBox, false);
@@ -142,25 +147,12 @@
             }
         },
         
-        updateTimelineLayout = (timeline, isInitial) => {
+        updateTimelineLayout = timeline => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
                 {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
             
-            if (isInitial) {
-                // Destroy and cleanup for a new timeline layout
-                timeline.deselectAll();
-                timeline.colsByLocId = {};
-                timeline.boxesByEventId = {};
-                timeline.ticksByTime = {};
-                timeline.gapRowsByTime = {};
-                timeline.tokensByAgentId = {};
-                colHeaders.destroyAllSubviews();
-                rowHeaders.destroyAllSubviews();
-                flowLayer.destroyAllSubviews();
-                
-                // Special Handling for HQ and The Void
-                orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
-            }
+            // Special Handling for HQ and The Void
+            if (isInitial) orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
             
             
             // Location Columns //
@@ -406,6 +398,8 @@
             if (timeline._eventModelOrIdToSelect) {
                 timeline.doSelectEvent(timeline._eventModelOrIdToSelect);
             }
+            
+            isInitial = false;
         },
         
         updateTimeLineLayoutDebounced = debounce(updateTimelineLayout, STANDARD_DEBOUNCE_MILLIS),
@@ -1033,10 +1027,6 @@
             }
         },
         
-        getAgentToken: function(agentModelOrId) {
-            if (agentModelOrId) return this.tokensByAgentId[typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id];
-        },
-        
         // History //
         navigateHistory: function(adj) {
             const newIdx = this._histIdx + adj,
@@ -1051,17 +1041,6 @@
         },
         
         // Scrolling //
-        getBoundingBoxForCurrentScrollPosition: function() {
-            const ide = this.scrollCaptureView.getIDE(),
-                flowContainer = this.flowContainer;
-            return {
-                x:ide.scrollLeft,
-                y:ide.scrollTop,
-                width:flowContainer.width,
-                height:flowContainer.height
-            };
-        },
-        
         scrollToEventBox: function(thingy, smoothly=true) {
             const eventBox = thingy?.isA?.(EventBox) ? thingy : this.getEventBox(thingy);
             if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly);
@@ -1081,8 +1060,6 @@
         setup: function(model) {
             this.model = model;
             this.timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
-            
-            updateTimelineLayout(this, true);
             this.timelineReady = true;
         },
         

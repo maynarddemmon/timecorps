@@ -198,7 +198,9 @@
             
             appView.callSuper(parent, attrs);
             
-            appView.scrollToDebounced = M.debounce(appView.scrollToEvent, 1000);
+            appView.scrollTo = M.debounce(eventModel => {
+                if (eventModel) timelineView.scrollToEventBox(eventModel);
+            }, 600);
             appView.attachToDom(G.mouse, 'noop', 'contextmenu', true);
             
             globalThis.hideSpinner();
@@ -210,7 +212,6 @@
             // Build UI
             appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:40}));
             appView.buildMiddleView(new WideView(appView, {layoutHint:1}));
-            //appView.buildFooterView(new WideView(appView, {bgColor:colorMedium, height:40}));
             
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
@@ -346,8 +347,6 @@
             dividerH.syncTo(middleView, 'updateLayout', 'width');
         },
         
-        //buildFooterView: NOOP, // footerView => {},
-        
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
         getEventDetailsView: () => eventDetailsView,
@@ -377,16 +376,14 @@
             timelineView.doSelectEvent(eventModelOrId);
         },
         
-        scrollToEvent: function(eventModel, clearDebounce, immediate=false) {
-            if (eventModel) timelineView.scrollToEventBox(eventModel, !immediate);
-            if (clearDebounce) this.scrollToDebounced();
-        },
-        // scrollToDebounced: setup in initNode
-        
-        /*  Scrolls back to the selected Event, cancelling any pending scrollToDebounced,
-            e.g. once the mouse leaves a button that scrolled the timeline elsewhere. */
-        scrollToSelectedEvent: function(immediate=false) {
-            this.scrollToEvent(timelineView.getSelectedEventBox()?.model, true, immediate);
+        scrollToSelectedEvent: function(immediate=false, immediateScrollsSmoothly=true) {
+            const eventModel = timelineView.getSelectedEventBox()?.model;
+            if (immediate) {
+                this.scrollTo(); // Clear debounced scrolling.
+                timelineView.scrollToEventBox(eventModel, immediateScrollsSmoothly);
+            } else {
+                this.scrollTo(eventModel);
+            }
         },
         
         // Event Dispatching

@@ -77,9 +77,9 @@
                 this.callSuper(v);
                 const app = pkg.app;
                 if (this.mouseOver) {
-                    app.scrollToDebounced(this.getNavEventModel());
+                    app.scrollTo(this.getNavEventModel());
                 } else {
-                    app.scrollToSelectedEvent();
+                    app.scrollToSelectedEvent(true);
                 }
             }
         }
