@@ -147,7 +147,7 @@
             }
         },
         
-        updateTimelineLayout = timeline => {
+        updateTimeLineLayoutDebounced = debounce(timeline => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
                 {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
             
@@ -400,9 +400,7 @@
             }
             
             isInitial = false;
-        },
-        
-        updateTimeLineLayoutDebounced = debounce(updateTimelineLayout, STANDARD_DEBOUNCE_MILLIS),
+        }, STANDARD_DEBOUNCE_MILLIS),
         
         // History //
         pushOntoHistory = (timeline, eventId) => {
@@ -1061,6 +1059,7 @@
             this.model = model;
             this.timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
             this.timelineReady = true;
+            updateTimeLineLayoutDebounced(this);
         },
         
         /*  Turned on once startup, including restoring a save, is done, so only changes the 

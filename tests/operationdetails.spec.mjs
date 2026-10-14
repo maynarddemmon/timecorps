@@ -35,9 +35,9 @@ test('hovering a precursor scrolls to its event, and leaving scrolls back', asyn
         globalThis.scrolls = [];
         app.scrollTo = eventModel => {globalThis.scrolls.push(eventModel?.id ?? null);};
         const scrollToSelectedEvent = app.scrollToSelectedEvent;
-        app.scrollToSelectedEvent = function() {
+        app.scrollToSelectedEvent = function(...args) {
             globalThis.scrolls.push('selected');
-            scrollToSelectedEvent.call(this);
+            scrollToSelectedEvent.apply(this, args);
         };
     });
     
