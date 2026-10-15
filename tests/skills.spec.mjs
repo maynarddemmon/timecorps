@@ -146,11 +146,11 @@ const routeScenarioWithSkillEffects = page => page.route('**/tests/data/test_sce
         origin = json.events.origin,
         NO_ROLL = {difficulty:'no-roll'};
     Object.assign(origin.actions, {
-        drill:{label:'Drill', skillCheck:NO_ROLL, effects:{'agent.skills.agl':{onSuccess:'15'}, 'agent.skills.cha':{onSuccess:'-10'}}},
-        overdo:{label:'Overdo', skillCheck:NO_ROLL, effects:{'agent.skills.agl':{onSuccess:'5000'}}},
-        nope:{label:'Nope', skillCheck:NO_ROLL, effects:{'agent.skills.nope':{onSuccess:'1'}}}
+        drill:{label:'Drill', skillCheck:NO_ROLL, adj:{'agent.skills.agl':{onSuccess:'15'}, 'agent.skills.cha':{onSuccess:'-10'}}},
+        overdo:{label:'Overdo', skillCheck:NO_ROLL, adj:{'agent.skills.agl':{onSuccess:'5000'}}},
+        nope:{label:'Nope', skillCheck:NO_ROLL, adj:{'agent.skills.nope':{onSuccess:'1'}}}
     });
-    origin.exits.find(exit => exit.to === 'aftermath').effects = {'agent.skills.dex':{onSuccess:'5'}};
+    origin.exits.find(exit => exit.to === 'aftermath').adj = {'agent.skills.dex':{onSuccess:'5'}};
     return route.fulfill({json});
 });
 
@@ -189,7 +189,7 @@ test('effects can raise and lower an agent\'s skills, within the maximum, from a
     expect(out.phrase).toContain('Charisma: ');
     // An effect on a skill that isn't configured is left out, with a warning.
     expect(out.nopeEffects).toBe(0);
-    expect(problems.warnings).toEqual([expect.stringMatching(/^Event origin action nope effect agent\.skills\.nope names no skill/)]);
+    expect(problems.warnings).toEqual([expect.stringMatching(/^Event origin action nope adj agent\.skills\.nope names no skill/)]);
     expect(problems.pageErrors).toEqual([]);
 });
 

@@ -81,7 +81,7 @@
 						"choice":"'run'",
 						"scratch.backstory_run":"true"
 					},
-					"effects":{
+					"adj":{
 						"agent.skills.agl":{"onSuccess":"15"},
 						"agent.skills.str":{"onSuccess":"10"}
 					},
@@ -94,7 +94,7 @@
 						"choice":"'guitar'",
 						"scratch.backstory_guitar":"true"
 					},
-					"effects":{
+					"adj":{
 						"agent.skills.dex":{"onSuccess":"15"},
 						"agent.skills.cha":{"onSuccess":"10"}
 					},
@@ -107,7 +107,7 @@
 						"choice":"'news'",
 						"scratch.backstory_news":"true"
 					},
-					"effects":{
+					"adj":{
 						"agent.skills.investigation":{"onSuccess":"15"},
 						"agent.skills.persuasion":{"onSuccess":"10"}
 					},
@@ -188,7 +188,7 @@
 					"label":"Talk to Your Neighbor",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'chat'"},
-					"effects":{
+					"adj":{
 						"agent.skills.cha":{"onSuccess":"10"},
 						"agent.skills.persuasion":{"onSuccess":"15"}
 					},
@@ -198,7 +198,7 @@
 					"label":"Watch the Passengers",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'watch'"},
-					"effects":{
+					"adj":{
 						"agent.skills.investigation":{"onSuccess":"10"},
 						"agent.skills.disguise":{"onSuccess":"15"}
 					},
@@ -208,7 +208,7 @@
 					"label":"Ride Without a Ticket",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'dodge'"},
-					"effects":{
+					"adj":{
 						"agent.skills.stealth":{"onSuccess":"15"},
 						"agent.skills.deception":{"onSuccess":"10"}
 					},
@@ -253,7 +253,7 @@
 					"label":"Start Work",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"scratch.backstory_work_chosen":"true"},
-					"effects":{
+					"adj":{
 						"agent.skills.dex":{"onSuccess":"15"},
 						"agent.skills.str":{"onSuccess":"10"},
 						"agent.skills.deception":{"onSuccess":"-10"}
@@ -264,7 +264,7 @@
 					"label":"Track Down the Wanderer",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'track'"},
-					"effects":{
+					"adj":{
 						"agent.skills.investigation":{"onSuccess":"10"},
 						"agent.skills.agl":{"onSuccess":"5"}
 					},
@@ -275,7 +275,7 @@
 					"label":"Calm the Ward",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'calm'"},
-					"effects":{
+					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
@@ -317,7 +317,7 @@
 					"label":"Start Work",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"scratch.backstory_work_chosen":"true"},
-					"effects":{
+					"adj":{
 						"agent.skills.investigation":{"onSuccess":"15"},
 						"agent.skills.deception":{"onSuccess":"10"},
 						"agent.skills.str":{"onSuccess":"-10"}
@@ -328,7 +328,7 @@
 					"label":"Chase the Source",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'chase'"},
-					"effects":{
+					"adj":{
 						"agent.skills.stealth":{"onSuccess":"10"},
 						"agent.skills.deception":{"onSuccess":"5"}
 					},
@@ -339,7 +339,7 @@
 					"label":"Pitch the Story",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'pitch'"},
-					"effects":{
+					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
@@ -381,7 +381,7 @@
 					"label":"Start Work",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"scratch.backstory_work_chosen":"true"},
-					"effects":{
+					"adj":{
 						"agent.skills.str":{"onSuccess":"15"},
 						"agent.skills.dex":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"-10"}
@@ -392,7 +392,7 @@
 					"label":"Fix the Impossible Engine",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'fix'"},
-					"effects":{
+					"adj":{
 						"agent.skills.dex":{"onSuccess":"10"},
 						"agent.skills.investigation":{"onSuccess":"5"}
 					},
@@ -403,7 +403,7 @@
 					"label":"Haggle with the Customer",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'haggle'"},
-					"effects":{
+					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.deception":{"onSuccess":"5"}
 					},
@@ -445,7 +445,7 @@
 					"label":"Start Work",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"scratch.backstory_work_chosen":"true"},
-					"effects":{
+					"adj":{
 						"agent.skills.disguise":{"onSuccess":"15"},
 						"agent.skills.cha":{"onSuccess":"10"},
 						"agent.skills.investigation":{"onSuccess":"-10"}
@@ -456,7 +456,7 @@
 					"label":"Cover for the Lead",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'cover'"},
-					"effects":{
+					"adj":{
 						"agent.skills.disguise":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
@@ -467,7 +467,7 @@
 					"label":"Rig the Flying Harness",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'rig'"},
-					"effects":{
+					"adj":{
 						"agent.skills.agl":{"onSuccess":"10"},
 						"agent.skills.dex":{"onSuccess":"5"}
 					},
@@ -509,21 +509,21 @@
 					"label":"Cut Through the Alley",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'alley'"},
-					"effects":{"agent.skills.stealth":{"onSuccess":"10"}, "agent.skills.agl":{"onSuccess":"5"}},
+					"adj":{"agent.skills.stealth":{"onSuccess":"10"}, "agent.skills.agl":{"onSuccess":"5"}},
 					"hidden":"event.values.choice.value !== ''"
 				},
 				"tourist":{
 					"label":"Help a Lost Tourist",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'tourist'"},
-					"effects":{"agent.skills.cha":{"onSuccess":"10"}, "agent.skills.investigation":{"onSuccess":"5"}},
+					"adj":{"agent.skills.cha":{"onSuccess":"10"}, "agent.skills.investigation":{"onSuccess":"5"}},
 					"hidden":"event.values.choice.value !== ''"
 				},
 				"bar":{
 					"label":"Talk Your Way into a Free Drink",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"choice":"'bar'"},
-					"effects":{"agent.skills.deception":{"onSuccess":"10"}, "agent.skills.persuasion":{"onSuccess":"5"}},
+					"adj":{"agent.skills.deception":{"onSuccess":"10"}, "agent.skills.persuasion":{"onSuccess":"5"}},
 					"hidden":"event.values.choice.value !== ''"
 				}
 			},
@@ -564,7 +564,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"reaction":"'caught'"},
 					"hidden":"event.values.reaction.value !== ''",
-					"effects":{
+					"adj":{
 						"agent.chronal":{"onSuccess":"1"}
 					}
 				},
@@ -573,7 +573,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"reaction":"'backed'"},
 					"hidden":"event.values.reaction.value !== ''",
-					"effects":{
+					"adj":{
 						"agent.chronal":{"onSuccess":"1"}
 					}
 				}
@@ -613,7 +613,7 @@
 					"label":"Dive for Cover",
 					"skillCheck":{"actionType":"athletic"},
 					"set":{"response":"'dove'"},
-					"effects":{"agent.health":{"onFailure":"-d(6)"}},
+					"adj":{"agent.health":{"onFailure":"-d(6)"}},
 					"hidden":"event.values.response.value !== ''"
 				},
 				"stand":{
@@ -740,7 +740,7 @@
 					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
 					"available":"!event.values.heard.value",
 					"costs":{"agent.action":null},
-					"effects":{
+					"adj":{
 						"agent.chronal":{"onSuccess":"15"},
 						"agent.skills.chronogation":{"onSuccess":"500"}
 					}

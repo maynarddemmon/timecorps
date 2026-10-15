@@ -221,10 +221,10 @@ test('in a flooded Event, actions that could generate paradox can\'t be taken, b
         const json = readTestData('test_scenario.json5'),
             NO_ROLL = {difficulty:'no-roll'};
         Object.assign(json.events.origin.actions, {
-            meddle:{label:'Meddle', skillCheck:NO_ROLL, effects:{'timeline.paradox':{onSuccess:'1'}}},
-            fumble:{label:'Fumble', skillCheck:NO_ROLL, effects:{'agent.paradox':{onFailure:'1'}}},
+            meddle:{label:'Meddle', skillCheck:NO_ROLL, adj:{'timeline.paradox':{onSuccess:'1'}}},
+            fumble:{label:'Fumble', skillCheck:NO_ROLL, adj:{'agent.paradox':{onFailure:'1'}}},
             gamble:{label:'Gamble', skillCheck:NO_ROLL, costs:{'agent.paradox':'1'}},
-            calm:{label:'Calm', skillCheck:NO_ROLL, effects:{'agent.paradox':{onSuccess:'-1'}}},
+            calm:{label:'Calm', skillCheck:NO_ROLL, adj:{'agent.paradox':{onSuccess:'-1'}}},
             look:{label:'Look', skillCheck:NO_ROLL}
         });
         return route.fulfill({json});

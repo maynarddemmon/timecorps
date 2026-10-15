@@ -154,7 +154,7 @@
             // Accessors ///////////////////////////////////////////////////////
             /** @overrides ActionCheckSupport */
             getSkillCheckOwner: function() {
-                return this.owner.getSkillCheckOwner() + ' effect ' + this.key;
+                return this.owner.getSkillCheckOwner() + ' adj ' + this.key;
             },
             
             hasOwnCheck: function() {return this.ownCheck;},
@@ -244,20 +244,22 @@
             }
         }),
         
-        /*  Gives an action or exit "effects": an object of StatEffectModel configs by key. */
+        /*  Gives an action or exit its effects, configured in the data as "adj", for the 
+            adjustments it makes to stats: an object of StatEffectModel configs by key. Unlike
+            set, which replaces what it sets, adj adds to it. */
         EffectsSupport = new JSModule('EffectsSupport', {
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
-                const effects = attrs.effects,
+                const adj = attrs.adj,
                     hasInjurySkillCheck = 'injurySkillCheck' in attrs;
-                delete attrs.effects;
+                delete attrs.adj;
                 delete attrs.injurySkillCheck;
                 
                 // Applied after the other attrs so any warnings can name the owner.
                 this.callSuper(attrs);
                 
-                if (hasInjurySkillCheck) console.warn(this.getSkillCheckOwner(), 'injurySkillCheck is replaced by effects, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)');
-                this.setEffects(effects);
+                if (hasInjurySkillCheck) console.warn(this.getSkillCheckOwner(), 'injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)');
+                this.setEffects(adj);
             },
             
             
@@ -266,7 +268,7 @@
                 const effects = this.effects = [];
                 if (cfg == null) return;
                 if (typeof cfg !== 'object' || Array.isArray(cfg)) {
-                    console.warn(this.getSkillCheckOwner(), 'effects must be an object of effects by stat, e.g. "agent.health" (ignoring them):', cfg);
+                    console.warn(this.getSkillCheckOwner(), 'adj must be an object of adjustments by stat, e.g. "agent.health" (ignoring them):', cfg);
                     return;
                 }
                 for (const key in cfg) {

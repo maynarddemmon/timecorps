@@ -29,7 +29,7 @@ const NO_ROLL = {difficulty:'no-roll'},
                     'scratch.origin_door':"'open after ' + scratch.origin_knocks",
                     'scratch.origin_alarm':'true'
                 },
-                effects:{'agent.paradox':{onSuccess:'scratch.origin_knocks - 2'}}
+                adj:{'agent.paradox':{onSuccess:'scratch.origin_knocks - 2'}}
             },
             bad:{
                 label:'Bad', skillCheck:NO_ROLL,

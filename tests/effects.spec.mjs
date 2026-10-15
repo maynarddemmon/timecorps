@@ -12,8 +12,8 @@ const INJURY = {difficulty:300, actionType:'athletic', onFailure:'-(d(6)+4)'},
     routeScenarioWithInjuries = page => page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5'),
             exitTo = (eventId, toId) => json.events[eventId].exits.find(exit => exit.to === toId);
-        exitTo('origin', 'aftermath').effects = {[HEALTH]:INJURY};
-        exitTo('warnings', 'backlog').effects = {[HEALTH]:{actionType:'athletic'}};
+        exitTo('origin', 'aftermath').adj = {[HEALTH]:INJURY};
+        exitTo('warnings', 'backlog').adj = {[HEALTH]:{actionType:'athletic'}};
         // And a bad action skill check, to show its warning names the Event too.
         json.events.plan.actions.prepare.skillCheck.difficulty = 'hard';
         return route.fulfill({json});
@@ -74,7 +74,7 @@ test('an exit\'s effect comes from the data, and one without an amount is ignore
 
     expect(problems.warnings).toHaveLength(2);
     expect(problems.warnings[0]).toMatch(/^Event plan action prepare skill check difficulty must be/);
-    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog effect agent\.health needs an onSuccess or onFailure amount/);
+    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog adj agent\.health needs an onSuccess or onFailure amount/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -339,13 +339,13 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
         });
     expect(result).toEqual({oneBad:[[null, '-9']], oldKey:[]});
     expect(problems.warnings).toEqual([
-        'Event origin exit to aftermath effect agent.health onSuccess must be a non-empty string (ignoring it): {onSuccess: , onFailure: -9}',
-        'Event origin exit to aftermath effect agent.health skill check has unknown keys damage: {damage: -150}',
-        'Event origin exit to aftermath effect agent.health needs an onSuccess or onFailure amount (ignoring it): {damage: -150}'
+        'Event origin exit to aftermath adj agent.health onSuccess must be a non-empty string (ignoring it): {onSuccess: , onFailure: -9}',
+        'Event origin exit to aftermath adj agent.health skill check has unknown keys damage: {damage: -150}',
+        'Event origin exit to aftermath adj agent.health needs an onSuccess or onFailure amount (ignoring it): {damage: -150}'
     ]);
 });
 
-test('effects must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
+test('adj must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old effects and injurySkillCheck are ignored with a warning', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const origin = tc.model.getEventModel('origin'),
@@ -369,23 +369,30 @@ test('effects must be keyed by a stat of the agent, event or timeline, or a skil
             const notAnObject = keys();
             delete origin.getActionModels().old;
             origin.setActions({old:{label:'Old', set:{}, injurySkillCheck:{damageOnFailure:'5'}}});
-            return {valid, notAnObject, oldEffects:origin.getActionModels().old.getEffects().length};
+            // The old name for adj.
+            origin.setActions({renamed:{label:'Renamed', set:{}, effects:{'agent.health':{onFailure:'-5'}}}});
+            return {
+                valid, notAnObject, 
+                oldEffects:origin.getActionModels().old.getEffects().length,
+                renamedEffects:origin.getActionModels().renamed.getEffects().length
+            };
         });
-    expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldEffects:0});
+    expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldEffects:0, renamedEffects:0});
     const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
-        'Event origin exit to aftermath effect agent.luck ' + named,
-        'Event origin exit to aftermath effect health ' + named,
-        'Event origin exit to aftermath effect event.health ' + named,
-        'Event origin exit to aftermath effect agent.health.value ' + named,
-        'Event origin exit to aftermath effect toString.health ' + named,
-        'Event origin exit to aftermath effect agent.skills ' + named,
-        'Event origin exit to aftermath effect agent.skills.agl.max ' + named,
-        'Event origin exit to aftermath effect event.skills.agl ' + named,
-        'Event origin exit to aftermath effect agent.health must be an object (ignoring it): -5',
-        'Event origin exit to aftermath effect timeline.paradox enabledForActionSkillCheck only applies to actions (ignoring it): {onSuccess: 1, enabledForActionSkillCheck: success}',
-        'Event origin exit to aftermath effects must be an object of effects by stat, e.g. "agent.health" (ignoring them): [Object]',
-        'Event origin action old injurySkillCheck is replaced by effects, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)'
+        'Event origin exit to aftermath adj agent.luck ' + named,
+        'Event origin exit to aftermath adj health ' + named,
+        'Event origin exit to aftermath adj event.health ' + named,
+        'Event origin exit to aftermath adj agent.health.value ' + named,
+        'Event origin exit to aftermath adj toString.health ' + named,
+        'Event origin exit to aftermath adj agent.skills ' + named,
+        'Event origin exit to aftermath adj agent.skills.agl.max ' + named,
+        'Event origin exit to aftermath adj event.skills.agl ' + named,
+        'Event origin exit to aftermath adj agent.health must be an object (ignoring it): -5',
+        'Event origin exit to aftermath adj timeline.paradox enabledForActionSkillCheck only applies to actions (ignoring it): {onSuccess: 1, enabledForActionSkillCheck: success}',
+        'Event origin exit to aftermath adj must be an object of adjustments by stat, e.g. "agent.health" (ignoring them): [Object]',
+        'Event origin action old injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)',
+        'Event origin action renamed effects is renamed adj, e.g. "adj":{"agent.health":{"onFailure":"-5"}} (ignoring it)'
     ]);
 });
 
@@ -474,7 +481,7 @@ const addRiskyAction = (page, effectCfg) => page.evaluate(effectCfg => {
         delete origin.getActionModels().risky;
         origin.setActions({risky:{
             label:'Risky', skillCheck:{difficulty:0, check:'0'}, set:{},
-            ...(effectCfg === null ? {} : {effects:{'agent.health':{difficulty:1000, check:'0', onFailure:'-(d(6)+2)', onSuccess:'-1', ...effectCfg}}})
+            ...(effectCfg === null ? {} : {adj:{'agent.health':{difficulty:1000, check:'0', onFailure:'-(d(6)+2)', onSuccess:'-1', ...effectCfg}}})
         }});
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
@@ -568,7 +575,7 @@ test('a bad enabledForActionSkillCheck warns and applies either way, and an effe
             const origin = tc.model.getEventModel('origin'),
                 make = effectCfg => {
                     delete origin.getActionModels().risky;
-                    origin.setActions({risky:{label:'Risky', set:{}, effects:{'agent.health':effectCfg}}});
+                    origin.setActions({risky:{label:'Risky', set:{}, adj:{'agent.health':effectCfg}}});
                     const [effect] = origin.getActionModels().risky.getEffects();
                     return {
                         when:effect?.enabledForActionSkillCheck ?? null,
@@ -586,8 +593,8 @@ test('a bad enabledForActionSkillCheck warns and applies either way, and an effe
         noAmount:{when:null, onFail:false, onPass:false}
     });
     expect(problems.warnings).toEqual([
-        'Event origin action risky effect agent.health enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"): {enabledForActionSkillCheck: fail, onFailure: -5}',
-        'Event origin action risky effect agent.health needs an onSuccess or onFailure amount (ignoring it): {enabledForActionSkillCheck: failure}'
+        'Event origin action risky adj agent.health enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"): {enabledForActionSkillCheck: fail, onFailure: -5}',
+        'Event origin action risky adj agent.health needs an onSuccess or onFailure amount (ignoring it): {enabledForActionSkillCheck: failure}'
     ]);
 });
 
@@ -632,7 +639,7 @@ test('effects can change the event and the timeline too, each within its stat\'s
 
     await page.evaluate(effects => {
         const origin = tc.model.getEventModel('origin');
-        origin.setActions({multi:{label:'Multi', skillCheck:{difficulty:0, check:'1000'}, set:{}, effects}});
+        origin.setActions({multi:{label:'Multi', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:effects}});
         // Close to its max, so the attestation is clamped.
         origin.attestation.setValue(98);
         tc.model.getAgentModel('AL').chronal.setValue(50);
@@ -802,7 +809,7 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
                 origin = tc.model.getEventModel('origin'),
                 healthAfter = (effectCfg, value) => {
                     delete origin.getActionModels().heal;
-                    origin.setActions({heal:{label:'Heal', skillCheck:{difficulty:0, check:'1000'}, set:{}, effects:{'agent.health':{difficulty:0, check:'1000', ...effectCfg}}}});
+                    origin.setActions({heal:{label:'Heal', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:{'agent.health':{difficulty:0, check:'1000', ...effectCfg}}}});
                     alpha.health.setValue(value);
                     alpha.setActionExecCount(0);
                     tc.rng.queueRolls(999, 999);
@@ -861,7 +868,7 @@ test('an amount\'s margin is how well the check that decided it went', async ({p
                 // returns how much it changed.
                 actWith = (effectCfg, skillCheck, ...rolls) => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, effects:{'event.attestation':effectCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':effectCfg}}});
                     attestation.setValue(50);
                     alpha.setActionExecCount(0);
                     tc.rng.queueRolls(...rolls);
@@ -908,7 +915,7 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
                 origin = tc.model.getEventModel('origin'),
                 withAction = (effectCfg, skillCheck) => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, effects:{'event.attestation':effectCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':effectCfg}}});
                     const actionModel = origin.getActionModels().measured;
                     return {
                         phrase:alpha.getEffectsPhrase(actionModel).replace(/\u00A0/g, ' '),

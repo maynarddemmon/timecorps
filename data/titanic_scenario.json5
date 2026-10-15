@@ -313,9 +313,9 @@
 					"label":"Relay to Bridge",
 					"skillCheck":{"actionType":"sure_thing"},
 					"set":{"relayToBridge":"true"},
-					// Every change of the value after the first costs the agent a paradox. Effects are
+					// Every change of the value after the first costs the agent a paradox. Adjustments are
 					// worked out before the set, so they see the flipCount before this change.
-					"effects":{
+					"adj":{
 						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
@@ -324,7 +324,7 @@
 					"label":"Don't relay to Bridge",
 					"skillCheck":{"actionType":"cha"},
 					"set":{"relayToBridge":"false"},
-					"effects":{
+					"adj":{
 						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
@@ -365,9 +365,9 @@
 					"label":"Spare Recovered",
 					"skillCheck":{"difficulty":300, "actionType":"social"},
 					"set":{"spareRecovered":"true"},
-					// Every attempt after the first, pass or fail, costs the agent a paradox. Effects
+					// Every attempt after the first, pass or fail, costs the agent a paradox. Adjustments
 					// are worked out before doneCount counts this attempt.
-					"effects":{
+					"adj":{
 						"agent.paradox":{
 							"onSuccess":"event.actions.recover.attemptCount >= 1 ? 1 : 0",
 							"onFailure":"event.actions.recover.attemptCount >= 1 ? 1 : 0"
@@ -379,7 +379,7 @@
 					"label":"Spare Removed",
 					"skillCheck":{"difficulty":300, "actionType":"sneak"},
 					"set":{"spareRecovered":"false"},
-					"effects":{
+					"adj":{
 						"agent.paradox":{
 							"onSuccess":"event.actions.removeSpare.doneCount >= 1 ? 1 : 0",
 							"onFailure":"event.actions.removeSpare.doneCount >= 1 ? 1 : 0"
@@ -425,8 +425,8 @@
 						"clearBacklogEarlier":"true",
 						"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
 					},
-					// Effects are worked out before the sets, so this sees the count before this flip.
-					"effects":{
+					// Adjustments are worked out before the sets, so this sees the count before this flip.
+					"adj":{
 						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
 						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
@@ -439,7 +439,7 @@
 						"clearBacklogEarlier":"false",
 						"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"
 					},
-					"effects":{
+					"adj":{
 						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
 						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
@@ -547,14 +547,14 @@
 					"skillCheck":{"difficulty":175, "actionType":"cha"},
 					"set":{"countermandAstern":"true"},
 					"hidden":"event.values.countermandAstern.value",
-					"effects":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
+					"adj":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
 				},
 				"allow":{
 					"label":"Allow Astern Order",
 					"skillCheck":{"difficulty":165, "actionType":"social"},
 					"set":{"countermandAstern":"false"},
 					"hidden":"!event.values.countermandAstern.value",
-					"effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
+					"adj":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
 				}
 			},
 			"exits":[
@@ -663,7 +663,7 @@
 			"actions":{
 				"_investigate":{
 					"skillCheck":{"difficulty":"no-roll"},
-					"effects":{
+					"adj":{
 						"event.attestation":{
 							"onSuccess":"d(Math.min(15, event.attestation.max - event.attestation.value))"
 						}
@@ -680,13 +680,13 @@
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
-					"effects":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
+					"adj":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
 				},
 				{
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || event.values.massLossOfLife.value",
-					"effects":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
+					"adj":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
 				}
 			],
 			"values":{

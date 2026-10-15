@@ -134,7 +134,7 @@
 			"description":["A signal is sent."]
 		},
 		
-		// Actions with effects from the data.
+		// Actions with adjustments from the data.
 		"lever":{
 			"name":"Lever",
 			"start":"1900-01-01T16:20:00",
@@ -146,14 +146,14 @@
 					"skillCheck":{"difficulty":175, "actionType":"cha"},
 					"set":{"pulled":"true"},
 					"hidden":"event.values.pulled.value",
-					"effects":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
+					"adj":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
 				},
 				"release":{
 					"label":"Release Lever",
 					"skillCheck":{"difficulty":165, "actionType":"social"},
 					"set":{"pulled":"false"},
 					"hidden":"!event.values.pulled.value",
-					"effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
+					"adj":{"agent.health":{"enabledForActionSkillCheck":"failure", "difficulty":250, "actionType":"athletic", "onFailure":"-5", "onSuccess":"-1"}}
 				}
 			},
 			"exits":[
@@ -218,7 +218,7 @@
 			"description":["Boats are built."]
 		},
 		
-		// A no-roll investigation, whose amount can't use the margin, and exits with effects.
+		// A no-roll investigation, whose amount can't use the margin, and exits with adjustments.
 		"aftermath":{
 			"name":"Aftermath",
 			"start":"1900-01-01T19:00:00",
@@ -227,7 +227,7 @@
 			"actions":{
 				"_investigate":{
 					"skillCheck":{"difficulty":"no-roll"},
-					"effects":{
+					"adj":{
 						"event.attestation":{
 							"onSuccess":"d(Math.min(25, event.attestation.max - event.attestation.value))"
 						}
@@ -240,13 +240,13 @@
 					"mode":"lifeboat",
 					"to":"finale",
 					"hidden":"!events.origin.values.struck.value || !event.values.lost.value",
-					"effects":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
+					"adj":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
 				},
 				{
 					"mode":"lifeboat",
 					"to":"finale",
 					"hidden":"!events.origin.values.struck.value || event.values.lost.value",
-					"effects":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
+					"adj":{"agent.health":{"difficulty":50, "actionType":"athletic", "onFailure":"-150"}}
 				}
 			],
 			"values":{
@@ -262,7 +262,7 @@
 			"description":["What happens after."]
 		},
 		
-		// Twelve hours, so Rest is offered, with an exit that has no effects.
+		// Twelve hours, so Rest is offered, with an exit that has no adjustments.
 		"warnings":{
 			"name":"Warnings",
 			"start":"1899-12-31T20:00:00",

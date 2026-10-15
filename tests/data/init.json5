@@ -79,7 +79,7 @@
 			"label":"Investigate",
 			"skillCheck":{"actionType":"investigate"},
 			"hidden":"event.attestation.value >= event.attestation.max",
-			"effects":{
+			"adj":{
 				// Up to 1 per 20 of margin, and never past the attestation left.
 				"event.attestation":{
 					"onSuccess":"d(Math.min(margin / 20, event.attestation.max - event.attestation.value))"
@@ -95,7 +95,7 @@
 				"difficulty":1000,
 				"check":"Math.round(2500 * (agent.health.value / agent.health.max)) - 1250"
 			},
-			"effects":{
+			"adj":{
 				// A d(4) per hour of the Event, up to 8.
 				"agent.health":{
 					"onSuccess":"d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"

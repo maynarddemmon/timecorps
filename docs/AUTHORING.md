@@ -12,7 +12,7 @@ How to write the files in `data/` that make up the game: scenarios with their ev
 - [Actions](#actions)
 - [Exits](#exits)
 - [Skill checks](#skill-checks)
-- [Effects](#effects)
+- [Adjustments](#adjustments-adj)
 - [Costs](#costs)
 - [Default actions](#default-actions)
 - [Agents](#agents)
@@ -79,7 +79,7 @@ Only property paths are watched. A method call such as `event.isHidden()` is wor
 
 ### Check expressions
 
-Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`), for an action's `costs` and for its `available` condition. They're worked out when they're needed rather than watched, and can use:
+Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure`), for an action's `costs` and for its `available` condition. They're worked out when they're needed rather than watched, and can use:
 
 | Name | Is |
 |---|---|
@@ -89,7 +89,7 @@ Used for skill checks (`check`), for effect amounts (`onSuccess`, `onFailure`), 
 | `scratch.<name>` | A [scratch](#scratch) entry |
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
-| `margin` | Amounts only: how well the deciding check went. See [Effects](#effects) |
+| `margin` | Amounts only: how well the deciding check went. See [Adjustments](#adjustments-adj) |
 
 `Math` is available as usual, e.g. `Math.max(agent.skills.deception, agent.skills.disguise)`.
 
@@ -116,12 +116,12 @@ Every stat has a value and a range, and changes stay within it.
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
 
-Any paradox reaching its limit counts, however it gets there: revisiting, an effect, a cost, a flood. Effects and costs are cut to what a stat allows, so they can reach a limit but never pass it.
+Any paradox reaching its limit counts, however it gets there: revisiting, an adjustment, a cost, a flood. Adjustments and costs are cut to what a stat allows, so they can reach a limit but never pass it.
 
 **Flooding.** When an event's paradox reaches its limit, the event floods with paradox, once:
 
 - No agent can time travel into or out of it: deploying, jumping, looping back and recalling are all refused. Its exits still work, both ways.
-- No agent can take an action there that could generate paradox: one with an effect that raises an agent's, the event's or the timeline's paradox on average, if it passes or if it fails, or one that costs paradox. Its button is disabled, and its tooltip says why. Other actions, including ones that lower paradox, still work.
+- No agent can take an action there that could generate paradox: one with an adjustment that raises an agent's, the event's or the timeline's paradox on average, if it passes or if it fails, or one that costs paradox. Its button is disabled, and its tooltip says why. Other actions, including ones that lower paradox, still work.
 - Its box on the timeline turns the paradox color.
 - Every agent who has ever been there gains a paradox for each visit, counted as for revisiting (their starting event counts). That can devour them.
 - Every descendant event, known or not, gains a paradox, which can flood it in turn.
@@ -278,7 +278,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
 		"skillCheck":{"actionType":"social"},
 		"set":{"preventReshuffle":"true"},
 		"hidden":"event.values.preventReshuffle.value",
-		"effects":{
+		"adj":{
 			"agent.chronal":{"onSuccess":"-2", "onFailure":"-2"}
 		}
 	}
@@ -289,16 +289,16 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`skillCheck`**: see [Skill checks](#skill-checks). Leave it out for an even chance: difficulty 250 against no skill.
 - **`set`**: sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order. Each entry is a string, set when the check passes, or `{"onSuccess":…, "onFailure":…}`, set for either result.
   - A string for a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
-  - A string for a `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's effects are worked out before its sets, so they see the entries as they were.
-  - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an effect's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went.
+  - A string for a `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's adjustments are worked out before its sets, so they see the entries as they were.
+  - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an adjustment's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
-- **`effects`**: changes to stats. See [Effects](#effects).
+- **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
 
-Every action counts how many times it's been taken, pass or fail, as its `doneCount`, e.g. `event.actions.recover.doneCount`. Any expression can read it, and constraints update when it changes, so `"hidden":"event.actions.recover.doneCount >= 3"` allows three tries. An action's effects are worked out before its own `doneCount`, and the `flipCount` of the values it sets, go up, so they see the counts before this take.
+Every action counts how many times it's been taken, pass or fail, as its `doneCount`, e.g. `event.actions.recover.doneCount`. Any expression can read it, and constraints update when it changes, so `"hidden":"event.actions.recover.doneCount >= 3"` allows three tries. An action's adjustments are worked out before its own `doneCount`, and the `flipCount` of the values it sets, go up, so they see the counts before this take.
 
-Taking an action pays its costs, whether the check passes or fails. The button shows the check's ease ("even", "tough"…), any costs beyond the usual action and any effects in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox, by an effect or a cost.
+Taking an action pays its costs, whether the check passes or fails. The button shows the check's ease ("even", "tough"…), any costs beyond the usual action and any adjustments in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox, by an adjustment or a cost.
 
 Every event also offers the [default actions](#default-actions), Investigate and Rest, before its own.
 
@@ -314,7 +314,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 		"mode":"lifeboat",
 		"to":"arrival_new_york",
 		"hidden":"!events.collision.values.struck.value",
-		"effects":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
+		"adj":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
 	}
 ]
 ```
@@ -322,7 +322,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 - **`mode`**: `wait`, `walk`, `swim` or `lifeboat`, which give "Wait til", "Walk to", "Swim to" and "Lifeboat to". Anything else gives "To".
 - **`to`**: the event it leads to. An exit to a hidden event isn't offered.
 - **`hidden`**: hides the exit.
-- **`effects`**: as for actions. Taking an exit always succeeds, so an effect without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
+- **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
 - **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
 
 ## Skill checks
@@ -344,9 +344,9 @@ Each part is optional, and comes from the first of these that gives it:
 - **Never certain.** The ease is limited to −999…−1, so any rolled check has at least a 0.1% chance either way.
 - **No roll.** For a certain result, use `"difficulty":"no-roll"`: the check always passes without rolling, as `sure_thing` does.
 
-## Effects
+## Adjustments (`adj`)
 
-Effects change stats as the result of an action or exit. They're keyed by the stat they change, as `"<scope>.<stat>"`:
+Adjustments change stats as the result of an action or exit. They go in its `adj`, and add to what they change, where an action's [`set`](#actions) replaces it. They're keyed by the stat they change, as `"<scope>.<stat>"`:
 
 | Scope | Stats | Whose |
 |---|---|---|
@@ -354,10 +354,10 @@ Effects change stats as the result of an action or exit. They're keyed by the st
 | `event` | `attestation`, `historicity`, `paradox` | The event the action or exit belongs to |
 | `timeline` | `paradox`, `chronal` | The timeline |
 
-An effect can also change one of the agent's skills, keyed `"agent.skills.<skill>"`, e.g. `"agent.skills.agl"`. Skills change within ±`MAX_SKILL_VALUE` (1000), are named in tooltips and floating text by the skill's name, e.g. "+15 Agility", and are saved with the agent. Origin Story uses them to build the player's agent from their choices.
+An adjustment can also change one of the agent's skills, keyed `"agent.skills.<skill>"`, e.g. `"agent.skills.agl"`. Skills change within ±`MAX_SKILL_VALUE` (1000), are named in tooltips and floating text by the skill's name, e.g. "+15 Agility", and are saved with the agent. Origin Story uses them to build the player's agent from their choices.
 
 ```json5
-"effects":{
+"adj":{
 	// A hard climb: hurts a little on a pass and a lot on a failure.
 	"agent.health":{"difficulty":250, "actionType":"athletic", "onSuccess":"-d(4)", "onFailure":"-d(6, 5)"},
 	// What's found, the more the better the action went.
@@ -365,17 +365,17 @@ An effect can also change one of the agent's skills, keyed `"agent.skills.<skill
 }
 ```
 
-Each effect has:
+Each adjustment has:
 
 - **`onSuccess`** and **`onFailure`**: amount expressions. At least one is needed. Positive raises the stat and negative lowers it, within its range. Amounts are rounded to whole points.
-- **A check of its own** (optional): any of `difficulty`, `check` and `actionType`, as for an action. With one, the effect rolls it and picks `onSuccess` or `onFailure` by the result. Without one, it follows the action's own check.
-- **`enabledForActionSkillCheck`** (actions only): `"success"`, `"failure"` or `"both"`, the default. Whether the effect applies at all, depending on the action's own check. Useful when an effect has its own check but should only happen after the action fails, say.
+- **A check of its own** (optional): any of `difficulty`, `check` and `actionType`, as for an action. With one, the adjustment rolls it and picks `onSuccess` or `onFailure` by the result. Without one, it follows the action's own check.
+- **`enabledForActionSkillCheck`** (actions only): `"success"`, `"failure"` or `"both"`, the default. Whether the adjustment applies at all, depending on the action's own check. Useful when an adjustment has its own check but should only happen after the action fails, say.
 
-**`margin`** is how well the deciding check went: its roll plus its ease. It's 0 or more on a pass and negative on a failure. A bare pass is about 0, and a roll at the top can be close to 1000. The deciding check is the effect's own check if it has one, or else the action's. It's 0 when nothing was rolled: an exit without its own check, or a no-roll check. That makes margin-based amounts pointless behind a no-roll check, so give those a fixed or dice amount instead.
+**`margin`** is how well the deciding check went: its roll plus its ease. It's 0 or more on a pass and negative on a failure. A bare pass is about 0, and a roll at the top can be close to 1000. The deciding check is the adjustment's own check if it has one, or else the action's. It's 0 when nothing was rolled: an exit without its own check, or a no-roll check. That makes margin-based amounts pointless behind a no-roll check, so give those a fixed or dice amount instead.
 
-**How effects show:**
+**How adjustments show:**
 
-- The tooltip lists each effect's average amounts, e.g. "Event Attestation: ~+5 if passed". Health harm reads as injury, e.g. "♥ Risking: serious injury (light injury if passed)".
+- The tooltip lists each adjustment's average amounts, e.g. "Event Attestation: ~+5 if passed". Health harm reads as injury, e.g. "♥ Risking: serious injury (light injury if passed)".
 - The floating text after taking the action or exit shows each change, e.g. "Succeeded by 140 · +4 Attestation · −3♥".
 
 **Side effects worth knowing:**
@@ -411,17 +411,17 @@ Costs are what an agent pays to take an action or an exit. An action costs one o
 - **Merged over the default.** Costs are merged over the default of one action, so `{"timeline.score":"100"}` costs an action and 100 score. To change the action cost, give `agent.action`, e.g. `"0"`. `null` leaves a cost out, so `{"agent.action":null}` is an action that uses no action, and `"costs":null` leaves them all out.
 - **Worked out when needed.** Amounts are worked out when the button is drawn and again when the action is taken, from the state at that moment, so `"agent.paradox.value"` costs as many actions as the agent has paradox. They never roll: a `d()` counts as its average. They're rounded to whole points.
 - **All or nothing.** The action can only be taken if every cost can be paid. Otherwise its button is disabled, and its tooltip marks the cost that can't be paid.
-- **Paid first.** Costs are worked out and checked before the action's check rolls, and paid whatever the result. Effects are worked out from the state before the costs are paid, then applied after them.
-- **Not gains.** A negative amount is a gain, which is what [effects](#effects) are for, so it pays nothing, with a warning. A broken amount can't be paid, with a warning, so the action shows as unavailable.
-- **Side effects.** As for effects: paying `event.attestation` lowers the score by 3 a point, and adding to `event.paradox` adds to `timeline.paradox` too.
+- **Paid first.** Costs are worked out and checked before the action's check rolls, and paid whatever the result. Adjustments are worked out from the state before the costs are paid, then applied after them.
+- **Not gains.** A negative amount is a gain, which is what [adjustments](#adjustments-adj) are for, so it pays nothing, with a warning. A broken amount can't be paid, with a warning, so the action shows as unavailable.
+- **Side effects.** As for adjustments: paying `event.attestation` lowers the score by 3 a point, and adding to `event.paradox` adds to `timeline.paradox` too.
 
 The tooltip lists costs, e.g. "Costs: 2 Actions, 100 Score", leaving out the usual single action, and says "Uses no action" for an action that doesn't use one.
 
 ## Default actions
 
-`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` effect) and Rest is `_rest` (a check with an `agent.health` effect).
+`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` adjustment) and Rest is `_rest` (a check with an `agent.health` adjustment).
 
-An event changes one by giving an action with the same ID. It's merged over the default key by key, so it only needs what differs. Use `null` to leave a default out, or one of its effects:
+An event changes one by giving an action with the same ID. It's merged over the default key by key, so it only needs what differs. Use `null` to leave a default out, or one of its adjustments:
 
 ```json5
 "actions":{
@@ -442,7 +442,7 @@ An event changes one by giving an action with the same ID. It's merged over the 
 // A no-roll investigation has no margin, so it gets its own amount.
 "_investigate":{
 	"skillCheck":{"difficulty":"no-roll"},
-	"effects":{"event.attestation":{"onSuccess":"d(Math.min(25, event.attestation.max - event.attestation.value))"}}
+	"adj":{"event.attestation":{"onSuccess":"d(Math.min(25, event.attestation.max - event.attestation.value))"}}
 }
 ```
 
@@ -564,17 +564,17 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "unplant":{"label":"Remove Key", "skillCheck":{"actionType":"sneak"}, "set":{"plantKey":"false"}, "hidden":"!event.values.plantKey.value"}
 ```
 
-**Something that costs more each time it's changed back.** Read the value's `flipCount`. Effects see the count before this change, so the first change is free.
+**Something that costs more each time it's changed back.** Read the value's `flipCount`. Adjustments see the count before this change, so the first change is free.
 
 ```json5
 "set":{"relayToBridge":"true"},
-"effects":{"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}}
+"adj":{"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}}
 ```
 
-**An action that costs more after the first try.** The same with its `doneCount`, which counts failures too, so the effect needs both cases.
+**An action that costs more after the first try.** The same with its `doneCount`, which counts failures too, so the adjustment needs both cases.
 
 ```json5
-"effects":{"agent.paradox":{
+"adj":{"agent.paradox":{
 	"onSuccess":"event.actions.recover.doneCount >= 1 ? 1 : 0",
 	"onFailure":"event.actions.recover.doneCount >= 1 ? 1 : 0"
 }}
@@ -588,16 +588,16 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "binocularsAccessible":{"name":"Glasses in the Nest", "value":"events.roster_reshuffle.values.keyOnShip.value || event.values.pickTheLocker.value"}
 ```
 
-**An action that's risky to try.** Give it an `agent.health` effect with its own check, so even a successful action can hurt.
+**An action that's risky to try.** Give it an `agent.health` adjustment with its own check, so even a successful action can hurt.
 
 ```json5
-"effects":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
+"adj":{"agent.health":{"difficulty":250, "actionType":"athletic", "onFailure":"-d(6,5)", "onSuccess":"-d(4)"}}
 ```
 
 **Risk only when the action fails.**
 
 ```json5
-"effects":{"agent.health":{"enabledForActionSkillCheck":"failure", "actionType":"athletic", "onFailure":"-5"}}
+"adj":{"agent.health":{"enabledForActionSkillCheck":"failure", "actionType":"athletic", "onFailure":"-5"}}
 ```
 
 **An action that costs more than an action.** Costs are merged over the default action.
@@ -612,17 +612,17 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "costs":{"agent.action":null}
 ```
 
-**An action that costs chronal and leaves a mark.** A cost is paid either way, and only if the agent has it. Effects without a check follow the action.
+**An action that costs chronal and leaves a mark.** A cost is paid either way, and only if the agent has it. Adjustments without a check follow the action.
 
 ```json5
 "costs":{"agent.chronal":"3"},
-"effects":{"event.paradox":{"onSuccess":"1"}}   // A crude fix leaves a mark.
+"adj":{"event.paradox":{"onSuccess":"1"}}   // A crude fix leaves a mark.
 ```
 
 **Evidence that rewards a good result.**
 
 ```json5
-"effects":{"event.attestation":{"onSuccess":"1 + Math.floor(margin / 100)"}}
+"adj":{"event.attestation":{"onSuccess":"1 + Math.floor(margin / 100)"}}
 ```
 
 **An exit that's only there sometimes.**

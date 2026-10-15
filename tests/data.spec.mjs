@@ -243,12 +243,12 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         
             // Returns the problems with an action's or exit's effects.
             checkEffects = (where, effects, isAction) => {
-                if (effects === null || typeof effects !== 'object' || Array.isArray(effects)) return [where + ' effects is not an object'];
+                if (effects === null || typeof effects !== 'object' || Array.isArray(effects)) return [where + ' adj is not an object'];
                 const effectProblems = [];
                 for (const [key, cfg] of Object.entries(effects)) {
                     // Null leaves out an effect of a default action.
                     if (cfg === null) continue;
-                    const at = where + ' effect ' + key,
+                    const at = where + ' adj ' + key,
                         [scope, statId, ...rest] = key.split('.');
                     if (scope === 'agent' && statId === 'skills' && rest.length === 1) {
                         if (!Object.hasOwn(skillCfgs, rest[0])) effectProblems.push(at + ' is not a skill');
@@ -298,7 +298,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     const error = getAmountCompileError(action.available);
                     if (error) problems.push(where + ' available ' + error);
                 }
-                if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
+                if (action.adj !== undefined) problems.push(...checkEffects(where, action.adj, true));
+                if ('effects' in action) problems.push(where + ' has effects, which is renamed adj');
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 for (const [key, value] of Object.entries(action.set ?? {})) {
                     const isScratch = key.startsWith('scratch.');
@@ -325,13 +326,14 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                         if (error) problems.push(where + ' set ' + key + ' ' + error);
                     }
                 }
-                if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
+                if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which adj replaced');
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
-                if (exit.effects !== undefined) problems.push(...checkEffects(where, exit.effects, false));
+                if (exit.adj !== undefined) problems.push(...checkEffects(where, exit.adj, false));
+                if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
-                if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which effects replaced');
+                if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');
             }
         }
         expect(problems).toEqual([]);

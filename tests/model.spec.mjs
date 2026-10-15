@@ -159,13 +159,13 @@ test('an Event\'s action merges over a default action of the same ID, and null l
             // Merged key by key, all the way down, with the Event's own actions after.
             merged:describe(build({
                 own:{label:'Own', set:{}},
-                _investigate:{label:'Search', skillCheck:{difficulty:300}, effects:{'event.attestation':{onSuccess:'2'}}},
+                _investigate:{label:'Search', skillCheck:{difficulty:300}, adj:{'event.attestation':{onSuccess:'2'}}},
                 _rest:null,
                 // Null only means something for a default, so it's ignored.
                 ghost:null
             })),
             // An effect can be dropped too.
-            noEffect:describe(build({_investigate:{effects:{'event.attestation':null}}})),
+            noEffect:describe(build({_investigate:{adj:{'event.attestation':null}}})),
             // The defaults weren't changed by any of that.
             untouched:describe(build({})),
             // A bad override is warned about, and the default's part kept.

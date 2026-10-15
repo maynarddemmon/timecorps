@@ -11,7 +11,7 @@ const NO_ROLL = {difficulty:'no-roll'},
         const json = readTestData('test_scenario.json5');
         json.events.origin.actions.poke = {
             label:'Poke', skillCheck:{difficulty:250},
-            effects:{'agent.paradox':{
+            adj:{'agent.paradox':{
                 onSuccess:'event.actions.poke.attemptCount >= 1 ? 1 : 0',
                 onFailure:'event.actions.poke.attemptCount >= 1 ? 1 : 0'
             }},
