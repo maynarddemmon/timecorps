@@ -193,7 +193,7 @@
                     "d(6, 3)". Use d(13) - 1 for 0 to 12. Only a real check rolls. Working out 
                     the ease without rolling, e.g. for an ease phrase, uses the dice's average.
                     Sides and count are rounded, sides to at least 1 and count to 1 to 99.
-                margin - For an amount, such as an effect's, the result of the check that decided
+                margin - For an amount, such as an adjustment's, the result of the check that decided
                     it: roll + ease, so 0 or more on a pass and negative on a failure. 0 if 
                     nothing was rolled. Working out an amount without rolling uses the average 
                     margin for a pass or a failure. 0 in a check expression itself.
@@ -274,12 +274,12 @@
             
             showFloatingTextForSkillCheck: (btnView, checkResult) => {
                 if (btnView && checkResult) {
-                    const {success, roll, ease, effects=[]} = checkResult,
+                    const {success, roll, ease, adjustments=[]} = checkResult,
                         // A no-roll check has no margin or roll to show.
                         text = (roll == null ? 'Succeeded' : 
                             (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
-                            // What any effects changed, e.g. "Failed by 120 · -7♥ · +2⥁".
-                            effects.filter(effect => effect.amount).map(effect => ICON_SEPARATOR + pkg.formatStatAdj(effect.statId, effect.amount)).join('');
+                            // What any adjustments changed, e.g. "Failed by 120 · -7♥ · +2⥁".
+                            adjustments.filter(adjustment => adjustment.amount).map(adjustment => ICON_SEPARATOR + pkg.formatStatAdj(adjustment.statId, adjustment.amount)).join('');
                     pkg.showFloatingTextAboveView(
                         btnView, 
                         text, 

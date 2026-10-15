@@ -34,7 +34,7 @@
                 label = actionModel.label,
                 name = actionModel.getActionSkillName(),
                 costsPhrase = agentModel.getCostsPhrase(actionModel),
-                effectsPhrase = agentModel.getEffectsPhrase(actionModel),
+                adjustmentsPhrase = agentModel.getAdjustmentsPhrase(actionModel),
                 blockedByFlood = agentModel.isActionBlockedByFlood(actionModel);
             
             return {
@@ -46,7 +46,7 @@
                 // An action without an actionType has no name to show.
                 tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
                     (costsPhrase ? ICON_SEPARATOR + costsPhrase : '') + 
-                    (effectsPhrase ? ICON_SEPARATOR + effectsPhrase : '') +
+                    (adjustmentsPhrase ? ICON_SEPARATOR + adjustmentsPhrase : '') +
                     (blockedByFlood ? ICON_SEPARATOR + 'Could generate paradox, which a flooded event can\'t hold' : ''),
                 disabled:blockedByFlood || !agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel)
             };
@@ -63,14 +63,14 @@
                     (showTargetName ? ' ' + (toEvent?.name ?? exitModel.to) : '') + 
                     pkg.formatAgentRisks(
                         agentModel.hasChronalChangeRiskFor(exitModel), 
-                        // The paradox for entering the Event, or else whether an effect changes it.
+                        // The paradox for entering the Event, or else whether an adjustment changes it.
                         agentModel.calculateParadoxForEntry(toEvent) || agentModel.hasParadoxChangeRiskFor(exitModel), 
                         agentModel.hasHealthChangeRiskFor(exitModel)
                     )
                 );
                 const costsPhrase = agentModel.getCostsPhrase(exitModel),
-                    effectsPhrase = agentModel.getEffectsPhrase(exitModel);
-                this.setTooltip([costsPhrase, effectsPhrase].filter(phrase => phrase).join(ICON_SEPARATOR));
+                    adjustmentsPhrase = agentModel.getAdjustmentsPhrase(exitModel);
+                this.setTooltip([costsPhrase, adjustmentsPhrase].filter(phrase => phrase).join(ICON_SEPARATOR));
                 this.setDisabled(!agentModel.canPayCostsFor(exitModel));
             },
             doActivated: function() {

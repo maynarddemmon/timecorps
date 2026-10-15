@@ -138,10 +138,10 @@ test('bought skill points survive a save and reload', async ({page}) => {
     expect(problems.pageErrors).toEqual([]);
 });
 
-/*  Serves the test scenario with skill effects added to Alpha's origin, as if they were in the
+/*  Serves the test scenario with skill adjustments added to Alpha's origin, as if they were in the
     data: an action that trains one skill and costs another, one that overtrains, one that
     names no skill, and an exit that trains on the way. */
-const routeScenarioWithSkillEffects = page => page.route('**/tests/data/test_scenario.json5', route => {
+const routeScenarioWithSkillAdjustments = page => page.route('**/tests/data/test_scenario.json5', route => {
     const json = readTestData('test_scenario.json5'),
         origin = json.events.origin,
         NO_ROLL = {difficulty:'no-roll'};
@@ -154,16 +154,16 @@ const routeScenarioWithSkillEffects = page => page.route('**/tests/data/test_sce
     return route.fulfill({json});
 });
 
-test('effects can raise and lower an agent\'s skills, within the maximum, from actions and exits', async ({page}) => {
-    await routeScenarioWithSkillEffects(page);
+test('adjustments can raise and lower an agent\'s skills, within the maximum, from actions and exits', async ({page}) => {
+    await routeScenarioWithSkillAdjustments(page);
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
                 origin = tc.model.getEventModel('origin'),
                 actions = origin.getActionModels(),
                 skills = () => ({agl:alpha.getSkill('agl'), cha:alpha.getSkill('cha'), dex:alpha.getSkill('dex')}),
-                lastLogged = () => alpha.getLog().at(-1).effects,
-                r = {before:skills(), phrase:alpha.getEffectsPhrase(actions.drill), nopeEffects:actions.nope.getEffects().length};
+                lastLogged = () => alpha.getLog().at(-1).adj,
+                r = {before:skills(), phrase:alpha.getAdjustmentsPhrase(actions.drill), nopeAdjustments:actions.nope.getAdjustments().length};
             alpha.doAction(actions.drill);
             r.drilled = skills();
             r.drillLogged = lastLogged();
@@ -179,7 +179,7 @@ test('effects can raise and lower an agent\'s skills, within the maximum, from a
     const {before} = out;
     expect(out.drilled).toEqual({agl:before.agl + 15, cha:before.cha - 10, dex:before.dex});
     expect(out.drillLogged).toEqual({'agent.skills.agl':15, 'agent.skills.cha':-10});
-    // Effects stop at the maximum, and log what they actually changed.
+    // Adjustments stop at the maximum, and log what they actually changed.
     expect(out.overdone.agl).toBe(1000);
     expect(out.overdoLogged).toEqual({'agent.skills.agl':1000 - (before.agl + 15)});
     expect(out.walked).toEqual({agl:1000, cha:before.cha - 10, dex:before.dex + 5});
@@ -187,14 +187,14 @@ test('effects can raise and lower an agent\'s skills, within the maximum, from a
     // The tooltip names the skill.
     expect(out.phrase).toContain('Agility: ');
     expect(out.phrase).toContain('Charisma: ');
-    // An effect on a skill that isn't configured is left out, with a warning.
-    expect(out.nopeEffects).toBe(0);
+    // An adjustment on a skill that isn't configured is left out, with a warning.
+    expect(out.nopeAdjustments).toBe(0);
     expect(problems.warnings).toEqual([expect.stringMatching(/^Event origin action nope adj agent\.skills\.nope names no skill/)]);
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('skills changed by effects show in the dossier and survive a save and reload', async ({page}) => {
-    await routeScenarioWithSkillEffects(page);
+test('skills changed by adjustments show in the dossier and survive a save and reload', async ({page}) => {
+    await routeScenarioWithSkillAdjustments(page);
     const problems = await startGame(page);
     const before = await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL'),

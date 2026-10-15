@@ -80,7 +80,7 @@
             [STAT_ID_HEALTH]:ICON_HEALTH
         },
         
-        /*  A stat's name, e.g. for describing an effect on it. A skill, as an effect names it,
+        /*  A stat's name, e.g. for describing an adjustment on it. A skill, as an adjustment names it,
             e.g. "skills.agl", is named by its config, e.g. "Agility". */
         getStatName = statId => STAT_NAME_BY_ID[statId] ?? 
             (statId.startsWith(SCOPE_SKILLS + '.') ? TC.getSkillConfig?.(statId.slice(SCOPE_SKILLS.length + 1))?.name : undefined) ?? 

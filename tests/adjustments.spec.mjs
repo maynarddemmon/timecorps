@@ -1,4 +1,4 @@
-// Effects on actions and exits: changes to a stat of the agent, the Event or the timeline, such
+// Adjustments on actions and exits: changes to a stat of the agent, the Event or the timeline, such
 // as injuries on the way through an exit or healing from a rest.
 import {test, expect} from '@playwright/test';
 import {startGame, dialogTitle, dismissAgentDossier, btnTooltip, readTestData} from './helpers.mjs';
@@ -6,7 +6,7 @@ import {startGame, dialogTitle, dismissAgentDossier, btnTooltip, readTestData} f
 const INJURY = {difficulty:300, actionType:'athletic', onFailure:'-(d(6)+4)'},
     HEALTH = 'agent.health',
 
-    /*  Serves the test scenario with effects added to some exits, as if they were in the
+    /*  Serves the test scenario with adjustments added to some exits, as if they were in the
         data: a good injury from the origin to the aftermath, and one with no amount from
         the warnings to the backlog. */
     routeScenarioWithInjuries = page => page.route('**/tests/data/test_scenario.json5', route => {
@@ -31,7 +31,7 @@ const INJURY = {difficulty:300, actionType:'athletic', onFailure:'-(d(6)+4)'},
         return {
             damage:before - alpha.health.value,
             event:alpha.event,
-            logged:log[log.length - 1].effects?.['agent.health'],
+            logged:log[log.length - 1].adj?.['agent.health'],
             queued:tc.rng.getQueuedRollCount()
         };
     }, rolls),
@@ -47,19 +47,19 @@ const INJURY = {difficulty:300, actionType:'athletic', onFailure:'-(d(6)+4)'},
         .filter(sv => sv.isA(tc.FloatingText) && sv.visible)
         .map(floatingText => floatingText.text.replace(/\u00A0/g, ' ')));
 
-test('an exit\'s effect comes from the data, and one without an amount is ignored with a warning naming it', async ({page}) => {
+test('an exit\'s adjustment comes from the data, and one without an amount is ignored with a warning naming it', async ({page}) => {
     await routeScenarioWithInjuries(page);
     const problems = await startGame(page),
         checks = await page.evaluate(() => {
             const describe = (eventId, toId) => {
                 const exitModel = tc.model.getEventModel(eventId).getExitModels().find(exit => exit.to === toId);
-                return exitModel.getEffects().map(effect => ({
-                    key:effect.key,
-                    onSuccess:effect.getAmountExpr(true) ?? null,
-                    onFailure:effect.getAmountExpr(false) ?? null,
-                    ownCheck:effect.hasOwnCheck(),
-                    difficulty:effect.getActionSkillDifficulty(),
-                    name:effect.getActionSkillName()
+                return exitModel.getAdjustments().map(adjustment => ({
+                    key:adjustment.key,
+                    onSuccess:adjustment.getAmountExpr(true) ?? null,
+                    onFailure:adjustment.getAmountExpr(false) ?? null,
+                    ownCheck:adjustment.hasOwnCheck(),
+                    difficulty:adjustment.getActionSkillDifficulty(),
+                    name:adjustment.getActionSkillName()
                 }));
             };
             return {
@@ -89,7 +89,7 @@ test('a failed injury check costs health but the exit is still taken; a passed o
     expect(await takeInjuryExit(page, FAIL_ROLL, 2)).toEqual({damage:7, event:'aftermath', logged:-7, queued:0});
 
     // Back again, and this time the check passes, so the damage die isn't rolled. The check
-    // was still made, so the effect is logged as nothing.
+    // was still made, so the adjustment is logged as nothing.
     await page.evaluate(() => tc.model.getAgentModel('AL').setEvent('origin'));
     expect(await takeInjuryExit(page, PASS_ROLL, 2)).toEqual({damage:0, event:'aftermath', logged:0, queued:1});
     await page.evaluate(() => tc.rng.clearQueuedRolls());
@@ -97,7 +97,7 @@ test('a failed injury check costs health but the exit is still taken; a passed o
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('an exit without effects rolls nothing and logs none', async ({page}) => {
+test('an exit without adjustments rolls nothing and logs none', async ({page}) => {
     const problems = await startGame(page);
     expect(await takeInjuryExit(page, FAIL_ROLL)).toEqual({damage:0, event:'aftermath', logged:undefined, queued:1});
     await page.evaluate(() => tc.rng.clearQueuedRolls());
@@ -114,11 +114,11 @@ test('amounts are whole points, a positive one heals, and a broken one does noth
             alpha.paradox.setValue(0);
             alpha.health.setValue(50);
             alpha.setEvent('origin');
-            exitModel.setEffects({'agent.health':{difficulty:1000, check:'0', onFailure:amount}});
+            exitModel.setAdjustments({'agent.health':{difficulty:1000, check:'0', onFailure:amount}});
             tc.rng.queueRolls(0);
             alpha.doFollowExit(exitModel);
             const log = alpha.getLog();
-            return [alpha.health.value - 50, log[log.length - 1].effects['agent.health']];
+            return [alpha.health.value - 50, log[log.length - 1].adj['agent.health']];
         }, amount);
 
     // The change, and the same logged.
@@ -177,7 +177,7 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
     expect(await btnTooltip(page, 'Walk to [♥]')).toBe(risk);
     await page.evaluate(() => tc.app.selectEventBox('origin'));
 
-    // Exits without effects have no flag or tooltip. Both Events are made known so the exit shows.
+    // Exits without adjustments have no flag or tooltip. Both Events are made known so the exit shows.
     await page.evaluate(() => {
         tc.model.getEventModel('warnings').attestation.setValue(10);
         tc.model.getEventModel('backlog').attestation.setValue(10);
@@ -206,7 +206,7 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
 const killALOnExit = page => page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL'),
             exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath');
-        exitModel.setEffects({'agent.health':{difficulty:1000, check:'0', onFailure:'-500'}});
+        exitModel.setAdjustments({'agent.health':{difficulty:1000, check:'0', onFailure:'-500'}});
         tc.rng.queueRolls(0);
         alpha.doFollowExit(exitModel);
         return {dead:alpha.isDead(), health:alpha.health.value};
@@ -284,10 +284,10 @@ test('a dead agent can\'t act or travel, and an agent with no chronal still coun
 });
 
 
-/*  Takes Alpha's exit from the origin with this health effect and the rolls queued: its check
+/*  Takes Alpha's exit from the origin with this health adjustment and the rolls queued: its check
     passes on a roll of 999 and fails on 0. Returns the damage, what was logged and the rolls
     left over. */
-const damageWith = (page, effectCfg, ...rolls) => page.evaluate(([effectCfg, rolls]) => {
+const damageWith = (page, adjustmentCfg, ...rolls) => page.evaluate(([adjustmentCfg, rolls]) => {
         const alpha = tc.model.getAgentModel('AL'),
             exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath');
         // Back to the start with full health and no visits, so the trips don't build up paradox.
@@ -295,19 +295,19 @@ const damageWith = (page, effectCfg, ...rolls) => page.evaluate(([effectCfg, rol
         alpha.paradox.setValue(0);
         alpha.health.setValue(alpha.health.max);
         alpha.setEvent('origin');
-        exitModel.setEffects({'agent.health':{difficulty:0, check:'0', ...effectCfg}});
+        exitModel.setAdjustments({'agent.health':{difficulty:0, check:'0', ...adjustmentCfg}});
         const before = alpha.health.value;
         tc.rng.queueRolls(...rolls);
         alpha.doFollowExit(exitModel);
         const log = alpha.getLog(),
             queued = tc.rng.getQueuedRollCount();
         tc.rng.clearQueuedRolls();
-        return {damage:before - alpha.health.value, logged:log[log.length - 1].effects?.['agent.health'], queued};
-    }, [effectCfg, rolls]),
+        return {damage:before - alpha.health.value, logged:log[log.length - 1].adj?.['agent.health'], queued};
+    }, [adjustmentCfg, rolls]),
     PASS = 999,
     FAIL = 0;
 
-test('an effect uses onSuccess when its check passes and onFailure when it fails', async ({page}) => {
+test('an adjustment uses onSuccess when its check passes and onFailure when it fails', async ({page}) => {
     const problems = await startGame(page);
 
     // Only on a failure. A pass rolls nothing more.
@@ -331,10 +331,10 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     const problems = await startGame(page),
         result = await page.evaluate(() => {
             const exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'),
-                read = () => exitModel.getEffects().map(effect => [effect.getAmountExpr(true) ?? null, effect.getAmountExpr(false) ?? null]);
-            exitModel.setEffects({'agent.health':{onSuccess:'', onFailure:'-9'}});
+                read = () => exitModel.getAdjustments().map(adjustment => [adjustment.getAmountExpr(true) ?? null, adjustment.getAmountExpr(false) ?? null]);
+            exitModel.setAdjustments({'agent.health':{onSuccess:'', onFailure:'-9'}});
             const oneBad = read();
-            exitModel.setEffects({'agent.health':{damage:'-150'}});
+            exitModel.setAdjustments({'agent.health':{damage:'-150'}});
             return {oneBad, oldKey:read()};
         });
     expect(result).toEqual({oneBad:[[null, '-9']], oldKey:[]});
@@ -345,13 +345,13 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     ]);
 });
 
-test('adj must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old effects and injurySkillCheck are ignored with a warning', async ({page}) => {
+test('adj must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const origin = tc.model.getEventModel('origin'),
                 exitModel = origin.getExitModels().find(exit => exit.to === 'aftermath'),
-                keys = () => exitModel.getEffects().map(effect => effect.key + ' ' + effect.enabledForActionSkillCheck);
-            exitModel.setEffects({
+                keys = () => exitModel.getAdjustments().map(adjustment => adjustment.key + ' ' + adjustment.enabledForActionSkillCheck);
+            exitModel.setAdjustments({
                 'agent.luck':{onSuccess:'1'},
                 'health':{onSuccess:'1'},
                 'event.health':{onSuccess:'1'},
@@ -365,19 +365,16 @@ test('adj must be keyed by a stat of the agent, event or timeline, or a skill of
                 'timeline.paradox':{onSuccess:'1', enabledForActionSkillCheck:'success'}
             });
             const valid = keys();
-            exitModel.setEffects([{onSuccess:'1'}]);
+            exitModel.setAdjustments([{onSuccess:'1'}]);
             const notAnObject = keys();
             delete origin.getActionModels().old;
             origin.setActions({old:{label:'Old', set:{}, injurySkillCheck:{damageOnFailure:'5'}}});
-            // The old name for adj.
-            origin.setActions({renamed:{label:'Renamed', set:{}, effects:{'agent.health':{onFailure:'-5'}}}});
             return {
                 valid, notAnObject, 
-                oldEffects:origin.getActionModels().old.getEffects().length,
-                renamedEffects:origin.getActionModels().renamed.getEffects().length
+                oldAdjustments:origin.getActionModels().old.getAdjustments().length
             };
         });
-    expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldEffects:0, renamedEffects:0});
+    expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldAdjustments:0});
     const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath adj agent.luck ' + named,
@@ -391,19 +388,18 @@ test('adj must be keyed by a stat of the agent, event or timeline, or a skill of
         'Event origin exit to aftermath adj agent.health must be an object (ignoring it): -5',
         'Event origin exit to aftermath adj timeline.paradox enabledForActionSkillCheck only applies to actions (ignoring it): {onSuccess: 1, enabledForActionSkillCheck: success}',
         'Event origin exit to aftermath adj must be an object of adjustments by stat, e.g. "agent.health" (ignoring them): [Object]',
-        'Event origin action old injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)',
-        'Event origin action renamed effects is renamed adj, e.g. "adj":{"agent.health":{"onFailure":"-5"}} (ignoring it)'
+        'Event origin action old injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)'
     ]);
 });
 
 test('a pass that still hurts floats its damage, and the risk tooltip gives both cases', async ({page}) => {
     const problems = await startGame(page),
-        riskFor = effectCfg => page.evaluate(effectCfg => {
+        riskFor = adjustmentCfg => page.evaluate(adjustmentCfg => {
             const alpha = tc.model.getAgentModel('AL'),
                 exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath');
-            exitModel.setEffects({'agent.health':{difficulty:0, check:'0', ...effectCfg}});
-            return alpha.getEffectsPhrase(exitModel).replace(/\u00A0/g, ' ');
-        }, effectCfg);
+            exitModel.setAdjustments({'agent.health':{difficulty:0, check:'0', ...adjustmentCfg}});
+            return alpha.getAdjustmentsPhrase(exitModel).replace(/\u00A0/g, ' ');
+        }, adjustmentCfg);
 
     // A failure's damage first, then a pass's when it hurts and reads differently.
     expect(await riskFor({onFailure:'-150'})).toBe('♥ Risking: certain death · ensured');
@@ -418,7 +414,7 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
     // Passing, but still hurt by the d(10): 4.
     await page.evaluate(() => {
         const exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath');
-        exitModel.setEffects({'agent.health':{difficulty:0, check:'1000', onSuccess:'-d(10)', onFailure:'-150'}});
+        exitModel.setAdjustments({'agent.health':{difficulty:0, check:'1000', onSuccess:'-d(10)', onFailure:'-150'}});
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
         tc.rng.queueRolls(500, 3);
@@ -429,29 +425,29 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('an effect\'s own check rolls and is described by its own settings, not the exit\'s default skill check', async ({page}) => {
+test('an adjustment\'s own check rolls and is described by its own settings, not the exit\'s default skill check', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
                 exitModel = tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'),
                 read = () => {
-                    const effect = exitModel.getEffects()[0];
+                    const adjustment = exitModel.getAdjustments()[0];
                     return {
-                        difficulty:effect.getActionSkillDifficulty(),
-                        expr:effect.getActionSkillExpr(),
-                        phrase:alpha.getEffectsPhrase(exitModel).replace(/\u00A0/g, ' ')
+                        difficulty:adjustment.getActionSkillDifficulty(),
+                        expr:adjustment.getActionSkillExpr(),
+                        phrase:alpha.getAdjustmentsPhrase(exitModel).replace(/\u00A0/g, ' ')
                     };
                 };
 
             // Its own difficulty and check: as sure as a skill check gets, so a roll of 1 passes,
             // where it would fail the default check.
-            exitModel.setEffects({'agent.health':{difficulty:0, check:'1000', actionType:'athletic', onFailure:'-5'}});
+            exitModel.setAdjustments({'agent.health':{difficulty:0, check:'1000', actionType:'athletic', onFailure:'-5'}});
             const own = read();
             tc.rng.queueRolls(1);
-            const ownCheck = alpha.rollEffectsFor(exitModel)[0].check.success;
+            const ownCheck = alpha.rollAdjustmentsFor(exitModel)[0].check.success;
 
             // No actionType: no name.
-            exitModel.setEffects({'agent.health':{difficulty:0, check:'1000', onFailure:'-5'}});
+            exitModel.setAdjustments({'agent.health':{difficulty:0, check:'1000', onFailure:'-5'}});
             const untyped = read();
 
             return {own, ownCheck, untyped};
@@ -463,29 +459,29 @@ test('an effect\'s own check rolls and is described by its own settings, not the
     expect(problems.warnings).toEqual([]);
 });
 
-test('the lifeboats\' effects use their own difficulties', async ({page}) => {
+test('the lifeboats\' adjustments use their own difficulties', async ({page}) => {
     await startGame(page);
     const difficulties = await page.evaluate(() => tc.model.getEventModel('aftermath').getExitModels()
         .filter(exitModel => exitModel.mode === 'lifeboat')
-        .map(exitModel => exitModel.getEffects()[0].getActionSkillDifficulty()));
+        .map(exitModel => exitModel.getAdjustments()[0].getActionSkillDifficulty()));
     expect(difficulties).toEqual([500, 50]);
 });
 
 
 /*  Gives the origin a test action Alpha can take. Its own check passes on a roll of 999 and
-    fails on 0, and so does its health effect's check, which does d(6)+2 damage on a failure
+    fails on 0, and so does its health adjustment's check, which does d(6)+2 damage on a failure
     and 1 on a pass. Replaces any earlier one, since adding an action never replaces one with
     the same ID. */
-const addRiskyAction = (page, effectCfg) => page.evaluate(effectCfg => {
+const addRiskyAction = (page, adjustmentCfg) => page.evaluate(adjustmentCfg => {
         const origin = tc.model.getEventModel('origin');
         delete origin.getActionModels().risky;
         origin.setActions({risky:{
             label:'Risky', skillCheck:{difficulty:0, check:'0'}, set:{},
-            ...(effectCfg === null ? {} : {adj:{'agent.health':{difficulty:1000, check:'0', onFailure:'-(d(6)+2)', onSuccess:'-1', ...effectCfg}}})
+            ...(adjustmentCfg === null ? {} : {adj:{'agent.health':{difficulty:1000, check:'0', onFailure:'-(d(6)+2)', onSuccess:'-1', ...adjustmentCfg}}})
         }});
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
-    }, effectCfg),
+    }, adjustmentCfg),
 
     // Has Alpha take the risky action with the rolls queued, and returns what happened.
     takeRiskyAction = (page, ...rolls) => page.evaluate(rolls => {
@@ -498,23 +494,23 @@ const addRiskyAction = (page, effectCfg) => page.evaluate(effectCfg => {
         const entry = alpha.getLog()[alpha.getLog().length - 1],
             queued = tc.rng.getQueuedRollCount();
         tc.rng.clearQueuedRolls();
-        return {success:entry.success, damage:before - alpha.health.value, logged:entry.effects?.['agent.health'], queued};
+        return {success:entry.success, damage:before - alpha.health.value, logged:entry.adj?.['agent.health'], queued};
     }, rolls),
     ACTION_PASS = 999,
     ACTION_FAIL = 0;
 
-test('actions get effects from the data, including when they apply', async ({page}) => {
+test('actions get adjustments from the data, including when they apply', async ({page}) => {
     const problems = await startGame(page),
         checks = await page.evaluate(() => {
             const {pull, release} = tc.model.getEventModel('lever').getActionModels(),
                 describe = actionModel => {
-                    const [effect] = actionModel.getEffects();
+                    const [adjustment] = actionModel.getAdjustments();
                     return {
-                        key:effect.key,
-                        when:effect.enabledForActionSkillCheck,
-                        difficulty:effect.getActionSkillDifficulty(),
-                        name:effect.getActionSkillName(),
-                        amounts:[effect.getAmountExpr(true), effect.getAmountExpr(false)],
+                        key:adjustment.key,
+                        when:adjustment.enabledForActionSkillCheck,
+                        difficulty:adjustment.getActionSkillDifficulty(),
+                        name:adjustment.getActionSkillName(),
+                        amounts:[adjustment.getAmountExpr(true), adjustment.getAmountExpr(false)],
                         // The action's own check is separate.
                         actionName:actionModel.getActionSkillName()
                     };
@@ -526,7 +522,7 @@ test('actions get effects from the data, including when they apply', async ({pag
     expect(problems.warnings).toEqual([]);
 });
 
-test('an action\'s effect rolls its own check after the action\'s, when the action\'s result calls for it', async ({page}) => {
+test('an action\'s adjustment rolls its own check after the action\'s, when the action\'s result calls for it', async ({page}) => {
     const problems = await startGame(page);
 
     // Both: whatever the action's result. Fails its own check: a 4 on the d(6), plus 2.
@@ -534,7 +530,7 @@ test('an action\'s effect rolls its own check after the action\'s, when the acti
     expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:6, logged:-6, queued:0});
     expect(await takeRiskyAction(page, ACTION_FAIL, 999)).toEqual({success:false, damage:1, logged:-1, queued:0});
 
-    // Only when the action fails. A success rolls nothing more and logs no effect.
+    // Only when the action fails. A success rolls nothing more and logs no adjustment.
     await addRiskyAction(page, {enabledForActionSkillCheck:'failure'});
     expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:0, logged:undefined, queued:2});
     expect(await takeRiskyAction(page, ACTION_FAIL, 0, 3)).toEqual({success:false, damage:6, logged:-6, queued:0});
@@ -544,7 +540,7 @@ test('an action\'s effect rolls its own check after the action\'s, when the acti
     expect(await takeRiskyAction(page, ACTION_PASS, 0, 3)).toEqual({success:true, damage:6, logged:-6, queued:0});
     expect(await takeRiskyAction(page, ACTION_FAIL, 0, 3)).toEqual({success:false, damage:0, logged:undefined, queued:2});
 
-    // No effects at all.
+    // No adjustments at all.
     await addRiskyAction(page, null);
     expect(await takeRiskyAction(page, ACTION_PASS, 0)).toEqual({success:true, damage:0, logged:undefined, queued:1});
 
@@ -552,16 +548,16 @@ test('an action\'s effect rolls its own check after the action\'s, when the acti
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('an effect without its own check follows the action\'s check and rolls nothing more', async ({page}) => {
+test('an adjustment without its own check follows the action\'s check and rolls nothing more', async ({page}) => {
     const problems = await startGame(page);
 
     // A pass hurts by 1, and a failure rolls the d(6)+2: a 4, plus 2.
     await addRiskyAction(page, {});
     await page.evaluate(() => {
         const origin = tc.model.getEventModel('origin');
-        origin.getActionModels().risky.setEffects({'agent.health':{onFailure:'-(d(6)+2)', onSuccess:'-1'}});
+        origin.getActionModels().risky.setAdjustments({'agent.health':{onFailure:'-(d(6)+2)', onSuccess:'-1'}});
     });
-    expect(await page.evaluate(() => tc.model.getEventModel('origin').getActionModels().risky.getEffects()[0].hasOwnCheck())).toBe(false);
+    expect(await page.evaluate(() => tc.model.getEventModel('origin').getActionModels().risky.getAdjustments()[0].hasOwnCheck())).toBe(false);
     expect(await takeRiskyAction(page, ACTION_PASS, 3)).toEqual({success:true, damage:1, logged:-1, queued:1});
     expect(await takeRiskyAction(page, ACTION_FAIL, 3)).toEqual({success:false, damage:6, logged:-6, queued:0});
 
@@ -569,18 +565,18 @@ test('an effect without its own check follows the action\'s check and rolls noth
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('a bad enabledForActionSkillCheck warns and applies either way, and an effect without an amount never applies', async ({page}) => {
+test('a bad enabledForActionSkillCheck warns and applies either way, and an adjustment without an amount never applies', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const origin = tc.model.getEventModel('origin'),
-                make = effectCfg => {
+                make = adjustmentCfg => {
                     delete origin.getActionModels().risky;
-                    origin.setActions({risky:{label:'Risky', set:{}, adj:{'agent.health':effectCfg}}});
-                    const [effect] = origin.getActionModels().risky.getEffects();
+                    origin.setActions({risky:{label:'Risky', set:{}, adj:{'agent.health':adjustmentCfg}}});
+                    const [adjustment] = origin.getActionModels().risky.getAdjustments();
                     return {
-                        when:effect?.enabledForActionSkillCheck ?? null,
-                        onFail:effect?.appliesFor({success:false}) ?? false,
-                        onPass:effect?.appliesFor({success:true}) ?? false
+                        when:adjustment?.enabledForActionSkillCheck ?? null,
+                        onFail:adjustment?.appliesFor({success:false}) ?? false,
+                        onPass:adjustment?.appliesFor({success:true}) ?? false
                     };
                 };
             return {
@@ -613,11 +609,11 @@ test('action buttons flag the injury risk, and the action\'s result floats with 
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('effects can change the event and the timeline too, each within its stat\'s limits', async ({page}) => {
+test('adjustments can change the event and the timeline too, each within its stat\'s limits', async ({page}) => {
     const problems = await startGame(page),
         // The action's own check passes on a roll of 1 or more and fails on 0. None of the
-        // effects has a check of its own, so they follow it.
-        effects = {
+        // adjustments has a check of its own, so they follow it.
+        adjustments = {
             'event.attestation':{onSuccess:'5'},
             // An Event's paradox also adds to the timeline's.
             'event.paradox':{onSuccess:'1'},
@@ -634,20 +630,20 @@ test('effects can change the event and the timeline too, each within its stat\'s
             alpha.doAction(origin.getActionModels().multi);
             const after = read(),
                 entry = alpha.getLog()[alpha.getLog().length - 1];
-            return {change:after.map((value, i) => value - before[i]), logged:entry.effects};
+            return {change:after.map((value, i) => value - before[i]), logged:entry.adj};
         }, roll);
 
-    await page.evaluate(effects => {
+    await page.evaluate(adjustments => {
         const origin = tc.model.getEventModel('origin');
-        origin.setActions({multi:{label:'Multi', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:effects}});
+        origin.setActions({multi:{label:'Multi', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:adjustments}});
         // Close to its max, so the attestation is clamped.
         origin.attestation.setValue(98);
         tc.model.getAgentModel('AL').chronal.setValue(50);
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
-    }, effects);
+    }, adjustments);
 
-    // Flagged for the chronal and paradox it changes, and the tooltip gives each effect's 
+    // Flagged for the chronal and paradox it changes, and the tooltip gives each adjustment's 
     // amounts in order.
     const btnText = 'Multi [⏲ + ⥁]';
     await expect(page.getByText(btnText, {exact:true}).filter({visible:true})).toBeVisible();
@@ -706,7 +702,7 @@ test('resting is likelier to work the healthier the agent is, never heals past m
                 health = alpha.health,
                 rest = tc.model.getEventModel('origin').getActionModels()._rest,
 
-                // Rest's own check rolls, then on a pass its health effect, which follows that
+                // Rest's own check rolls, then on a pass its health adjustment, which follows that
                 // check, heals with a d(4). The origin lasts a minute, which rounds up to
                 // one die. A failed rest rolls nothing more.
                 restFrom = (value, ...rolls) => {
@@ -718,7 +714,7 @@ test('resting is likelier to work the healthier the agent is, never heals past m
                         acted = alpha.getActionExecCount(),
                         entry = acted ? alpha.getLog()[alpha.getLog().length - 1] : null;
                     tc.rng.clearQueuedRolls();
-                    return {health:health.value, logged:entry?.effects?.['agent.health'], success:entry?.success, left, acted};
+                    return {health:health.value, logged:entry?.adj?.['agent.health'], success:entry?.success, left, acted};
                 },
                 phraseAt = value => {
                     health.setValue(value);
@@ -726,11 +722,11 @@ test('resting is likelier to work the healthier the agent is, never heals past m
                 };
             return {
                 max:health.max,
-                ownCheck:rest.getEffects()[0].hasOwnCheck(),
+                ownCheck:rest.getAdjustments()[0].hasOwnCheck(),
 
                 // Healing still changes health. A d(4) averages 2.5, rounded to 3.
                 risk:alpha.hasHealthChangeRiskFor(rest),
-                effectsPhrase:alpha.getEffectsPhrase(rest),
+                adjustmentsPhrase:alpha.getAdjustmentsPhrase(rest),
 
                 // Alpha has 85 max health. At half or less it's hopeless, and at 90% or more
                 // it's ensured.
@@ -751,7 +747,7 @@ test('resting is likelier to work the healthier the agent is, never heals past m
         });
     expect(out.ownCheck).toBe(false);
     expect(out.risk).toBe(true);
-    expect(out.effectsPhrase).toBe('Health: ~+3 if passed');
+    expect(out.adjustmentsPhrase).toBe('Health: ~+3 if passed');
     expect(out.phrases).toEqual(['hopeless', 'even', 'ensured']);
     expect(out.failAt60).toEqual({health:60, logged:undefined, success:false, left:1, acted:1});
     expect(out.passAt60).toEqual({health:64, logged:4, success:true, left:0, acted:1});
@@ -807,9 +803,9 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
                 origin = tc.model.getEventModel('origin'),
-                healthAfter = (effectCfg, value) => {
+                healthAfter = (adjustmentCfg, value) => {
                     delete origin.getActionModels().heal;
-                    origin.setActions({heal:{label:'Heal', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:{'agent.health':{difficulty:0, check:'1000', ...effectCfg}}}});
+                    origin.setActions({heal:{label:'Heal', skillCheck:{difficulty:0, check:'1000'}, set:{}, adj:{'agent.health':{difficulty:0, check:'1000', ...adjustmentCfg}}}});
                     alpha.health.setValue(value);
                     alpha.setActionExecCount(0);
                     tc.rng.queueRolls(999, 999);
@@ -832,20 +828,20 @@ test('positive amounts heal and negative ones hurt, and a broken amount does not
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('buttons flag each stat an effect could change, but not a broken amount', async ({page}) => {
+test('buttons flag each stat an adjustment could change, but not a broken amount', async ({page}) => {
     const problems = await startGame(page),
         // Waits for the exit's button in the agent's list of exits to read as expected, since
         // Event Details redraws after a debounce.
-        expectExitTextWith = async (effects, expected) => {
-            await page.evaluate(effects => {
-                tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath').setEffects(effects);
+        expectExitTextWith = async (adjustments, expected) => {
+            await page.evaluate(adjustments => {
+                tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath').setAdjustments(adjustments);
                 tc.app.selectEventBox('aftermath');
                 tc.app.selectEventBox('origin');
-            }, effects);
+            }, adjustments);
             await expect(page.getByText(/^Walk to Aftermath/).filter({visible:true})).toHaveText(expected);
         };
     
-    // Entering the aftermath costs no paradox, so only the effects flag anything.
+    // Entering the aftermath costs no paradox, so only the adjustments flag anything.
     await expectExitTextWith({}, 'Walk to Aftermath');
     await expectExitTextWith({'timeline.paradox':{onSuccess:'1'}}, 'Walk to Aftermath [⥁]');
     await expectExitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}}, 'Walk to Aftermath [⏲ + ♥]');
@@ -864,11 +860,11 @@ test('an amount\'s margin is how well the check that decided it went', async ({p
                 origin = tc.model.getEventModel('origin'),
                 attestation = origin.attestation,
                 
-                // Has Alpha take an action with this effect on the origin's attestation, and
+                // Has Alpha take an action with this adjustment on the origin's attestation, and
                 // returns how much it changed.
-                actWith = (effectCfg, skillCheck, ...rolls) => {
+                actWith = (adjustmentCfg, skillCheck, ...rolls) => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':effectCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':adjustmentCfg}}});
                     attestation.setValue(50);
                     alpha.setActionExecCount(0);
                     tc.rng.queueRolls(...rolls);
@@ -883,7 +879,7 @@ test('an amount\'s margin is how well the check that decided it went', async ({p
             
             // An exit without a check of its own has no margin.
             const exitModel = origin.getExitModels().find(exit => exit.to === 'aftermath');
-            exitModel.setEffects({'event.attestation':{onSuccess:'margin + 3'}});
+            exitModel.setAdjustments({'event.attestation':{onSuccess:'margin + 3'}});
             attestation.setValue(50);
             alpha.doFollowExit(exitModel);
             const exit = attestation.value - 50;
@@ -895,7 +891,7 @@ test('an amount\'s margin is how well the check that decided it went', async ({p
                 actionFail:actWith(BY_MARGIN, HARD, 99),
                 
                 // Its own check decides, not the action's: the action passes by 499, but the
-                // effect's own check passes by only 150.
+                // adjustment's own check passes by only 150.
                 own:actWith({...HARD, ...BY_MARGIN}, HARD, 999, 650),
                 
                 // A no-roll check has no margin.
@@ -913,31 +909,31 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
                 origin = tc.model.getEventModel('origin'),
-                withAction = (effectCfg, skillCheck) => {
+                withAction = (adjustmentCfg, skillCheck) => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':effectCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':adjustmentCfg}}});
                     const actionModel = origin.getActionModels().measured;
                     return {
-                        phrase:alpha.getEffectsPhrase(actionModel).replace(/\u00A0/g, ' '),
+                        phrase:alpha.getAdjustmentsPhrase(actionModel).replace(/\u00A0/g, ' '),
                         flagged:alpha.hasStatChangeFor(actionModel, 'attestation')
                     };
                 },
                 HARD = {difficulty:500, check:'0'},
                 TENTH = {onSuccess:'margin / 10', onFailure:'margin / 10'},
                 exitModel = origin.getExitModels().find(exit => exit.to === 'aftermath');
-            exitModel.setEffects({'event.attestation':{onSuccess:'margin + 3'}});
+            exitModel.setAdjustments({'event.attestation':{onSuccess:'margin + 3'}});
             
             return {
                 // At an ease of -500, passes run from 0 to 499 and failures from -500 to -1.
                 averages:[[-500, true], [-500, false], [-1, true], [-1, false]].map(([ease, success]) => tc.checks.getAverageMargin(ease, success)),
                 hard:withAction(TENTH, HARD),
                 
-                // An effect's own check is as sure as a check gets, so a pass averages 499.
+                // An adjustment's own check is as sure as a check gets, so a pass averages 499.
                 own:withAction({difficulty:0, check:'1000', onSuccess:'margin / 10'}, HARD),
                 
                 // No margin without a roll, so an amount of just the margin is no change.
                 noRoll:withAction({onSuccess:'margin'}, {difficulty:'no-roll'}),
-                exit:alpha.getEffectsPhrase(exitModel)
+                exit:alpha.getAdjustmentsPhrase(exitModel)
             };
         });
     expect(out.averages).toEqual([249.5, -250.5, 499, -1]);

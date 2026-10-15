@@ -149,7 +149,7 @@ test('an Event\'s action merges over a default action of the same ID, and null l
                         ids:Object.keys(actionModels),
                         label:investigate?.label,
                         check:investigate ? [investigate.getActionSkillDifficulty(), investigate.getActionSkillExpr()] : null,
-                        effects:investigate?.getEffects().map(effect => effect.key + ' ' + effect.getAmountExpr(true))
+                        adjustments:investigate?.getAdjustments().map(adjustment => adjustment.key + ' ' + adjustment.getAmountExpr(true))
                     };
                 } finally {
                     eventModel.destroy();
@@ -164,17 +164,17 @@ test('an Event\'s action merges over a default action of the same ID, and null l
                 // Null only means something for a default, so it's ignored.
                 ghost:null
             })),
-            // An effect can be dropped too.
-            noEffect:describe(build({_investigate:{adj:{'event.attestation':null}}})),
+            // An adjustment can be dropped too.
+            noAdjustment:describe(build({_investigate:{adj:{'event.attestation':null}}})),
             // The defaults weren't changed by any of that.
             untouched:describe(build({})),
             // A bad override is warned about, and the default's part kept.
             bad:describe(build({_investigate:{skillCheck:{difficulty:3.5}}}))
         };
     });
-    expect(out.merged).toEqual({ids:['_investigate', 'own'], label:'Search', check:[300, defaultSkill], effects:['event.attestation 2']});
-    expect(out.noEffect.effects).toEqual([]);
-    expect(out.untouched).toEqual({ids:['_investigate', '_rest'], label:'Investigate', check:[defaultDifficulty, defaultSkill], effects:['event.attestation d(Math.min(margin / 20, event.attestation.max - event.attestation.value))']});
+    expect(out.merged).toEqual({ids:['_investigate', 'own'], label:'Search', check:[300, defaultSkill], adjustments:['event.attestation 2']});
+    expect(out.noAdjustment.adjustments).toEqual([]);
+    expect(out.untouched).toEqual({ids:['_investigate', '_rest'], label:'Investigate', check:[defaultDifficulty, defaultSkill], adjustments:['event.attestation d(Math.min(margin / 20, event.attestation.max - event.attestation.value))']});
     expect(out.bad.check).toEqual([defaultDifficulty, defaultSkill]);
     expect(problems.warnings).toEqual([
         'Event merge_test action _investigate skill check difficulty must be an integer or "no-roll": {actionType: investigate, difficulty: 3.5}'
@@ -221,7 +221,7 @@ test('investigating finds more the better the check goes, scores what it finds, 
                     gained:plan.attestation.value - attestation,
                     scored:tc.model.getScore() - score,
                     actionsUsed:alpha.getActionExecCount() - actionCount,
-                    logged:{type:entry.type, success:entry.success, effects:entry.effects}
+                    logged:{type:entry.type, success:entry.success, adj:entry.adj}
                 };
             };
         alpha.doDeployToEvent(plan);
@@ -241,10 +241,10 @@ test('investigating finds more the better the check goes, scores what it finds, 
         };
     });
     const found = n => ({'event.attestation':n});
-    expect(result.failure).toEqual({gained:0, scored:0, actionsUsed:1, logged:{type:'action', success:false, effects:undefined}});
-    expect(result.bare).toEqual({gained:1, scored:3, actionsUsed:1, logged:{type:'action', success:true, effects:found(1)}});
-    expect(result.best).toEqual({gained:15, scored:45, actionsUsed:1, logged:{type:'action', success:true, effects:found(15)}});
-    expect(result.nearlyComplete).toEqual({gained:5, scored:15, actionsUsed:1, logged:{type:'action', success:true, effects:found(5)}});
+    expect(result.failure).toEqual({gained:0, scored:0, actionsUsed:1, logged:{type:'action', success:false, adj:undefined}});
+    expect(result.bare).toEqual({gained:1, scored:3, actionsUsed:1, logged:{type:'action', success:true, adj:found(1)}});
+    expect(result.best).toEqual({gained:15, scored:45, actionsUsed:1, logged:{type:'action', success:true, adj:found(15)}});
+    expect(result.nearlyComplete).toEqual({gained:5, scored:15, actionsUsed:1, logged:{type:'action', success:true, adj:found(5)}});
     expect(problems.warnings).toEqual([]);
 });
 
@@ -475,7 +475,7 @@ test('values and exits follow the causators they depend on, however far back', a
                 // hurts even on a pass.
                 lifeboatDamageOnSuccess = exitsToFinale('aftermath', 'lifeboat')
                     .filter(exitModel => !exitModel.isHidden())
-                    .map(exitModel => exitModel.getEffects().find(effect => effect.key === 'agent.health')?.getAmountExpr(true) ?? null);
+                    .map(exitModel => exitModel.getAdjustments().find(adjustment => adjustment.key === 'agent.health')?.getAmountExpr(true) ?? null);
             return {
                 arrivals:finale.getValueModels().arrivals.value,
                 waitHidden:[...waitHidden('origin'), ...waitHidden('aftermath')],

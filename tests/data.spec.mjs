@@ -206,8 +206,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             return retval;
         };
 
-    /*  The stats an effect can change, by scope. Mirrors tc.EFFECT_STAT_IDS. */
-    const EFFECT_STAT_IDS = {
+    /*  The stats an adjustment can change, by scope. Mirrors tc.ADJUSTMENT_STAT_IDS. */
+    const ADJUSTMENT_STAT_IDS = {
         agent:['health', 'chronal', 'paradox'],
         event:['paradox', 'historicity', 'attestation'],
         timeline:['paradox', 'chronal']
@@ -220,9 +220,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         'timeline.chronal', 'timeline.paradox', 'timeline.score', 'timeline.credits'
     ];
 
-    test('every investigate, action skill check, action cost, action scratch set and action and exit effect is valid, including the default event actions', () => {
+    test('every investigate, action skill check, action cost, action scratch set and action and exit adjustment is valid, including the default event actions', () => {
         const problems = [],
-            counts = {actionEffects:0, exitEffects:0, costs:0, scratchSets:0, perResultSets:0},
+            counts = {actionAdjustments:0, exitAdjustments:0, costs:0, scratchSets:0, perResultSets:0},
             
             // Returns the problems with an action's costs. null leaves them all out.
             checkCosts = (where, costs) => {
@@ -241,42 +241,42 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 return costProblems;
             },
         
-            // Returns the problems with an action's or exit's effects.
-            checkEffects = (where, effects, isAction) => {
-                if (effects === null || typeof effects !== 'object' || Array.isArray(effects)) return [where + ' adj is not an object'];
-                const effectProblems = [];
-                for (const [key, cfg] of Object.entries(effects)) {
-                    // Null leaves out an effect of a default action.
+            // Returns the problems with an action's or exit's adjustments.
+            checkAdjustments = (where, adjustments, isAction) => {
+                if (adjustments === null || typeof adjustments !== 'object' || Array.isArray(adjustments)) return [where + ' adj is not an object'];
+                const adjustmentProblems = [];
+                for (const [key, cfg] of Object.entries(adjustments)) {
+                    // Null leaves out an adjustment of a default action.
                     if (cfg === null) continue;
                     const at = where + ' adj ' + key,
                         [scope, statId, ...rest] = key.split('.');
                     if (scope === 'agent' && statId === 'skills' && rest.length === 1) {
-                        if (!Object.hasOwn(skillCfgs, rest[0])) effectProblems.push(at + ' is not a skill');
-                    } else if (rest.length > 0 || !EFFECT_STAT_IDS[scope]?.includes(statId)) {
-                        effectProblems.push(at + ' is not a stat of the agent, event or timeline, or a skill of the agent');
+                        if (!Object.hasOwn(skillCfgs, rest[0])) adjustmentProblems.push(at + ' is not a skill');
+                    } else if (rest.length > 0 || !ADJUSTMENT_STAT_IDS[scope]?.includes(statId)) {
+                        adjustmentProblems.push(at + ' is not a stat of the agent, event or timeline, or a skill of the agent');
                     }
                     if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
-                        effectProblems.push(at + ' is not an object');
+                        adjustmentProblems.push(at + ' is not an object');
                         continue;
                     }
                     const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg;
-                    if (onSuccess === undefined && onFailure === undefined) effectProblems.push(at + ' has no onSuccess or onFailure');
+                    if (onSuccess === undefined && onFailure === undefined) adjustmentProblems.push(at + ' has no onSuccess or onFailure');
                     for (const [name, amount] of [['onSuccess', onSuccess], ['onFailure', onFailure]]) {
                         const error = amount === undefined ? null : getAmountCompileError(amount);
-                        if (error) effectProblems.push(at + ' ' + name + ' ' + error);
+                        if (error) adjustmentProblems.push(at + ' ' + name + ' ' + error);
                     }
                     if (enabledForActionSkillCheck !== undefined) {
                         if (!isAction) {
-                            effectProblems.push(at + ' has enabledForActionSkillCheck, which only applies to actions');
+                            adjustmentProblems.push(at + ' has enabledForActionSkillCheck, which only applies to actions');
                         } else if (!['success', 'failure', 'both'].includes(enabledForActionSkillCheck)) {
-                            effectProblems.push(at + ' enabledForActionSkillCheck is not "success", "failure" or "both"');
+                            adjustmentProblems.push(at + ' enabledForActionSkillCheck is not "success", "failure" or "both"');
                         }
                     }
-                    // Anything else is the effect's own skill check.
-                    if (Object.keys(checkCfg).length > 0) effectProblems.push(...checkSkillCheckCfg(at, checkCfg));
-                    counts[isAction ? 'actionEffects' : 'exitEffects']++;
+                    // Anything else is the adjustment's own skill check.
+                    if (Object.keys(checkCfg).length > 0) adjustmentProblems.push(...checkSkillCheckCfg(at, checkCfg));
+                    counts[isAction ? 'actionAdjustments' : 'exitAdjustments']++;
                 }
-                return effectProblems;
+                return adjustmentProblems;
             };
     
         // The default actions every Event gets are checked as if on an Event of their own, and 
@@ -298,7 +298,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     const error = getAmountCompileError(action.available);
                     if (error) problems.push(where + ' available ' + error);
                 }
-                if (action.adj !== undefined) problems.push(...checkEffects(where, action.adj, true));
+                if (action.adj !== undefined) problems.push(...checkAdjustments(where, action.adj, true));
                 if ('effects' in action) problems.push(where + ' has effects, which is renamed adj');
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 for (const [key, value] of Object.entries(action.set ?? {})) {
@@ -330,7 +330,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
-                if (exit.adj !== undefined) problems.push(...checkEffects(where, exit.adj, false));
+                if (exit.adj !== undefined) problems.push(...checkAdjustments(where, exit.adj, false));
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');
@@ -338,10 +338,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         }
         expect(problems).toEqual([]);
     
-        // The test data has effects on both, so the checks above aren't vacuous.
+        // The test data has adjustments on both, so the checks above aren't vacuous.
         if (DATA_DIR === TEST_DATA_DIR) {
-            expect(counts.actionEffects).toBeGreaterThan(0);
-            expect(counts.exitEffects).toBeGreaterThan(0);
+            expect(counts.actionAdjustments).toBeGreaterThan(0);
+            expect(counts.exitAdjustments).toBeGreaterThan(0);
             expect(counts.costs).toBeGreaterThan(0);
             expect(counts.scratchSets).toBeGreaterThan(0);
         }

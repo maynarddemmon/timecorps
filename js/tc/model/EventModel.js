@@ -33,7 +33,7 @@
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
         
-        /*  Skill checks for an action, exit or effect. Checks are stored by action ID, so a model
+        /*  Skill checks for an action, exit or adjustment. Checks are stored by action ID, so a model
             could have one per action it offers. */
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
             /*  Sets the skill check for an action. An actionId of null is the model's own check,
@@ -106,33 +106,33 @@
             }
         }),
         
-        /*  The stats an effect can change, by the scope that has them: the agent taking the 
+        /*  The stats an adjustment can change, by the scope that has them: the agent taking the 
             action or exit, its Event, or the timeline. */
-        EFFECT_STAT_IDS = pkg.EFFECT_STAT_IDS = {
+        ADJUSTMENT_STAT_IDS = pkg.ADJUSTMENT_STAT_IDS = {
             [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
             [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
             [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL]
         },
         
-        EFFECT_WHEN_SUCCESS = 'success',
-        EFFECT_WHEN_FAILURE = 'failure',
-        EFFECT_WHEN_BOTH = 'both',
+        ADJUSTMENT_WHEN_SUCCESS = 'success',
+        ADJUSTMENT_WHEN_FAILURE = 'failure',
+        ADJUSTMENT_WHEN_BOTH = 'both',
         
-        /*  One effect of an action or exit: a change to a stat, named by its key as 
+        /*  One adjustment of an action or exit: a change to a stat, named by its key as 
             "<scope>.<stat>", e.g. "agent.health", "event.attestation" or "timeline.paradox". 
-            See EFFECT_STAT_IDS. Or a change to one of the agent's skills, keyed 
+            See ADJUSTMENT_STAT_IDS. Or a change to one of the agent's skills, keyed 
             "agent.skills.<skill>", e.g. "agent.skills.agl", whose statId is "skills.<skill>". 
             Configured as:
                 onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 
                     positive amount raises the stat and a negative one lowers it, within the 
                     stat's limits. An amount sees the same parameters as a check expression.
-                difficulty, check, actionType - Optional. The effect's own skill check, as for 
-                    an action. With one, the effect rolls it and uses onSuccess or onFailure by
+                difficulty, check, actionType - Optional. The adjustment's own skill check, as for 
+                    an action. With one, the adjustment rolls it and uses onSuccess or onFailure by
                     its result. Without one, it follows the action's own check, and taking an 
                     exit counts as a success.
-                enabledForActionSkillCheck - Actions only. Whether the effect applies when the
+                enabledForActionSkillCheck - Actions only. Whether the adjustment applies when the
                     action's own check is a "success", a "failure" or "both", the default. */
-        StatEffectModel = pkg.StatEffectModel = new JSClass('StatEffectModel', BaseModel, {
+        StatAdjustmentModel = pkg.StatAdjustmentModel = new JSClass('StatAdjustmentModel', BaseModel, {
             include: [ActionCheckSupport],
             
             
@@ -189,7 +189,7 @@
                         warn('names no skill (ignoring it)');
                         return false;
                     }
-                } else if (rest.length > 0 || !Object.hasOwn(EFFECT_STAT_IDS, scopeName) || !EFFECT_STAT_IDS[scopeName].includes(statId)) {
+                } else if (rest.length > 0 || !Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) || !ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                     warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it)');
                     return false;
                 }
@@ -210,15 +210,15 @@
                 self.onSuccess = toAmount('onSuccess', onSuccess);
                 self.onFailure = toAmount('onFailure', onFailure);
                 
-                // Any other keys are the effect's own check, which warns about unknown ones.
+                // Any other keys are the adjustment's own check, which warns about unknown ones.
                 self.ownCheck = ['difficulty', 'check', 'actionType'].some(name => name in checkCfg);
                 if (Object.keys(checkCfg).length > 0) self.addSkillCheck(null, checkCfg);
                 
-                self.enabledForActionSkillCheck = EFFECT_WHEN_BOTH;
+                self.enabledForActionSkillCheck = ADJUSTMENT_WHEN_BOTH;
                 if (enabledForActionSkillCheck !== undefined) {
                     if (!self.owner.isGatedByActionSkillCheck()) {
                         warn('enabledForActionSkillCheck only applies to actions (ignoring it)');
-                    } else if ([EFFECT_WHEN_SUCCESS, EFFECT_WHEN_FAILURE, EFFECT_WHEN_BOTH].includes(enabledForActionSkillCheck)) {
+                    } else if ([ADJUSTMENT_WHEN_SUCCESS, ADJUSTMENT_WHEN_FAILURE, ADJUSTMENT_WHEN_BOTH].includes(enabledForActionSkillCheck)) {
                         self.enabledForActionSkillCheck = enabledForActionSkillCheck;
                     } else {
                         warn('enabledForActionSkillCheck must be "success", "failure" or "both" (using "both")');
@@ -232,22 +232,22 @@
                 return true;
             },
             
-            /*  Whether the effect applies given the action's own check result, if any. */
+            /*  Whether the adjustment applies given the action's own check result, if any. */
             appliesFor: function(actionCheck) {
                 if (actionCheck) {
                     switch (this.enabledForActionSkillCheck) {
-                        case EFFECT_WHEN_SUCCESS: return actionCheck.success === true;
-                        case EFFECT_WHEN_FAILURE: return actionCheck.success === false;
+                        case ADJUSTMENT_WHEN_SUCCESS: return actionCheck.success === true;
+                        case ADJUSTMENT_WHEN_FAILURE: return actionCheck.success === false;
                     }
                 }
                 return true;
             }
         }),
         
-        /*  Gives an action or exit its effects, configured in the data as "adj", for the 
-            adjustments it makes to stats: an object of StatEffectModel configs by key. Unlike
+        /*  Gives an action or exit its adjustments, configured in the data as "adj", for the 
+            adjustments it makes to stats: an object of StatAdjustmentModel configs by key. Unlike
             set, which replaces what it sets, adj adds to it. */
-        EffectsSupport = new JSModule('EffectsSupport', {
+        AdjustmentSupport = new JSModule('AdjustmentSupport', {
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const adj = attrs.adj,
@@ -259,34 +259,34 @@
                 this.callSuper(attrs);
                 
                 if (hasInjurySkillCheck) console.warn(this.getSkillCheckOwner(), 'injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)');
-                this.setEffects(adj);
+                this.setAdjustments(adj);
             },
             
             
             // Accessors ///////////////////////////////////////////////////////
-            setEffects: function(cfg) {
-                const effects = this.effects = [];
+            setAdjustments: function(cfg) {
+                const adjustments = this.adjustments = [];
                 if (cfg == null) return;
                 if (typeof cfg !== 'object' || Array.isArray(cfg)) {
                     console.warn(this.getSkillCheckOwner(), 'adj must be an object of adjustments by stat, e.g. "agent.health" (ignoring them):', cfg);
                     return;
                 }
                 for (const key in cfg) {
-                    // Null leaves an effect out, e.g. to drop one from a default action.
+                    // Null leaves an adjustment out, e.g. to drop one from a default action.
                     if (cfg[key] === null) continue;
                     
-                    const effectModel = new StatEffectModel({owner:this, key, cfg:cfg[key]});
-                    if (effectModel.valid) effects.push(effectModel);
+                    const adjustmentModel = new StatAdjustmentModel({owner:this, key, cfg:cfg[key]});
+                    if (adjustmentModel.valid) adjustments.push(adjustmentModel);
                 }
             },
-            getEffects: function() {return this.effects;},
-            hasEffects: function() {return this.effects.length > 0;},
+            getAdjustments: function() {return this.adjustments;},
+            hasAdjustments: function() {return this.adjustments.length > 0;},
             
-            /*  True if the effects can depend on the result of the owner's own check. */
+            /*  True if the adjustments can depend on the result of the owner's own check. */
             isGatedByActionSkillCheck: () => false
         }),
         
-        /*  The model whose stat a cost or effect of an action changes: the agent, the action's
+        /*  The model whose stat a cost or adjustment of an action changes: the agent, the action's
             Event or the timeline. */
         getScopeTarget = (scopeName, agentModel, actionModel) => {
             switch (scopeName) {
@@ -315,7 +315,7 @@
                 pay: (agentModel, actionModel, amount) => {
                     getStat(agentModel, actionModel).adjValue(accrues ? amount : -amount);
                     
-                    // An Event's attestation scores the same however it's lost, as for effects.
+                    // An Event's attestation scores the same however it's lost, as for adjustments.
                     if (scopeName === SCOPE_EVENT && statId === STAT_ID_ATTESTATION) pkg.model.adjScore(-amount * SCORE_PER_ATTESTATION);
                 }
             };
@@ -405,14 +405,14 @@
                 }
                 this.expr = expr;
                 
-                // The stat it's paid in, if it's one, named as for an effect.
+                // The stat it's paid in, if it's one, named as for an adjustment.
                 this.scopeName = COSTS[this.key].scopeName;
                 this.statId = COSTS[this.key].statId;
                 return true;
             },
             
             /*  What the agent would pay now, in whole points. NaN, with a warning, if the
-                expression is broken. A negative amount is a gain, which is what effects are
+                expression is broken. A negative amount is a gain, which is what adjustments are
                 for, so it's 0, with a warning the first time. */
             getAmount: function(agentModel) {
                 const amount = Math.round(pkg.checks.getAverageAmount(this.expr, {agent:agentModel, event:this.owner.event}));
@@ -527,7 +527,7 @@
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport, CostsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -617,7 +617,7 @@
                 this.addSkillCheck(null, cfg);
             },
             
-            /** @overrides EffectsSupport */
+            /** @overrides AdjustmentSupport */
             isGatedByActionSkillCheck: () => true,
             
             setDoneCount: function(v) {
@@ -739,7 +739,7 @@
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport, CostsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport],
             
             
             // Accessors ///////////////////////////////////////////////////////

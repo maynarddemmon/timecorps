@@ -211,7 +211,7 @@ test('an action\'s button shows its costs, flags stat costs and is disabled when
     await page.evaluate(() => tc.model.getAgentModel('AL').setActionExecCount(3));
     await expect(btn('Tip')).toHaveClass(/disabled/);
     await expect(btn('Glance')).not.toHaveClass(/disabled/);
-    // Stat costs flag the button as an effect would.
+    // Stat costs flag the button as an adjustment would.
     await expect(btn('Spend')).toHaveText('Spend [⏲ + ⥁ + ♥]');
     await expect(btn('Bribe')).toHaveText('Bribe');
 

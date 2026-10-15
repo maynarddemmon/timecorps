@@ -101,7 +101,7 @@ test('every agent who has been to a flooded Event gains a paradox per visit, whi
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('an effect that takes paradox to the limit floods the Event, or devours the agent', async ({page}) => {
+test('an adjustment that takes paradox to the limit floods the Event, or devours the agent', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const m = tc.model,
@@ -110,14 +110,14 @@ test('an effect that takes paradox to the limit floods the Event, or devours the
                 exit = origin.getExitModels().find(exit => exit.to === 'aftermath'),
                 r = {};
 
-            // Effects are cut to what the stat allows, so these only ever reach the limit.
-            exit.setEffects({'event.paradox':{onSuccess:'10'}});
+            // Adjustments are cut to what the stat allows, so these only ever reach the limit.
+            exit.setAdjustments({'event.paradox':{onSuccess:'10'}});
             origin.paradox.setValue(origin.paradox.max - 1);
             bravo.setEvent('origin');
             bravo.doFollowExit(exit);
             r.originFlooded = origin.isFlooded();
 
-            exit.setEffects({'agent.paradox':{onSuccess:'10'}});
+            exit.setAdjustments({'agent.paradox':{onSuccess:'10'}});
             bravo.setEvent('origin');
             bravo.paradox.setValue(0);
             bravo.doFollowExit(exit);

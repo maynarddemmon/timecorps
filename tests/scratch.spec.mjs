@@ -20,7 +20,7 @@ const NO_ROLL = {difficulty:'no-roll'},
                 set:{'scratch.origin_knocks':'scratch.origin_knocks + 1'},
                 hidden:'scratch.origin_knocks >= 3'
             },
-            // Sets in order, so a later one sees an earlier one. An effect sees the count 
+            // Sets in order, so a later one sees an earlier one. An adjustment sees the count 
             // before the action's sets.
             open:{
                 label:'Open', skillCheck:{difficulty:250},
@@ -86,7 +86,7 @@ test('an action sets scratch entries once, in order, and constraints follow them
     await page.evaluate(() => tc.model.getAgentModel('AL').paradox.setValue(0));
     await takeAction(page, 'open', 999);
     expect(await readScratch(page)).toEqual({...FRESH, origin_knocks:13, origin_door:'open after 13', origin_alarm:true});
-    // The effect saw 3, the count before the sets: 3 - 2.
+    // The adjustment saw 3, the count before the sets: 3 - 2.
     expect(await page.evaluate(() => tc.model.getAgentModel('AL').paradox.value)).toBe(1);
     
     expect(problems.warnings).toEqual([]);

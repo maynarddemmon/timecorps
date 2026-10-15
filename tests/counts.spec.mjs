@@ -48,11 +48,11 @@ const NO_ROLL = {difficulty:'no-roll'},
         };
     });
 
-test('attemptCount counts every take, pass or fail, and effects and constraints can use it', async ({page}) => {
+test('attemptCount counts every take, pass or fail, and adjustments and constraints can use it', async ({page}) => {
     await routeScenarioWithCounts(page);
     const problems = await startGame(page);
 
-    // Effects see the count before this take, so the first is free.
+    // Adjustments see the count before this take, so the first is free.
     expect(await takeAction(page, 'AL', 'origin', 'poke', 0)).toEqual({attemptCount:1, paradox:0, hidden:false});
     expect(await takeAction(page, 'AL', 'origin', 'poke', 999)).toEqual({attemptCount:2, paradox:1, hidden:false});
     expect(await takeAction(page, 'AL', 'origin', 'poke', 0)).toEqual({attemptCount:3, paradox:1, hidden:true});
