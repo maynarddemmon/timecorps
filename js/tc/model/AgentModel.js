@@ -389,6 +389,7 @@
             // This provides a Stat like interface to a skill for purposes of modification.
             const agentModel = this;
             return {
+                get value() {return agentModel.getSkill(skillId);},
                 getAllowedAdj: adj => {
                     const value = agentModel.getSkill(skillId),
                         newValue = mathMin(MAX_SKILL_VALUE, mathMax(-MAX_SKILL_VALUE, value + adj));
@@ -691,11 +692,24 @@
                         expr = isPerResult ? (success ? cfg.onSuccess : cfg.onFailure) : (success ? cfg : undefined);
                     if (expr === undefined) continue;
                     
+                    const parsedKey = pkg.parseChangeKey(key);
                     if (key.startsWith(SCRATCH_PREFIX)) {
                         // Worked out once, now, rather than kept up to date like a Causator,
                         // so "scratch.x + 1" counts. Dice roll.
                         const result = rollValue(expr, rollCfg);
                         if (result !== undefined) pkg.model.setScratch(key.slice(SCRATCH_PREFIX.length), result);
+                    } else if (parsedKey.kind === 'stat' || parsedKey.kind === 'skill') {
+                        // Worked out once, now, and set within the stat's limits, by adjusting it
+                        // so the stat's own rules apply, e.g. reaching a paradox limit.
+                        const result = rollValue(expr, rollCfg),
+                            target = pkg.getChangeTarget(parsedKey, this, event);
+                        if (target && Number.isFinite(result)) {
+                            const adj = target.getAllowedAdj(mathRound(result) - target.value).adj;
+                            if (adj) {
+                                target.adjValue(adj);
+                                if (parsedKey.scopeName === SCOPE_EVENT && parsedKey.statId === STAT_ID_ATTESTATION) pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
+                            }
+                        }
                     } else {
                         const eventValueModel = event.values[key];
                         if (!eventValueModel) {
@@ -804,7 +818,7 @@
             "♥ Risking: deadly injury (light injury if passed) · Athletic / even", and anything 
             else as amounts, e.g. "Event Attestation: ~+5 if passed, ~-2 if failed". */
         getAdjustmentsPhrase: function(ownerModel) {
-            return ownerModel.getAdjustments().map(adjustmentModel => {
+            return ownerModel.getAdjustments().filter(adjustmentModel => adjustmentModel.isShown()).map(adjustmentModel => {
                 const failAmount = getAverageAdjustmentAmount(this, adjustmentModel, false),
                     passAmount = getAverageAdjustmentAmount(this, adjustmentModel, true);
                 let phrase;
@@ -886,7 +900,7 @@
                 // A broken expression (NaN) does nothing. || 0 so it's never -0.
                 const stat = adjustmentModel.getStat(this),
                     adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
-                results.push({adjustment:adjustmentModel, key:adjustmentModel.key, statId:adjustmentModel.statId, stat, amount:adj, check});
+                results.push({adjustment:adjustmentModel, key:adjustmentModel.key, statId:adjustmentModel.statId, stat, amount:adj, check, shown:adjustmentModel.isShown()});
             }
             return results;
         },

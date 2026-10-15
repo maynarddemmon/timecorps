@@ -736,14 +736,14 @@
 				"answer":{
 					"label":"Answer the Device",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"heard":"true"},
-					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
-					"available":"!event.values.heard.value",
-					"costs":{"agent.action":null},
-					"adj":{
+					"set":{
+						"heard":"true",
 						"agent.chronal":{"onSuccess":"15"},
 						"agent.skills.chronogation":{"onSuccess":"500"}
-					}
+					},
+					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
+					"available":"!event.values.heard.value",
+					"costs":{"agent.action":null}
 				}
 			},
 			"values":{

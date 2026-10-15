@@ -14,7 +14,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SKILLS,
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
@@ -114,15 +114,71 @@
             [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL]
         },
         
+        /*  What a set or adj key names, or why it names nothing:
+                {kind:'stat', scopeName, statId} - e.g. "agent.health". See ADJUSTMENT_STAT_IDS.
+                {kind:'skill', scopeName:'agent', statId:'skills.<skill>', skillId} - e.g. 
+                    "agent.skills.agl".
+                {kind:'scratch', statId:'scratch.<name>', name} - e.g. "scratch.origin_knocks".
+                {kind:'value', statId:'values.<id>', valueId} - a Value of the action's or exit's
+                    own Event, by its ID, e.g. "bus_arrives".
+                {error} - a phrase for a warning. */
+        parseChangeKey = pkg.parseChangeKey = key => {
+            const [scopeName, statId, ...rest] = String(key).split('.');
+            if (statId === undefined) return {kind:'value', statId:'values.' + scopeName, valueId:scopeName};
+            if (scopeName === SCOPE_SCRATCH && rest.length === 0) return {kind:'scratch', statId:key, name:statId};
+            if (scopeName === SCOPE_AGENT && statId === SCOPE_SKILLS && rest.length === 1) {
+                return pkg.isSkillId(rest[0]) ? {kind:'skill', scopeName, statId:SCOPE_SKILLS + '.' + rest[0], skillId:rest[0]} : {error:'names no skill'};
+            }
+            if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) return {kind:'stat', scopeName, statId};
+            return {error:'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event or "scratch.<name>"'};
+        },
+        
+        /*  What a parsed key changes, as something stat-like: {value, getAllowedAdj(adj), 
+            adjValue(adj)}. A stat is its NumericStatModel. A Value or scratch entry has no 
+            limits, but only changes while it's a number; otherwise nothing is allowed and a 
+            warning names it. Undefined when there's nothing to change, e.g. no such Value. */
+        getChangeTarget = pkg.getChangeTarget = (parsed, agentModel, eventModel) => {
+            const numericOnly = (getValue, setValue, what) => ({
+                get value() {return getValue();},
+                getAllowedAdj: adj => {
+                    if (Number.isFinite(getValue())) return {adj};
+                    console.warn(what, 'is not a number, so adj can\'t change it:', getValue());
+                    return {adj:0};
+                },
+                adjValue: adj => {setValue(getValue() + adj);}
+            });
+            switch (parsed.kind) {
+                case 'stat':
+                    switch (parsed.scopeName) {
+                        case SCOPE_AGENT: return agentModel?.[parsed.statId];
+                        case SCOPE_EVENT: return eventModel?.[parsed.statId];
+                        case SCOPE_TIMELINE: return pkg.model[parsed.statId];
+                    }
+                    return;
+                case 'skill':
+                    return agentModel?.getSkillStat(parsed.skillId);
+                case 'scratch':
+                    return numericOnly(() => pkg.model.scratch[parsed.name], v => pkg.model.setScratch(parsed.name, v), 'scratch.' + parsed.name);
+                case 'value': {
+                    const valueModel = eventModel?.values?.[parsed.valueId];
+                    if (!valueModel) {
+                        console.warn('Event', eventModel?.id, 'has no Value', parsed.valueId);
+                        return;
+                    }
+                    return numericOnly(() => valueModel.value, v => valueModel.setValueByAction(JSON.stringify(v)), 'Event ' + eventModel.id + ' Value ' + parsed.valueId);
+                }
+            }
+        },
+        
         ADJUSTMENT_WHEN_SUCCESS = 'success',
         ADJUSTMENT_WHEN_FAILURE = 'failure',
         ADJUSTMENT_WHEN_BOTH = 'both',
         
-        /*  One adjustment of an action or exit: a change to a stat, named by its key as 
-            "<scope>.<stat>", e.g. "agent.health", "event.attestation" or "timeline.paradox". 
-            See ADJUSTMENT_STAT_IDS. Or a change to one of the agent's skills, keyed 
-            "agent.skills.<skill>", e.g. "agent.skills.agl", whose statId is "skills.<skill>". 
-            Configured as:
+        /*  One adjustment of an action or exit: an amount added to what its key names (see 
+            parseChangeKey): a stat, e.g. "agent.health", "event.attestation" or 
+            "timeline.paradox", a skill of the agent, e.g. "agent.skills.agl", a Value of its 
+            Event, e.g. "bus_arrives", or a scratch entry, e.g. "scratch.origin_knocks". Only 
+            stats and skills show in tooltips, flags and floating text. Configured as:
                 onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 
                     positive amount raises the stat and a negative one lowers it, within the 
                     stat's limits. An amount sees the same parameters as a check expression.
@@ -162,18 +218,11 @@
             /*  The amount expression for a result, or undefined if nothing happens then. */
             getAmountExpr: function(success) {return success ? this.onSuccess : this.onFailure;},
             
-            /*  The model whose stat changes: the agent, the owner's Event or the timeline. */
-            getTarget: function(agentModel) {
-                if (this.skillId) return agentModel;
-                switch (this.scopeName) {
-                    case SCOPE_AGENT: return agentModel;
-                    case SCOPE_EVENT: return this.owner.event;
-                    case SCOPE_TIMELINE: return pkg.model;
-                }
-            },
-            getStat: function(agentModel) {
-                return this.skillId ? agentModel?.getSkillStat(this.skillId) : this.getTarget(agentModel)?.[this.statId];
-            },
+            /*  What changes, as something stat-like. See getChangeTarget. */
+            getStat: function(agentModel) {return getChangeTarget(this.parsedKey, agentModel, this.owner.event);},
+            
+            /*  Whether the player sees the adjustment: stats and skills, not Values or scratch. */
+            isShown: function() {return this.kind === 'stat' || this.kind === 'skill';},
             
             
             // Methods /////////////////////////////////////////////////////////
@@ -181,25 +230,21 @@
             configure: function(cfg) {
                 const self = this,
                     warn = msg => console.warn(self.getSkillCheckOwner(), msg + ':', cfg),
-                    [scopeName, statId, ...rest] = String(self.key).split('.'),
-                    isSkill = scopeName === SCOPE_AGENT && statId === SCOPE_SKILLS && rest.length === 1;
+                    parsedKey = parseChangeKey(self.key);
                 
-                if (isSkill) {
-                    if (!pkg.isSkillId(rest[0])) {
-                        warn('names no skill (ignoring it)');
-                        return false;
-                    }
-                } else if (rest.length > 0 || !Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) || !ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
-                    warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it)');
+                if (parsedKey.error) {
+                    warn(parsedKey.error + ' (ignoring it)');
                     return false;
                 }
                 if (cfg == null || typeof cfg !== 'object' || Array.isArray(cfg)) {
                     warn('must be an object (ignoring it)');
                     return false;
                 }
-                self.scopeName = scopeName;
-                self.statId = isSkill ? statId + '.' + rest[0] : statId;
-                self.skillId = isSkill ? rest[0] : null;
+                self.parsedKey = parsedKey;
+                self.kind = parsedKey.kind;
+                self.scopeName = parsedKey.scopeName;
+                self.statId = parsedKey.statId;
+                self.skillId = parsedKey.skillId ?? null;
                 
                 const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg,
                     toAmount = (name, amount) => {
@@ -570,8 +615,11 @@
                 const clean = {};
                 for (const key in set ?? {}) {
                     const cfg = set[key],
-                        warn = msg => console.warn('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key + ' ' + msg + ' (ignoring it):', cfg);
-                    if (typeof cfg === 'string') {
+                        warn = msg => console.warn('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key + ' ' + msg + ' (ignoring it):', cfg),
+                        parsedKey = parseChangeKey(key);
+                    if (parsedKey.error) {
+                        warn(parsedKey.error);
+                    } else if (typeof cfg === 'string') {
                         clean[key] = cfg;
                     } else if (cfg !== null && typeof cfg === 'object' && !Array.isArray(cfg)) {
                         const {onSuccess, onFailure, ...rest} = cfg,

@@ -345,7 +345,7 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     ]);
 });
 
-test('adj must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
+test('adj must be keyed by a stat, a skill, a Value or scratch, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const origin = tc.model.getEventModel('origin'),
@@ -374,11 +374,11 @@ test('adj must be keyed by a stat of the agent, event or timeline, or a skill of
                 oldAdjustments:origin.getActionModels().old.getAdjustments().length
             };
         });
-    expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldAdjustments:0});
-    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it): {onSuccess: 1}';
+    // A key without a dot names a Value of the Event, which is only looked up when it applies.
+    expect(out).toEqual({valid:['health both', 'timeline.paradox both'], notAnObject:[], oldAdjustments:0});
+    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event or "scratch.<name>" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath adj agent.luck ' + named,
-        'Event origin exit to aftermath adj health ' + named,
         'Event origin exit to aftermath adj event.health ' + named,
         'Event origin exit to aftermath adj agent.health.value ' + named,
         'Event origin exit to aftermath adj toString.health ' + named,

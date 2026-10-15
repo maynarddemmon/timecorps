@@ -241,20 +241,27 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 return costProblems;
             },
         
+            // Returns why a set or adj key names nothing, or null: a stat or skill of the agent, a
+            // stat of the event or timeline, a Value of the event, or a declared scratch entry.
+            checkChangeKey = (key, event) => {
+                const [scope, statId, ...rest] = key.split('.');
+                if (statId === undefined) return event.values?.[key] ? null : 'is not a Value of the Event';
+                if (scope === 'scratch' && rest.length === 0) return Object.hasOwn(scratch, statId) ? null : 'is not declared';
+                if (scope === 'agent' && statId === 'skills' && rest.length === 1) return Object.hasOwn(skillCfgs, rest[0]) ? null : 'is not a skill';
+                if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scope) && ADJUSTMENT_STAT_IDS[scope].includes(statId)) return null;
+                return 'is not a stat, skill, Value or scratch entry';
+            },
+            
             // Returns the problems with an action's or exit's adjustments.
-            checkAdjustments = (where, adjustments, isAction) => {
+            checkAdjustments = (where, adjustments, isAction, event) => {
                 if (adjustments === null || typeof adjustments !== 'object' || Array.isArray(adjustments)) return [where + ' adj is not an object'];
                 const adjustmentProblems = [];
                 for (const [key, cfg] of Object.entries(adjustments)) {
                     // Null leaves out an adjustment of a default action.
                     if (cfg === null) continue;
                     const at = where + ' adj ' + key,
-                        [scope, statId, ...rest] = key.split('.');
-                    if (scope === 'agent' && statId === 'skills' && rest.length === 1) {
-                        if (!Object.hasOwn(skillCfgs, rest[0])) adjustmentProblems.push(at + ' is not a skill');
-                    } else if (rest.length > 0 || !ADJUSTMENT_STAT_IDS[scope]?.includes(statId)) {
-                        adjustmentProblems.push(at + ' is not a stat of the agent, event or timeline, or a skill of the agent');
-                    }
+                        keyProblem = checkChangeKey(key, event);
+                    if (keyProblem) adjustmentProblems.push(at + ' ' + keyProblem);
                     if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
                         adjustmentProblems.push(at + ' is not an object');
                         continue;
@@ -298,17 +305,14 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     const error = getAmountCompileError(action.available);
                     if (error) problems.push(where + ' available ' + error);
                 }
-                if (action.adj !== undefined) problems.push(...checkAdjustments(where, action.adj, true));
+                if (action.adj !== undefined) problems.push(...checkAdjustments(where, action.adj, true, event));
                 if ('effects' in action) problems.push(where + ' has effects, which is renamed adj');
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 for (const [key, value] of Object.entries(action.set ?? {})) {
-                    const isScratch = key.startsWith('scratch.');
-                    if (isScratch) {
-                        if (!Object.hasOwn(scratch, key.slice('scratch.'.length))) problems.push(where + ' sets ' + key + ', which is not declared');
-                        counts.scratchSets++;
-                    } else if (!event.values?.[key]) {
-                        problems.push(where + ' sets ' + key + ', which is not a Value of the Event');
-                    }
+                    const isScratch = key.startsWith('scratch.'),
+                        keyProblem = checkChangeKey(key, event);
+                    if (keyProblem) problems.push(where + ' sets ' + key + ', which ' + keyProblem);
+                    if (isScratch) counts.scratchSets++;
                     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
                         // Per result, worked out once with the same parameters as an amount.
                         const {onSuccess, onFailure, ...rest} = value;
@@ -321,7 +325,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                         counts.perResultSets++;
                     } else if (typeof value !== 'string') {
                         problems.push(where + ' set ' + key + ' is not a string or {onSuccess, onFailure}');
-                    } else if (isScratch) {
+                    } else if (key.includes('.')) {
+                        // Scratch, stats and skills are worked out once, as check expressions.
                         const error = getAmountCompileError(value);
                         if (error) problems.push(where + ' set ' + key + ' ' + error);
                     }
@@ -330,7 +335,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
-                if (exit.adj !== undefined) problems.push(...checkAdjustments(where, exit.adj, false));
+                if (exit.adj !== undefined) problems.push(...checkAdjustments(where, exit.adj, false, event));
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');

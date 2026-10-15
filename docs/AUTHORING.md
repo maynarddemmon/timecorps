@@ -291,6 +291,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
   - A string for a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
   - A string for a `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's adjustments are worked out before its sets, so they see the entries as they were.
   - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an adjustment's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went.
+  - A stat or skill, keyed as for [adjustments](#adjustments-adj), e.g. `"agent.skills.agl":"50"` or `"agent.health":{"onFailure":"10"}`, is set to what its expression works out to, once, within the stat's limits. It's set by adjusting it, so its rules still apply: reaching a paradox limit devours, and `event.attestation` scores. Unlike adjustments, sets aren't shown in tooltips, flags or floating text, so use `adj` for changes the player should see.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
@@ -355,6 +356,8 @@ Adjustments change stats as the result of an action or exit. They go in its `adj
 | `timeline` | `paradox`, `chronal` | The timeline |
 
 An adjustment can also change one of the agent's skills, keyed `"agent.skills.<skill>"`, e.g. `"agent.skills.agl"`. Skills change within ±`MAX_SKILL_VALUE` (1000), are named in tooltips and floating text by the skill's name, e.g. "+15 Agility", and are saved with the agent. Origin Story uses them to build the player's agent from their choices.
+
+An adjustment can also add to a Value of its event, keyed by the Value's ID, e.g. `"count":{"onSuccess":"1"}`, or to a scratch entry, e.g. `"scratch.origin_knocks":{"onSuccess":"1"}`. Only a number can be added to; anything else is left alone, with a warning. The Value is set to the new number, not kept up to date. These aren't shown to the player in tooltips, flags or floating text.
 
 ```json5
 "adj":{

@@ -279,7 +279,7 @@
                         text = (roll == null ? 'Succeeded' : 
                             (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
                             // What any adjustments changed, e.g. "Failed by 120 · -7♥ · +2⥁".
-                            adjustments.filter(adjustment => adjustment.amount).map(adjustment => ICON_SEPARATOR + pkg.formatStatAdj(adjustment.statId, adjustment.amount)).join('');
+                            adjustments.filter(adjustment => adjustment.amount && adjustment.shown !== false).map(adjustment => ICON_SEPARATOR + pkg.formatStatAdj(adjustment.statId, adjustment.amount)).join('');
                     pkg.showFloatingTextAboveView(
                         btnView, 
                         text, 

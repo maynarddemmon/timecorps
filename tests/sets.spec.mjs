@@ -80,3 +80,100 @@ test('a set that is neither a string nor {onSuccess, onFailure} is left out, wit
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+/*  Serves the test scenario with actions at the origin that set stats and skills, and adjust
+    Values and scratch. */
+const routeScenarioWithAnyTargets = page => page.route('**/tests/data/test_scenario.json5', route => {
+    const json = readTestData('test_scenario.json5'),
+        origin = json.events.origin,
+        NO_ROLL = {difficulty:'no-roll'};
+    Object.assign(json.scratch, {origin_tally:0, origin_word:'hello'});
+    Object.assign(origin.values, {count:{name:'Count', value:'0'}, label:{name:'Label', value:"'none'"}});
+    Object.assign(origin.actions, {
+        train:{
+            label:'Train', skillCheck:{check:'0', difficulty:500}, costs:{'agent.action':null},
+            set:{
+                // A string sets on a pass, worked out once.
+                'agent.skills.agl':'50',
+                'agent.health':{onFailure:'10'},
+                'event.attestation':{onSuccess:'event.attestation.value + 4'},
+                // Within the stat's limits.
+                'agent.chronal':{onSuccess:'100000'}
+            }
+        },
+        tally:{
+            label:'Tally', skillCheck:NO_ROLL, costs:{'agent.action':null},
+            adj:{
+                count:{onSuccess:'2'},
+                'scratch.origin_tally':{onSuccess:'3'},
+                'agent.skills.dex':{onSuccess:'1'},
+                // Not numbers, so they're left alone with a warning.
+                label:{onSuccess:'1'},
+                'scratch.origin_word':{onSuccess:'1'}
+            }
+        },
+        badSet:{label:'Bad Set', skillCheck:NO_ROLL, set:{'agent.luck':'1', 'event.skills.agl':'1'}}
+    });
+    origin.exits.find(exit => exit.to === 'aftermath').adj = {count:{onSuccess:'10'}};
+    return route.fulfill({json});
+});
+
+test('set can set stats and skills, worked out once and within their limits', async ({page}) => {
+    await routeScenarioWithAnyTargets(page);
+    const problems = await startGame(page),
+        take = roll => page.evaluate(roll => {
+            const alpha = tc.model.getAgentModel('AL'),
+                origin = tc.model.getEventModel('origin');
+            alpha.health.setValue(50);
+            origin.attestation.setValue(5);
+            tc.model.setScore(0);
+            tc.rng.queueRolls(roll);
+            alpha.doAction(origin.getActionModels().train);
+            return {
+                agl:alpha.getSkill('agl'), health:alpha.health.value, chronal:alpha.chronal.value, chronalMax:alpha.chronal.max,
+                attestation:origin.attestation.value, score:tc.model.getScore()
+            };
+        }, roll);
+    const failed = await take(100);
+    expect(failed).toMatchObject({health:10, attestation:5, score:0});
+    expect(failed.agl).not.toBe(50);
+    const passed = await take(900);
+    expect(passed).toMatchObject({agl:50, health:50, attestation:9, score:12});
+    // Set as far as the stat allows.
+    expect(passed.chronal).toBe(passed.chronalMax);
+    expect(problems.warnings).toEqual([
+        expect.stringMatching(/^Event origin action badSet set agent\.luck must be named for a stat/),
+        expect.stringMatching(/^Event origin action badSet set event\.skills\.agl must be named for a stat/)
+    ]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('adj can add to numeric Values and scratch, from actions and exits, without showing them to the player', async ({page}) => {
+    await routeScenarioWithAnyTargets(page);
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const alpha = tc.model.getAgentModel('AL'),
+                origin = tc.model.getEventModel('origin'),
+                values = origin.getValueModels(),
+                tally = origin.getActionModels().tally,
+                dex = alpha.getSkill('dex'),
+                read = () => ({count:values.count.value, label:values.label.value, tally:tc.model.scratch.origin_tally, word:tc.model.scratch.origin_word});
+            const phrase = alpha.getAdjustmentsPhrase(tally);
+            alpha.doAction(tally);
+            const once = read();
+            alpha.doAction(tally);
+            const twice = read();
+            alpha.doFollowExit(origin.getExitModels().find(exit => exit.to === 'aftermath'));
+            return {phrase, once, twice, walked:read(), dex:alpha.getSkill('dex') - dex, logged:alpha.getLog().at(-2).adj};
+        });
+    // Only the skill shows.
+    expect(out.phrase).toBe('Dexterity: ~+1 if passed');
+    expect(out.once).toEqual({count:2, label:'none', tally:3, word:'hello'});
+    expect(out.twice).toEqual({count:4, label:'none', tally:6, word:'hello'});
+    expect(out.walked.count).toBe(14);
+    expect(out.dex).toBe(2);
+    expect(out.logged).toEqual({count:2, 'scratch.origin_tally':3, 'agent.skills.dex':1, label:0, 'scratch.origin_word':0});
+    expect(problems.warnings).toContain('Event origin Value label is not a number, so adj can\'t change it: none');
+    expect(problems.warnings).toContain('scratch.origin_word is not a number, so adj can\'t change it: hello');
+    expect(problems.pageErrors).toEqual([]);
+});
