@@ -68,7 +68,10 @@
                         agentModel.hasHealthChangeRiskFor(exitModel)
                     )
                 );
-                this.setTooltip(agentModel.getEffectsPhrase(exitModel));
+                const costsPhrase = agentModel.getCostsPhrase(exitModel),
+                    effectsPhrase = agentModel.getEffectsPhrase(exitModel);
+                this.setTooltip([costsPhrase, effectsPhrase].filter(phrase => phrase).join(ICON_SEPARATOR));
+                this.setDisabled(!agentModel.canPayCostsFor(exitModel));
             },
             doActivated: function() {
                 this.agentModel.doFollowExit(this.exitModel, this);

@@ -625,7 +625,8 @@
                     if (costs.every(cost => cost.canPay)) {
                         const effects = this.rollEffectsFor(exitModel),
                             logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
-                        this.payCosts(costs, logEntry);
+                        // Most exits are free, so only those with costs record them.
+                        if (costs.length > 0) this.payCosts(costs, logEntry);
                         if (effects.length > 0) {
                             const shownCheck = effects.find(effect => effect.check)?.check ?? {success:true, roll:null};
                             showFloatingTextForSkillCheck(btnView, {...shownCheck, effects});
@@ -770,7 +771,8 @@
             action that uses no action says that. */
         getCostsPhrase: function(actionModel) {
             const parts = [];
-            let actionCost = 0;
+            // Exits cost no action by default, so only an action says when it uses none.
+            let actionCost = actionModel.isGatedByActionSkillCheck() ? 0 : null;
             for (const {cost, amount, canPay} of this.getCostsFor(actionModel)) {
                 if (cost.isActionCost()) {
                     actionCost = amount;

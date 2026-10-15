@@ -223,3 +223,52 @@ test('an action\'s button shows its costs, flags stat costs and is disabled when
     })).toEqual([false, true, true, false]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('an exit costs nothing unless it says so, and one that can\'t be paid for is disabled and not taken', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.origin.exits.find(exit => exit.to === 'aftermath').costs = {'agent.chronal':'10', 'timeline.score':'5'};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        takeExit = (setup) => page.evaluate(({chronal, score}) => {
+            const alpha = tc.model.getAgentModel('AL'),
+                origin = tc.model.getEventModel('origin'),
+                exitModel = origin.getExitModels().find(exit => exit.to === 'aftermath');
+            alpha.setEvent('origin');
+            alpha.chronal.setValue(chronal);
+            tc.model.setScore(score);
+            const r = {
+                canPay:alpha.canPayCostsFor(exitModel),
+                phrase:alpha.getCostsPhrase(exitModel),
+                waitPhrase:alpha.getCostsPhrase(origin.getExitModels().find(exit => exit.to === 'finale'))
+            };
+            alpha.doFollowExit(exitModel);
+            const entry = alpha.getLog().at(-1);
+            return {...r, event:alpha.event, chronal:alpha.chronal.value, score:tc.model.getScore(), logged:entry.type === 'exit' ? entry.costs ?? null : 'none'};
+        }, setup);
+    
+    expect(await takeExit({chronal:20, score:100})).toEqual({
+        canPay:true, phrase:'Costs: 10 Chr⏲nal, 5 Score', waitPhrase:'',
+        event:'aftermath', chronal:10, score:95, logged:{'agent.chronal':10, 'timeline.score':5}
+    });
+    expect(await takeExit({chronal:9, score:100})).toEqual({
+        canPay:false, phrase:"Costs: 10 Chr⏲nal (can't pay), 5 Score", waitPhrase:'',
+        event:'origin', chronal:9, score:100, logged:'none'
+    });
+    
+    // The exit's button is disabled while it can't be paid for, and says why.
+    await page.evaluate(() => {
+        tc.app.selectEventBox('aftermath');
+        tc.app.selectEventBox('origin');
+    });
+    const exitBtn = page.getByText('Walk to Aftermath', {exact:false}).filter({visible:true});
+    await expect(exitBtn).toHaveClass(/disabled/);
+    await page.evaluate(() => tc.model.getAgentModel('AL').chronal.setValue(50));
+    await page.evaluate(() => {
+        tc.app.selectEventBox('aftermath');
+        tc.app.selectEventBox('origin');
+    });
+    await expect(exitBtn).not.toHaveClass(/disabled/);
+    expect(problems.pageErrors).toEqual([]);
+});

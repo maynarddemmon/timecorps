@@ -313,7 +313,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
                 if (exit.effects !== undefined) problems.push(...checkEffects(where, exit.effects, false));
-                if ('costs' in exit) problems.push(where + ' has costs, which only actions have');
+                if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }
         }

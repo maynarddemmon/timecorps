@@ -355,7 +355,7 @@
         /*  The costs of an action when it doesn't give its own. */
         DEFAULT_ACTION_COSTS = {[COST_KEY_ACTION]:'1'},
         
-        /*  The costs of an action when it doesn't give its own. */
+        /*  The costs of an exit when it doesn't give its own: none. */
         DEFAULT_EXIT_COSTS = {},
         
         /*  One cost of an action: something the agent must pay to take it, named by its key,

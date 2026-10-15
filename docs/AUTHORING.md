@@ -322,6 +322,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 - **`to`**: the event it leads to. An exit to a hidden event isn't offered.
 - **`hidden`**: hides the exit.
 - **`effects`**: as for actions. Taking an exit always succeeds, so an effect without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
+- **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
 
 ## Skill checks
 
@@ -383,7 +384,7 @@ Each effect has:
 
 ## Costs
 
-Costs are what an agent pays to take an action. An action costs one of the agent's actions at the event unless it says otherwise. Costs are keyed by what's paid, and each is an amount [check expression](#check-expressions):
+Costs are what an agent pays to take an action or an exit. An action costs one of the agent's actions at the event unless it says otherwise; an exit costs nothing unless it says otherwise. Costs are keyed by what's paid, and each is an amount [check expression](#check-expressions):
 
 ```json5
 // Two actions, and 100 score, more for each point of the event's paradox.
