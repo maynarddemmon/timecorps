@@ -222,7 +222,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     test('every investigate, action skill check, action cost, action scratch set and action and exit effect is valid, including the default event actions', () => {
         const problems = [],
-            counts = {actionEffects:0, exitEffects:0, costs:0, scratchSets:0},
+            counts = {actionEffects:0, exitEffects:0, costs:0, scratchSets:0, perResultSets:0},
             
             // Returns the problems with an action's costs. null leaves them all out.
             checkCosts = (where, costs) => {
@@ -301,12 +301,29 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (action.effects !== undefined) problems.push(...checkEffects(where, action.effects, true));
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 for (const [key, value] of Object.entries(action.set ?? {})) {
-                    if (!key.startsWith('scratch.')) continue;
-                    const name = key.slice('scratch.'.length),
-                        error = getAmountCompileError(value);
-                    if (!Object.hasOwn(scratch, name)) problems.push(where + ' sets ' + key + ', which is not declared');
-                    if (error) problems.push(where + ' set ' + key + ' ' + error);
-                    counts.scratchSets++;
+                    const isScratch = key.startsWith('scratch.');
+                    if (isScratch) {
+                        if (!Object.hasOwn(scratch, key.slice('scratch.'.length))) problems.push(where + ' sets ' + key + ', which is not declared');
+                        counts.scratchSets++;
+                    } else if (!event.values?.[key]) {
+                        problems.push(where + ' sets ' + key + ', which is not a Value of the Event');
+                    }
+                    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+                        // Per result, worked out once with the same parameters as an amount.
+                        const {onSuccess, onFailure, ...rest} = value;
+                        if (Object.keys(rest).length > 0) problems.push(where + ' set ' + key + ' has keys other than onSuccess and onFailure');
+                        if (onSuccess === undefined && onFailure === undefined) problems.push(where + ' set ' + key + ' has no onSuccess or onFailure');
+                        for (const [name, expr] of [['onSuccess', onSuccess], ['onFailure', onFailure]]) {
+                            const error = expr === undefined ? null : getAmountCompileError(expr);
+                            if (error) problems.push(where + ' set ' + key + ' ' + name + ' ' + error);
+                        }
+                        counts.perResultSets++;
+                    } else if (typeof value !== 'string') {
+                        problems.push(where + ' set ' + key + ' is not a string or {onSuccess, onFailure}');
+                    } else if (isScratch) {
+                        const error = getAmountCompileError(value);
+                        if (error) problems.push(where + ' set ' + key + ' ' + error);
+                    }
                 }
                 if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which effects replaced');
             }

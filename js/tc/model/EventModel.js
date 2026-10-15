@@ -539,21 +539,56 @@
                 this.doneCount = 0;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
-                const {skillCheck, available} = attrs;
+                const {skillCheck, available, set} = attrs;
                 delete attrs.skillCheck;
                 delete attrs.available;
+                delete attrs.set;
                 
                 this.callSuper(attrs);
                 
                 this.setSkillCheck(skillCheck);
                 this.setAvailable(available);
+                this.setSet(set);
             },
             
             
             // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
             
-            setSet: function(set) {this.set('setObj', set, true);},
+            /*  What the action sets, by key: a Value of its Event, or "scratch.<name>". An 
+                entry is either:
+                    - a string, set when the check passes. A Value gets it as a constraint 
+                      expression, kept up to date, and scratch as a check expression, worked 
+                      out once.
+                    - {onSuccess, onFailure}, either optional: check expressions worked out 
+                      once, when the action is taken, for the result the check had. They see 
+                      margin, and set a Value to a literal.
+                Entries that are neither are left out, with a warning. */
+            setSet: function(set) {
+                const clean = {};
+                for (const key in set ?? {}) {
+                    const cfg = set[key],
+                        warn = msg => console.warn('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key + ' ' + msg + ' (ignoring it):', cfg);
+                    if (typeof cfg === 'string') {
+                        clean[key] = cfg;
+                    } else if (cfg !== null && typeof cfg === 'object' && !Array.isArray(cfg)) {
+                        const {onSuccess, onFailure, ...rest} = cfg,
+                            isExpr = expr => expr === undefined || (typeof expr === 'string' && expr.trim() !== '');
+                        if (Object.keys(rest).length > 0) {
+                            warn('has keys other than onSuccess and onFailure');
+                        } else if (!isExpr(onSuccess) || !isExpr(onFailure)) {
+                            warn('onSuccess and onFailure must be non-empty strings');
+                        } else if (onSuccess === undefined && onFailure === undefined) {
+                            warn('needs an onSuccess or onFailure');
+                        } else {
+                            clean[key] = {onSuccess, onFailure};
+                        }
+                    } else {
+                        warn('must be a string, or {onSuccess, onFailure}');
+                    }
+                }
+                this.set('setObj', clean, true);
+            },
             
             /*  An optional condition on the agent who'd take the action, e.g.
                 "agent.health.value < agent.health.max". Unlike hidden, which is the same for

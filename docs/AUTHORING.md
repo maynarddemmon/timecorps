@@ -287,9 +287,10 @@ Actions are what agents do at an event: a check, then changes to values and stat
 
 - **`label`**: the button's text.
 - **`skillCheck`**: see [Skill checks](#skill-checks). Leave it out for an even chance: difficulty 250 against no skill.
-- **`set`**: on success, sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order.
-  - A key that's a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
-  - A `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's effects are worked out before its sets, so they see the entries as they were.
+- **`set`**: sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order. Each entry is a string, set when the check passes, or `{"onSuccess":…, "onFailure":…}`, set for either result.
+  - A string for a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
+  - A string for a `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's effects are worked out before its sets, so they see the entries as they were.
+  - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an effect's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`effects`**: changes to stats. See [Effects](#effects).

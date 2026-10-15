@@ -681,26 +681,36 @@
                 // After the effects are worked out, so they see the count before this is applied.
                 actionModel.setAttemptCount(actionModel.getAttemptCount() + 1);
                 
-                if (check.success) {
-                    for (const key in setObj) {
-                        const value = setObj[key];
-                        if (key.startsWith(SCRATCH_PREFIX)) {
-                            // Worked out once, now, rather than kept up to date like a Causator,
-                            // so "scratch.x + 1" counts. Dice roll.
-                            const result = rollValue(value, getCheckCfg(this, actionModel.getActionSkillDifficulty()));
-                            if (result !== undefined) pkg.model.setScratch(key.slice(SCRATCH_PREFIX.length), result);
+                // A string entry sets on success. An {onSuccess, onFailure} entry sets for 
+                // either result, worked out once now. See EventActionModel.setSet.
+                const success = check.success,
+                    rollCfg = {...getCheckCfg(this, actionModel.getActionSkillDifficulty()), margin:check.result ?? 0};
+                for (const key in setObj) {
+                    const cfg = setObj[key],
+                        isPerResult = typeof cfg === 'object',
+                        expr = isPerResult ? (success ? cfg.onSuccess : cfg.onFailure) : (success ? cfg : undefined);
+                    if (expr === undefined) continue;
+                    
+                    if (key.startsWith(SCRATCH_PREFIX)) {
+                        // Worked out once, now, rather than kept up to date like a Causator,
+                        // so "scratch.x + 1" counts. Dice roll.
+                        const result = rollValue(expr, rollCfg);
+                        if (result !== undefined) pkg.model.setScratch(key.slice(SCRATCH_PREFIX.length), result);
+                    } else {
+                        const eventValueModel = event.values[key];
+                        if (!eventValueModel) {
+                            console.warn('Missing Value in doIt:' + key);
+                        } else if (isPerResult) {
+                            // Set as a literal, so it stays what it was worked out to be.
+                            const result = rollValue(expr, rollCfg);
+                            if (result !== undefined) eventValueModel.setValueByAction(JSON.stringify(result));
                         } else {
-                            const eventValueModel = event.values[key];
-                            if (eventValueModel) {
-                                eventValueModel.setValueByAction(value);
-                            } else {
-                                console.warn('Missing Value in doIt:' + key);
-                            }
+                            eventValueModel.setValueByAction(expr);
                         }
                     }
-                    
-                    actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 }
+                
+                if (success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 this.pushOntoLog(logEntry);
             }
         },

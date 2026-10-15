@@ -148,7 +148,7 @@
 				"wait":{
 					"label":"Wait for the Bus",
 					"skillCheck":{"actionType":"coin_flip"},
-					"set":{"bus_arrives":"true"}
+					"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}
 				}
 			},
 			"exits":[
@@ -161,11 +161,11 @@
 			"values":{
 				"bus_arrives":{
 					"name":"Bus Arrives",
-					"value":"false",
+					"value":"0",
 					"description":[
-						{"text":"The bus seems to be running late.", "hidden":"event.actions.wait.attemptCount > 0"},
-						{"text":"The bus arrives.", "hidden":"event.actions.wait.attemptCount === 0 || !event.values.bus_arrives.value"},
-						{"text":"The bus is late, you rush home and grab your bike. You‘ll have to ride to work.", "hidden":"event.actions.wait.attemptCount === 0 || event.values.bus_arrives.value"}
+						{"text":"The bus seems to be running late.", "hidden":"event.values.bus_arrives.value !== 0"},
+						{"text":"The bus arrives. You can still rush home and grab your bike if you’d rather ride to work.", "hidden":"event.values.bus_arrives.value !== 1"},
+						{"text":"The bus is late, you rush home and grab your bike. You‘ll have to ride to work.", "hidden":"event.values.bus_arrives.value !== -1"}
 					]
 				}
 			},
@@ -180,7 +180,7 @@
 			"duration":{"m":30},
 			"location":"origin.city_streets",
 			"actionLimit":1,
-			"hidden":"events.origin_bus_stop.actions.wait.attemptCount === 0 || !events.origin_bus_stop.values.bus_arrives.value",
+			"hidden":"events.origin_bus_stop.values.bus_arrives.value !== 1",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -245,7 +245,7 @@
 			"duration":{"h":8},
 			"location":"origin.hospital",
 			"actionLimit":2,
-			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -309,7 +309,7 @@
 			"duration":{"h":8},
 			"location":"origin.newsroom",
 			"actionLimit":2,
-			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -373,7 +373,7 @@
 			"duration":{"h":8},
 			"location":"origin.garage",
 			"actionLimit":2,
-			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -437,7 +437,7 @@
 			"duration":{"h":8},
 			"location":"origin.theater",
 			"actionLimit":2,
-			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
