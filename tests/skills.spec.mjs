@@ -1,6 +1,6 @@
 // Buying skill points: at HQ, from the agent's dossier, for credits, up to MAX_SKILL_VALUE.
 import {test, expect} from '@playwright/test';
-import {startGame, reloadGame} from './helpers.mjs';
+import {startGame, reloadGame, readTestData} from './helpers.mjs';
 
 const
     /*  Puts Alpha at HQ with some credits and opens their dossier. */
@@ -135,5 +135,77 @@ test('bought skill points survive a save and reload', async ({page}) => {
     });
     await reloadGame(page);
     expect(await readAlpha(page, 'agl')).toEqual({skill:27, credits:1});
+    expect(problems.pageErrors).toEqual([]);
+});
+
+/*  Serves the test scenario with skill effects added to Alpha's origin, as if they were in the
+    data: an action that trains one skill and costs another, one that overtrains, one that
+    names no skill, and an exit that trains on the way. */
+const routeScenarioWithSkillEffects = page => page.route('**/tests/data/test_scenario.json5', route => {
+    const json = readTestData('test_scenario.json5'),
+        origin = json.events.origin,
+        NO_ROLL = {difficulty:'no-roll'};
+    Object.assign(origin.actions, {
+        drill:{label:'Drill', skillCheck:NO_ROLL, effects:{'agent.skills.agl':{onSuccess:'15'}, 'agent.skills.cha':{onSuccess:'-10'}}},
+        overdo:{label:'Overdo', skillCheck:NO_ROLL, effects:{'agent.skills.agl':{onSuccess:'5000'}}},
+        nope:{label:'Nope', skillCheck:NO_ROLL, effects:{'agent.skills.nope':{onSuccess:'1'}}}
+    });
+    origin.exits.find(exit => exit.to === 'aftermath').effects = {'agent.skills.dex':{onSuccess:'5'}};
+    return route.fulfill({json});
+});
+
+test('effects can raise and lower an agent\'s skills, within the maximum, from actions and exits', async ({page}) => {
+    await routeScenarioWithSkillEffects(page);
+    const problems = await startGame(page),
+        out = await page.evaluate(() => {
+            const alpha = tc.model.getAgentModel('AL'),
+                origin = tc.model.getEventModel('origin'),
+                actions = origin.getActionModels(),
+                skills = () => ({agl:alpha.getSkill('agl'), cha:alpha.getSkill('cha'), dex:alpha.getSkill('dex')}),
+                lastLogged = () => alpha.getLog().at(-1).effects,
+                r = {before:skills(), phrase:alpha.getEffectsPhrase(actions.drill), nopeEffects:actions.nope.getEffects().length};
+            alpha.doAction(actions.drill);
+            r.drilled = skills();
+            r.drillLogged = lastLogged();
+            alpha.setActionExecCount(0);
+            alpha.doAction(actions.overdo);
+            r.overdone = skills();
+            r.overdoLogged = lastLogged();
+            alpha.doFollowExit(origin.getExitModels().find(exit => exit.to === 'aftermath'));
+            r.walked = skills();
+            r.event = alpha.event;
+            return r;
+        });
+    const {before} = out;
+    expect(out.drilled).toEqual({agl:before.agl + 15, cha:before.cha - 10, dex:before.dex});
+    expect(out.drillLogged).toEqual({'agent.skills.agl':15, 'agent.skills.cha':-10});
+    // Effects stop at the maximum, and log what they actually changed.
+    expect(out.overdone.agl).toBe(1000);
+    expect(out.overdoLogged).toEqual({'agent.skills.agl':1000 - (before.agl + 15)});
+    expect(out.walked).toEqual({agl:1000, cha:before.cha - 10, dex:before.dex + 5});
+    expect(out.event).toBe('aftermath');
+    // The tooltip names the skill.
+    expect(out.phrase).toContain('Agility: ');
+    expect(out.phrase).toContain('Charisma: ');
+    // An effect on a skill that isn't configured is left out, with a warning.
+    expect(out.nopeEffects).toBe(0);
+    expect(problems.warnings).toEqual([expect.stringMatching(/^Event origin action nope effect agent\.skills\.nope names no skill/)]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('skills changed by effects show in the dossier and survive a save and reload', async ({page}) => {
+    await routeScenarioWithSkillEffects(page);
+    const problems = await startGame(page);
+    const before = await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL'),
+            before = alpha.getSkill('agl');
+        tc.app.openAgentDossier(alpha);
+        alpha.doAction(tc.model.getEventModel('origin').getActionModels().drill);
+        return before;
+    });
+    await expect(page.getByText('Agility : ' + (before + 15), {exact:true}).filter({visible:true})).toBeVisible();
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    expect((await readAlpha(page, 'agl')).skill).toBe(before + 15);
     expect(problems.pageErrors).toEqual([]);
 });

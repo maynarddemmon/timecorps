@@ -71,7 +71,7 @@
             self._photo = new pkg.MediaView(self, photoAttrs, photoMixins);
             
             const labelWidth = 65,
-                profile = new WideView(self, {
+                profile = self._profile = new WideView(self, {
                     x:halfPadding, percentOfParentWidthOffset:-padding, percentOfParentHeight:100,
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
                     overflow:'autoy'
@@ -101,6 +101,7 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         getPhoto: function() {return this._photo;},
+        getProfile: function() {return this._profile;},
         
         getBriefReportLabel: () => 'Report',
         

@@ -12,7 +12,9 @@
             NotifyingNumericStatModel, getConstrainedValueCfg,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
-                AGENT_CHRONAL_LIMIT, AGENT_PARADOX_LIMIT, AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
+                AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
+                AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
+                AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
                 SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             theme:{colorAction, fontFamilyMono},
@@ -184,7 +186,8 @@
             self.actionExecCount = 0;
             
             self[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
-                notifyTargets:self, id:STAT_ID_PARADOX, absMin:0, min:0, value:0, max:AGENT_PARADOX_LIMIT
+                notifyTargets:self, id:STAT_ID_PARADOX,
+                absMin:0, min:0, value:AGENT_DEFAULT_PARADOX, max:AGENT_PARADOX_LIMIT
             }, [{
                 // Reaching the limit, however it happens, gets the Agent devoured.
                 triggerValueAtMax: function() {
@@ -194,7 +197,8 @@
             }]);
             
             self[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
-                notifyTargets:self, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:AGENT_CHRONAL_LIMIT
+                notifyTargets:self, id:STAT_ID_CHRONAL,
+                absMin:0, min:0, value:AGENT_DEFAULT_CHRONAL, max:AGENT_CHRONAL_LIMIT
             });
             
             // The max is the Agent's constitution, which can be raised up to the absMax. 
@@ -232,19 +236,35 @@
         setName: function(name) {this.setAndNotifyCollection('name', name, true);},
         getName: function() {return this.name;},
         
-        setParadox: function(v) { // Used by instantiation only.
+        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
+            to the max. */
+        setParadox: function(v) {
             if (this.inited) {
                 console.warn('AgentModel.setParadox after init', this);
             } else {
-                this[STAT_ID_PARADOX].setValue(v);
+                const statParadox = this[STAT_ID_PARADOX];
+                if (typeof v === 'number') {
+                    statParadox.setValue(v);
+                } else if (v) {
+                    if (v.max != null) statParadox.setMax(v.max);
+                    statParadox.setValue(v.value ?? statParadox.getMax());
+                }
             }
         },
         
-        setChronal: function(v) { // Used by instantiation only.
+        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
+            to the max. */
+        setChronal: function(v) {
             if (this.inited) {
                 console.warn('AgentModel.setChronal after init', this);
             } else {
-                this[STAT_ID_CHRONAL].setValue(v);
+                const statChronal = this[STAT_ID_CHRONAL];
+                if (typeof v === 'number') {
+                    statChronal.setValue(v);
+                } else if (v) {
+                    if (v.max != null) statChronal.setMax(v.max);
+                    statChronal.setValue(v.value ?? statChronal.getMax());
+                }
             }
         },
         
@@ -363,6 +383,23 @@
         },
         getSkills: function() {return this[SCOPE_SKILLS];},
         getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
+        
+        /*  A skill as an effect sees a stat: it can change within ±MAX_SKILL_VALUE. */
+        getSkillStat: function(skillId) {
+            // This provides a Stat like interface to a skill for purposes of modification.
+            const agentModel = this;
+            return {
+                getAllowedAdj: adj => {
+                    const value = agentModel.getSkill(skillId),
+                        newValue = mathMin(MAX_SKILL_VALUE, mathMax(-MAX_SKILL_VALUE, value + adj));
+                    return {adj:newValue - value};
+                },
+                adjValue: adj => {
+                    agentModel[SCOPE_SKILLS] = {...agentModel[SCOPE_SKILLS], [skillId]:agentModel.getSkill(skillId) + adj};
+                    agentModel.notifyCollectionOfUpdate();
+                }
+            };
+        },
         getSkillChronogation: function() {return this.getSkill(SKILL_ID_CHRONOGATION);},
         getSkillInvestigation: function() {return this.getSkill(SKILL_ID_INVESTIGATION);},
         
@@ -584,16 +621,20 @@
                     // way, e.g. hurt. The result is shown before the effects apply since that can
                     // rebuild the views, btnView included. The first effect with its own check 
                     // gives the result.
-                    const effects = this.rollEffectsFor(exitModel),
-                        logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
-                    if (effects.length > 0) {
-                        const shownCheck = effects.find(effect => effect.check)?.check ?? {success:true, roll:null};
-                        showFloatingTextForSkillCheck(btnView, {...shownCheck, effects});
-                        this.applyEffects(effects, logEntry);
+                    const costs = this.getCostsFor(exitModel);
+                    if (costs.every(cost => cost.canPay)) {
+                        const effects = this.rollEffectsFor(exitModel),
+                            logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
+                        this.payCosts(costs, logEntry);
+                        if (effects.length > 0) {
+                            const shownCheck = effects.find(effect => effect.check)?.check ?? {success:true, roll:null};
+                            showFloatingTextForSkillCheck(btnView, {...shownCheck, effects});
+                            this.applyEffects(effects, logEntry);
+                        }
+                        
+                        this.setEvent(toEvent.id, logEntry);
+                        pkg.app.selectEventBox(toEvent);
                     }
-                    
-                    this.setEvent(toEvent.id, logEntry);
-                    pkg.app.selectEventBox(toEvent);
                 }
             } else {
                 console.warn('Agent not at event for exit:', exitModel, this);

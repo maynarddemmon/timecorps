@@ -14,13 +14,17 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE,
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SKILLS,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
         TRAVEL_MODE_WAIT ='wait',
         TRAVEL_MODE_WALK ='walk',
         TRAVEL_MODE_SWIM ='swim',
+        TRAVEL_MODE_BIKE ='bike',
+        TRAVEL_MODE_ENTER ='enter',
+        TRAVEL_MODE_JUMP ='jump',
+        TRAVEL_MODE_PULLED ='pulled',
         TRAVEL_MODE_LIFEBOAT = 'lifeboat',
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
@@ -115,7 +119,9 @@
         
         /*  One effect of an action or exit: a change to a stat, named by its key as 
             "<scope>.<stat>", e.g. "agent.health", "event.attestation" or "timeline.paradox". 
-            See EFFECT_STAT_IDS. Configured as:
+            See EFFECT_STAT_IDS. Or a change to one of the agent's skills, keyed 
+            "agent.skills.<skill>", e.g. "agent.skills.agl", whose statId is "skills.<skill>". 
+            Configured as:
                 onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 
                     positive amount raises the stat and a negative one lowers it, within the 
                     stat's limits. An amount sees the same parameters as a check expression.
@@ -157,13 +163,16 @@
             
             /*  The model whose stat changes: the agent, the owner's Event or the timeline. */
             getTarget: function(agentModel) {
+                if (this.skillId) return agentModel;
                 switch (this.scopeName) {
                     case SCOPE_AGENT: return agentModel;
                     case SCOPE_EVENT: return this.owner.event;
                     case SCOPE_TIMELINE: return pkg.model;
                 }
             },
-            getStat: function(agentModel) {return this.getTarget(agentModel)?.[this.statId];},
+            getStat: function(agentModel) {
+                return this.skillId ? agentModel?.getSkillStat(this.skillId) : this.getTarget(agentModel)?.[this.statId];
+            },
             
             
             // Methods /////////////////////////////////////////////////////////
@@ -171,10 +180,16 @@
             configure: function(cfg) {
                 const self = this,
                     warn = msg => console.warn(self.getSkillCheckOwner(), msg + ':', cfg),
-                    [scopeName, statId, ...rest] = String(self.key).split('.');
+                    [scopeName, statId, ...rest] = String(self.key).split('.'),
+                    isSkill = scopeName === SCOPE_AGENT && statId === SCOPE_SKILLS && rest.length === 1;
                 
-                if (rest.length > 0 || !Object.hasOwn(EFFECT_STAT_IDS, scopeName) || !EFFECT_STAT_IDS[scopeName].includes(statId)) {
-                    warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health" (ignoring it)');
+                if (isSkill) {
+                    if (!pkg.isSkillId(rest[0])) {
+                        warn('names no skill (ignoring it)');
+                        return false;
+                    }
+                } else if (rest.length > 0 || !Object.hasOwn(EFFECT_STAT_IDS, scopeName) || !EFFECT_STAT_IDS[scopeName].includes(statId)) {
+                    warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it)');
                     return false;
                 }
                 if (cfg == null || typeof cfg !== 'object' || Array.isArray(cfg)) {
@@ -182,7 +197,8 @@
                     return false;
                 }
                 self.scopeName = scopeName;
-                self.statId = statId;
+                self.statId = isSkill ? statId + '.' + rest[0] : statId;
+                self.skillId = isSkill ? rest[0] : null;
                 
                 const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg,
                     toAmount = (name, amount) => {
@@ -337,7 +353,10 @@
         },
         
         /*  The costs of an action when it doesn't give its own. */
-        DEFAULT_COSTS = {[COST_KEY_ACTION]:'1'},
+        DEFAULT_ACTION_COSTS = {[COST_KEY_ACTION]:'1'},
+        
+        /*  The costs of an action when it doesn't give its own. */
+        DEFAULT_EXIT_COSTS = {},
         
         /*  One cost of an action: something the agent must pay to take it, named by its key,
             e.g. "agent.action" or "timeline.score". See COSTS. Configured as an amount
@@ -443,7 +462,11 @@
                     console.warn(this.getSkillCheckOwner(), 'costs must be an object of amounts by key, e.g. {"agent.action":"2"} (using the default):', cfg);
                     cfg = undefined;
                 }
-                cfg = {...DEFAULT_COSTS, ...cfg};
+                if (this.isA(EventActionModel)) {
+                    cfg = {...DEFAULT_ACTION_COSTS, ...cfg};
+                } else if (this.isA(EventExitModel)) {
+                    cfg = {...DEFAULT_EXIT_COSTS, ...cfg};
+                }
                 for (const key in cfg) {
                     if (cfg[key] === null) continue;
                     
@@ -678,7 +701,7 @@
         }),
         
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, EffectsSupport, CostsSupport],
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -706,8 +729,12 @@
             getModePhrase: function() {
                 switch (this.mode) {
                     case TRAVEL_MODE_WAIT:     return 'Wait til';
+                    case TRAVEL_MODE_JUMP:     return 'Jump to';
+                    case TRAVEL_MODE_PULLED:   return 'Pulled to';
+                    case TRAVEL_MODE_ENTER:    return 'Enter';
                     case TRAVEL_MODE_WALK:     return 'Walk to';
                     case TRAVEL_MODE_SWIM:     return 'Swim to';
+                    case TRAVEL_MODE_BIKE:     return 'Bike to';
                     case TRAVEL_MODE_LIFEBOAT: return 'Lifeboat to';
                     default: return 'To';
                 }

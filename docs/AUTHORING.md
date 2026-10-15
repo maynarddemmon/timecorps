@@ -175,7 +175,7 @@ Skills and skill checks can also be added by scenario files. A later file's entr
 			"name":"Bridge",
 			"color":"#ccf9",
 			"textColor":"#000",   // Optional.
-			"order":3,            // The row's position on the timeline. Required.
+			"order":3,            // The row's position on the timeline, 0 or more. Required.
 			"video":true,         // Optional: there's a .webm as well as the .jpg.
 			"description":[…]     // Optional phrases, shown in the area brief.
 		}
@@ -351,6 +351,8 @@ Effects change stats as the result of an action or exit. They're keyed by the st
 | `agent` | `health`, `chronal`, `paradox` | The agent taking the action or exit |
 | `event` | `attestation`, `historicity`, `paradox` | The event the action or exit belongs to |
 | `timeline` | `paradox`, `chronal` | The timeline |
+
+An effect can also change one of the agent's skills, keyed `"agent.skills.<skill>"`, e.g. `"agent.skills.agl"`. Skills change within ±`MAX_SKILL_VALUE` (1000), are named in tooltips and floating text by the skill's name, e.g. "+15 Agility", and are saved with the agent. Origin Story uses them to build the player's agent from their choices.
 
 ```json5
 "effects":{

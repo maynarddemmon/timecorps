@@ -250,7 +250,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     if (cfg === null) continue;
                     const at = where + ' effect ' + key,
                         [scope, statId, ...rest] = key.split('.');
-                    if (rest.length > 0 || !EFFECT_STAT_IDS[scope]?.includes(statId)) effectProblems.push(at + ' is not a stat of the agent, event or timeline');
+                    if (scope === 'agent' && statId === 'skills' && rest.length === 1) {
+                        if (!Object.hasOwn(skillCfgs, rest[0])) effectProblems.push(at + ' is not a skill');
+                    } else if (rest.length > 0 || !EFFECT_STAT_IDS[scope]?.includes(statId)) {
+                        effectProblems.push(at + ' is not a stat of the agent, event or timeline, or a skill of the agent');
+                    }
                     if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
                         effectProblems.push(at + ' is not an object');
                         continue;

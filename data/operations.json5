@@ -1,7 +1,37 @@
 {
-	"initialOperation":"titanic_noCollision",
+	"initialOperation":"origin_story",
 	
 	"operations":{
+		"origin_story":{
+			"name":"Origin Story",
+			"description":[
+				"An ordinary Friday in November 2026."
+			],
+			"onSetup":{
+				"awardAgents":"ME",
+				"revealAgents":"ME",
+				"initialAgentSelection":"ME",
+				"initialEventSelection":"origin_alarm"
+			},
+			"objectives":{
+				"answer":{
+					"name":"Answer the Call",
+					"description":[
+						"Find out what has happened to you."
+					],
+					"success":"events.safehouse_room.values.heard.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"Yesterday you were an ordinary person with an ordinary life. Tonight you are alone in a stranger’s hideout, sixty years from home, with a dead agent’s mission strapped to your wrist.",
+					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: on the night of 14 April 1912, in the North Atlantic, something is about to go wrong."
+				],
+				"nextOperation":"titanic_noCollision",
+				"awardScore":1000
+			}
+		},
+		
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
 			"image":true,

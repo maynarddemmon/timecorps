@@ -1,8 +1,13 @@
 {
 	// The scenario files loaded after this one, in order.
-	"scenarios":["titanic_scenario", "lusitania_scenario"],
+	"scenarios":["origin_scenario", "titanic_scenario", "lusitania_scenario"],
 	
 	"skillChecks":{
+		"coin_flip":{
+			"name":"Coin Flip",
+			"check":"agent.skills.luck",
+			"difficulty":500
+		},
 		"sure_thing":{
 			"name":"Sure Thing",
 			"check":"1000",
@@ -35,6 +40,10 @@
 	},
 	
 	"skills":{
+		"luck":{
+			"name":"Luck",
+			"description":"How much the hand of fate favors you."
+		},
 		"agl":{
 			"name":"Agility",
 			"description":"Balance and coordination."

@@ -80,8 +80,11 @@
             [STAT_ID_HEALTH]:ICON_HEALTH
         },
         
-        /*  A stat's name, e.g. for describing an effect on it. */
-        getStatName = statId => STAT_NAME_BY_ID[statId] ?? statId,
+        /*  A stat's name, e.g. for describing an effect on it. A skill, as an effect names it,
+            e.g. "skills.agl", is named by its config, e.g. "Agility". */
+        getStatName = statId => STAT_NAME_BY_ID[statId] ?? 
+            (statId.startsWith(SCOPE_SKILLS + '.') ? TC.getSkillConfig?.(statId.slice(SCOPE_SKILLS.length + 1))?.name : undefined) ?? 
+            statId,
         
         // A difficulty in the data that skips the roll, so the check always succeeds. It's
         // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
@@ -164,8 +167,8 @@
                 MIN_JUMP_CHRONAL:1,
                 
                 // The starting maximum chronal an Agent can have.
-                AGENT_DEFAULT_STARTING_CHRONAL:75,
-                AGENT_CHRONAL_LIMIT:100,
+                AGENT_DEFAULT_CHRONAL:45,
+                AGENT_CHRONAL_LIMIT:50,
                 
                 // An Agent's normal maximum health, and the most it can ever be raised to.
                 AGENT_DEFAULT_HEALTH:100,
@@ -179,6 +182,7 @@
                 MIN_SKILL_EASE:-999,
                 
                 // The starting maximum paradox an Agent can have.
+                AGENT_DEFAULT_PARADOX:0,
                 AGENT_PARADOX_LIMIT:5,
                 
                 // The starting maximum paradox an Event can have.

@@ -345,7 +345,7 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     ]);
 });
 
-test('effects must be keyed by a stat of the agent, event or timeline, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
+test('effects must be keyed by a stat of the agent, event or timeline, or a skill of the agent, and the old injurySkillCheck is ignored with a warning', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const origin = tc.model.getEventModel('origin'),
@@ -357,6 +357,9 @@ test('effects must be keyed by a stat of the agent, event or timeline, and the o
                 'event.health':{onSuccess:'1'},
                 'agent.health.value':{onSuccess:'1'},
                 'toString.health':{onSuccess:'1'},
+                'agent.skills':{onSuccess:'1'},
+                'agent.skills.agl.max':{onSuccess:'1'},
+                'event.skills.agl':{onSuccess:'1'},
                 'agent.health':'-5',
                 // An exit has no check of its own to follow, so this is ignored.
                 'timeline.paradox':{onSuccess:'1', enabledForActionSkillCheck:'success'}
@@ -369,13 +372,16 @@ test('effects must be keyed by a stat of the agent, event or timeline, and the o
             return {valid, notAnObject, oldEffects:origin.getActionModels().old.getEffects().length};
         });
     expect(out).toEqual({valid:['timeline.paradox both'], notAnObject:[], oldEffects:0});
-    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health" (ignoring it): {onSuccess: 1}';
+    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", or a skill of the agent, e.g. "agent.skills.agl" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath effect agent.luck ' + named,
         'Event origin exit to aftermath effect health ' + named,
         'Event origin exit to aftermath effect event.health ' + named,
         'Event origin exit to aftermath effect agent.health.value ' + named,
         'Event origin exit to aftermath effect toString.health ' + named,
+        'Event origin exit to aftermath effect agent.skills ' + named,
+        'Event origin exit to aftermath effect agent.skills.agl.max ' + named,
+        'Event origin exit to aftermath effect event.skills.agl ' + named,
         'Event origin exit to aftermath effect agent.health must be an object (ignoring it): -5',
         'Event origin exit to aftermath effect timeline.paradox enabledForActionSkillCheck only applies to actions (ignoring it): {onSuccess: 1, enabledForActionSkillCheck: success}',
         'Event origin exit to aftermath effects must be an object of effects by stat, e.g. "agent.health" (ignoring them): [Object]',

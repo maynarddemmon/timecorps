@@ -21,6 +21,40 @@
 	},
 	
 	"agents":{
+		// The player: a civilian from 2026 until a stranger straps a device to their wrist.
+		// Their name and portrait are placeholders until the player can choose them. Their
+		// skills start at 0 and Origin Story's choices move them. Their field notes list
+		// those choices.
+		"ME":{
+			"name":"You",
+			"event":"origin_alarm",
+			"health":{"value":70, "max":70},
+			"chronal":{"value":0, "max":25},
+			"skills":{
+				"chronogation":-1000,
+			},
+			"description":[
+				{"text":"A civilian, born in the twenty-first century.", "hidden":"events.origin_stranger.values.reaction.value !== ''"},
+				{"text":"A civilian from 2026, pulled out of time by a stranger’s device.", "hidden":"events.origin_stranger.values.reaction.value === ''"},
+				{"text":"Runs every morning.", "hidden":"!scratch.backstory_run"},
+				{"text":"Plays guitar, badly but every day.", "hidden":"!scratch.backstory_guitar"},
+				{"text":"Reads the news cover to cover, and argues with it.", "hidden":"!scratch.backstory_news"},
+				{"text":"Will talk to anyone, and usually win them over.", "hidden":"events.origin_busride.values.choice.value !== 'chat'"},
+				{"text":"A people-watcher: notices how others carry themselves.", "hidden":"events.origin_busride.values.choice.value !== 'watch'"},
+				{"text":"Hasn’t paid a bus fare in years.", "hidden":"events.origin_busride.values.choice.value !== 'dodge'"},
+				{"text":"Nurse at St. Brendan’s. Found a lost patient no one else could.", "hidden":"events.origin_hospital.values.choice.value !== 'track'"},
+				{"text":"Nurse at St. Brendan’s. Keeps a ward calm in a crisis.", "hidden":"events.origin_hospital.values.choice.value !== 'calm'"},
+				{"text":"Reporter at the Ledger. Gets the story by following people.", "hidden":"events.origin_newsroom.values.choice.value !== 'chase'"},
+				{"text":"Reporter at the Ledger. Gets the story onto the front page.", "hidden":"events.origin_newsroom.values.choice.value !== 'pitch'"},
+				{"text":"Mechanic at Delgado’s. Fixes what others can’t find.", "hidden":"events.origin_garage.values.choice.value !== 'fix'"},
+				{"text":"Mechanic at Delgado’s. Sells repairs better than they make them.", "hidden":"events.origin_garage.values.choice.value !== 'haggle'"},
+				{"text":"Understudy at the Orpheum. Played the lead and no one noticed.", "hidden":"events.origin_theater.values.choice.value !== 'cover'"},
+				{"text":"Stagehand at the Orpheum. Unafraid of heights.", "hidden":"events.origin_theater.values.choice.value !== 'rig'"},
+				{"text":"Takes shortcuts through alleys.", "hidden":"events.origin_walk_home.values.choice.value !== 'alley'"},
+				{"text":"Helps strangers, even in the rain.", "hidden":"events.origin_walk_home.values.choice.value !== 'tourist'"},
+				{"text":"Never pays for a drink.", "hidden":"events.origin_walk_home.values.choice.value !== 'bar'"}
+			]
+		},
 		"VQ":{
 			"name":"Vasquez",
 			"video":true,
@@ -42,7 +76,7 @@
 		"OK":{
 			"name":"Okonjo",
 			"health":{"value":50, "max":90},
-			"chronal":0,
+			"chronal":{"value":0},
 			"paradox":1,
 			"skills":{
 				"chronogation":25,

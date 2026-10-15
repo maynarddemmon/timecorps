@@ -1,0 +1,780 @@
+{
+	// Origin Story: the player's ordinary day in 2026, which shapes their skills and history,
+	// until a stranger straps a device to their wrist and it carries them to a safe house in
+	// 2087. Its rows sit left of the Titanic's, whose orders start at 1 (negative orders
+	// aren't shown).
+	"locationsBaseOrder":0,
+	
+	"locations":{
+		"origin.home":{
+			"name":"Your Apartment",
+			"color":"#0003"
+		},
+		"origin.city_streets":{
+			"name":"City Streets",
+			"color":"#0003"
+		},
+		"origin.hospital":{
+			"name":"St. Brendan’s Hospital",
+			"color":"#0006"
+		},
+		"origin.newsroom":{
+			"name":"The Ledger Newsroom",
+			"color":"#0006"
+		},
+		"origin.garage":{
+			"name":"Delgado’s Garage",
+			"color":"#0006"
+		},
+		"origin.theater":{
+			"name":"The Orpheum Theater",
+			"color":"#0006"
+		},
+		"origin.street":{
+			"name":"Halsey Street",
+			"color":"#0009"
+		},
+		"safehouse.corridor":{
+			"name":"Corridor",
+			"color":"#000c"
+		},
+		"safehouse.office":{
+			"name":"Office",
+			"color":"#000c"
+		}
+	},
+	
+	"scratch":{
+		"backstory_run":false,
+		"backstory_guitar":false,
+		"backstory_news":false,
+		"backstory_work_chosen":false
+	},
+	
+	"events":{
+		// Act 1: an ordinary Friday. Each event offers one choice, which can't be undone, and
+		// the way on opens once it's made. Choices grant skills (between them, no skill goes
+		// past ±50) and are remembered in the agent's field notes.
+		"origin_alarm":{
+			"name":"The Alarm",
+			"start":"2026-11-13T07:00:00",
+			"duration":{"h":1},
+			"location":"origin.home",
+			"hidden":"false",
+			"actionLimit":2,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"run":{
+					"label":"Go for a Run",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{
+						"choice":"'run'",
+						"scratch.backstory_run":"true"
+					},
+					"effects":{
+						"agent.skills.agl":{"onSuccess":"15"},
+						"agent.skills.str":{"onSuccess":"10"}
+					},
+					"available":"!scratch.backstory_run"
+				},
+				"guitar":{
+					"label":"Practice the Guitar",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{
+						"choice":"'guitar'",
+						"scratch.backstory_guitar":"true"
+					},
+					"effects":{
+						"agent.skills.dex":{"onSuccess":"15"},
+						"agent.skills.cha":{"onSuccess":"10"}
+					},
+					"available":"!scratch.backstory_guitar"
+				},
+				"news":{
+					"label":"Read the News",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{
+						"choice":"'news'",
+						"scratch.backstory_news":"true"
+					},
+					"effects":{
+						"agent.skills.investigation":{"onSuccess":"15"},
+						"agent.skills.persuasion":{"onSuccess":"10"}
+					},
+					"available":"!scratch.backstory_news"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_bus_stop"}
+			],
+			"values":{
+				"choice":{
+					"name":"Morning Activities",
+					"value":"''",
+					"description":[
+						{"text":"The morning is yours, for an hour.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"Three miles along the river before breakfast, the way you do most mornings.", "hidden":"!scratch.backstory_run"},
+						{"text":"An hour on the guitar, working at a passage you’ve never quite got.", "hidden":"!scratch.backstory_guitar"},
+						{"text":"Coffee and the news, every word of it, with opinions.", "hidden":"!scratch.backstory_news"}
+					]
+				}
+			},
+			"description":[
+				"Friday the 13th of November, 2026. Your alarm goes off at seven, the way it does every weekday, and the city outside your window is grey and wet and entirely ordinary.",
+				"<br><br>You have an hour before the bus. Nothing about today is going to be any different from any other day."
+			]
+		},
+		
+		"origin_bus_stop":{
+			"name":"The Bus Stop",
+			"start":"2026-11-13T08:03:00",
+			"duration":{"m":5},
+			"location":"origin.city_streets",
+			"actionLimit":1,
+			"hidden":"events.origin_alarm.values.choice.flipCount < events.origin_alarm.actionLimit",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"wait":{
+					"label":"Wait for the Bus",
+					"skillCheck":{"actionType":"coin_flip"},
+					"set":{"bus_arrives":"true"}
+				}
+			},
+			"exits":[
+				{"mode":"board", "to":"origin_busride"},
+				{"mode":"bike", "to":"origin_hospital"},
+				{"mode":"bike", "to":"origin_newsroom",},
+				{"mode":"bike", "to":"origin_garage"},
+				{"mode":"bike", "to":"origin_theater"}
+			],
+			"values":{
+				"bus_arrives":{
+					"name":"Bus Arrives",
+					"value":"false",
+					"description":[
+						{"text":"The bus seems to be running late.", "hidden":"event.actions.wait.attemptCount > 0"},
+						{"text":"The bus arrives.", "hidden":"event.actions.wait.attemptCount === 0 || !event.values.bus_arrives.value"},
+						{"text":"The bus is late, you rush home and grab your bike. You‘ll have to ride to work.", "hidden":"event.actions.wait.attemptCount === 0 || event.values.bus_arrives.value"}
+					]
+				}
+			},
+			"description":[
+				"The crosstown bus, crowded and steamed up, crawling through the morning traffic. The same faces as every other morning, more or less.",
+				"<br><br>Where it lets you off depends on where you work."
+			]
+		},
+		
+		"origin_busride":{
+			"name":"The Bus Ride",
+			"start":"2026-11-13T08:15:00",
+			"duration":{"m":30},
+			"location":"origin.city_streets",
+			"actionLimit":1,
+			"hidden":"events.origin_bus_stop.actions.wait.attemptCount === 0 || !events.origin_bus_stop.values.bus_arrives.value",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"chat":{
+					"label":"Talk to Your Neighbor",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'chat'"},
+					"effects":{
+						"agent.skills.cha":{"onSuccess":"10"},
+						"agent.skills.persuasion":{"onSuccess":"15"}
+					},
+					"available":"event.values.choice.value === ''"
+				},
+				"watch":{
+					"label":"Watch the Passengers",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'watch'"},
+					"effects":{
+						"agent.skills.investigation":{"onSuccess":"10"},
+						"agent.skills.disguise":{"onSuccess":"15"}
+					},
+					"available":"event.values.choice.value === ''"
+				},
+				"dodge":{
+					"label":"Ride Without a Ticket",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'dodge'"},
+					"effects":{
+						"agent.skills.stealth":{"onSuccess":"15"},
+						"agent.skills.deception":{"onSuccess":"10"}
+					},
+					"available":"event.values.choice.value === ''"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_hospital"},
+				{"mode":"walk", "to":"origin_newsroom"},
+				{"mode":"walk", "to":"origin_garage"},
+				{"mode":"walk", "to":"origin_theater"}
+			],
+			"values":{
+				"choice":{
+					"name":"On the Bus",
+					"value":"''",
+					"description":[
+						{"text":"Thirty minutes of stop-and-start traffic to fill.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"You talk to the woman beside you the whole way, and by the end she’s agreed with you about everything.", "hidden":"event.values.choice.value !== 'chat'"},
+						{"text":"You watch the other passengers and guess at their lives: how they stand, what they carry, what they’re pretending not to be.", "hidden":"event.values.choice.value !== 'watch'"},
+						{"text":"You slip on behind a crowd at the back door, and the inspector who gets on at Fifth never looks twice at you.", "hidden":"event.values.choice.value !== 'dodge'"}
+					]
+				}
+			},
+			"description":[
+				"The crosstown bus, crowded and steamed up, crawling through the morning traffic. The same faces as every other morning, more or less.",
+				"<br><br>Where it lets you off depends on where you work."
+			]
+		},
+		
+		"origin_hospital":{
+			"name":"A Shift at St. Brendan’s",
+			"start":"2026-11-13T09:00:00",
+			"duration":{"h":8},
+			"location":"origin.hospital",
+			"actionLimit":2,
+			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"work":{
+					"label":"Start Work",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"scratch.backstory_work_chosen":"true"},
+					"effects":{
+						"agent.skills.dex":{"onSuccess":"15"},
+						"agent.skills.str":{"onSuccess":"10"},
+						"agent.skills.deception":{"onSuccess":"-10"}
+					},
+					"available":"!scratch.backstory_work_chosen"
+				},
+				"track":{
+					"label":"Track Down the Wanderer",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'track'"},
+					"effects":{
+						"agent.skills.investigation":{"onSuccess":"10"},
+						"agent.skills.agl":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				},
+				"calm":{
+					"label":"Calm the Ward",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'calm'"},
+					"effects":{
+						"agent.skills.persuasion":{"onSuccess":"10"},
+						"agent.skills.cha":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_walk_home"}
+			],
+			"values":{
+				"choice":{
+					"name":"The Incident",
+					"value":"''",
+					"description":[
+						{"text":"Mr. Abernathy in bed twelve has gone missing again, and the ward is getting restless.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"You find Mr. Abernathy on the roof, in his gown, looking for a bus that stopped running in 1974.", "hidden":"event.values.choice.value !== 'track'"},
+						{"text":"Someone else finds Mr. Abernathy. You keep the rest of the ward in their beds and in good spirits.", "hidden":"event.values.choice.value !== 'calm'"}
+					]
+				}
+			},
+			"description":[
+				"You’re a nurse on the geriatric ward at St. Brendan’s: quick hands, a strong back and no patience at all for being lied to.",
+				"<br><br>Eight hours of bedpans, medication rounds and small emergencies."
+			]
+		},
+		
+		"origin_newsroom":{
+			"name":"Deadline at the Ledger",
+			"start":"2026-11-13T09:00:00",
+			"duration":{"h":8},
+			"location":"origin.newsroom",
+			"actionLimit":2,
+			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"work":{
+					"label":"Start Work",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"scratch.backstory_work_chosen":"true"},
+					"effects":{
+						"agent.skills.investigation":{"onSuccess":"15"},
+						"agent.skills.deception":{"onSuccess":"10"},
+						"agent.skills.str":{"onSuccess":"-10"}
+					},
+					"available":"!scratch.backstory_work_chosen"
+				},
+				"chase":{
+					"label":"Chase the Source",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'chase'"},
+					"effects":{
+						"agent.skills.stealth":{"onSuccess":"10"},
+						"agent.skills.deception":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				},
+				"pitch":{
+					"label":"Pitch the Story",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'pitch'"},
+					"effects":{
+						"agent.skills.persuasion":{"onSuccess":"10"},
+						"agent.skills.cha":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_walk_home"}
+			],
+			"values":{
+				"choice":{
+					"name":"The Story",
+					"value":"''",
+					"description":[
+						{"text":"A city councilman’s name keeps turning up in places it shouldn’t, and your editor doesn’t want to hear about it.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"You follow the councilman’s aide to a parking garage and listen from behind a pillar. You have a story.", "hidden":"event.values.choice.value !== 'chase'"},
+						{"text":"You talk your editor round, one fact at a time, until the story has the front page.", "hidden":"event.values.choice.value !== 'pitch'"}
+					]
+				}
+			},
+			"description":[
+				"You’re a reporter at the Ledger, one of the last papers in the city still printing on paper: nosy, persistent, and not above a little invention to get someone talking.",
+				"<br><br>The deadline is at five. It is always at five."
+			]
+		},
+		
+		"origin_garage":{
+			"name":"Under the Hood at Delgado’s",
+			"start":"2026-11-13T09:00:00",
+			"duration":{"h":8},
+			"location":"origin.garage",
+			"actionLimit":2,
+			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"work":{
+					"label":"Start Work",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"scratch.backstory_work_chosen":"true"},
+					"effects":{
+						"agent.skills.str":{"onSuccess":"15"},
+						"agent.skills.dex":{"onSuccess":"10"},
+						"agent.skills.cha":{"onSuccess":"-10"}
+					},
+					"available":"!scratch.backstory_work_chosen"
+				},
+				"fix":{
+					"label":"Fix the Impossible Engine",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'fix'"},
+					"effects":{
+						"agent.skills.dex":{"onSuccess":"10"},
+						"agent.skills.investigation":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				},
+				"haggle":{
+					"label":"Haggle with the Customer",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'haggle'"},
+					"effects":{
+						"agent.skills.persuasion":{"onSuccess":"10"},
+						"agent.skills.deception":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_walk_home"}
+			],
+			"values":{
+				"choice":{
+					"name":"The Job",
+					"value":"''",
+					"description":[
+						{"text":"A 1968 Mustang has been towed in with a knock nobody can find, and its owner is in a hurry.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"Three hours on your back under the Mustang, and you find the knock: a cracked bolt no one else would have looked at twice.", "hidden":"event.values.choice.value !== 'fix'"},
+						{"text":"You let the apprentice find the knock, and talk the owner into a rebuild he didn’t know he wanted.", "hidden":"event.values.choice.value !== 'haggle'"}
+					]
+				}
+			},
+			"description":[
+				"You’re a mechanic at Delgado’s Garage: strong hands, good ears and not much to say to the customers.",
+				"<br><br>The radio is on, the coffee is burnt, and there’s a car on every lift."
+			]
+		},
+		
+		"origin_theater":{
+			"name":"The Matinee at the Orpheum",
+			"start":"2026-11-13T09:00:00",
+			"duration":{"h":8},
+			"location":"origin.theater",
+			"actionLimit":2,
+			"hidden":"events.origin_busride.values.choice.value === '' && (events.origin_bus_stop.actions.wait.attemptCount === 0 || events.origin_bus_stop.values.bus_arrives.value)",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"work":{
+					"label":"Start Work",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"scratch.backstory_work_chosen":"true"},
+					"effects":{
+						"agent.skills.disguise":{"onSuccess":"15"},
+						"agent.skills.cha":{"onSuccess":"10"},
+						"agent.skills.investigation":{"onSuccess":"-10"}
+					},
+					"available":"!scratch.backstory_work_chosen"
+				},
+				"cover":{
+					"label":"Cover for the Lead",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'cover'"},
+					"effects":{
+						"agent.skills.disguise":{"onSuccess":"10"},
+						"agent.skills.cha":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				},
+				"rig":{
+					"label":"Rig the Flying Harness",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'rig'"},
+					"effects":{
+						"agent.skills.agl":{"onSuccess":"10"},
+						"agent.skills.dex":{"onSuccess":"5"}
+					},
+					"hidden":"!scratch.backstory_work_chosen",
+					"available":"event.values.choice.value === ''"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"origin_walk_home"}
+			],
+			"values":{
+				"choice":{
+					"name":"The Show",
+					"value":"''",
+					"description":[
+						{"text":"The lead has food poisoning, the flying rig is jammed, and curtain is at two.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"You go on in the lead’s wig and costume, and not one person in the house can tell.", "hidden":"event.values.choice.value !== 'cover'"},
+						{"text":"You climb into the fly loft and free the jammed rig with minutes to spare, forty feet above the stage.", "hidden":"event.values.choice.value !== 'rig'"}
+					]
+				}
+			},
+			"description":[
+				"You work at the Orpheum, an understudy who also does whatever needs doing backstage: a different face for every part, and not much interest in the details of anything else.",
+				"<br><br>Two shows today, and the first is at two."
+			]
+		},
+		
+		"origin_walk_home":{
+			"name":"The Walk Home",
+			"start":"2026-11-13T17:20:00",
+			"duration":{"m":30},
+			"location":"origin.street",
+			"actionLimit":1,
+			"hidden":"events.origin_hospital.values.choice.value === '' && events.origin_newsroom.values.choice.value === '' && events.origin_garage.values.choice.value === '' && events.origin_theater.values.choice.value === ''",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"alley":{
+					"label":"Cut Through the Alley",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'alley'"},
+					"effects":{"agent.skills.stealth":{"onSuccess":"10"}, "agent.skills.agl":{"onSuccess":"5"}},
+					"hidden":"event.values.choice.value !== ''"
+				},
+				"tourist":{
+					"label":"Help a Lost Tourist",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'tourist'"},
+					"effects":{"agent.skills.cha":{"onSuccess":"10"}, "agent.skills.investigation":{"onSuccess":"5"}},
+					"hidden":"event.values.choice.value !== ''"
+				},
+				"bar":{
+					"label":"Talk Your Way into a Free Drink",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"choice":"'bar'"},
+					"effects":{"agent.skills.deception":{"onSuccess":"10"}, "agent.skills.persuasion":{"onSuccess":"5"}},
+					"hidden":"event.values.choice.value !== ''"
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"origin_stranger"}
+			],
+			"values":{
+				"choice":{
+					"name":"On the Way",
+					"value":"''",
+					"description":[
+						{"text":"It’s dark already, and it’s started to rain properly.", "hidden":"event.values.choice.value !== ''"},
+						{"text":"You cut through the alley behind the laundromat, the way you always tell yourself you shouldn’t.", "hidden":"event.values.choice.value !== 'alley'"},
+						{"text":"A couple with a soaked paper map are lost three streets from their hotel. You walk them there and find out their whole life story.", "hidden":"event.values.choice.value !== 'tourist'"},
+						{"text":"You stop at the Anchor, and the new bartender believes every word about it being your birthday.", "hidden":"event.values.choice.value !== 'bar'"}
+					]
+				}
+			},
+			"description":[
+				"Halsey Street, the long way home, under a drizzle that can’t make up its mind. The shops are closing and the streetlights are coming on.",
+				"<br><br>It’s been a day like any other day. You will remember it for the rest of your life."
+			]
+		},
+		
+		// Act 2: the encounter.
+		"origin_stranger":{
+			"name":"The Stranger",
+			"start":"2026-11-13T17:52:00",
+			"duration":{"m":3},
+			"location":"origin.street",
+			"actionLimit":1,
+			"hidden":"events.origin_walk_home.values.choice.value === ''",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"catch":{
+					"label":"Catch Them",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"reaction":"'caught'"},
+					"hidden":"event.values.reaction.value !== ''",
+					"effects":{
+						"agent.chronal":{"onSuccess":"1"}
+					}
+				},
+				"back":{
+					"label":"Step Back",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"reaction":"'backed'"},
+					"hidden":"event.values.reaction.value !== ''",
+					"effects":{
+						"agent.chronal":{"onSuccess":"1"}
+					}
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"origin_masked"}
+			],
+			"values":{
+				"reaction":{
+					"name":"Your Reaction",
+					"value":"''",
+					"description":[
+						{"text":"The stranger lurches toward you.", "hidden":"event.values.reaction.value !== ''"},
+						{"text":"You catch them as they fall, and their blood is warm on your hands.", "hidden":"event.values.reaction.value !== 'caught'"},
+						{"text":"You step back, but not fast enough. They catch your arm as they fall.", "hidden":"event.values.reaction.value !== 'backed'"}
+					]
+				}
+			},
+			"description":[
+				"There’s a sound like a held breath let go, and a person is standing on the pavement in front of you who was not there a moment ago.",
+				"<br><br>They are old, older than anyone you know, in clothes cut in a way you have never seen. Around their wrist is something that isn’t a watch and isn’t a phone, and above it, for an instant, hangs a diagram made of light: lines, branching and rejoining. Then it’s gone, and you’re not sure you saw it at all.",
+				{"text":"<br><br>The stranger seizes your wrist. Something cold snaps shut around it. “You have to finish it,” they say, and their voice is strangely familiar. “My mission. Everything depends on it. Causality itself.” Then you see the blood soaking through their coat, and they fold up onto the wet pavement at your feet.", "hidden":"event.values.reaction.value === ''"}
+			]
+		},
+		
+		"origin_masked":{
+			"name":"The Masked Figure",
+			"start":"2026-11-13T17:55:00",
+			"duration":{"m":1},
+			"location":"origin.street",
+			"actionLimit":1,
+			"hidden":"events.origin_stranger.values.reaction.value === ''",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"dive":{
+					"label":"Dive for Cover",
+					"skillCheck":{"actionType":"athletic"},
+					"set":{"response":"'dove'"},
+					"effects":{"agent.health":{"onFailure":"-d(6)"}},
+					"hidden":"event.values.response.value !== ''"
+				},
+				"stand":{
+					"label":"Stand Your Ground",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"response":"'stood'"},
+					"hidden":"event.values.response.value !== ''"
+				}
+			},
+			"exits":[
+				{
+					"mode":"pulled", "to":"safehouse_arrival", "costs":{
+						"agent.action":null,
+						"agent.chronal":"1"
+					}
+				}
+			],
+			"values":{
+				"response":{
+					"name":"Your Response",
+					"value":"''",
+					"description":[
+						{"text":"The gun comes up.", "hidden":"event.values.response.value !== ''"},
+						{"text":"You throw yourself behind a parked car, and skin your hands on the wet road.", "hidden":"event.values.response.value !== 'dove'"},
+						{"text":"You don’t move. You couldn’t if you wanted to.", "hidden":"event.values.response.value !== 'stood'"}
+					]
+				}
+			},
+			"description":[
+				"The air tears again. A second figure stands over the body: masked, in a close-fitting black suit that seems to swallow the streetlight. They draw something from their hip that can only be a weapon, though it is no gun you have ever seen.",
+				"<br><br>On your wrist, the device begins to flash and to beep, faster and faster.",
+				{"text":"<br><br>The masked figure raises the weapon. And then there is no street, no rain, no time, no you.", "hidden":"event.values.response.value === ''"}
+			]
+		},
+		
+		// Act 3: a safe house, late in the 2080s. Hidden until the device is on your wrist.
+		"safehouse_arrival":{
+			"name":"Elsewhere",
+			"start":"2087-03-09T23:41:00",
+			"duration":{"m":10},
+			"location":"safehouse.corridor",
+			"actionLimit":1,
+			"hidden":"events.origin_masked.values.response.value === ''",
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"hide":{
+					"label":"Find Somewhere to Hide",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"concealed":"true"},
+					"hidden":"event.values.concealed.value"
+				}
+			},
+			"exits":[
+				{"mode":"wait", "to":"safehouse_fight"}
+			],
+			"values":{
+				"concealed":{
+					"name":"Concealed",
+					"value":"false",
+					"description":[
+						{"text":"You’re crouched in the open, in plain sight of the glass.", "hidden":"event.values.concealed.value"},
+						{"text":"You’ve squeezed in behind a tall cabinet, where you can see through the glass without being seen.", "hidden":"!event.values.concealed.value"}
+					]
+				}
+			},
+			"description":[
+				"You come back to yourself on your hands and knees on a cold floor, retching. A long corridor, dimly lit, with a wall of frosted glass along one side. The air smells of dust and machine oil.",
+				"<br><br>Beyond the glass is an office, and in it, arguing in low, furious voices, are the two people you just saw on Halsey Street. The old one is not bleeding. Not yet."
+			]
+		},
+		
+		"safehouse_fight":{
+			"name":"The Fight",
+			"start":"2087-03-09T23:51:00",
+			"duration":{"m":2},
+			"location":"safehouse.office",
+			"actionLimit":1,
+			"hidden":"events.safehouse_arrival.actions.hide.attemptCount === 0",
+			"actions":{
+				"_rest":null,
+				"_investigate":{"skillCheck":{"difficulty":"no-roll"}},
+			},
+			"exits":[
+				{"mode":"enter", "to":"safehouse_room"}
+			],
+			"description":[
+				"The argument turns into a fight, fast and ugly. The masked figure has a blade, thin and dark, and the old one is slower than they used to be.",
+				"<br><br>The blade goes in. The old one gasps, slaps at their wrist,",
+				{"text":"shoots a quick glance in your direction,","hidden":"!events.safehouse_arrival.values.concealed.value"},
+				"and is gone, in a flicker and a sound like a held breath let go.",
+				"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.",
+				{"text":"They turn to look at you as they activate the device on their wrist.","hidden":"events.safehouse_arrival.values.concealed.value"},
+				"A moment later, they too are gone.",
+				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "hidden":"event.attestation.value === 0"}
+			]
+		},
+		
+		"safehouse_room":{
+			"name":"The Empty Room",
+			"start":"2087-03-09T23:54:00",
+			"duration":{"h":1},
+			"location":"safehouse.office",
+			"actionLimit":3,
+			"hidden":"events.safehouse_fight.actions._investigate.attemptCount === 0",
+			"actions":{
+				"_rest":null,
+				"_investigate":{"skillCheck":{"difficulty":50}},
+				"desk":{
+					"label":"Search the Desk",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"foundBadge":"true"},
+					"available":"!event.values.foundBadge.value",
+					"costs":{"agent.action":null}
+				},
+				"screen":{
+					"label":"Wake the Screen",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"readScreen":"true"},
+					"available":"!event.values.readScreen.value",
+					"costs":{"agent.action":null}
+				},
+				"answer":{
+					"label":"Answer the Device",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"heard":"true"},
+					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
+					"available":"!event.values.heard.value",
+					"costs":{"agent.action":null},
+					"effects":{
+						"agent.chronal":{"onSuccess":"15"},
+						"agent.skills.chronogation":{"onSuccess":"500"}
+					}
+				}
+			},
+			"values":{
+				"foundBadge":{
+					"name":"The Badge",
+					"value":"false",
+					"description":[
+						{"text":"The desk is a mess of papers and dead hardware.", "hidden":"event.values.foundBadge.value"},
+						{"text":"Under the papers is a badge: a disc of dark glass that lights at your touch. A circle, two arrows chasing each other around it, and the words TIME CORPS · FIELD AGENT. The name beneath has been scratched out.", "hidden":"!event.values.foundBadge.value"}
+					]
+				},
+				"readScreen":{
+					"name":"The Screen",
+					"value":"false",
+					"description":[
+						{"text":"A screen on the wall is dark.", "hidden":"event.values.readScreen.value"},
+						{"text":"The screen wakes to the date, 9 March 2087, and to a diagram you have seen once before, over a stranger’s wrist: lines of light, branching and rejoining, one of them pulsing red.", "hidden":"!event.values.readScreen.value"}
+					]
+				},
+				"heard":{
+					"name":"Message Heard",
+					"value":"false",
+					"description":[
+						{"text":"The device on your wrist is flashing, insistently.", "hidden":"event.values.heard.value"},
+						{"text":"You have heard the message, and you have a mission.", "hidden":"!event.values.heard.value"}
+					]
+				}
+			},
+			"description":[
+				"The office is empty now. A chair is overturned, and there’s blood on the floor where the old one stood, and a faint scorch mark in a circle around it.",
+				{"text":"<br><br>It isn’t an office, exactly. There’s a cot in one corner, tins of food, spare clothes, a go-bag by the door. Someone has been living here, and hiding.", "hidden":"event.attestation.value < 10"},
+				{"text":"<br><br>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
+				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"},
+				{"text":"<br><br>The device on your wrist chimes, once, and a figure made of light rises from it: the old stranger, recorded, unhurt, looking straight at you.", "hidden":"event.actions.answer.hidden"},
+				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The first thread they’ll pull is the night of 14 April 1912, in the North Atlantic. You know the ship. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "hidden":"event.actions.answer.hidden || !event.values.heard.value"}
+			]
+		}
+	}
+}

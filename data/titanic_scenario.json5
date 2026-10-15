@@ -1,5 +1,5 @@
 {
-	"locationsBaseOrder":0,
+	"locationsBaseOrder":100,
 	
 	// Scratch entries, read and set as "scratch.<name>". Names are global, so they start with
 	// the id of the Event they belong to.

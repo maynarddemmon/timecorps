@@ -38,7 +38,7 @@
             self._statusTxt = new PlainText(self);
             
             const vitalsX = HALF_PADDING + PHOTO_SIZE + layoutSpacing,
-                vitals = new WideView(self, {
+                vitals = self._vitalsView = new WideView(self, {
                     x:vitalsX, y:HALF_PADDING, height:PHOTO_SIZE,
                     percentOfParentWidthOffset:-(vitalsX + HALF_PADDING),
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
@@ -75,6 +75,8 @@
         
         
         // Accessors ///////////////////////////////////////////////////////////
+        getVitalsView: function() {return this._vitalsView;},
+        
         /** @overrides BriefSupport */
         getBriefTitle: briefModel => pkg.makeBriefTitle('Agent Dossier', briefModel.getName()),
         
@@ -103,20 +105,29 @@
                 self._eventView.setValue(eventModel.name);
                 self.updateStats(agentModel);
                 
-                let statusAttrs = {text:''};
+                let statusAttrs = {text:''},
+                    bgColor = colorDark,
+                    panelBgColor = colorMegaDark;
                 if (agentModel.isDead()) {
+                    bgColor = '#444';
+                    panelBgColor = '#222';
                     photo.addDomClass('agent-dead');
                     statusAttrs = {x:12, y:-135, fontSize:'400px', textColor:'#fff3', text:pkg.ICON_DEATH};
                 } else {
                     photo.removeDomClass('agent-dead');
                 }
                 if (agentModel.isDevoured()) {
+                    bgColor = '#608';
+                    panelBgColor = '#406';
                     photo.addDomClass('agent-devoured');
                     statusAttrs = {x:-8, y:-138, fontSize:'400px', textColor:'#fff3', text:pkg.ICON_THE_VOID};
                 } else {
                     photo.removeDomClass('agent-devoured');
                 }
                 statusTxt.callSetters(statusAttrs);
+                self.getContentView().setBgColor(bgColor);
+                self.getVitalsView().setBgColor(panelBgColor);
+                self.getProfile().setBgColor(panelBgColor);
                 
                 const skillsRow = self._skills;
                 skillsRow.destroyAllSubviews();

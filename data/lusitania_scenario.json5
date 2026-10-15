@@ -1,5 +1,5 @@
 {
-	"locationsBaseOrder":100,
+	"locationsBaseOrder":200,
 	"locations":{
 		"london.admiralty":{
 			"name":"The Admiralty",

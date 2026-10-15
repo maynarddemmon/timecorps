@@ -22,7 +22,7 @@
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
                 SCORE_TO_CREDITS_EARN_AMOUNT,
-                AGENT_DEFAULT_STARTING_CHRONAL, DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
+                DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
@@ -123,10 +123,6 @@
             model[SCOPE_EVENTS]     = new TCModelCollection({modelClass:EventModel,     scopeId:SCOPE_EVENTS});
             model[SCOPE_AGENTS]     = new TCModelCollection({modelClass:AgentModel,     scopeId:SCOPE_AGENTS}, [{
                 processDatum: function(datum, jsonContext) {
-                    if (typeof datum.chronal !== 'number') {
-                        datum.chronal = AGENT_DEFAULT_STARTING_CHRONAL;
-                    }
-                    
                     // Every Agent gets the shared description phrases after their own. Cloned
                     // so each Agent's phrase models are built from their own data.
                     const defaultDescription = jsonContext.agentDefaults?.description;
@@ -143,10 +139,7 @@
             }]);
             model[SCOPE_LOCATIONS]  = new TCModelCollection({modelClass:LocationModel,  scopeId:SCOPE_LOCATIONS}, [{
                 processDatum: function(datum, jsonContext) {
-                    if (typeof datum.order !== 'number') {
-                        console.warn(this.scopeId, datum.id, 'has no numeric order (', typeof datum.order, datum.order, ') defaulting to 0');
-                        datum.order = 0;
-                    }
+                    if (typeof datum.order !== 'number') datum.order = 0;
                     
                     // Makes it easy to shift the order of all locations in a file by a fixed amount.
                     datum.order += jsonContext.locationsBaseOrder ?? 0;
