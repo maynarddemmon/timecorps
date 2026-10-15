@@ -23,6 +23,7 @@
         TRAVEL_MODE_SWIM ='swim',
         TRAVEL_MODE_BIKE ='bike',
         TRAVEL_MODE_ENTER ='enter',
+        TRAVEL_MODE_BOARD ='board',
         TRAVEL_MODE_JUMP ='jump',
         TRAVEL_MODE_PULLED ='pulled',
         TRAVEL_MODE_LIFEBOAT = 'lifeboat',
@@ -732,6 +733,7 @@
                     case TRAVEL_MODE_JUMP:     return 'Jump to';
                     case TRAVEL_MODE_PULLED:   return 'Pulled to';
                     case TRAVEL_MODE_ENTER:    return 'Enter';
+                    case TRAVEL_MODE_BOARD:    return 'Board';
                     case TRAVEL_MODE_WALK:     return 'Walk to';
                     case TRAVEL_MODE_SWIM:     return 'Swim to';
                     case TRAVEL_MODE_BIKE:     return 'Bike to';

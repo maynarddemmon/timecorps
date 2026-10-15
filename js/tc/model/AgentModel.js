@@ -247,7 +247,7 @@
                     statParadox.setValue(v);
                 } else if (v) {
                     if (v.max != null) statParadox.setMax(v.max);
-                    statParadox.setValue(v.value ?? statParadox.getMax());
+                    statParadox.setValue(v.value ?? statParadox.getMin());
                 }
             }
         },

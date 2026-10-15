@@ -8,39 +8,48 @@
 	"locations":{
 		"origin.home":{
 			"name":"Your Apartment",
-			"color":"#0003"
+			"color":"#0003",
+			"order":1
 		},
 		"origin.city_streets":{
 			"name":"City Streets",
-			"color":"#0003"
+			"color":"#0003",
+			"order":2
 		},
 		"origin.hospital":{
 			"name":"St. Brendan’s Hospital",
-			"color":"#0006"
+			"color":"#0006",
+			"order":3
 		},
 		"origin.newsroom":{
 			"name":"The Ledger Newsroom",
-			"color":"#0006"
+			"color":"#0006",
+			"order":4
 		},
 		"origin.garage":{
 			"name":"Delgado’s Garage",
-			"color":"#0006"
+			"color":"#0006",
+			"order":5
 		},
 		"origin.theater":{
 			"name":"The Orpheum Theater",
-			"color":"#0006"
+			"color":"#0006",
+			"order":6
 		},
 		"origin.street":{
 			"name":"Halsey Street",
-			"color":"#0009"
+			"color":"#0009",
+			"order":7
 		},
 		"safehouse.corridor":{
 			"name":"Corridor",
-			"color":"#000c"
+			"color":"#000c",
+			"order":8
 		},
 		"safehouse.office":{
 			"name":"Office",
-			"color":"#000c"
+			"color":"#000c",
+			"order":9
 		}
 	},
 	
@@ -161,13 +170,12 @@
 				}
 			},
 			"description":[
-				"The crosstown bus, crowded and steamed up, crawling through the morning traffic. The same faces as every other morning, more or less.",
-				"<br><br>Where it lets you off depends on where you work."
+				"The sheltered bench where folks wait for the bus. The ads are covered in grafitti and haven’t changed in months."
 			]
 		},
 		
 		"origin_busride":{
-			"name":"The Bus Ride",
+			"name":"The Bus",
 			"start":"2026-11-13T08:15:00",
 			"duration":{"m":30},
 			"location":"origin.city_streets",
@@ -617,10 +625,7 @@
 			},
 			"exits":[
 				{
-					"mode":"pulled", "to":"safehouse_arrival", "costs":{
-						"agent.action":null,
-						"agent.chronal":"1"
-					}
+					"mode":"pulled", "to":"safehouse_arrival", "costs":{"agent.chronal":"1"}
 				}
 			],
 			"values":{
