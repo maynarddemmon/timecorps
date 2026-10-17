@@ -575,7 +575,7 @@
         getExitTo: function(eventModel) {
             if (eventModel?.isNotHidden()) {
                 const currentEventModel = this.getEventModel();
-                if (eventModel === currentEventModel) {
+                if (eventModel !== currentEventModel) {
                     return currentEventModel.getExitModels().find(
                         exitModel => exitModel.isNotHidden() && exitModel.getToEventModel() === eventModel
                     );
@@ -605,7 +605,7 @@
             }
         },
         doRecallToHQ: function() {
-            this.doDeployToEvent(pkg.model.getHQEventModel(), LOG_TYPE_RECALL);
+            this.doDeployToEvent(pkg.model.getHQEventModel(), true);
         },
         doFollowExit: function(exitModel, btnView) {
             if (this.isNotDead() && this.getEventModel() === exitModel.event) {

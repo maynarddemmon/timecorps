@@ -231,7 +231,7 @@ test('a restored save still selects the operation\'s initial event', async ({pag
     
     await page.evaluate(() => {
         const m = tc.model;
-        m.getAgentModel('AL').doDeployToEvent(m.getEventModel('plan'));
+        m.getAgentModel('AL').setEvent('plan'); // Unlike a deploy, doesn't change the selection.
     });
     await saveGame(page);
     

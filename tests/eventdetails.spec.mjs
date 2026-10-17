@@ -157,7 +157,7 @@ test('no exit button without an exit from the agent\'s event to the selected eve
         const exitModel = tc.model.getEventModel('origin').getExitModels().find(e => e.to === 'aftermath');
         exitModel.setHidden(true);
         return tc.model.getAgentModel('AL').getExitTo(tc.model.getEventModel('aftermath'));
-    })).toBeNull();
+    })).toBeUndefined();
     
     expect(problems.pageErrors).toEqual([]);
 });
