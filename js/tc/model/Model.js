@@ -197,16 +197,10 @@
         getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
         getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsSortedList(
             (a, b) => b.getArrivalOrder() - a.getArrivalOrder(),
-            agent => agent.getEvent() === eventId && !agent.isHidden()
+            agent => agent.getEvent() === eventId && agent.isNotHidden()
         ),
         getActiveAgentsAsList: () => model.getAgentModelsAsList(
-            agentModel => {
-                const isPlayerControlled = agentModel.isPlayerControlled(),
-                    isHidden = agentModel.isHidden(),
-                    isDead = agentModel.isDead(),
-                    isDevoured = agentModel.isDevoured();
-                return isPlayerControlled && !isHidden && !isDead && !isDevoured;
-            }
+            agentModel => agentModel.isPlayerControlled() && agentModel.isNotHidden() && agentModel.isNotDead() && agentModel.isNotDevoured()
         ),
         
         revealAgents: agentIds => {
@@ -396,7 +390,7 @@
             it below the current paradox clamps the paradox, which destabilizes the Timeline. */
         updateTimelineParadoxMax: () => {
             if (pkg.isAppReady()) {
-                const visCount = model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden()).length;
+                const visCount = model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && eventModel.isNotHidden()).length;
                 model[STAT_ID_PARADOX].setMax(
                     mathFloor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT * visCount)
                 );

@@ -1049,21 +1049,21 @@
             
             getVisibleExitAndEntrances: function() {
                 const accum = [];
-                if (!this.isHidden()) {
+                if (this.isNotHidden()) {
                     const eventModels = pkg.model.getEventModels();
                     for (const eventId in eventModels) {
                         const eventModel = eventModels[eventId];
                         if (eventModel === this) {
                             for (const exitModel of eventModel.getExitModels()) {
                                 const toModel = exitModel.getToEventModel();
-                                if (toModel && toModel !== this && !toModel.isHidden() && !exitModel.isHidden()) {
+                                if (toModel && toModel !== this && toModel.isNotHidden() && exitModel.isNotHidden()) {
                                     accum.push(exitModel);
                                 }
                             }
-                        } else if (!eventModel.isHidden()) {
+                        } else if (eventModel.isNotHidden()) {
                             for (const exitModel of eventModel.getExitModels()) {
                                 if (exitModel.getToEventModel() === this) {
-                                    if (!exitModel.isHidden()) accum.push(exitModel);
+                                    if (exitModel.isNotHidden()) accum.push(exitModel);
                                 }
                             }
                         }

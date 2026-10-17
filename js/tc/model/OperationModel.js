@@ -94,7 +94,7 @@
                 const add = (eventModel, valueModel, statId) => {
                     retval.push({
                         eventModel, valueModel, statId,
-                        known:!eventModel.isHidden() && !valueModel?.isHidden()
+                        known:eventModel.isNotHidden() && !valueModel?.isHidden()
                     });
                 };
                 for (const observable of observables) {

@@ -74,6 +74,7 @@
                 this.setDisabled(!agentModel.canPayCostsFor(exitModel));
             },
             doActivated: function() {
+                this.agentModel.selectRow();
                 this.agentModel.doFollowExit(this.exitModel, this);
             }
         }),
@@ -104,10 +105,13 @@
                 
                 self.markerView = new StatusAgentMarkerMedium(self, {x:spacing, y:spacing, ignoreLayout:true});
                 self.vitaeBtn = new UnderlineBtn(self, {x:MARKER_EXTENT, y:spacing, fontSize:fontSizeLarge, ignoreLayout:true}, [{
-                    doActivated: () => pkg.app.selectAgentRow(self.agentModel)
+                    doActivated: () => self.agentModel.selectRow()
                 }]);
                 self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
-                    doActivated: () => {self.agentModel.doRecallToHQ();}
+                    doActivated: () => {
+                        self.agentModel.selectRow();
+                        self.agentModel.doRecallToHQ();
+                    }
                 }]);
                 
                 self.actionView = new AgentRowFlow(self);
@@ -151,10 +155,13 @@
                 const actionModels = eventModel.getActionModels();
                 for (const actionId in actionModels) {
                     const actionModel = actionModels[actionId];
-                    if (!actionModel.isHidden()) {
+                    if (actionModel.isNotHidden()) {
                         new TextForFlow(actionView, {text:ICON_SEPARATOR});
                         new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel), [{
-                            doActivated: function() {agentModel.doAction(actionModel, this);}
+                            doActivated: function() {
+                                agentModel.selectRow();
+                                agentModel.doAction(actionModel, this);
+                            }
                         }]);
                     }
                 }
@@ -164,9 +171,9 @@
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
-                    if (!exitModel.isHidden()) {
+                    if (exitModel.isNotHidden()) {
                         const toEventModel = exitModel.getToEventModel();
-                        if (!toEventModel.isHidden()) {
+                        if (toEventModel.isNotHidden()) {
                             if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
                             const btn = new UnderlineBtn(exitView, {navEventModel:toEventModel}, [AgentExitBtn, EventNavHover]);
                             btn.configure(agentModel, exitModel, true);
@@ -236,11 +243,11 @@
                 // Only show links the player is allowed to know about.
                 self.precursorsFlow.update(
                     'Precursors:\u00A0',
-                    [...valueModel.getPrecursors()].filter(precursor => !precursor.isHidden() && !eventModel.isAffectedByHidden(precursor))
+                    [...valueModel.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
                 );
                 self.descendantsFlow.update(
                     'Descendants:\u00A0',
-                    [...valueModel.getDescendants()].filter(descendant => !descendant.isHidden() && !descendant.isAffectedByHidden(eventModel))
+                    [...valueModel.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
                 );
                 self.linksView.setVisible(self.precursorsFlow.visible || self.descendantsFlow.visible);
             }
@@ -396,7 +403,7 @@
                 causatorsRow.getContentView().destroyAllSubviews();
                 let addedCount = 0;
                 for (const valueModel of Object.values(eventModel.getValueModels())) {
-                    if (!valueModel.isHidden()) {
+                    if (valueModel.isNotHidden()) {
                         new CausatorRow(causatorsRow, {valueModel});
                         addedCount++;
                     }
@@ -446,7 +453,7 @@
                     followExitBtn.setBtnModel(selectedAgentModel);
                 }
                 recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
-                deployAgentBtn.setVisible(canDirectAgent && !eventModel.isHidden());
+                deployAgentBtn.setVisible(canDirectAgent && eventModel.isNotHidden());
                 let sepIsVisible = false;
                 if (canDirectAgent) {
                     let btn;

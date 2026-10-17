@@ -41,6 +41,7 @@
                 }
             },
             isHidden: function() {return this.hidden;},
+            isNotHidden: function() {return !this.isHidden();},
             
             doHiddenChanged: NOOP // function(hidden) {}
         }),
@@ -119,7 +120,7 @@
             
             getDescriptionPhrases: function() {return this._descPhrases ?? [];},
             getVisibleDescriptionPhrases: function() {
-                return this.getDescriptionPhrases().filter(phrase => !phrase.isHidden());
+                return this.getDescriptionPhrases().filter(phrase => phrase.isNotHidden());
             },
             
             doDescriptionChanged: NOOP, // function() {}

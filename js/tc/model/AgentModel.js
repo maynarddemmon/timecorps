@@ -39,6 +39,16 @@
         LOG_TYPE_ACTION = 'action',
         LOG_TYPE_DEVOURED = 'devoured',
         
+        /*  The flooded Event, if any, that keeps the Agent from time traveling to eventModel:
+            the one they'd leave, or the one they'd arrive at. null if neither is flooded. */
+        getFloodedEventBlockingTravel = (agentModel, eventModel) => {
+            const from = agentModel.getEventModel();
+            if (from?.isFlooded()) return from;
+            if (eventModel?.isFlooded()) return eventModel;
+            return null;
+        },
+        isFloodedEventNotBlockingTravel = (agentModel, eventModel) => getFloodedEventBlockingTravel(agentModel, eventModel) == null,
+        
         getInfoForTimeTravel = (agentModel, eventModel) => {
             const isHQ = eventModel.isHQ(),
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
@@ -46,7 +56,7 @@
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
                 paradoxCost = agentModel.calculateParadoxForEntry(eventModel),
                 agentRisksPhrase = pkg.formatAgentRisks(chronalNeeded, paradoxCost),
-                floodedEventModel = agentModel.getFloodedEventBlocking(eventModel);
+                floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
             let disabled,
                 text,
                 visible = true;
@@ -140,7 +150,7 @@
         getSkillPurchase = pkg.getSkillPurchase = (_agentModel, _skillId) => ({points:1, credits:1}),
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
-            const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, -1); // -1 because we will have just pushed an entry event of some kind onto the log.
+            const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, 1); // 1 because we will have just pushed an entry event of some kind onto the log.
             if (paradox > 0) {
                 // Accrue in Event first since the Agent might get sent to The Void.
                 const eventModel = agentModel.getEventModel();
@@ -536,6 +546,10 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        selectRow: function() {
+            pkg.app.selectAgentRow(this);
+        },
+        
         notifyCollectionOfUpdate: function() {
             if (this.inited) {
                 this.callSuper();
@@ -555,73 +569,52 @@
             btn.callSetters(getInfoForTimeTravel(this, eventModel));
         },
         
-        /*  The exit the Agent can take from its current Event to eventModel, or null if there's 
-            none. As in the Agent's list of exits, hidden exits and exits to hidden Events don't 
-            count. */
+        /*  The exit the Agent can take from its current Event to eventModel, or undefined if 
+            there's none. As in the Agent's list of exits, hidden exits and exits to hidden 
+            Events don't count. */
         getExitTo: function(eventModel) {
-            const currentEventModel = this.getEventModel();
-            if (!currentEventModel || !eventModel || eventModel === currentEventModel || eventModel.isHidden()) return null;
-            return currentEventModel.getExitModels().find(exitModel => !exitModel.isHidden() && exitModel.getToEventModel() === eventModel) ?? null;
-        },
-        
-        /*  The flooded Event, if any, that keeps the Agent from time traveling to eventModel:
-            the one they'd leave, or the one they'd arrive at. null if neither is flooded. */
-        getFloodedEventBlocking: function(eventModel) {
-            const from = this.getEventModel();
-            if (from?.isFlooded()) return from;
-            if (eventModel?.isFlooded()) return eventModel;
-            return null;
-        },
-        
-        doDeployToEvent: function(eventModel) {
-            if (this.isDead()) return;
-            if (this.getFloodedEventBlocking(eventModel)) {
-                console.warn('Cannot time travel into or out of a flooded Event');
-                return;
+            if (eventModel?.isNotHidden()) {
+                const currentEventModel = this.getEventModel();
+                if (eventModel === currentEventModel) {
+                    return currentEventModel.getExitModels().find(
+                        exitModel => exitModel.isNotHidden() && exitModel.getToEventModel() === eventModel
+                    );
+                }
             }
-            
-            if (eventModel) {
-                const cost = pkg.getChronalToDeploy(this, eventModel);
-                if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
-                    this[STAT_ID_CHRONAL].adjValue(-cost);
-                    this.setEvent_Hard(eventModel.id, {type:LOG_TYPE_DEPLOY, event:eventModel});
+        },
+        
+        doDeployToEvent: function(eventModel, isRecall) {
+            if (eventModel && this.isNotDead()) {
+                if (isFloodedEventNotBlockingTravel(this, eventModel)) {
+                    const cost = isRecall ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel);
+                    if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
+                        this[STAT_ID_CHRONAL].adjValue(-cost);
+                        this.setEvent_Hard(
+                            eventModel.id, 
+                            {type:isRecall ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:eventModel}
+                        );
+                        pkg.app.selectEventBox(eventModel);
+                    } else {
+                        console.warn('insufficent chronal to ' + (isRecall ? 'recall' : 'deploy'));
+                    }
                 } else {
-                    console.warn('insufficent chronal to deploy');
+                    console.warn('Cannot time travel into or out of a flooded Event');
                 }
             } else {
                 console.warn('doDeployToEvent: no eventModel');
             }
         },
         doRecallToHQ: function() {
-            if (this.isDead()) return;
-            
-            const hqEventModel = pkg.model.getHQEventModel();
-            if (this.getFloodedEventBlocking(hqEventModel)) {
-                console.warn('Cannot time travel out of a flooded Event');
-                return;
-            }
-            if (hqEventModel) {
-                const cost = pkg.getChronalToRecall(this);
-                if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
-                    this[STAT_ID_CHRONAL].adjValue(-cost);
-                    this.setEvent(hqEventModel.id, {type:LOG_TYPE_RECALL, event:hqEventModel});
-                } else {
-                    console.warn('insufficent chronal to recall');
-                }
-            } else {
-                console.warn('doRecallToHQ: no eventModel');
-            }
+            this.doDeployToEvent(pkg.model.getHQEventModel(), LOG_TYPE_RECALL);
         },
         doFollowExit: function(exitModel, btnView) {
-            if (this.isDead()) return;
-            
-            if (this.getEventModel() === exitModel.event) {
+            if (this.isNotDead() && this.getEventModel() === exitModel.event) {
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
-                    // Taking the exit always succeeds, but its adjustments may change things on the 
-                    // way, e.g. hurt. The result is shown before the adjustments apply since that can
-                    // rebuild the views, btnView included. The first adjustment with its own check 
-                    // gives the result.
+                    // Taking the exit always succeeds, but its adjustments may change things on 
+                    // the way, e.g. hurt. The result is shown before the adjustments apply since 
+                    // that can rebuild the views, btnView included. The first adjustment with its 
+                    // own check gives the result.
                     const costs = this.getCostsFor(exitModel);
                     if (costs.every(cost => cost.canPay)) {
                         const adjustments = this.rollAdjustmentsFor(exitModel),
@@ -731,14 +724,13 @@
         
         
         // Paradox //
-        calculateParadoxForEntry: function(eventModelOrId, visitsAdj=0) {
+        calculateParadoxForEntry: function(eventModelOrId, permittedVisitCount=0) {
             const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
             if (eventModel) {
                 // Paradox is only to enter regular events.
                 if (eventModel.isRegularEvent()) {
-                    const visits = this.countVisitsToEvent(eventModel) + visitsAdj;
-                    // More paradox the more times the Agent has already been to the Event.
-                    if (visits > 0) return visits;
+                    // More paradox the more times the Agent has already visited the Event.
+                    return this.countVisitsToEvent(eventModel) - permittedVisitCount;
                 }
             }
             return 0;
@@ -757,6 +749,7 @@
             }
         },
         isDevoured: function() {return this.devoured;},
+        isNotDevoured: function() {return !this.isDevoured();},
         
         
         // Costs //
@@ -772,7 +765,7 @@
         
         /*  Whether the agent can pay all of an action's costs. The dead can't pay anything. */
         canPayCostsFor: function(actionModel) {
-            return !this.isDead() && this.getCostsFor(actionModel).every(cost => cost.canPay);
+            return this.isNotDead() && this.getCostsFor(actionModel).every(cost => cost.canPay);
         },
         
         /*  Pays costs from getCostsFor and records them on the log entry by key. */
@@ -925,9 +918,8 @@
         
         
         // Death //
-        isDead: function() {
-            return this[STAT_ID_HEALTH].isAtMinValue();
-        },
+        isDead: function() {return this[STAT_ID_HEALTH].isAtMinValue();},
+        isNotDead: function() {return !this.isDead();},
         
         
         // Life and Log //

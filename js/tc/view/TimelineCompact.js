@@ -450,7 +450,7 @@
         
         updateEventBox = eventBox => {
             const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar} = eventBox,
-                hidden = model.isHidden();
+                notHidden = model.isNotHidden();
             eventBox.eventId = model.id;
             
             _label.setText(model.name || '');
@@ -459,12 +459,12 @@
             _paradoxBar.updateForStat(model[STAT_ID_PARADOX]);
             
             eventBox.setTooltip(_label.text);
-            eventBox.setVisible(!hidden);
+            eventBox.setVisible(notHidden);
             eventBox.updateEntangled();
             eventBox.updateFlooded();
             
             // Update connections between boxes
-            if (!hidden) {
+            if (notHidden) {
                 const endId = model.id,
                     flowLayer = timeline.flowLayer;
                 for (const eventModel of model.getPrecursors()) {
@@ -473,7 +473,7 @@
                     if (startBox) {
                         const startEventModel = startBox.model,
                             hideAffectedBy = model.isAffectedByHidden(startEventModel);
-                        if (!hideAffectedBy && !startEventModel.isHidden()) {
+                        if (!hideAffectedBy && startEventModel.isNotHidden()) {
                             const splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
                                 existingConnection = flowLayer.getSpline(splineId);
                             if (!existingConnection) {

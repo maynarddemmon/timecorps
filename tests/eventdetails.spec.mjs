@@ -135,7 +135,7 @@ test('no exit button without an exit from the agent\'s event to the selected eve
     expect(await page.evaluate(() => {
         tc.model.getEventModel('plan').attestation.setValue(50);
         return tc.model.getAgentModel('AL').getExitTo(tc.model.getEventModel('plan'));
-    })).toBeNull();
+    })).toBeUndefined();
     await page.waitForTimeout(300);
     await page.evaluate(() => tc.app.selectEventBox('plan'));
     await expect(visibleButton(page, /Jump to/)).toBeVisible();
@@ -150,7 +150,7 @@ test('no exit button without an exit from the agent\'s event to the selected eve
         } finally {
             aftermath.setHidden(false);
         }
-    })).toBeNull();
+    })).toBeUndefined();
     
     // A hidden exit doesn't count.
     expect(await page.evaluate(() => {

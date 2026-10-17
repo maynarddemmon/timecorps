@@ -494,7 +494,7 @@
         },
         
         notifyAgentLocOrVisChange: function(agentModel, isHiddenChange) {
-            if (isHiddenChange && agentModel && agentModel.inited && !agentModel.isHidden()) {
+            if (isHiddenChange && agentModel && agentModel.inited && agentModel.isNotHidden()) {
                 openAgentDossier(agentModel);
             }
             timelineView.notifyAgentLocOrVisChange(agentModel);

@@ -128,7 +128,7 @@
         }),
         
         SimpleAgentMarker = pkg.SimpleAgentMarker = new JSClass('SimpleAgentMarker', AbstractAgentMarker, {
-            doActivated: function() {pkg.app.selectAgentRow(this.model);},
+            doActivated: function() {this.model.selectRow();},
             doDoubleClick: function() {pkg.app.openAgentDossier(this.model);}
         }),
         

@@ -100,7 +100,7 @@
         
         doActivated: function() {pkg.app.selectEventBox(this.getNavEventModel());}
     });
-
+    
     pkg.UnderlineActionBtn = new JSClass('UnderlineActionBtn', UnderlineBtn, {
         initNode: function(parent, attrs) {
             attrs.textColor ??= colorAction;
