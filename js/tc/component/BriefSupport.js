@@ -24,7 +24,8 @@
         
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
-            getBriefReportUrl(model) - Required. The URL of the report text.
+            getBriefReportUrl(model) - Required. The URL of the report text, or null if there's
+                no report, which hides the report row.
             getBriefReportLabel() - The report's label. Defaults to "Report". */
     pkg.BriefSupport = new JS.Module('BriefSupport', {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -116,7 +117,15 @@
                 self.setTitle(self.getBriefTitle(model));
                 photo.setMedia(...model.getMediaUrls());
                 self.updateFieldNotes();
-                pkg.loadTxtIntoElement(self.getBriefReportUrl(model), self._profileView, () => self.briefModel === model);
+                
+                const reportUrl = self.getBriefReportUrl(model),
+                    profileView = self._profileView;
+                if (reportUrl == null) {
+                    profileView.setVisible(false);
+                } else {
+                    profileView.setVisible(true);
+                    pkg.loadTxtIntoElement(reportUrl, profileView, () => self.briefModel === model);
+                }
             } else {
                 photo.clearMedia();
             }

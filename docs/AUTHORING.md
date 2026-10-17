@@ -29,8 +29,8 @@ How to write the files in `data/` that make up the game: scenarios with their ev
 | `data/<scenario>.json5` | One per scenario, e.g. `titanic_scenario.json5`: its locations and events |
 | `data/agents.json5` | The agents, and description phrases they all share |
 | `data/operations.json5` | The missions, and which one the campaign starts with |
-| `data/help.txt`, `data/mission/`, `data/location/`, `data/dossiers/` | Text shown in the game |
-| `img/agent/`, `img/location/`, `img/mission/` | Portraits and photos, plus optional videos |
+| `data/help.txt`, `data/mission/`, `data/location/`, `data/dossiers/`, `data/event/` | Text shown in the game |
+| `img/agent/`, `img/location/`, `img/mission/`, `img/event/` | Portraits and photos, plus optional videos |
 
 The files load in this order: `init.json5`, the scenarios it lists, `agents.json5`, `operations.json5`. A later file can refer to anything in an earlier one, and expressions can refer to anything at all, since they're only worked out once everything has loaded.
 
@@ -201,6 +201,8 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
+	"image":true,                    // Optional. There's img/event/<id>.jpg for its Event Brief.
+	"brief":true,                    // Optional. There's data/event/<id>.txt for its Event Brief.
 	"description":[…],
 	"values":{…},
 	"actions":{…},
@@ -221,6 +223,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ]
 ```
 
+- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief: the facts, the visible description as field notes, and, if the event has them, a square photo (`"image":true`: `img/event/<id>.jpg`, 512×512, shown at 256; add `"video":true` for a `.webm` too) and a report (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 
 ## Values (causators)
@@ -539,9 +542,11 @@ HQ and The Void leave out `_investigate` this way.
 | `data/mission/<operation>.txt` | A mission's briefing |
 | `data/location/<location>.txt` | A location's area brief |
 | `data/dossiers/<agent>.txt` | An agent's dossier |
+| `data/event/<event>.txt` | An event's brief report, if it has `"brief":true` |
 | `img/agent/<agent>.jpg` (and `.webm`) | Portrait, with an optional video version |
 | `img/location/<location>.jpg` (and `.webm`) | Location photo, with an optional video version |
 | `img/mission/<operation>.jpg` | A mission's picture, if it has `"image":true` |
+| `img/event/<event>.jpg` | An event's square picture (512×512), if it has `"image":true` |
 
 A `.jpg` is required even when there's a video, since it's the fallback. Text files can contain HTML.
 

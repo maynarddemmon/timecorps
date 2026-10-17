@@ -178,6 +178,8 @@
 			"start":"1900-01-01T16:40:00",
 			"duration":{"m":1},
 			"location":"deck",
+			// Has an Event Brief photo and report, which other Events don't.
+			"image":true, "brief":true,
 			"actions":{
 				"_investigate":{"skillCheck":{"difficulty":150}}
 			},

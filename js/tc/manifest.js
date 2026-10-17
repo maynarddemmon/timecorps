@@ -51,7 +51,7 @@ JS.Packages(file => {
         'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
     );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
-        'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel'
+        'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires(
         'tc.Describable','tc.MediaSupport'
@@ -84,6 +84,10 @@ JS.Packages(file => {
         'tc.ChronalBar','tc.ParadoxBar','tc.HealthBar','tc.SkillBar'
     );
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'EventBrief.js').provides('tc.EventBrief').requires(
+        'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow',
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+    );
     file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
@@ -91,6 +95,6 @@ JS.Packages(file => {
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
+        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
     );
 });

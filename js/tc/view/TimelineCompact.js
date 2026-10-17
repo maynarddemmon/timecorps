@@ -564,6 +564,8 @@
                 self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:25, width:barWidth}, [MiniStatBar]);
                 
                 updateEventBox(self);
+                
+                self.attachDomObserver(self, '_doDblClick', 'dblclick');
             },
             
             setModel: function(model) {
@@ -624,6 +626,10 @@
             setAdjacentIsSelected: function(adjacentIsSelected) {
                 this.set('adjacentIsSelected', adjacentIsSelected, true);
                 this.updateUI();
+            },
+            
+            _doDblClick: function(_event) {
+                if (!this.disabled && this.model) pkg.app.openEventBrief(this.model);
             },
             
             doActivated: function() {

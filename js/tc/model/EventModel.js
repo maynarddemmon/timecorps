@@ -833,10 +833,13 @@
         }),
         
         EventModel = pkg.EventModel = new JSClass('EventModel', BaseModel, {
-            include: [pkg.DescribableHideable],
+            include: [pkg.DescribableHideable, pkg.MediaSupport],
             
             /** @overrides ConstrainableAttrSupport */
             getConstraintScopeName: () => SCOPE_EVENT,
+            
+            /** @overrides MediaSupport */
+            getMediaFolder: () => 'event',
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -902,6 +905,19 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
+            /*  An Event's image and Event Brief report are optional, so it only has them when
+                the data says "image":true or "brief":true. Without one there's nothing to load,
+                and no failed request for a missing file. */
+            setImage: function(v) {this.image = v === true;},
+            hasImage: function() {return this.image === true;},
+            setBrief: function(v) {this.brief = v === true;},
+            hasBrief: function() {return this.brief === true;},
+            
+            /** @overrides MediaSupport */
+            getMediaUrls: function() {
+                return this.hasImage() ? this.callSuper() : [null, null];
+            },
+            
             isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ;},
             isTheVoid: function() {return this.id === EVENT_ID_THE_VOID;},
             isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},

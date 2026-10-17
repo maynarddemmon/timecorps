@@ -407,6 +407,20 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
+    test('every event has the event brief image and report it says it has', () => {
+        const missing = [];
+        for (const [eventId, event] of Object.entries(events)) {
+            const files = [];
+            if (event.image) files.push(MEDIA_DIR + '/event/' + eventId + '.jpg');
+            if (event.video) files.push(MEDIA_DIR + '/event/' + eventId + '.webm');
+            if (event.brief) files.push(DATA_DIR + '/event/' + eventId + '.txt');
+            for (const file of files) {
+                if (!fileExists(file)) missing.push(file);
+            }
+        }
+        expect(missing).toEqual([]);
+    });
+
     test('the data files are JSON5, but plain JSON apart from comments and trailing commas', () => {
         // Every data file was moved to JSON5.
         expect(fs.readdirSync(path.join(ROOT, DATA_DIR)).filter(name => name.endsWith('.json'))).toEqual([]);

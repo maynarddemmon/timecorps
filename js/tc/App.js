@@ -22,6 +22,7 @@
         
         agentDossier,
         areaBrief,
+        eventBrief,
         missionBrief,
         settingsDialog;
     
@@ -407,6 +408,7 @@
                 case SCOPE_EVENTS:
                     eventDetailsView.notifyEventModelChanged(instanceModel);
                     opsView.notifyEventModelChanged(instanceModel);
+                    eventBrief?.notifyBriefModelChanged(instanceModel);
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);
@@ -551,6 +553,12 @@
             areaBrief ??= new pkg.AreaBrief(appView);
             areaBrief.show(locationModel);
             return areaBrief;
+        },
+        
+        openEventBrief: eventModel => {
+            eventBrief ??= new pkg.EventBrief(appView);
+            eventBrief.show(eventModel);
+            return eventBrief;
         },
         
         /*  Takes its turn with the other ack and confirm dialogs, e.g. a new mission's brief

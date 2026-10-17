@@ -20,30 +20,33 @@
 		},
 		"social":{
 			"name":"Social",
-			"check":"0.5*agent.skills.cha + 0.25*agent.skills.deception + 0.25*agent.skills.persuasion"
+			"check":"0.3*agent.skills.cha + 0.3*agent.skills.deception + 0.3*agent.skills.persuasion + 0.1*agent.skills.luck"
 		},
 		"athletic":{
 			"name":"Athletic",
-			"check":"0.5*agent.skills.str + 0.5*agent.skills.agl",
+			"check":"0.45*agent.skills.str + 0.45*agent.skills.agl + 0.1*agent.skills.luck",
 			"difficulty":175
 		},
 		"sneak":{
 			"name":"Sneak",
-			"check":"0.5*agent.skills.dex + 0.5*agent.skills.stealth",
+			"check":"0.45*agent.skills.dex + 0.45*agent.skills.stealth + 0.1*agent.skills.luck",
 			"difficulty":275
 		},
 		"investigate":{
 			"name":"Investigate",
-			"check":"agent.skills.investigation -3*event.attestation.value",
+			"check":"(0.9*agent.skills.investigation + 0.1*agent.skills.luck) -3*event.attestation.value",
 			"difficulty":200
 		}
 	},
 	
 	"skills":{
+		// Misc
 		"luck":{
 			"name":"Luck",
 			"description":"How much the hand of fate favors you."
 		},
+		
+		// Attributes
 		"agl":{
 			"name":"Agility",
 			"description":"Balance and coordination."
@@ -60,6 +63,8 @@
 			"name":"Charisma",
 			"description":"Your force of personality."
 		},
+		
+		// Skills
 		"chronogation":{
 			"name":"Chronogation",
 			"description":"The efficiencty with which an agent employs “chronal” to travel through time and space."

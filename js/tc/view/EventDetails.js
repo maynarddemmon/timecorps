@@ -287,6 +287,11 @@
                 tooltip:'Select the next Event you viewed.'
             }, [{doActivated: function() {timelineView.navigateHistory(1);}}]);
             
+            // The title opens the Event Brief.
+            const titleView = self.getTitleView();
+            titleView.setCursor('pointer');
+            self.attachToDom(titleView, '_doTitleClick', 'click');
+            
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
             });
@@ -479,8 +484,13 @@
             const eventName = this.eventModel?.name ?? 'none';
             this.setTitle(
                 ICON_EVENT + ' ' + pkg.wrapInStyledSpan(eventName, colorUltraLight),
-                'Historical Event : ' + eventName
+                'Open the event brief for: ' + eventName
             );
+        },
+        
+        /** @private */
+        _doTitleClick: function(_event) {
+            if (this.eventModel) pkg.app.openEventBrief(this.eventModel);
         }
     });
 })(tc);
