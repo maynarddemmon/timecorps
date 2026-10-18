@@ -444,7 +444,7 @@ test('an adjustment\'s own check rolls and is described by its own settings, not
             exitModel.setAdjustments({'agent.health':{difficulty:0, check:'1000', actionType:'athletic', onFailure:'-5'}});
             const own = read();
             tc.rng.queueRolls(1);
-            const ownCheck = alpha.rollAdjustmentsFor(exitModel)[0].check.success;
+            const ownCheck = exitModel.rollAdjustments(alpha)[0].check.success;
 
             // No actionType: no name.
             exitModel.setAdjustments({'agent.health':{difficulty:0, check:'1000', onFailure:'-5'}});

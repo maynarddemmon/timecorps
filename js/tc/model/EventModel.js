@@ -19,7 +19,7 @@
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
-        getTravelModePhrase = M.memoize(mode => {
+        getTravelModePhrase = mode => {
             switch (mode) {
                 case 'wait':     return 'Wait til';
                 case 'jump':     return 'Jump to';
@@ -32,7 +32,7 @@
                 case 'lifeboat': return 'Lifeboat to';
             }
             return 'To';
-        }),
+        },
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
         PREFIX_SKILL_DIFF = '_SkDff_',
@@ -245,6 +245,20 @@
         ADJUSTMENT_WHEN_FAILURE = 'failure',
         ADJUSTMENT_WHEN_BOTH = 'both',
         
+        /*  The average margin of the check that decides it, for a pass or a failure: its own
+            check, or else its action's. 0 if nothing is rolled, as for an exit without a 
+            check of its own or a no-roll check. */
+        getAvrgMargin = (statAdjModel, agentModel, success) => {
+            const decider = statAdjModel.hasOwnCheck() ? statAdjModel : (statAdjModel.owner.isGatedByActionSkillCheck() ? statAdjModel.owner : null);
+            if (decider) {
+                const difficulty = decider.getActionSkillDifficulty();
+                if (!pkg.isNoRollDifficulty(difficulty)) {
+                    return pkg.checks.getAverageMargin(agentModel.getSkillExpressionEase(decider.getActionSkillExpr(), difficulty), success);
+                }
+            }
+            return 0;
+        },
+        
         /*  One adjustment of an action or exit: an amount added to what its key names: a stat, 
             e.g. "agent.health", "event.attestation" or "timeline.paradox", a skill of the agent, 
             e.g. "agent.skills.agl", a Value of its Event, e.g. "bus_arrives", or a scratch entry, 
@@ -345,6 +359,61 @@
                     }
                 }
                 return true;
+            },
+            
+            /*  Whether it changes the agent's health. */
+            isHealth: function() {return this.scopeName === SCOPE_AGENT && this.statId === STAT_ID_HEALTH;},
+            
+            /*  Names the stat it changes, e.g. "Health" or "Event Attestation". */
+            getStatDescription: function() {
+                const name = getStatName(this.statId);
+                switch (this.scopeName) {
+                    case SCOPE_AGENT: return name;
+                    case SCOPE_EVENT: return 'Event ' + name;
+                    default: return 'Timeline ' + name;
+                }
+            },
+            
+            /*  Its amount for an agent when its check passes or fails, given that check's margin,
+                by amountFunc: rolled (checks.rollAmount) or averaged (checks.getAverageAmount).
+                Undefined if nothing happens in that case. */
+            getAmount: function(agentModel, success, amountFunc, margin) {
+                const expr = this.getAmountExpr(success);
+                if (expr) {
+                    return amountFunc(expr, {
+                        agent:agentModel, 
+                        event:agentModel.getEventModel(), 
+                        difficulty:(this.hasOwnCheck() ? this : this.owner).getActionSkillDifficulty(),
+                        margin
+                    });
+                }
+            },
+            
+            /*  Its average amount for an agent for a pass or a failure, without rolling. */
+            getAvrgAmount: function(agentModel, success) {
+                return this.getAmount(agentModel, success, pkg.checks.getAverageAmount, getAvrgMargin(this, agentModel, success));
+            },
+            
+            /*  Rolls it for an agent, given the action's own check if it has one, without applying
+                it. Returns {adjustment, key, statId, stat, amount, check, shown}, where amount is 
+                what the stat will actually change by, in whole points within its limits, and 
+                check is its own check if it has one. Null if it doesn't apply, or has nothing to
+                do in its case and has no check of its own. */
+            roll: function(agentModel, actionCheck) {
+                if (!this.appliesFor(actionCheck)) return null;
+                
+                const check = this.hasOwnCheck() ? agentModel.checkSkillExpression(this.getActionSkillExpr(), this.getActionSkillDifficulty()) : null,
+                    // Without its own check it follows the action, and an exit succeeds. The
+                    // margin is that of whichever check decided it, or 0 if none.
+                    decidingCheck = check ?? actionCheck,
+                    success = decidingCheck ? decidingCheck.success : true,
+                    amount = this.getAmount(agentModel, success, pkg.checks.rollAmount, decidingCheck?.result ?? 0);
+                if (amount === undefined && !check) return null;
+                
+                // A broken expression (NaN) does nothing. || 0 so it's never -0.
+                const stat = this.getStat(agentModel),
+                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(Math.round(amount)).adj : 0) || 0;
+                return {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()};
             }
         }),
         
@@ -385,6 +454,12 @@
             },
             getAdjustments: function() {return this.adjustments;},
             hasAdjustments: function() {return this.adjustments.length > 0;},
+            
+            /*  Rolls the adjustments that apply for an agent, given the action's own check if 
+                there is one, without applying them. See StatAdjustmentModel.roll. */
+            rollAdjustments: function(agentModel, actionCheck) {
+                return this.adjustments.map(adjustmentModel => adjustmentModel.roll(agentModel, actionCheck)).filter(Boolean);
+            },
             
             /*  True if the adjustments can depend on the result of the owner's own check. */
             isGatedByActionSkillCheck: () => false

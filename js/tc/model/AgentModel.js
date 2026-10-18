@@ -18,13 +18,11 @@
                 PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             theme:{colorAction, fontFamilyMono},
-            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
-            isNoRollDifficulty,
+            checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
-            getStatName
+            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
@@ -75,46 +73,6 @@
         },
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
-        
-        /*  The difficulty an adjustment's amount expression sees: its own check's, or else the
-            action's or exit's. */
-        getAdjustmentDifficulty = adjustmentModel => (adjustmentModel.hasOwnCheck() ? adjustmentModel : adjustmentModel.owner).getActionSkillDifficulty(),
-        
-        /*  An adjustment's amount for when its check passes or fails, given that check's margin: 
-            rolled, or its average. Undefined if nothing happens in that case. */
-        getAdjustmentAmount = (agentModel, adjustmentModel, success, amountFunc, margin) => {
-            const expr = adjustmentModel.getAmountExpr(success);
-            return expr ? amountFunc(expr, {...getCheckCfg(agentModel, getAdjustmentDifficulty(adjustmentModel)), margin}) : undefined;
-        },
-        
-        /*  The average margin of the check that decides an adjustment, for a pass or a failure: 
-            its own check, or else its action's. 0 if nothing is rolled, as for an exit without 
-            a check of its own or a no-roll check. */
-        getAverageAdjustmentMargin = (agentModel, adjustmentModel, success) => {
-            const decider = adjustmentModel.hasOwnCheck() ? adjustmentModel : (adjustmentModel.owner.isGatedByActionSkillCheck() ? adjustmentModel.owner : null);
-            if (!decider) return 0;
-            
-            const difficulty = decider.getActionSkillDifficulty();
-            if (isNoRollDifficulty(difficulty)) return 0;
-            return getAverageMargin(agentModel.getSkillExpressionEase(decider.getActionSkillExpr(), difficulty), success);
-        },
-        
-        /*  An adjustment's average amount for a pass or a failure, without rolling. */
-        getAverageAdjustmentAmount = (agentModel, adjustmentModel, success) => getAdjustmentAmount(
-            agentModel, adjustmentModel, success, getAverageAmount, getAverageAdjustmentMargin(agentModel, adjustmentModel, success)
-        ),
-        
-        isHealthAdjustment = adjustmentModel => adjustmentModel.scopeName === SCOPE_AGENT && adjustmentModel.statId === STAT_ID_HEALTH,
-        
-        /*  Names the stat an adjustment changes, e.g. "Health" or "Event Attestation". */
-        describeAdjustmentStat = adjustmentModel => {
-            const name = getStatName(adjustmentModel.statId);
-            switch (adjustmentModel.scopeName) {
-                case SCOPE_AGENT: return name;
-                case SCOPE_EVENT: return 'Event ' + name;
-                default: return 'Timeline ' + name;
-            }
-        },
         
         /*  Applies rolled adjustments and records them on the log entry by key. */
         applyAdjustments = (adjustments, logEntry) => {
@@ -641,7 +599,7 @@
                     // own check gives the result.
                     const costs = this.getCostsFor(exitModel);
                     if (costs.every(cost => cost.canPay)) {
-                        const adjustments = this.rollAdjustmentsFor(exitModel),
+                        const adjustments = exitModel.rollAdjustments(this),
                             logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
                         // Most exits are free, so only those with costs record them.
                         if (costs.length > 0) this.payCosts(costs, logEntry);
@@ -682,7 +640,7 @@
                         actionModel.getActionSkillExpr(),
                         actionModel.getActionSkillDifficulty()
                     ),
-                    adjustments = this.rollAdjustmentsFor(actionModel, check),
+                    adjustments = actionModel.rollAdjustments(this, check),
                     logEntry = {type:LOG_TYPE_ACTION, action:actionModel, success:check.success};
                 
                 // Now show floating panel, with the adjustments so there's only one. (must be before 
@@ -793,10 +751,10 @@
             else as amounts, e.g. "Event Attestation: ~+5 if passed, ~-2 if failed". */
         getAdjustmentsPhrase: function(ownerModel) {
             return ownerModel.getAdjustments().filter(adjustmentModel => adjustmentModel.isShown()).map(adjustmentModel => {
-                const failAmount = getAverageAdjustmentAmount(this, adjustmentModel, false),
-                    passAmount = getAverageAdjustmentAmount(this, adjustmentModel, true);
+                const failAmount = adjustmentModel.getAvrgAmount(this, false),
+                    passAmount = adjustmentModel.getAvrgAmount(this, true);
                 let phrase;
-                if (isHealthAdjustment(adjustmentModel) && mathMin(failAmount ?? 0, passAmount ?? 0) < 0) {
+                if (adjustmentModel.isHealth() && mathMin(failAmount ?? 0, passAmount ?? 0) < 0) {
                     // A failure's damage first, then a pass's if that hurts too and reads 
                     // differently.
                     const failPhrase = toDamagePhrase(-(failAmount ?? 0)),
@@ -811,7 +769,7 @@
                             parts.push(ICON_APPROX + (rounded < 0 ? '-' : '+') + mathAbs(rounded) + ' ' + when);
                         }
                     }
-                    phrase = describeAdjustmentStat(adjustmentModel) + ': ' + parts.join(', ');
+                    phrase = adjustmentModel.getStatDescription() + ': ' + parts.join(', ');
                 }
                 
                 if (adjustmentModel.hasOwnCheck()) {
@@ -828,7 +786,7 @@
         hasStatChangeFor: function(ownerModel, statId) {
             return ownerModel.getAdjustments().some(adjustmentModel => adjustmentModel.statId === statId && 
                 [true, false].some(success => {
-                    const amount = getAverageAdjustmentAmount(this, adjustmentModel, success);
+                    const amount = adjustmentModel.getAvrgAmount(this, success);
                     return Number.isFinite(amount) && amount !== 0;
                 })
             ) || (ownerModel.getCosts?.() ?? []).some(costModel => costModel.statId === statId && costModel.getAmount(this) > 0);
@@ -838,7 +796,7 @@
             fails, or a cost paid in paradox. */
         canGenerateParadoxFor: function(actionModel) {
             return actionModel.getAdjustments().some(adjustmentModel => adjustmentModel.statId === STAT_ID_PARADOX &&
-                [true, false].some(success => getAverageAdjustmentAmount(this, adjustmentModel, success) > 0)
+                [true, false].some(success => adjustmentModel.getAvrgAmount(this, success) > 0)
             ) || actionModel.getCosts().some(costModel => costModel.statId === STAT_ID_PARADOX && costModel.getAmount(this) > 0);
         },
         
@@ -851,33 +809,6 @@
         hasHealthChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_HEALTH);},
         hasChronalChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_CHRONAL);},
         hasParadoxChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_PARADOX);},
-        
-        /*  Rolls the adjustments of an action or exit that apply, given the action's own check if 
-            it has one. Doesn't apply them. Returns an Array of 
-            {adjustment, key, statId, stat, amount, check} where amount is what the stat will 
-            actually change by, in whole points within its limits, and check is the adjustment's 
-            own check if it has one. An adjustment with nothing to do in its case is left out, 
-            unless it rolled its own check. */
-        rollAdjustmentsFor: function(ownerModel, actionCheck) {
-            const results = [];
-            for (const adjustmentModel of ownerModel.getAdjustments()) {
-                if (!adjustmentModel.appliesFor(actionCheck)) continue;
-                
-                const check = adjustmentModel.hasOwnCheck() ? this.checkSkillExpression(adjustmentModel.getActionSkillExpr(), adjustmentModel.getActionSkillDifficulty()) : null,
-                    // Without its own check an adjustment follows the action, and an exit succeeds.
-                    // The margin is that of whichever check decided it, or 0 if none.
-                    decidingCheck = check ?? actionCheck,
-                    success = decidingCheck ? decidingCheck.success : true,
-                    amount = getAdjustmentAmount(this, adjustmentModel, success, rollAmount, decidingCheck?.result ?? 0);
-                if (amount === undefined && !check) continue;
-                
-                // A broken expression (NaN) does nothing. || 0 so it's never -0.
-                const stat = adjustmentModel.getStat(this),
-                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
-                results.push({adjustment:adjustmentModel, key:adjustmentModel.key, statId:adjustmentModel.statId, stat, amount:adj, check, shown:adjustmentModel.isShown()});
-            }
-            return results;
-        },
         
         
         // Death //
