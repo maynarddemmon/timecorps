@@ -335,17 +335,20 @@
             }
         },
         
+        /*  The first time a known agent is at a known Event, whether by entering it or by
+            either of them being revealed, the Event is marked visited and, if the player 
+            wants, its brief opens. */
         tryToOpenEventBrief: function() {
-                const eventModel = this.getEventModel();
-                if (
-                    eventModel?.isRegularEvent() && eventModel.isNotHidden() && 
-                    this.isNotHidden() && !eventModel.hasBeenVisited()
-                ) {
-                    eventModel.setBeenVisited(true);
-                    if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
-                        pkg.app.openEventBrief(eventModel);
-                    }
+            const eventModel = this.getEventModel();
+            if (
+                eventModel?.isRegularEvent() && eventModel.isNotHidden() && 
+                this.isNotHidden() && !eventModel.hasBeenVisited()
+            ) {
+                eventModel.setBeenVisited(true);
+                if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
+                    pkg.app.openEventBrief(eventModel);
                 }
+            }
         },
         
         getEvent: function() {return this.event;},

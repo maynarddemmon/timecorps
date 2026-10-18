@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, dialogTitle} from './helpers.mjs';
+import {startGame, dialogTitle, reloadGame} from './helpers.mjs';
 
 const visibleText = (page, text) => page.getByText(text, {exact:false}).filter({visible:true});
 
@@ -70,6 +70,10 @@ test('an open event brief follows its event', async ({page}) => {
 test('the brief opens the first time any agent enters an event, unless the setting is off', async ({page}) => {
     const problems = await startGame(page, {eventBriefs:true});
     expect(await page.evaluate(() => tc.settings.get(tc.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY))).toBe(true);
+    
+    // The first mission reveals Alpha at Origin, which counts as a first visit.
+    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await page.keyboard.press('Escape');
     await expect(briefTitle(page)).toHaveCount(0);
     
     const deploy = (agentId, eventId) => page.evaluate(([agentId, eventId]) => {
@@ -97,6 +101,27 @@ test('the brief opens the first time any agent enters an event, unless the setti
     expect(await page.evaluate(() => tc.settings.get(tc.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY))).toBe(false);
     await deploy('AL', 'finale');
     await page.waitForTimeout(250);
+    await expect(briefTitle(page)).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent at an event when it is revealed counts as a first visit, and a reload opens nothing again', async ({page}) => {
+    const problems = await startGame(page, {eventBriefs:true});
+    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await page.keyboard.press('Escape');
+    
+    // Plan is unknown when Alpha arrives, so its brief waits until it's revealed.
+    await page.evaluate(() => tc.model.getAgentModel('AL').doDeployToEvent(tc.model.getEventModel('plan')));
+    await page.waitForTimeout(250);
+    await expect(briefTitle(page)).toHaveCount(0);
+    await page.evaluate(() => tc.model.getEventModel('plan').attestation.setValue(10));
+    await expect(briefTitle(page)).toHaveText('Event Brief : Plan');
+    await page.keyboard.press('Escape');
+    
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    await page.waitForTimeout(500);
     await expect(briefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);

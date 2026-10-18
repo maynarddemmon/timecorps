@@ -949,12 +949,15 @@
             getDuration: function(formatted) {return formatted ? formatDuration(this.duration) : this.duration;},
             
             // Hidden
-            doHiddenChanged: function(_hidden) {
+            doHiddenChanged: function(hidden) {
                 this.notifyCollectionOfUpdate();
                 pkg.app.getTimelineView().notifyEventVisibilityChange(this);
                 
                 // Each known Event raises the Timeline's paradox limit.
                 pkg.model.updateTimelineParadoxMax();
+                
+                // An agent already here when it's revealed counts as its first visit.
+                if (!hidden) pkg.model.getAgentModelsForEvent(this.id)[0]?.tryToOpenEventBrief();
             },
             
             // Description
