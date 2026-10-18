@@ -146,6 +146,7 @@
             },
             
             adjValue: function(adj, cfg) {
+                if (adj === 0) return 0;
                 const allowed = this.getAllowedAdj(adj, cfg);
                 if (allowed.adj !== 0) this.setValue(this.getValue() + allowed.adj);
                 if (allowed.clamp === 'max') this.triggerValueClampedToMax();

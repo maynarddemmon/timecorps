@@ -3,7 +3,8 @@
     
     const {Class:JSClass, Module:JSModule} = JS,
         
-        {stableStringify, BaseModel} = myt,
+        M = myt,
+        BaseModel = M.BaseModel,
         
         {
             NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
@@ -18,15 +19,20 @@
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
-        TRAVEL_MODE_WAIT ='wait',
-        TRAVEL_MODE_WALK ='walk',
-        TRAVEL_MODE_SWIM ='swim',
-        TRAVEL_MODE_BIKE ='bike',
-        TRAVEL_MODE_ENTER ='enter',
-        TRAVEL_MODE_BOARD ='board',
-        TRAVEL_MODE_JUMP ='jump',
-        TRAVEL_MODE_PULLED ='pulled',
-        TRAVEL_MODE_LIFEBOAT = 'lifeboat',
+        getTravelModePhrase = M.memoize(mode => {
+            switch (mode) {
+                case 'wait':     return 'Wait til';
+                case 'jump':     return 'Jump to';
+                case 'pulled':   return 'Pulled to';
+                case 'enter':    return 'Enter';
+                case 'board':    return 'Board';
+                case 'walk':     return 'Walk to';
+                case 'swim':     return 'Swim to';
+                case 'bike':     return 'Bike to';
+                case 'lifeboat': return 'Lifeboat to';
+            }
+            return 'To';
+        }),
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
         PREFIX_SKILL_DIFF = '_SkDff_',
@@ -114,30 +120,11 @@
             [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL]
         },
         
-        /*  What a set or adj key names, or why it names nothing:
-                {kind:'stat', scopeName, statId} - e.g. "agent.health". See ADJUSTMENT_STAT_IDS.
-                {kind:'skill', scopeName:'agent', statId:'skills.<skill>', skillId} - e.g. 
-                    "agent.skills.agl".
-                {kind:'scratch', statId:'scratch.<name>', name} - e.g. "scratch.origin_knocks".
-                {kind:'value', statId:'values.<id>', valueId} - a Value of the action's or exit's
-                    own Event, by its ID, e.g. "bus_arrives".
-                {error} - a phrase for a warning. */
-        parseChangeKey = pkg.parseChangeKey = key => {
-            const [scopeName, statId, ...rest] = String(key).split('.');
-            if (statId === undefined) return {kind:'value', statId:'values.' + scopeName, valueId:scopeName};
-            if (scopeName === SCOPE_SCRATCH && rest.length === 0) return {kind:'scratch', statId:key, name:statId};
-            if (scopeName === SCOPE_AGENT && statId === SCOPE_SKILLS && rest.length === 1) {
-                return pkg.isSkillId(rest[0]) ? {kind:'skill', scopeName, statId:SCOPE_SKILLS + '.' + rest[0], skillId:rest[0]} : {error:'names no skill'};
-            }
-            if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) return {kind:'stat', scopeName, statId};
-            return {error:'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event or "scratch.<name>"'};
-        },
-        
         /*  What a parsed key changes, as something stat-like: {value, getAllowedAdj(adj), 
             adjValue(adj)}. A stat is its NumericStatModel. A Value or scratch entry has no 
             limits, but only changes while it's a number; otherwise nothing is allowed and a 
             warning names it. Undefined when there's nothing to change, e.g. no such Value. */
-        getChangeTarget = pkg.getChangeTarget = (parsed, agentModel, eventModel) => {
+        getChangeTarget = (parsed, agentModel, eventModel) => {
             const numericOnly = (getValue, setValue, what) => ({
                 get value() {return getValue();},
                 getAllowedAdj: adj => {
@@ -145,7 +132,9 @@
                     console.warn(what, 'is not a number, so adj can\'t change it:', getValue());
                     return {adj:0};
                 },
-                adjValue: adj => {setValue(getValue() + adj);}
+                adjValue: adj => {
+                    if (adj !== 0) setValue(getValue() + adj);
+                }
             });
             switch (parsed.kind) {
                 case 'stat':
@@ -172,7 +161,7 @@
         
         /*  Reads one entry of a set or adj block, warning about problems with "where" at the
             front, e.g. "Event origin action toss set outcome". The key must name something 
-            that can change (see parseChangeKey). The entry is a string or an object with
+            that can change. The entry is a string or an object with
             onSuccess and/or onFailure expressions, or onBoth, which is the same expression for
             either result. onSuccess or onFailure beside onBoth is ignored, as is an expression
             that isn't a non-empty string.
@@ -186,12 +175,36 @@
             Returns {parsedKey, onSuccess, onFailure}, at least one of the two set, or null if
             the entry can't be used. */
         readChangeEntry = (where, key, cfg, {keepString=false, readRest}={}) => {
-            const warn = msg => console.warn(where + ' ' + msg + ':', cfg),
-                parsedKey = parseChangeKey(key);
-            if (parsedKey.error) {
-                warn(parsedKey.error + ' (ignoring it)');
+            const warn = msg => console.warn(where + ' ' + msg + ':', cfg);
+            
+            /*  Parse change key. What a set or adj key names, or why it names nothing:
+                {kind:'stat', scopeName, statId} - e.g. "agent.health". See ADJUSTMENT_STAT_IDS.
+                {kind:'skill', scopeName:'agent', statId:'skills.<skill>', skillId} - e.g. 
+                    "agent.skills.agl".
+                {kind:'scratch', statId:'scratch.<name>', name} - e.g. "scratch.origin_knocks".
+                {kind:'value', statId:'values.<id>', valueId} - a Value of the action's or exit's
+                    own Event, by its ID, e.g. "bus_arrives".
+                {error} - a phrase for a warning. */
+            let parsedKey;
+            const [scopeName, statId, ...rest] = String(key).split('.');
+            if (statId === undefined) {
+                parsedKey = {kind:'value', statId:'values.' + scopeName, valueId:scopeName};
+            } else if (scopeName === SCOPE_SCRATCH && rest.length === 0) {
+                parsedKey = {kind:'scratch', statId:key, name:statId};
+            } else if (scopeName === SCOPE_AGENT && statId === SCOPE_SKILLS && rest.length === 1) {
+                if (pkg.isSkillId(rest[0])) {
+                    parsedKey = {kind:'skill', scopeName, statId:SCOPE_SKILLS + '.' + rest[0], skillId:rest[0]};
+                } else {
+                    warn('names no skill (ignoring it)');
+                    return null;
+                }
+            } else if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
+                parsedKey = {kind:'stat', scopeName, statId};
+            } else {
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event or "scratch.<name>" (ignoring it)');
                 return null;
             }
+            
             if (typeof cfg === 'string') {
                 if (keepString) return {parsedKey, string:cfg};
                 cfg = {onSuccess:cfg};
@@ -200,7 +213,7 @@
                 return null;
             }
             
-            const {onBoth, onSuccess, onFailure, ...rest} = cfg,
+            const {onBoth, onSuccess, onFailure, ...restOfCfg} = cfg,
                 toExpr = (name, expr) => {
                     if (expr === undefined || (typeof expr === 'string' && expr.trim() !== '')) return expr;
                     warn(name + ' must be a non-empty string (ignoring it)');
@@ -215,8 +228,8 @@
             }
             
             if (readRest) {
-                if (readRest(rest, warn) === false) return null;
-            } else if (Object.keys(rest).length > 0) {
+                if (readRest(restOfCfg, warn) === false) return null;
+            } else if (Object.keys(restOfCfg).length > 0) {
                 warn('has keys other than onSuccess, onFailure and onBoth (ignoring it)');
                 return null;
             }
@@ -232,11 +245,11 @@
         ADJUSTMENT_WHEN_FAILURE = 'failure',
         ADJUSTMENT_WHEN_BOTH = 'both',
         
-        /*  One adjustment of an action or exit: an amount added to what its key names (see 
-            parseChangeKey): a stat, e.g. "agent.health", "event.attestation" or 
-            "timeline.paradox", a skill of the agent, e.g. "agent.skills.agl", a Value of its 
-            Event, e.g. "bus_arrives", or a scratch entry, e.g. "scratch.origin_knocks". Only 
-            stats and skills show in tooltips, flags and floating text. Configured as:
+        /*  One adjustment of an action or exit: an amount added to what its key names: a stat, 
+            e.g. "agent.health", "event.attestation" or "timeline.paradox", a skill of the agent, 
+            e.g. "agent.skills.agl", a Value of its Event, e.g. "bus_arrives", or a scratch entry, 
+            e.g. "scratch.origin_knocks". Only stats and skills show in tooltips, flags and 
+            floating text. Configured as:
                 onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 
                     positive amount raises the stat and a negative one lowers it, within the 
                     stat's limits. An amount sees the same parameters as a check expression.
@@ -379,12 +392,14 @@
         
         /*  The model whose stat a cost or adjustment of an action changes: the agent, the action's
             Event or the timeline. */
-        getScopeTarget = (scopeName, agentModel, actionModel) => {
+        getScopeStat = (statId, scopeName, agentModel, actionModel) => {
+            let target;
             switch (scopeName) {
-                case SCOPE_AGENT: return agentModel;
-                case SCOPE_EVENT: return actionModel.event;
-                case SCOPE_TIMELINE: return pkg.model;
+                case SCOPE_AGENT:    target = agentModel; break;
+                case SCOPE_EVENT:    target = actionModel.event; break;
+                case SCOPE_TIMELINE: target = pkg.model; break;
             }
+            return target?.[statId];
         },
         
         /*  A cost paid in a stat. Paying lowers it, except paradox, which a cost adds to. Either
@@ -394,20 +409,17 @@
             destabilizes the timeline. */
         makeStatCost = (scopeName, statId, reserve=0) => {
             const accrues = statId === STAT_ID_PARADOX,
-                getStat = (agentModel, actionModel) => getScopeTarget(scopeName, agentModel, actionModel)?.[statId];
+                name = (scopeName === SCOPE_EVENT ? 'Event ' : scopeName === SCOPE_TIMELINE ? 'Timeline ' : '') + getStatName(statId);
             return {
-                scopeName, statId,
-                getName: () => (scopeName === SCOPE_EVENT ? 'Event ' : scopeName === SCOPE_TIMELINE ? 'Timeline ' : '') + getStatName(statId),
+                scopeName,
+                statId,
+                getName: () => name,
                 getAvailable: (agentModel, actionModel) => {
-                    const stat = getStat(agentModel, actionModel);
-                    if (!stat) return 0;
-                    return (accrues ? stat.getValueToMax() : -stat.getValueToMin()) - reserve;
+                    const stat = getScopeStat(statId, scopeName, agentModel, actionModel);
+                    return stat ? (accrues ? stat.getValueToMax() : -stat.getValueToMin()) - reserve : 0;
                 },
                 pay: (agentModel, actionModel, amount) => {
-                    getStat(agentModel, actionModel).adjValue(accrues ? amount : -amount);
-                    
-                    // An Event's attestation scores the same however it's lost, as for adjustments.
-                    if (scopeName === SCOPE_EVENT && statId === STAT_ID_ATTESTATION) pkg.model.adjScore(-amount * SCORE_PER_ATTESTATION);
+                    getScopeStat(statId, scopeName, agentModel, actionModel).adjValue(accrues ? amount : -amount);
                 }
             };
         },
@@ -656,12 +668,13 @@
                     - {onSuccess, onFailure}, either optional: check expressions worked out 
                       once, when the action is taken, for the result the check had. They see 
                       margin, and set a Value to a literal. {onBoth} is one for either result.
-                Entries that are neither are left out, with a warning. See readChangeEntry. */
+                Entries that are neither are left out, with a warning. See readChangeEntry, and
+                applySets for how each kind of key is set. */
             setSet: function(set) {
                 const clean = {};
                 for (const key in set ?? {}) {
                     const entry = readChangeEntry('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key, key, set[key], {keepString:true});
-                    if (entry) clean[key] = entry.string ?? {onSuccess:entry.onSuccess, onFailure:entry.onFailure};
+                    if (entry) clean[key] = entry;
                 }
                 this.set('setObj', clean, true);
             },
@@ -693,6 +706,57 @@
             
             /** @overrides AdjustmentSupport */
             isGatedByActionSkillCheck: () => true,
+            
+            /*  Sets what the action sets, by key, for an agent's check result. A string entry 
+                sets on success and an {onSuccess, onFailure} entry for either result. Margin 
+                is how well the check went. */
+            applySets: function(agentModel, success, margin) {
+                const event = this.event,
+                    {rollValue} = pkg.checks,
+                    rollCfg = {agent:agentModel, event, difficulty:this.getActionSkillDifficulty(), margin};
+                for (const key in this.setObj) {
+                    const {parsedKey, string, onSuccess, onFailure} = this.setObj[key],
+                        isPerResult = string === undefined,
+                        expr = isPerResult ? (success ? onSuccess : onFailure) : (success ? string : undefined);
+                    if (expr === undefined) continue;
+                    
+                    switch (parsedKey.kind) {
+                        case 'scratch': {
+                            // Worked out once, now, rather than kept up to date like a Causator,
+                            // so "scratch.x + 1" counts. Dice roll.
+                            const result = rollValue(expr, rollCfg);
+                            if (result !== undefined) pkg.model.setScratch(parsedKey.name, result);
+                            break;
+                        }
+                        case 'stat':
+                        case 'skill': {
+                            // Worked out once, now, and set within the stat's limits, by adjusting it
+                            // so the stat's own rules apply, e.g. reaching a paradox limit.
+                            const result = rollValue(expr, rollCfg),
+                                target = getChangeTarget(parsedKey, agentModel, event);
+                            if (target && Number.isFinite(result)) {
+                                const adj = target.getAllowedAdj(Math.round(result) - target.value).adj;
+                                target.adjValue(adj);
+                            }
+                            break;
+                        }
+                        case 'value': {
+                            const valueModel = event.values[parsedKey.valueId];
+                            if (!valueModel) {
+                                console.warn('Event', event.id, 'action', this.id, 'sets missing Value', parsedKey.valueId);
+                            } else if (isPerResult) {
+                                // Set as a literal, so it stays what it was worked out to be.
+                                const result = rollValue(expr, rollCfg);
+                                if (result !== undefined) valueModel.setValueByAction(JSON.stringify(result));
+                            } else {
+                                // A constraint expression, kept up to date.
+                                valueModel.setValueByAction(expr);
+                            }
+                            break;
+                        }
+                    }
+                }
+            },
             
             setDoneCount: function(v) {
                 if (this.doneCount !== v) {
@@ -838,20 +902,7 @@
             
             // Methods /////////////////////////////////////////////////////////
             /*  How the exit is taken, as the start of a button label, e.g. "Walk to". */
-            getModePhrase: function() {
-                switch (this.mode) {
-                    case TRAVEL_MODE_WAIT:     return 'Wait til';
-                    case TRAVEL_MODE_JUMP:     return 'Jump to';
-                    case TRAVEL_MODE_PULLED:   return 'Pulled to';
-                    case TRAVEL_MODE_ENTER:    return 'Enter';
-                    case TRAVEL_MODE_BOARD:    return 'Board';
-                    case TRAVEL_MODE_WALK:     return 'Walk to';
-                    case TRAVEL_MODE_SWIM:     return 'Swim to';
-                    case TRAVEL_MODE_BIKE:     return 'Bike to';
-                    case TRAVEL_MODE_LIFEBOAT: return 'Lifeboat to';
-                    default: return 'To';
-                }
-            }
+            getModePhrase: function() {return getTravelModePhrase(this.mode);}
         }),
         
         HideAffectedByModel = new JSClass('HideAffectedByModel', BaseModel, {
@@ -875,11 +926,18 @@
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
-                self[STAT_ID_ATTESTATION] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_ATTESTATION, absMin:0, min:0, value:0, max:100, absMax:100});
+                self[STAT_ID_ATTESTATION] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_ATTESTATION, absMin:0, min:0, value:0, max:100, absMax:100}, [{
+                    adjValue: function(adj, cfg) {
+                        const retval = this.callSuper(adj, cfg);
+                        // Score is adjusted when attestation increases and taken away when it drops.
+                        if (retval !== 0) pkg.model.adjScore(retval * SCORE_PER_ATTESTATION);
+                        return retval;
+                    }
+                }]);
                 self[STAT_ID_PARADOX] =     new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_PARADOX,     absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
                     adjValue: function(adj, cfg) {
                         const retval = this.callSuper(adj, cfg);
-                        if (retval !== 0) pkg.model[STAT_ID_PARADOX].adjValue(retval);
+                        pkg.model[STAT_ID_PARADOX].adjValue(retval);
                         return retval;
                     },
                     // Reaching the limit, however it happens, floods the Event.
@@ -924,7 +982,7 @@
                 for (const attrName of EVENT_STAT_IDS) {
                     // Use stableStringify since similarTo uses shallowEqual. If this gets 
                     // unwieldy change similarTo to use deepEqual and drop the stableStringify.
-                    retval[attrName] = stableStringify(this[attrName].getAsObj(cfg));
+                    retval[attrName] = M.stableStringify(this[attrName].getAsObj(cfg));
                 }
                 return retval;
             },
@@ -1230,7 +1288,7 @@
                 // Agent visits.
                 for (const agentModel of pkg.model.getAgentModelsAsList()) {
                     const visits = agentModel.countVisitsToEvent(this);
-                    if (visits > 0) agentModel[STAT_ID_PARADOX].adjValue(visits);
+                    agentModel[STAT_ID_PARADOX].adjValue(visits);
                 }
                 
                 for (const descendant of this.getDescendants()) descendant[STAT_ID_PARADOX].adjValue(1);

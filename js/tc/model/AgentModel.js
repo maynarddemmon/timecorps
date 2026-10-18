@@ -15,22 +15,19 @@
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
-                SCORE_PER_ATTESTATION, PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
+                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             theme:{colorAction, fontFamilyMono},
-            checks:{rollValue, skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
+            checks:{skill, getSkillEase, getEasePhrase, rollAmount, getAverageAmount, getAverageMargin, toDamagePhrase, showFloatingTextForSkillCheck},
             isNoRollDifficulty,
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_ATTESTATION,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, SCOPE_SCRATCH, CHECK_SKILL_EXPR_PREFIX,
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
             getStatName
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
-        
-        // An action's set key that names a scratch entry, e.g. "scratch.collision_lookoutWarned".
-        SCRATCH_PREFIX = SCOPE_SCRATCH + '.',
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -116,6 +113,14 @@
                 case SCOPE_AGENT: return name;
                 case SCOPE_EVENT: return 'Event ' + name;
                 default: return 'Timeline ' + name;
+            }
+        },
+        
+        /*  Applies rolled adjustments and records them on the log entry by key. */
+        applyAdjustments = (adjustments, logEntry) => {
+            if (adjustments.length > 0) {
+                const logged = logEntry.adj = {};
+                for (const {key, stat, amount} of adjustments) stat.adjValue(logged[key] = amount);
             }
         },
         
@@ -643,7 +648,7 @@
                         if (adjustments.length > 0) {
                             const shownCheck = adjustments.find(adjustment => adjustment.check)?.check ?? {success:true, roll:null};
                             showFloatingTextForSkillCheck(btnView, {...shownCheck, adjustments});
-                            this.applyAdjustments(adjustments, logEntry);
+                            applyAdjustments(adjustments, logEntry);
                         }
                         
                         this.setEvent(toEvent.id, logEntry);
@@ -658,10 +663,7 @@
         doAction: function(actionModel, btnView) {
             if (this.isDead()) return;
             
-            const eventModel = this.getEventModel(),
-                {setObj, event} = actionModel;
-            
-            if (eventModel !== event) {
+            if (this.getEventModel() !== actionModel.event) {
                 console.warn('Agent not in same event as action.', actionModel, this);
                 return;
             }
@@ -689,54 +691,14 @@
                 showFloatingTextForSkillCheck(btnView, {...check, adjustments});
                 
                 this.payCosts(costs, logEntry);
-                this.applyAdjustments(adjustments, logEntry);
+                applyAdjustments(adjustments, logEntry);
                 
                 // After the adjustments are worked out, so they see the count before this is applied.
                 actionModel.setAttemptCount(actionModel.getAttemptCount() + 1);
                 
-                // A string entry sets on success. An {onSuccess, onFailure} entry sets for 
-                // either result, worked out once now. See EventActionModel.setSet.
-                const success = check.success,
-                    rollCfg = {...getCheckCfg(this, actionModel.getActionSkillDifficulty()), margin:check.result ?? 0};
-                for (const key in setObj) {
-                    const cfg = setObj[key],
-                        isPerResult = typeof cfg === 'object',
-                        expr = isPerResult ? (success ? cfg.onSuccess : cfg.onFailure) : (success ? cfg : undefined);
-                    if (expr === undefined) continue;
-                    
-                    const parsedKey = pkg.parseChangeKey(key);
-                    if (key.startsWith(SCRATCH_PREFIX)) {
-                        // Worked out once, now, rather than kept up to date like a Causator,
-                        // so "scratch.x + 1" counts. Dice roll.
-                        const result = rollValue(expr, rollCfg);
-                        if (result !== undefined) pkg.model.setScratch(key.slice(SCRATCH_PREFIX.length), result);
-                    } else if (parsedKey.kind === 'stat' || parsedKey.kind === 'skill') {
-                        // Worked out once, now, and set within the stat's limits, by adjusting it
-                        // so the stat's own rules apply, e.g. reaching a paradox limit.
-                        const result = rollValue(expr, rollCfg),
-                            target = pkg.getChangeTarget(parsedKey, this, event);
-                        if (target && Number.isFinite(result)) {
-                            const adj = target.getAllowedAdj(mathRound(result) - target.value).adj;
-                            if (adj) {
-                                target.adjValue(adj);
-                                if (parsedKey.scopeName === SCOPE_EVENT && parsedKey.statId === STAT_ID_ATTESTATION) pkg.model.adjScore(adj * SCORE_PER_ATTESTATION);
-                            }
-                        }
-                    } else {
-                        const eventValueModel = event.values[key];
-                        if (!eventValueModel) {
-                            console.warn('Missing Value in doIt:' + key);
-                        } else if (isPerResult) {
-                            // Set as a literal, so it stays what it was worked out to be.
-                            const result = rollValue(expr, rollCfg);
-                            if (result !== undefined) eventValueModel.setValueByAction(JSON.stringify(result));
-                        } else {
-                            eventValueModel.setValueByAction(expr);
-                        }
-                    }
-                }
+                actionModel.applySets(this, check.success, check.result ?? 0);
                 
-                if (success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
+                if (check.success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 this.pushOntoLog(logEntry);
             }
         },
@@ -915,24 +877,6 @@
                 results.push({adjustment:adjustmentModel, key:adjustmentModel.key, statId:adjustmentModel.statId, stat, amount:adj, check, shown:adjustmentModel.isShown()});
             }
             return results;
-        },
-        
-        /*  Applies rolled adjustments and records them on the log entry by key. */
-        applyAdjustments: function(adjustments, logEntry) {
-            if (adjustments.length === 0) return;
-            
-            const logged = logEntry.adj = {};
-            for (const {adjustment, key, stat, amount} of adjustments) {
-                logged[key] = amount;
-                if (amount !== 0) {
-                    stat.adjValue(amount);
-                    
-                    // An Event's attestation scores the same however it's gained, or lost.
-                    if (adjustment.scopeName === SCOPE_EVENT && adjustment.statId === STAT_ID_ATTESTATION) {
-                        pkg.model.adjScore(amount * SCORE_PER_ATTESTATION);
-                    }
-                }
-            }
         },
         
         
