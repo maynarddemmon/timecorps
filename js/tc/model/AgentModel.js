@@ -15,7 +15,8 @@
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
-                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
+                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE,
+                MIN_CHRONOGATION_TO_LOOPBACK
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
@@ -50,24 +51,32 @@
                 chronalAvailable = -agentModel[STAT_ID_CHRONAL].getValueToMin(),
                 hasEnoughChronal = chronalNeeded <= chronalAvailable,
                 paradoxCost = agentModel.calculateParadoxForEntry(eventModel),
-                agentRisksPhrase = pkg.formatAgentRisks(chronalNeeded, paradoxCost),
-                floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
-            let disabled,
+                isAlreadyAtEvent = agentModel.isAtEvent(eventModel),
+                chronogation = agentModel.getSkill(SKILL_ID_CHRONOGATION);
+            
+            let disabled = !hasEnoughChronal,
                 text,
-                visible = true;
+                visible = true,
+                tooltip;
             if (isHQ) {
-                disabled = !hasEnoughChronal;
-                text = 'Recall to ' + ICON_HQ + agentRisksPhrase;
+                text = 'Recall to ' + ICON_HQ;
             } else {
-                const isAlreadyAtEvent = agentModel.isAtEvent(eventModel);
-                disabled = !hasEnoughChronal;
-                text = (agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to')) + agentRisksPhrase;
+                text = agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to');
             }
+            text += pkg.formatAgentRisks(chronalNeeded, paradoxCost);
             
-            if (floodedEventModel) disabled = true;
-            const tooltip = floodedEventModel ? floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.' : '';
-            
-            if (agentModel.isDead()) visible = false;
+            if (
+                agentModel.isDead() ||
+                (isAlreadyAtEvent && chronogation < pkg.getMinChronogationToLoopbackAtEvent(eventModel))
+            ) {
+                visible = false;
+            } else {
+                const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
+                if (floodedEventModel) {
+                    disabled = true;
+                    tooltip = floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.';
+                }
+            }
             
             return {disabled, text, tooltip, visible};
         },

@@ -2,9 +2,11 @@
     'use strict';
     
     const {
-            max:mathMax, floor:mathFloor, ceil:mathCeil, 
+            max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil, 
             log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom
         } = Math,
+        
+        logToBase = (v, base) => mathLog(v) / mathLog(base),
         
         // Chronal Util //
         calculateSkillFactor = agentModel => 2 ** (agentModel.getSkillChronogation() / 100),
@@ -181,6 +183,8 @@
                 MAX_SKILL_EASE:-1,
                 MIN_SKILL_EASE:-999,
                 
+                MIN_CHRONOGATION_TO_LOOPBACK:50,
+                
                 // The starting maximum paradox an Agent can have.
                 AGENT_DEFAULT_PARADOX:0,
                 AGENT_PARADOX_LIMIT:5,
@@ -326,6 +330,14 @@
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
+            getMinChronogationToLoopbackAtEvent: eventModel => {
+                // Gets a spread of difficulties where the shorter the duration of the Event the
+                // more difficult it is to loop back to it. The idea is the short duration requires
+                // more precision to arrive accurately. The calculation below creates an ease of
+                // about 500 at 100 years and 0 at 1 second.
+                return TC.cfg.MIN_CHRONOGATION_TO_LOOPBACK - mathMax(0, mathMin(500, logToBase(eventModel.getDuration(), 1.0447) - 158));
+            },
+            
             loadTxt: (url, callback) => {
                 myt.doFetch(url, {}, true,
                     response => {
@@ -429,6 +441,8 @@
             ICON_MISSION:'⚑',
             ICON_EVENT:'⧉', // ⧉, ⚭
             ICON_DEATH:'☠',
+            
+            logToBase,
             
             // Formatting //
             wrapInStyledSpan,

@@ -742,7 +742,7 @@
 					"set":{
 						"heard":"true",
 						"agent.chronal":{"onSuccess":"15"},
-						"agent.skills.chronogation":{"onSuccess":"500"}
+						"agent.skills.chronogation":{"onSuccess":"-500"}
 					},
 					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
 					"available":"!event.values.heard.value",
