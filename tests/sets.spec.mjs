@@ -1,5 +1,6 @@
 // An action's set: what it changes in its Event's Values and in scratch. A string sets when
-// the check passes; {onSuccess, onFailure} sets for either result, worked out once.
+// the check passes; {onSuccess, onFailure} sets for either result, worked out once, and
+// {onBoth} is the same for both.
 import {test, expect} from '@playwright/test';
 import {startGame, reloadGame, readTestData} from './helpers.mjs';
 
@@ -25,6 +26,17 @@ const routeScenarioWithSets = page => page.route('**/tests/data/test_scenario.js
         fumble:{
             label:'Fumble', skillCheck:{check:'0', difficulty:500}, costs:{'agent.action':null},
             set:{outcome:{onFailure:'event.values.outcome.value - 10'}}
+        },
+        // The same for either result, in a set and an adj. onBoth wins over the others.
+        both:{
+            label:'Both', skillCheck:{check:'0', difficulty:500}, costs:{'agent.action':null},
+            set:{outcome:{onBoth:'margin'}, 'scratch.origin_margin':{onBoth:'7', onSuccess:'1'}},
+            adj:{'scratch.origin_wins':{onBoth:'1', onFailure:'5'}}
+        },
+        // A string adj, like a string set, applies only on a pass.
+        practice:{
+            label:'Practice', skillCheck:{check:'0', difficulty:500}, costs:{'agent.action':null},
+            adj:{'agent.skills.agl':'10', 'scratch.origin_wins':'1'}
         },
         bad:{
             label:'Bad', skillCheck:{difficulty:'no-roll'},
@@ -67,16 +79,48 @@ test('a set can give each result its own value, worked out once with margin, and
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('onBoth sets or adjusts the same for either result, and onSuccess or onFailure beside it is ignored with a warning', async ({page}) => {
+    await routeScenarioWithSets(page);
+    const problems = await startGame(page);
+    expect(problems.warnings.filter(warning => warning.includes('has onBoth'))).toEqual([
+        expect.stringMatching(/^Event origin action both adj scratch\.origin_wins has onBoth, so its onSuccess and onFailure are ignored:/),
+        expect.stringMatching(/^Event origin action both set scratch\.origin_margin has onBoth, so its onSuccess and onFailure are ignored:/)
+    ]);
+    
+    expect(await act(page, 'both', 900)).toMatchObject({outcome:400, margin:7, wins:1});
+    expect(await act(page, 'both', 100)).toMatchObject({outcome:-400, margin:7, wins:2});
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a string adj is short for {onSuccess}, so it applies only on a pass', async ({page}) => {
+    await routeScenarioWithSets(page);
+    const problems = await startGame(page),
+        practice = roll => page.evaluate(roll => {
+            const alpha = tc.model.getAgentModel('AL');
+            tc.rng.queueRolls(roll);
+            alpha.doAction(tc.model.getEventModel('origin').getActionModels().practice);
+            return {agl:alpha.getSkill('agl'), wins:tc.model.scratch.origin_wins};
+        }, roll),
+        agl = await page.evaluate(() => tc.model.getAgentModel('AL').getSkill('agl'));
+    
+    expect(await practice(100)).toEqual({agl, wins:0});
+    expect(await practice(900)).toEqual({agl:agl + 10, wins:1});
+    expect(await page.evaluate(() => tc.model.getEventModel('origin').getActionModels().practice.getAdjustments().map(a => a.getAmountExpr(false) ?? null))).toEqual([null, null]);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('a set that is neither a string nor {onSuccess, onFailure} is left out, with a warning', async ({page}) => {
     await routeScenarioWithSets(page);
     const problems = await startGame(page),
         setKeys = await page.evaluate(() => Object.keys(tc.model.getEventModel('origin').getActionModels().bad.setObj));
     expect(setKeys).toEqual([]);
     expect(problems.warnings.filter(warning => warning.startsWith('Event origin action bad set '))).toEqual([
-        expect.stringMatching(/^Event origin action bad set outcome has keys other than onSuccess and onFailure \(ignoring it\)/),
-        expect.stringMatching(/^Event origin action bad set struck onSuccess and onFailure must be non-empty strings \(ignoring it\)/),
-        expect.stringMatching(/^Event origin action bad set noted must be a string, or \{onSuccess, onFailure\} \(ignoring it\)/),
-        expect.stringMatching(/^Event origin action bad set empty needs an onSuccess or onFailure \(ignoring it\)/)
+        expect.stringMatching(/^Event origin action bad set outcome has keys other than onSuccess, onFailure and onBoth \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set struck onSuccess, onFailure and onBoth must be non-empty strings \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set noted must be a string, \{onSuccess, onFailure\} or \{onBoth\} \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set empty needs an onSuccess, onFailure or onBoth \(ignoring it\)/)
     ]);
     expect(problems.pageErrors).toEqual([]);
 });

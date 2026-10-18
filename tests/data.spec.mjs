@@ -256,19 +256,21 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             checkAdjustments = (where, adjustments, isAction, event) => {
                 if (adjustments === null || typeof adjustments !== 'object' || Array.isArray(adjustments)) return [where + ' adj is not an object'];
                 const adjustmentProblems = [];
-                for (const [key, cfg] of Object.entries(adjustments)) {
+                for (let [key, cfg] of Object.entries(adjustments)) {
                     // Null leaves out an adjustment of a default action.
                     if (cfg === null) continue;
                     const at = where + ' adj ' + key,
                         keyProblem = checkChangeKey(key, event);
                     if (keyProblem) adjustmentProblems.push(at + ' ' + keyProblem);
+                    if (typeof cfg === 'string') cfg = {onSuccess:cfg}; // Applies on success.
                     if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
-                        adjustmentProblems.push(at + ' is not an object');
+                        adjustmentProblems.push(at + ' is not a string or an object');
                         continue;
                     }
-                    const {onSuccess, onFailure, enabledForActionSkillCheck, ...checkCfg} = cfg;
-                    if (onSuccess === undefined && onFailure === undefined) adjustmentProblems.push(at + ' has no onSuccess or onFailure');
-                    for (const [name, amount] of [['onSuccess', onSuccess], ['onFailure', onFailure]]) {
+                    const {onSuccess, onFailure, onBoth, enabledForActionSkillCheck, ...checkCfg} = cfg;
+                    if (onSuccess === undefined && onFailure === undefined && onBoth === undefined) adjustmentProblems.push(at + ' has no onSuccess, onFailure or onBoth');
+                    if (onBoth !== undefined && (onSuccess !== undefined || onFailure !== undefined)) adjustmentProblems.push(at + ' has onBoth with onSuccess or onFailure');
+                    for (const [name, amount] of [['onSuccess', onSuccess], ['onFailure', onFailure], ['onBoth', onBoth]]) {
                         const error = amount === undefined ? null : getAmountCompileError(amount);
                         if (error) adjustmentProblems.push(at + ' ' + name + ' ' + error);
                     }
@@ -315,16 +317,17 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     if (isScratch) counts.scratchSets++;
                     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
                         // Per result, worked out once with the same parameters as an amount.
-                        const {onSuccess, onFailure, ...rest} = value;
-                        if (Object.keys(rest).length > 0) problems.push(where + ' set ' + key + ' has keys other than onSuccess and onFailure');
-                        if (onSuccess === undefined && onFailure === undefined) problems.push(where + ' set ' + key + ' has no onSuccess or onFailure');
-                        for (const [name, expr] of [['onSuccess', onSuccess], ['onFailure', onFailure]]) {
+                        const {onSuccess, onFailure, onBoth, ...rest} = value;
+                        if (Object.keys(rest).length > 0) problems.push(where + ' set ' + key + ' has keys other than onSuccess, onFailure and onBoth');
+                        if (onSuccess === undefined && onFailure === undefined && onBoth === undefined) problems.push(where + ' set ' + key + ' has no onSuccess, onFailure or onBoth');
+                        if (onBoth !== undefined && (onSuccess !== undefined || onFailure !== undefined)) problems.push(where + ' set ' + key + ' has onBoth with onSuccess or onFailure');
+                        for (const [name, expr] of [['onSuccess', onSuccess], ['onFailure', onFailure], ['onBoth', onBoth]]) {
                             const error = expr === undefined ? null : getAmountCompileError(expr);
                             if (error) problems.push(where + ' set ' + key + ' ' + name + ' ' + error);
                         }
                         counts.perResultSets++;
                     } else if (typeof value !== 'string') {
-                        problems.push(where + ' set ' + key + ' is not a string or {onSuccess, onFailure}');
+                        problems.push(where + ' set ' + key + ' is not a string, {onSuccess, onFailure} or {onBoth}');
                     } else if (key.includes('.')) {
                         // Scratch, stats and skills are worked out once, as check expressions.
                         const error = getAmountCompileError(value);

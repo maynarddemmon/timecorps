@@ -79,7 +79,7 @@ Only property paths are watched. A method call such as `event.isHidden()` is wor
 
 ### Check expressions
 
-Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure`), for an action's `costs` and for its `available` condition. They're worked out when they're needed rather than watched, and can use:
+Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure`, `onBoth`), for an action's `costs` and for its `available` condition. They're worked out when they're needed rather than watched, and can use:
 
 | Name | Is |
 |---|---|
@@ -282,7 +282,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
 		"set":{"preventReshuffle":"true"},
 		"hidden":"event.values.preventReshuffle.value",
 		"adj":{
-			"agent.chronal":{"onSuccess":"-2", "onFailure":"-2"}
+			"agent.chronal":{"onBoth":"-2"}
 		}
 	}
 }
@@ -290,10 +290,10 @@ Actions are what agents do at an event: a check, then changes to values and stat
 
 - **`label`**: the button's text.
 - **`skillCheck`**: see [Skill checks](#skill-checks). Leave it out for an even chance: difficulty 250 against no skill.
-- **`set`**: sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order. Each entry is a string, set when the check passes, or `{"onSuccess":…, "onFailure":…}`, set for either result.
+- **`set`**: sets the event's own values, and [scratch](#scratch) entries. Keys are applied in order. Each entry is a string, set when the check passes, or `{"onSuccess":…, "onFailure":…}`, set for either result, or `{"onBoth":…}`, the same for both.
   - A string for a value's ID sets that value. The new value is a constraint expression, so `"true"` sets a literal and an expression makes the value follow it from then on.
   - A string for a `"scratch.<name>"` key sets that entry to what a [check expression](#check-expressions) works out to when the action is taken, once, so `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"` counts. Dice roll, and a later key sees an earlier one. An action's adjustments are worked out before its sets, so they see the entries as they were.
-  - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an adjustment's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went.
+  - `{"onSuccess":…, "onFailure":…}` gives each result its own check expression, either optional. It's worked out once, when the action is taken, and sees `margin` like an adjustment's amount, so a value is set to what it works out to, not kept up to date. E.g. `"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}`, or `{"onSuccess":"margin"}` to keep how well it went. `{"onBoth":"'dove'"}` sets the same either way; `onSuccess` or `onFailure` beside `onBoth` is ignored, with a warning.
   - A stat or skill, keyed as for [adjustments](#adjustments-adj), e.g. `"agent.skills.agl":"50"` or `"agent.health":{"onFailure":"10"}`, is set to what its expression works out to, once, within the stat's limits. It's set by adjusting it, so its rules still apply: reaching a paradox limit devours, and `event.attestation` scores. Unlike adjustments, sets aren't shown in tooltips, flags or floating text, so use `adj` for changes the player should see.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
@@ -374,6 +374,8 @@ An adjustment can also add to a Value of its event, keyed by the Value's ID, e.g
 Each adjustment has:
 
 - **`onSuccess`** and **`onFailure`**: amount expressions. At least one is needed. Positive raises the stat and negative lowers it, within its range. Amounts are rounded to whole points.
+- **`onBoth`**: instead of `onSuccess` and `onFailure`, one amount for either result. Either of them beside it is ignored, with a warning.
+- **A string alone** is short for `{"onSuccess":…}`, so it applies only on a pass, like a string `set`: `"adj":{"agent.skills.agl":"1"}`.
 - **A check of its own** (optional): any of `difficulty`, `check` and `actionType`, as for an action. With one, the adjustment rolls it and picks `onSuccess` or `onFailure` by the result. Without one, it follows the action's own check.
 - **`enabledForActionSkillCheck`** (actions only): `"success"`, `"failure"` or `"both"`, the default. Whether the adjustment applies at all, depending on the action's own check. Useful when an adjustment has its own check but should only happen after the action fails, say.
 
@@ -579,13 +581,10 @@ A `.jpg` is required even when there's a video, since it's the fallback. Text fi
 "adj":{"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}}
 ```
 
-**An action that costs more after the first try.** The same with its `doneCount`, which counts failures too, so the adjustment needs both cases.
+**An action that costs more after the first try.** The same with its `doneCount`, which counts failures too, so the adjustment needs both cases, which `onBoth` gives it.
 
 ```json5
-"adj":{"agent.paradox":{
-	"onSuccess":"event.actions.recover.doneCount >= 1 ? 1 : 0",
-	"onFailure":"event.actions.recover.doneCount >= 1 ? 1 : 0"
-}}
+"adj":{"agent.paradox":{"onBoth":"event.actions.recover.doneCount >= 1 ? 1 : 0"}}
 ```
 
 **Counting something else.** Keep the count in a [scratch](#scratch) entry and add to it in a `set`, e.g. `"scratch.wireless_clearBacklogEarlier_flipCount":"scratch.wireless_clearBacklogEarlier_flipCount + 1"`.

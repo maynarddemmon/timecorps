@@ -611,9 +611,12 @@
 				"_rest":null,
 				"dive":{
 					"label":"Dive for Cover",
-					"skillCheck":{"actionType":"athletic"},
-					"set":{"response":{"onSuccess":"'dove'","onFailure":"'dove'"}},
-					"adj":{"agent.health":{"onFailure":"-d(6)"}},
+					"skillCheck":{"actionType":"athletic","difficulty":600},
+					"set":{"response":{"onBoth":"'dove'"}},
+					"adj":{
+						"agent.health":{"onFailure":"-d(6)"},
+						"agent.skills.agl":{"onSuccess":"d(4)","onFailure":"1"},
+					},
 					"hidden":"event.values.response.value !== ''"
 				},
 				"stand":{

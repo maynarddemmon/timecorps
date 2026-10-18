@@ -74,7 +74,7 @@ test('an exit\'s adjustment comes from the data, and one without an amount is ig
 
     expect(problems.warnings).toHaveLength(2);
     expect(problems.warnings[0]).toMatch(/^Event plan action prepare skill check difficulty must be/);
-    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog adj agent\.health needs an onSuccess or onFailure amount/);
+    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog adj agent\.health needs an onSuccess, onFailure or onBoth amount/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -341,7 +341,7 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath adj agent.health onSuccess must be a non-empty string (ignoring it): {onSuccess: , onFailure: -9}',
         'Event origin exit to aftermath adj agent.health skill check has unknown keys damage: {damage: -150}',
-        'Event origin exit to aftermath adj agent.health needs an onSuccess or onFailure amount (ignoring it): {damage: -150}'
+        'Event origin exit to aftermath adj agent.health needs an onSuccess, onFailure or onBoth amount (ignoring it): {damage: -150}'
     ]);
 });
 
@@ -360,7 +360,7 @@ test('adj must be keyed by a stat, a skill, a Value or scratch, and the old inju
                 'agent.skills':{onSuccess:'1'},
                 'agent.skills.agl.max':{onSuccess:'1'},
                 'event.skills.agl':{onSuccess:'1'},
-                'agent.health':'-5',
+                'agent.health':-5,
                 // An exit has no check of its own to follow, so this is ignored.
                 'timeline.paradox':{onSuccess:'1', enabledForActionSkillCheck:'success'}
             });
@@ -385,7 +385,7 @@ test('adj must be keyed by a stat, a skill, a Value or scratch, and the old inju
         'Event origin exit to aftermath adj agent.skills ' + named,
         'Event origin exit to aftermath adj agent.skills.agl.max ' + named,
         'Event origin exit to aftermath adj event.skills.agl ' + named,
-        'Event origin exit to aftermath adj agent.health must be an object (ignoring it): -5',
+        'Event origin exit to aftermath adj agent.health must be a string or an object (ignoring it): -5',
         'Event origin exit to aftermath adj timeline.paradox enabledForActionSkillCheck only applies to actions (ignoring it): {onSuccess: 1, enabledForActionSkillCheck: success}',
         'Event origin exit to aftermath adj must be an object of adjustments by stat, e.g. "agent.health" (ignoring them): [Object]',
         'Event origin action old injurySkillCheck is replaced by adj, e.g. {"agent.health":{"onFailure":"-5"}} (ignoring it)'
@@ -590,7 +590,7 @@ test('a bad enabledForActionSkillCheck warns and applies either way, and an adju
     });
     expect(problems.warnings).toEqual([
         'Event origin action risky adj agent.health enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"): {enabledForActionSkillCheck: fail, onFailure: -5}',
-        'Event origin action risky adj agent.health needs an onSuccess or onFailure amount (ignoring it): {enabledForActionSkillCheck: failure}'
+        'Event origin action risky adj agent.health needs an onSuccess, onFailure or onBoth amount (ignoring it): {enabledForActionSkillCheck: failure}'
     ]);
 });
 
