@@ -555,11 +555,15 @@
             return areaBrief;
         },
         
-        openEventBrief: eventModel => openWhenClear(() => {
-            eventBrief ??= new pkg.EventBrief(appView);
-            eventBrief.show(eventModel);
-            return eventBrief;
-        }),
+        openEventBrief: eventModel => {
+            if (readyToHandleEvents) {
+                openWhenClear(() => {
+                    eventBrief ??= new pkg.EventBrief(appView);
+                    eventBrief.show(eventModel);
+                    return eventBrief;
+                });
+            }
+        },
         
         /*  Takes its turn with the other ack and confirm dialogs, e.g. a new mission's brief
             waits for the previous mission's Mission Complete. Returns the MissionBrief, or 
