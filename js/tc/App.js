@@ -70,13 +70,13 @@
         },
         
         openAgentDossier = agentModel => {
-            if (!readyToHandleEvents) return;
-            
-            return openWhenClear(() => {
-                agentDossier ??= new pkg.AgentDossier(appView);
-                agentDossier.show(agentModel);
-                return agentDossier;
-            });
+            if (readyToHandleEvents) {
+                return openWhenClear(() => {
+                    agentDossier ??= new pkg.AgentDossier(appView);
+                    agentDossier.show(agentModel);
+                    return agentDossier;
+                });
+            }
         },
         
         // Help //
@@ -555,11 +555,11 @@
             return areaBrief;
         },
         
-        openEventBrief: eventModel => {
+        openEventBrief: eventModel => openWhenClear(() => {
             eventBrief ??= new pkg.EventBrief(appView);
             eventBrief.show(eventModel);
             return eventBrief;
-        },
+        }),
         
         /*  Takes its turn with the other ack and confirm dialogs, e.g. a new mission's brief
             waits for the previous mission's Mission Complete. Returns the MissionBrief, or 

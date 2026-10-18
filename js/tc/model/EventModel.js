@@ -845,7 +845,7 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
-                self.hidden = self.flooded = false;
+                self.hidden = self.flooded = self._beenVisited = false;
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -959,6 +959,10 @@
             
             // Description
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
+            
+            // Visited by Agent Status
+            setBeenVisited: function(v) {this.set('_beenVisited', v, true);},
+            hasBeenVisited: function() {return this._beenVisited;},
             
             // Flooded
             /*  An Event floods when its paradox reaches its limit. Read as 
@@ -1138,7 +1142,8 @@
                     values = this.values;
                 for (const statId of EVENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
                 for (const id in values) valuesObj[id] = values[id].exportToObj();
-                retval.flooded = this.flooded;
+                if (this.flooded) retval.flooded = true;
+                if (this._beenVisited) retval.beenVisited = true;
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1152,6 +1157,7 @@
                     if (obj[statId]) this[statId].importFromObj(obj[statId]);
                 }
                 if ('flooded' in obj) this.setFlooded(obj.flooded);
+                if ('beenVisited' in obj) this.setBeenVisited(obj.beenVisited);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {

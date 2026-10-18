@@ -330,7 +330,22 @@
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
                 pkg.app.notifyAgentLocOrVisChange(this, false);
+                
+                this.tryToOpenEventBrief();
             }
+        },
+        
+        tryToOpenEventBrief: function() {
+                const eventModel = this.getEventModel();
+                if (
+                    eventModel?.isRegularEvent() && eventModel.isNotHidden() && 
+                    this.isNotHidden() && !eventModel.hasBeenVisited()
+                ) {
+                    eventModel.setBeenVisited(true);
+                    if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
+                        pkg.app.openEventBrief(eventModel);
+                    }
+                }
         },
         
         getEvent: function() {return this.event;},
@@ -354,6 +369,7 @@
                 if (!hidden) this.stampArrival();
                 this.notifyCollectionOfUpdate();
                 pkg.app.notifyAgentLocOrVisChange(this, true);
+                this.tryToOpenEventBrief();
             }
         },
         

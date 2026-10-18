@@ -4,6 +4,7 @@
     const STORAGE_KEY = 'tc.settings',
         
         SETTING_SAVE_ON_OPERATION_COMPLETION = pkg.SETTING_SAVE_ON_OPERATION_COMPLETION = 'saveOnOperationCompletion',
+        SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = 'openEventBriefOnFirstEntry',
         
         /*  Every player setting. The SettingsDialog builds its UI from this list, so adding a
             setting here is enough to make it appear there. */
@@ -13,6 +14,12 @@
             defaultValue:true,
             label:'Save on mission completion',
             description:'Automatically save your progress each time a mission is completed.'
+        }, {
+            id:SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY,
+            type:'boolean',
+            defaultValue:true,
+            label:'Open event briefs on first entry',
+            description:'Open an Event’s brief the first time any agent enters it.'
         }],
         
         DEFINITIONS_BY_ID = new Map(DEFINITIONS.map(def => [def.id, def])),

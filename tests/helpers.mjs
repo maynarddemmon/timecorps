@@ -48,7 +48,10 @@ export const TEST_DATA_DIR = 'tests/data',
     
     Requests to other origins (e.g. the Font Awesome CDN used by myt) are answered with an 
     empty response so the tests never depend on the network. */
-export const startGame = async (page, {skipHelp=true, dismissBrief=true} = {}) => {
+/*  Event briefs that open on an agent's first entry are off unless eventBriefs is true, so 
+    they don't get in the way of tests about other things. The player's other settings, and 
+    this one once a test changes it, are left alone. */
+export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBriefs=false} = {}) => {
     const problems = {pageErrors:[], warnings:[], errors:[]};
     page.on('pageerror', err => problems.pageErrors.push(err.message));
     page.on('console', msg => {
@@ -59,6 +62,20 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true} = {}) =
     
     await page.route(url => url.origin !== BASE_URL, route => route.fulfill({status:200, body:''}));
     await page.addInitScript(overrides => {globalThis.TC_CFG_OVERRIDES = overrides;}, CFG_OVERRIDES);
+    
+    if (!eventBriefs) {
+        await page.addInitScript(() => {
+            try {
+                const settings = JSON.parse(localStorage.getItem('tc.settings')) ?? {};
+                if (!('openEventBriefOnFirstEntry' in settings)) {
+                    settings.openEventBriefOnFirstEntry = false;
+                    localStorage.setItem('tc.settings', JSON.stringify(settings));
+                }
+            } catch {
+                // Ignore. The briefs will just open.
+            }
+        });
+    }
     
     if (skipHelp) {
         await page.addInitScript(() => {

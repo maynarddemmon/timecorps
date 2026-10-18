@@ -612,7 +612,7 @@
 				"dive":{
 					"label":"Dive for Cover",
 					"skillCheck":{"actionType":"athletic"},
-					"set":{"response":"'dove'"},
+					"set":{"response":{"onSuccess":"'dove'","onFailure":"'dove'"}},
 					"adj":{"agent.health":{"onFailure":"-d(6)"}},
 					"hidden":"event.values.response.value !== ''"
 				},

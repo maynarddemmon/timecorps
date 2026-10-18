@@ -48,7 +48,7 @@ test('turning the setting off stops the save and is remembered', async ({page}) 
     
     await turnSettingOff(page);
     expect(await getSetting(page)).toBe(false);
-    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.settings')))).toEqual({saveOnOperationCompletion:false});
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.settings')))).toMatchObject({saveOnOperationCompletion:false});
     
     await completeFirstMission(page);
     await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
@@ -59,11 +59,11 @@ test('turning the setting off stops the save and is remembered', async ({page}) 
     await reloadGame(page, {briefExpected:true});
     expect(await getSetting(page)).toBe(false);
     
-    // Turning it back on stores nothing, since on is the default.
+    // Turning it back on stores nothing for it, since on is the default.
     await visibleButton(page, '⚙').click();
     await visibleText(page, LABEL).click();
     expect(await getSetting(page)).toBe(true);
-    expect(await page.evaluate(() => localStorage.getItem('tc.settings'))).toBeNull();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.settings'))?.saveOnOperationCompletion)).toBeUndefined();
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
