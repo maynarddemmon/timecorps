@@ -118,8 +118,9 @@ test('a set that is neither a string nor {onSuccess, onFailure} is left out, wit
     expect(setKeys).toEqual([]);
     expect(problems.warnings.filter(warning => warning.startsWith('Event origin action bad set '))).toEqual([
         expect.stringMatching(/^Event origin action bad set outcome has keys other than onSuccess, onFailure and onBoth \(ignoring it\)/),
-        expect.stringMatching(/^Event origin action bad set struck onSuccess, onFailure and onBoth must be non-empty strings \(ignoring it\)/),
-        expect.stringMatching(/^Event origin action bad set noted must be a string, \{onSuccess, onFailure\} or \{onBoth\} \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set struck onSuccess must be a non-empty string \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set struck needs an onSuccess, onFailure or onBoth \(ignoring it\)/),
+        expect.stringMatching(/^Event origin action bad set noted must be a string or an object \(ignoring it\)/),
         expect.stringMatching(/^Event origin action bad set empty needs an onSuccess, onFailure or onBoth \(ignoring it\)/)
     ]);
     expect(problems.pageErrors).toEqual([]);

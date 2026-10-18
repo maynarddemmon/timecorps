@@ -74,7 +74,7 @@ test('an exit\'s adjustment comes from the data, and one without an amount is ig
 
     expect(problems.warnings).toHaveLength(2);
     expect(problems.warnings[0]).toMatch(/^Event plan action prepare skill check difficulty must be/);
-    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog adj agent\.health needs an onSuccess, onFailure or onBoth amount/);
+    expect(problems.warnings[1]).toMatch(/^Event warnings exit to backlog adj agent\.health needs an onSuccess, onFailure or onBoth/);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -341,7 +341,7 @@ test('an amount that isn\'t a non-empty string is ignored with a warning, and un
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath adj agent.health onSuccess must be a non-empty string (ignoring it): {onSuccess: , onFailure: -9}',
         'Event origin exit to aftermath adj agent.health skill check has unknown keys damage: {damage: -150}',
-        'Event origin exit to aftermath adj agent.health needs an onSuccess, onFailure or onBoth amount (ignoring it): {damage: -150}'
+        'Event origin exit to aftermath adj agent.health needs an onSuccess, onFailure or onBoth (ignoring it): {damage: -150}'
     ]);
 });
 
@@ -590,7 +590,7 @@ test('a bad enabledForActionSkillCheck warns and applies either way, and an adju
     });
     expect(problems.warnings).toEqual([
         'Event origin action risky adj agent.health enabledForActionSkillCheck must be "success", "failure" or "both" (using "both"): {enabledForActionSkillCheck: fail, onFailure: -5}',
-        'Event origin action risky adj agent.health needs an onSuccess, onFailure or onBoth amount (ignoring it): {enabledForActionSkillCheck: failure}'
+        'Event origin action risky adj agent.health needs an onSuccess, onFailure or onBoth (ignoring it): {enabledForActionSkillCheck: failure}'
     ]);
 });
 

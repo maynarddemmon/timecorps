@@ -170,18 +170,62 @@
             }
         },
         
-        /*  Reads the per-result expressions of a set or adj entry. onBoth is shorthand for the 
-            same expression as onSuccess and onFailure, so it replaces them, and either one 
-            alongside it is ignored with a warning. Returns {onSuccess, onFailure, rest, names}, 
-            where rest is the entry's other keys and names maps "onSuccess" and "onFailure" to
-            the key each came from, for warnings. */
-        readResultExprs = (cfg, warn) => {
-            const {onBoth, onSuccess, onFailure, ...rest} = cfg;
-            if (onBoth === undefined) {
-                return {onSuccess, onFailure, rest, names:{onSuccess:'onSuccess', onFailure:'onFailure'}};
+        /*  Reads one entry of a set or adj block, warning about problems with "where" at the
+            front, e.g. "Event origin action toss set outcome". The key must name something 
+            that can change (see parseChangeKey). The entry is a string or an object with
+            onSuccess and/or onFailure expressions, or onBoth, which is the same expression for
+            either result. onSuccess or onFailure beside onBoth is ignored, as is an expression
+            that isn't a non-empty string.
+            
+            Options:
+                keepString - True to return a string entry as {parsedKey, string}. Otherwise 
+                    a string is short for {onSuccess:<string>}.
+                readRest(rest, warn) - Reads the entry's other keys. Returns false if the 
+                    entry can't be used. Without one, other keys make the entry unusable.
+            
+            Returns {parsedKey, onSuccess, onFailure}, at least one of the two set, or null if
+            the entry can't be used. */
+        readChangeEntry = (where, key, cfg, {keepString=false, readRest}={}) => {
+            const warn = msg => console.warn(where + ' ' + msg + ':', cfg),
+                parsedKey = parseChangeKey(key);
+            if (parsedKey.error) {
+                warn(parsedKey.error + ' (ignoring it)');
+                return null;
             }
-            if (onSuccess !== undefined || onFailure !== undefined) warn('has onBoth, so its onSuccess and onFailure are ignored');
-            return {onSuccess:onBoth, onFailure:onBoth, rest, names:{onSuccess:'onBoth', onFailure:'onBoth'}};
+            if (typeof cfg === 'string') {
+                if (keepString) return {parsedKey, string:cfg};
+                cfg = {onSuccess:cfg};
+            } else if (cfg == null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+                warn('must be a string or an object (ignoring it)');
+                return null;
+            }
+            
+            const {onBoth, onSuccess, onFailure, ...rest} = cfg,
+                toExpr = (name, expr) => {
+                    if (expr === undefined || (typeof expr === 'string' && expr.trim() !== '')) return expr;
+                    warn(name + ' must be a non-empty string (ignoring it)');
+                },
+                retval = {parsedKey};
+            if (onBoth === undefined) {
+                retval.onSuccess = toExpr('onSuccess', onSuccess);
+                retval.onFailure = toExpr('onFailure', onFailure);
+            } else {
+                if (onSuccess !== undefined || onFailure !== undefined) warn('has onBoth, so its onSuccess and onFailure are ignored');
+                retval.onSuccess = retval.onFailure = toExpr('onBoth', onBoth);
+            }
+            
+            if (readRest) {
+                if (readRest(rest, warn) === false) return null;
+            } else if (Object.keys(rest).length > 0) {
+                warn('has keys other than onSuccess, onFailure and onBoth (ignoring it)');
+                return null;
+            }
+            
+            if (retval.onSuccess === undefined && retval.onFailure === undefined) {
+                warn('needs an onSuccess, onFailure or onBoth (ignoring it)');
+                return null;
+            }
+            return retval;
         },
         
         ADJUSTMENT_WHEN_SUCCESS = 'success',
@@ -244,58 +288,39 @@
             // Methods /////////////////////////////////////////////////////////
             /*  Returns true if the config is usable. Problems are warned about. */
             configure: function(cfg) {
-                const self = this,
-                    warn = msg => console.warn(self.getSkillCheckOwner(), msg + ':', cfg),
-                    parsedKey = parseChangeKey(self.key);
-                
-                if (parsedKey.error) {
-                    warn(parsedKey.error + ' (ignoring it)');
-                    return false;
-                }
-                // A string applies on success, like a string set.
-                if (typeof cfg === 'string') cfg = {onSuccess:cfg};
-                if (cfg == null || typeof cfg !== 'object' || Array.isArray(cfg)) {
-                    warn('must be a string or an object (ignoring it)');
-                    return false;
-                }
-                self.parsedKey = parsedKey;
-                self.kind = parsedKey.kind;
-                self.scopeName = parsedKey.scopeName;
-                self.statId = parsedKey.statId;
-                self.skillId = parsedKey.skillId ?? null;
-                
-                const {onSuccess, onFailure, rest, names} = readResultExprs(cfg, warn),
-                    {enabledForActionSkillCheck, ...checkCfg} = rest,
-                    warned = new Set(),
-                    toAmount = (name, amount) => {
-                        if (amount === undefined) return undefined;
-                        if (typeof amount === 'string' && amount.trim() !== '') return amount;
-                        if (!warned.has(name)) warn(name + ' must be a non-empty string (ignoring it)');
-                        warned.add(name);
-                    };
-                self.onSuccess = toAmount(names.onSuccess, onSuccess);
-                self.onFailure = toAmount(names.onFailure, onFailure);
-                
-                // Any other keys are the adjustment's own check, which warns about unknown ones.
-                self.ownCheck = ['difficulty', 'check', 'actionType'].some(name => name in checkCfg);
-                if (Object.keys(checkCfg).length > 0) self.addSkillCheck(null, checkCfg);
-                
+                const self = this;
                 self.enabledForActionSkillCheck = ADJUSTMENT_WHEN_BOTH;
-                if (enabledForActionSkillCheck !== undefined) {
-                    if (!self.owner.isGatedByActionSkillCheck()) {
-                        warn('enabledForActionSkillCheck only applies to actions (ignoring it)');
-                    } else if ([ADJUSTMENT_WHEN_SUCCESS, ADJUSTMENT_WHEN_FAILURE, ADJUSTMENT_WHEN_BOTH].includes(enabledForActionSkillCheck)) {
-                        self.enabledForActionSkillCheck = enabledForActionSkillCheck;
-                    } else {
-                        warn('enabledForActionSkillCheck must be "success", "failure" or "both" (using "both")');
-                    }
-                }
                 
-                if (self.onSuccess == null && self.onFailure == null) {
-                    warn('needs an onSuccess, onFailure or onBoth amount (ignoring it)');
+                // A string applies on success, like a string set. Any other keys are the 
+                // adjustment's own check, which warns about unknown ones.
+                const entry = readChangeEntry(self.getSkillCheckOwner(), self.key, cfg, {
+                    readRest: ({enabledForActionSkillCheck, ...checkCfg}, warn) => {
+                        self.ownCheck = ['difficulty', 'check', 'actionType'].some(name => name in checkCfg);
+                        if (Object.keys(checkCfg).length > 0) self.addSkillCheck(null, checkCfg);
+                        
+                        if (enabledForActionSkillCheck !== undefined) {
+                            if (!self.owner.isGatedByActionSkillCheck()) {
+                                warn('enabledForActionSkillCheck only applies to actions (ignoring it)');
+                            } else if ([ADJUSTMENT_WHEN_SUCCESS, ADJUSTMENT_WHEN_FAILURE, ADJUSTMENT_WHEN_BOTH].includes(enabledForActionSkillCheck)) {
+                                self.enabledForActionSkillCheck = enabledForActionSkillCheck;
+                            } else {
+                                warn('enabledForActionSkillCheck must be "success", "failure" or "both" (using "both")');
+                            }
+                        }
+                    }
+                });
+                if (entry) {
+                    const parsedKey = self.parsedKey = entry.parsedKey;
+                    self.kind = parsedKey.kind;
+                    self.scopeName = parsedKey.scopeName;
+                    self.statId = parsedKey.statId;
+                    self.skillId = parsedKey.skillId ?? null;
+                    self.onSuccess = entry.onSuccess;
+                    self.onFailure = entry.onFailure;
+                    return true;
+                } else {
                     return false;
                 }
-                return true;
             },
             
             /*  Whether the adjustment applies given the action's own check result, if any. */
@@ -631,33 +656,12 @@
                     - {onSuccess, onFailure}, either optional: check expressions worked out 
                       once, when the action is taken, for the result the check had. They see 
                       margin, and set a Value to a literal. {onBoth} is one for either result.
-                Entries that are neither are left out, with a warning. */
+                Entries that are neither are left out, with a warning. See readChangeEntry. */
             setSet: function(set) {
                 const clean = {};
                 for (const key in set ?? {}) {
-                    const cfg = set[key],
-                        warnOnly = msg => console.warn('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key + ' ' + msg + ':', cfg),
-                        warn = msg => warnOnly(msg + ' (ignoring it)'),
-                        parsedKey = parseChangeKey(key);
-                    if (parsedKey.error) {
-                        warn(parsedKey.error);
-                    } else if (typeof cfg === 'string') {
-                        clean[key] = cfg;
-                    } else if (cfg !== null && typeof cfg === 'object' && !Array.isArray(cfg)) {
-                        const {onSuccess, onFailure, rest} = readResultExprs(cfg, warnOnly),
-                            isExpr = expr => expr === undefined || (typeof expr === 'string' && expr.trim() !== '');
-                        if (Object.keys(rest).length > 0) {
-                            warn('has keys other than onSuccess, onFailure and onBoth');
-                        } else if (!isExpr(onSuccess) || !isExpr(onFailure)) {
-                            warn('onSuccess, onFailure and onBoth must be non-empty strings');
-                        } else if (onSuccess === undefined && onFailure === undefined) {
-                            warn('needs an onSuccess, onFailure or onBoth');
-                        } else {
-                            clean[key] = {onSuccess, onFailure};
-                        }
-                    } else {
-                        warn('must be a string, {onSuccess, onFailure} or {onBoth}');
-                    }
+                    const entry = readChangeEntry('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key, key, set[key], {keepString:true});
+                    if (entry) clean[key] = entry.string ?? {onSuccess:entry.onSuccess, onFailure:entry.onFailure};
                 }
                 this.set('setObj', clean, true);
             },
