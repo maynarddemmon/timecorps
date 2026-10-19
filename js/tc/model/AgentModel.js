@@ -11,7 +11,7 @@
         {
             NotifyingNumericStatModel, getConstrainedValueCfg,
             cfg:{
-                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED,
+                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED, FACTION_ID_TIMECORPS,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
@@ -66,7 +66,8 @@
             
             if (
                 agentModel.isDead() ||
-                (isAlreadyAtEvent && chronogation < pkg.getMinChronogationToLoopbackAtEvent(eventModel))
+                (isAlreadyAtEvent && chronogation < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) ||
+                (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS))
             ) {
                 visible = false;
             } else {
@@ -373,6 +374,10 @@
         },
         getFaction: function() {return this.faction;},
         getFactionModel: function() {return pkg.model.getFactionModel(this.faction);},
+        isInFaction: function(idOrModel) {
+            const id = typeof idOrModel === 'string' ? idOrModel : idOrModel?.id;
+            return id === this.getFaction();
+        },
         
         stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
         getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
