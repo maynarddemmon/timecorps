@@ -1,6 +1,6 @@
 {
 	// The scenario files loaded after this one, in order.
-	"scenarios":["origin_scenario", "titanic_scenario", "lusitania_scenario"],
+	"scenarios":["origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario"],
 	
 	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
 	// "faction".

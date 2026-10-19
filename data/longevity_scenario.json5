@@ -1,0 +1,194 @@
+{
+	// Spring Returns: Shanghai, 2081. The day the world learns it no longer has to grow old,
+	// and the three things that made that day happen: a trial that worked, an investor who
+	// paid for it, and a vote to tell everyone. In the first mission the player only watches,
+	// from the announcement. Attesting it reveals its precursors one by one, and the Values
+	// that link them. A later mission changes those links. Its rows sit between Origin's and
+	// the Titanic's.
+	"locationsBaseOrder":50,
+
+	"locations":{
+		"lgv.expo":{
+			"name":"Shanghai Expo Centre",
+			"color":"#3c36",
+			"order":1
+		},
+		"lgv.institute":{
+			"name":"Zhangjiang Longevity Institute",
+			"color":"#3c36",
+			"order":2
+		},
+		"lgv.lanfang":{
+			"name":"Lanfang Tower",
+			"color":"#3c36",
+			"order":3
+		},
+		"lgv.commission":{
+			"name":"National Health Commission",
+			"color":"#3c36",
+			"order":4
+		}
+	},
+
+	"events":{
+		// Where the device brings the player once they've heard its message. Watching and
+		// asking around raises its attestation, which reveals its precursors: the trial at 15,
+		// the investor at 25 and the Commission's vote at 35. The fixed observations alone
+		// reach 35, so the mission can't be lost to bad rolls.
+		"lgv_announcement":{
+			"name":"The Announcement",
+			"start":"2087-11-12T02:00:00",
+			"duration":{"h":2},
+			"location":"lgv.expo",
+			"hidden":"!events.safehouse_room.values.heard.value",
+			"actionLimit":1,
+			"actions":{
+				"_rest":null,
+				"keynote":{
+					"label":"Listen to the Keynote",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.keynote.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"press":{
+					"label":"Read the Press Packet",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.press.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"demonstration":{
+					"label":"Watch the Demonstration",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.demonstration.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"reporter":{
+					"label":"Talk to a Reporter",
+					"skillCheck":{"actionType":"social"},
+					"hidden":"event.actions.reporter.attemptCount > 0",
+					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
+				},
+				"crowd":{
+					"label":"Watch the Crowd",
+					"skillCheck":{"actionType":"investigate", "difficulty":150},
+					"hidden":"event.actions.crowd.attemptCount > 0",
+					"set":{"watcher":"true"},
+					"adj":{"event.attestation":{"onSuccess":"5"}}
+				}
+			},
+			"values":{
+				"rejuvenation":{
+					"name":"The Treatment Works",
+					"value":"events.lgv_trial.values.reversal.value",
+					"hidden":"events.lgv_trial.hidden",
+					"description":[
+						{"text":"Whatever is announced today, the trial behind it worked.", "hidden":"!event.values.rejuvenation.value"},
+						{"text":"Whatever is announced today, the trial behind it failed.", "hidden":"event.values.rejuvenation.value"}
+					]
+				},
+				"forTheFew":{
+					"name":"For the Few",
+					"value":"events.lgv_backer.values.exclusiveLicense.value",
+					"hidden":"events.lgv_backer.hidden",
+					"description":[
+						{"text":"One company owns the right to make it, and will set the price.", "hidden":"!event.values.forTheFew.value"},
+						{"text":"Anyone with a licence may make it.", "hidden":"event.values.forTheFew.value"}
+					]
+				},
+				"goingPublic":{
+					"name":"Going Public",
+					"value":"events.lgv_commission.values.approvedRelease.value",
+					"hidden":"events.lgv_commission.hidden",
+					"description":[
+						{"text":"The world is being told.", "hidden":"!event.values.goingPublic.value"},
+						{"text":"The world is not being told.", "hidden":"event.values.goingPublic.value"}
+					]
+				},
+				"watcher":{
+					"name":"The Watcher",
+					"value":"false",
+					"hidden":"!event.values.watcher.value",
+					"description":[
+						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "hidden":"!event.values.watcher.value"}
+					]
+				}
+			},
+			"description":[
+				"The hall is packed, and the feeds are carrying it live to half the world. On the stage, under a banner that reads 还春 · SPRING RETURNS, Dr. Shen Yiran of the Zhangjiang Longevity Institute waits for the noise to die down.",
+				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10"},
+				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20"},
+				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30"},
+				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
+			]
+		},
+
+		// The precursors. Each is revealed by attesting the announcement, and holds the literal
+		// Value the announcement's own Values follow. Nothing changes them in this mission.
+		"lgv_backer":{
+			"name":"The Private Investor",
+			"start":"2087-02-17T07:00:00",
+			"duration":{"h":2},
+			"location":"lgv.lanfang",
+			"hidden":"events.lgv_announcement.attestation.value < 25",
+			"values":{
+				"exclusiveLicense":{
+					"name":"Exclusive Licence",
+					"value":"true",
+					"description":[
+						{"text":"In return, Lanfang Capital gets the sole right to manufacture the treatment for ten years.", "hidden":"!event.values.exclusiveLicense.value"},
+						{"text":"Lanfang Capital pays for the trial without asking for anything in return.", "hidden":"event.values.exclusiveLicense.value"}
+					]
+				}
+			},
+			"description":[
+				"The state money has run out, and the Institute’s board has been told to shut the trial down. On the sixty-first floor of Lanfang Tower, a man who has never met Dr. Shen offers to pay for all of it.",
+				{"text":"<br><br>His name is Gao Ruifeng. He is eighty-three years old, and he has been told he has a year to live.", "hidden":"event.attestation.value < 15"}
+			]
+		},
+		"lgv_trial":{
+			"name":"The Trial Results",
+			"start":"2087-06-03T06:00:00",
+			"duration":{"h":3},
+			"location":"lgv.institute",
+			"hidden":"events.lgv_announcement.attestation.value < 15",
+			"values":{
+				"reversal":{
+					"name":"Age Reversed",
+					"value":"true",
+					"description":[
+						{"text":"Across 412 volunteers, biological age has gone backwards by eleven years on average. No one in the room says anything for a long time.", "hidden":"!event.values.reversal.value"},
+						{"text":"The numbers show nothing. The treatment is no better than the placebo.", "hidden":"event.values.reversal.value"}
+					]
+				}
+			},
+			"description":[
+				"In a windowless room at the Institute, Dr. Shen’s team unblinds the Phase III data.",
+				{"text":"<br><br>The statistician, Ma Jun, runs the analysis three times before he will show it to anyone.", "hidden":"event.attestation.value < 15"}
+			]
+		},
+		"lgv_commission":{
+			"name":"The Closed Session",
+			"start":"2087-09-22T01:00:00",
+			"duration":{"h":4},
+			"location":"lgv.commission",
+			"hidden":"events.lgv_announcement.attestation.value < 35",
+			"values":{
+				"approvedRelease":{
+					"name":"Release Approved",
+					"value":"true",
+					"description":[
+						{"text":"The Commission votes, seven to four, to announce the treatment to the world rather than keep it a state secret.", "hidden":"!event.values.approvedRelease.value"},
+						{"text":"The Commission votes to keep the treatment a state secret.", "hidden":"event.values.approvedRelease.value"}
+					]
+				}
+			},
+			"description":[
+				"In Beijing, behind closed doors, eleven officials decide what to do with the end of old age.",
+				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15"}
+			]
+		}
+	}
+}

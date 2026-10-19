@@ -741,7 +741,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{
 						"heard":"true",
-						"agent.chronal":{"onSuccess":"15"},
+						"agent.chronal":{"onSuccess":"20"},
 						"agent.skills.chronogation":{"onSuccess":"-500"}
 					},
 					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
@@ -781,7 +781,7 @@
 				{"text":"<br><br>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
 				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"},
 				{"text":"<br><br>The device on your wrist chimes, once, and a figure made of light rises from it: the old stranger, recorded, unhurt, looking straight at you.", "hidden":"event.actions.answer.hidden"},
-				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The first thread they’ll pull is the night of 14 April 1912, in the North Atlantic. You know the ship. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "hidden":"event.actions.answer.hidden || !event.values.heard.value"}
+				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2081: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, not yet. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "hidden":"event.actions.answer.hidden || !event.values.heard.value"}
 			]
 		}
 	}

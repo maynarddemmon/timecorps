@@ -25,10 +25,52 @@
 			"onSuccess":{
 				"debrief":[
 					"Yesterday you were an ordinary person with an ordinary life. Tonight you are alone in a stranger’s hideout, sixty years from home, with a dead agent’s mission strapped to your wrist.",
-					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: on the night of 14 April 1912, in the North Atlantic, something is about to go wrong."
+					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2081, something is about to change the world, and someone wants it to."
 				],
-				"nextOperation":"titanic_noCollision",
+				"nextOperation":"spring_witness",
 				"awardScore":1000
+			}
+		},
+		
+		// The player only watches: attesting the announcement reveals the Events behind it.
+		// The mission after this one will have them change one of the links.
+		"spring_witness":{
+			"name":"Spring Returns - Witness",
+			"description":[
+				"Shanghai, 12 November 2081. The day the world learns it no longer has to grow old."
+			],
+			"onSetup":{
+				"initialAgentSelection":"ME",
+				"initialEventSelection":"lgv_announcement"
+			},
+			"objectives":{
+				"trial":{
+					"name":"The Breakthrough",
+					"description":["Find out what the treatment rests on."],
+					"success":"!events.lgv_trial.hidden"
+				},
+				"backer":{
+					"name":"The Money",
+					"description":["Find out who paid for it."],
+					"success":"!events.lgv_backer.hidden"
+				},
+				"commission":{
+					"name":"The Decision",
+					"description":["Find out who decided the world should know."],
+					"success":"!events.lgv_commission.hidden"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"A trial that worked. A dying billionaire who paid for it, and owns it. Eleven officials who voted, seven to four, to tell the world.",
+					"<br><br>Within a decade the treatment will be everywhere the rich are, and nowhere else. The old will stop making room for the young, and money will stop changing hands at funerals.",
+					{
+						"text":"<br><br>And someone else was in that hall, watching, with a device on their wrist like yours.",
+						"hidden":"!events.lgv_announcement.values.watcher.value"
+					},
+					"<br><br>The device on your wrist pulses, and shows you the Commission’s vote, glowing red. Four votes to keep it secret. It would only take two more."
+				],
+				"awardScore":2000
 			}
 		},
 		
