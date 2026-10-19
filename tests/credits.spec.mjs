@@ -11,8 +11,8 @@ const NO_ROLL = {difficulty:'no-roll'},
         page.route('**/tests/data/operations.json5', route => {
             const json = readTestData('operations.json5'),
                 first = json.operations.first;
-            first.onSetup.awardCredits = 5;
-            first.onSuccess.awardCredits = 7;
+            first.onSetup.adj = {'timeline.credits':'5'};
+            first.onSuccess.adj['timeline.credits'] = '7';
             return route.fulfill({json});
         }),
         page.route('**/tests/data/test_scenario.json5', route => {
@@ -109,14 +109,17 @@ test('credits and the peak score survive a save and reload, without earning agai
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('a bad credit award is 0, with a warning', async ({page}) => {
+test('a mission can take credits and score away, but not below 0', async ({page}) => {
     await page.route('**/tests/data/operations.json5', route => {
         const json = readTestData('operations.json5');
-        json.operations.first.onSetup.awardCredits = 2.5;
+        json.operations.first.onSetup.adj = {'timeline.credits':'3', 'timeline.score':'250'};
+        json.operations.first.onSuccess.adj = {'timeline.credits':'-10', 'timeline.score':'-1000'};
         return route.fulfill({json});
     });
     const problems = await startGame(page);
-    expect((await readCredits(page)).credits).toBe(0);
-    expect(problems.warnings).toEqual(['onSetup.awardCredits must be a whole number of 0 or more (using 0): 2.5']);
+    // 3, and 2 more earned by the score.
+    expect(await readCredits(page)).toEqual({score:250, credits:5});
+    await page.evaluate(() => tc.model.getOperationModel('first').doOnSuccess());
+    expect(await readCredits(page)).toEqual({score:0, credits:0});
     expect(problems.pageErrors).toEqual([]);
 });

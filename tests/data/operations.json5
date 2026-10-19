@@ -20,9 +20,9 @@
 				"revealAgents":"AL",
 				"initialAgentSelection":"AL",
 				"initialEventSelection":"origin",
-				"historicityAdjustments":{
-					"origin":75,
-					"aftermath":65
+				"set":{
+					"events.origin.historicity":"75",
+					"events.aftermath.historicity":"65"
 				}
 			},
 			"objectives":{
@@ -38,8 +38,10 @@
 					{"text":" The plan was prepared.", "hidden":"!events.plan.values.prepared.value"}
 				],
 				"nextOperation":"second",
-				"awardHQChronal":15,
-				"awardScore":5000
+				"adj":{
+					"timeline.chronal":"15",
+					"timeline.score":"5000"
+				}
 			}
 		},
 		
@@ -48,8 +50,8 @@
 			"image":true,
 			"description":["Struck, but nobody lost."],
 			"onSetup":{
-				"historicityAdjustments":{
-					"boats":25
+				"set":{
+					"events.boats.historicity":"25"
 				}
 			},
 			"objectives":{
@@ -67,8 +69,10 @@
 			"onSuccess":{
 				"debrief":["The second mission is complete."],
 				"nextOperation":"third",
-				"awardHQChronal":25,
-				"awardScore":8000,
+				"adj":{
+					"timeline.chronal":"25",
+					"timeline.score":"8000"
+				},
 				"awardAgents":["DE"],
 				"revealAgents":["DE", "EC"]
 			}
@@ -90,8 +94,10 @@
 			},
 			"onSuccess":{
 				"debrief":["The third mission is complete. This concludes the current campaign."],
-				"awardHQChronal":30,
-				"awardScore":13000
+				"adj":{
+					"timeline.chronal":"30",
+					"timeline.score":"13000"
+				}
 			}
 		}
 	}

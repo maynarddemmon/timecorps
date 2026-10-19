@@ -73,7 +73,10 @@
             [STAT_ID_CHRONAL]:I18N_CHRONAL,
             [STAT_ID_HEALTH]:I18N_HEALTH,
             [STAT_ID_HISTORICITY]:I18N_HISTORICITY,
-            [STAT_ID_ATTESTATION]:I18N_ATTESTATION
+            [STAT_ID_ATTESTATION]:I18N_ATTESTATION,
+            // The timeline's, which set and adj can change like stats.
+            score:'Score',
+            credits:'Credits'
         },
         
         STAT_ICON_BY_ID = {
@@ -241,7 +244,6 @@
                 
                 // Scoring
                 SCORE_PER_ATTESTATION:3,
-                MISSION_SCORE_MULTIPLIER:1,
                 PARADOX_SCORE_MULTIPLIER:-500,
                 
                 // A credit is earned for each time the score reaches a new multiple of this.

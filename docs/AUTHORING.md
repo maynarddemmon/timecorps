@@ -105,7 +105,7 @@ Every stat has a value and a range, and changes stay within it.
 
 | Stat | Range | Notes |
 |---|---|---|
-| `event.historicity` | 0–100 | How fixed the event is in history. Raised by mission setup (`historicityAdjustments`) |
+| `event.historicity` | 0–100 | How fixed the event is in history. Usually set by a mission's setup (`set`) |
 | `event.attestation` | 0–100 | How much the Corps knows about the event. Raised by investigating. Knowing more reveals more |
 | `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (6) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
 | `agent.health` | 0–`max`, max up to 150 | Default 100. 0 is death |
@@ -130,8 +130,8 @@ A flood's paradox doesn't cost score. Expressions can read `event.flooded`, e.g.
 
 The timeline also has a score and credits, read as plain numbers:
 
-- **`timeline.score`**: the player's score. Missions award it (`awardScore`), attestation adds 3 a point, and each point of paradox an agent gains by revisiting an event takes away 500.
-- **`timeline.credits`**: what the Corps spends, e.g. on HQ actions' [costs](#costs). One credit is earned each time the score reaches a new multiple of `SCORE_TO_CREDITS_EARN_AMOUNT` (100) for the first time: a score of 78 earns none, and reaching 100 earns one. Losing score takes no credits away, and regaining it earns none until the score passes its highest yet. Missions can also award credits (`awardCredits`).
+- **`timeline.score`**: the player's score. Missions award it (an `adj` of `timeline.score`), attestation adds 3 a point however it's gained or lost, and each point of paradox an agent gains by revisiting an event takes away 500.
+- **`timeline.credits`**: what the Corps spends, e.g. on HQ actions' [costs](#costs). One credit is earned each time the score reaches a new multiple of `SCORE_TO_CREDITS_EARN_AMOUNT` (100) for the first time: a score of 78 earns none, and reaching 100 earns one. Losing score takes no credits away, and regaining it earns none until the score passes its highest yet. Missions can also award credits (an `adj` of `timeline.credits`). `set` and `adj` can change both score and credits, but never below 0.
 
 ## init.json5
 
@@ -362,7 +362,10 @@ Adjustments change stats as the result of an action or exit. They go in its `adj
 |---|---|---|
 | `agent` | `health`, `chronal`, `paradox` | The agent taking the action or exit |
 | `event` | `attestation`, `historicity`, `paradox` | The event the action or exit belongs to |
-| `timeline` | `paradox`, `chronal` | The timeline |
+| `timeline` | `paradox`, `chronal`, `score`, `credits` | The timeline. Score and credits can't go below 0 |
+| `events.<id>` | `attestation`, `historicity`, `paradox` | Any event, by its ID, e.g. `"events.collision.historicity"` |
+
+A key can also name a Value of any event, as `"events.<id>.values.<value>"`, e.g. `"events.aftermath.values.lost"`. So an action can change another event, and an exit can change the event it leads to, e.g. `"adj":{"events.aftermath.attestation":"5"}`. These name the event by its ID, so they work in a mission's `set` and `adj` too. An adjustment to another event shows in tooltips by its name, e.g. "Aftermath Attestation".
 
 An adjustment can also change one of the agent's skills, keyed `"agent.skills.<skill>"`, e.g. `"agent.skills.agl"`. Skills change within ±`MAX_SKILL_VALUE` (1000), are named in tooltips and floating text by the skill's name, e.g. "+15 Agility", and are saved with the agent. Origin Story uses them to build the player's agent from their choices.
 
@@ -512,9 +515,9 @@ HQ and The Void leave out `_investigate` this way.
 				"awardAgents":"VQ",
 				"initialAgentSelection":"VQ",
 				"initialEventSelection":"collision",
-				"awardCredits":20,             // Optional. Credits to start the mission with.
-				// Raises each event's historicity to at least this.
-				"historicityAdjustments":{"collision":75, "casualties":65}
+				// Optional. As for an action, but keyed by event ID, e.g. each event's historicity.
+				"set":{"events.collision.historicity":"75", "events.casualties.historicity":"65"},
+				"adj":{"timeline.credits":"20"}  // Optional. Credits to start the mission with.
 			},
 			"objectives":{
 				"avoid":{
@@ -526,9 +529,8 @@ HQ and The Void leave out `_investigate` this way.
 			"onSuccess":{
 				"debrief":[…],                 // Phrases, shown when the mission is completed.
 				"nextOperation":"titanic_rescued",
-				"awardScore":5000,
-				"awardHQChronal":15,           // Added to timeline.chronal.
-				"awardCredits":10,             // Optional. On top of those the score earns.
+				// The rewards: score, HQ chronal, and credits on top of those the score earns.
+				"adj":{"timeline.score":"5000", "timeline.chronal":"15", "timeline.credits":"10"},
 				"revealAgents":["GO", "PI"],
 				"awardAgents":["GO"]
 			}
@@ -537,8 +539,9 @@ HQ and The Void leave out `_investigate` this way.
 }
 ```
 
-- **Setup.** When a mission starts, its setup is applied once: historicity raised, the Mission Brief opened, agents revealed and awarded, credits awarded, and the selection made.
-- **Completion.** A mission is complete when every objective's `success` is true. Then its rewards (score, chronal, credits and agents) are granted once, and the debrief is shown, with phrases that can describe how it was won.
+- **Setup.** When a mission starts, its setup is applied once: its `adj` and `set`, the Mission Brief opened, agents revealed and awarded, and the selection made.
+- **Completion.** A mission is complete when every objective's `success` is true. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
+- **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.

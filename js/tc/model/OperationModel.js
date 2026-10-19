@@ -7,8 +7,8 @@
         
         {
             ConstrainableAttrSupport, Describable, setConstrainedValue,
-            cfg:{STANDARD_DEBOUNCE_MILLIS, MISSION_SCORE_MULTIPLIER},
-            STAT_ID_CHRONAL, SCOPE_OPERATION
+            cfg:{STANDARD_DEBOUNCE_MILLIS},
+            SCOPE_OPERATION
         } = pkg,
         
         /*  For models owned by an Operation. Expressions on them resolve against the
@@ -28,12 +28,36 @@
             }
         }),
         
-        /*  Credits to award: a whole number of 0 or more. Anything else is 0, with a warning. */
-        validateCredits = (v, label) => {
-            if (v == null) return 0;
-            if (Number.isInteger(v) && v >= 0) return v;
-            console.warn(label, 'must be a whole number of 0 or more (using 0):', v);
-            return 0;
+        /*  Reads the set and adj blocks of an onSetup or onSuccess config. They change the
+            same things as an action's, but name Events by ID, since an Operation has no Event
+            or agent of its own, e.g. "events.collision.historicity", "timeline.score" or 
+            "timeline.credits". They're applied as a success, so onFailure is never used. */
+        readChanges = (operationModel, where, cfg) => {
+            const prefix = 'Operation ' + operationModel.id + ' ' + where;
+            for (const oldKey of ['historicityAdjustments', 'awardScore', 'awardCredits', 'awardHQChronal']) {
+                if (oldKey in cfg) console.warn(prefix, oldKey, 'is replaced by set and adj (ignoring it)');
+            }
+            const changes = {
+                set:pkg.readChangeEntries(prefix + ' set', cfg.set, {keepString:true}),
+                adj:pkg.readChangeEntries(prefix + ' adj', cfg.adj)
+            };
+            for (const block of ['set', 'adj']) {
+                for (const key in changes[block]) {
+                    const {onSuccess, onFailure} = changes[block][key];
+                    if (onFailure !== undefined && onFailure !== onSuccess) console.warn(prefix, block, key, 'has onFailure, which an Operation never uses');
+                }
+            }
+            return changes;
+        },
+        
+        /*  Applies changes read by readChanges: the adjustments, then the sets, as for an 
+            action. Expressions see no agent or event, just "timeline", "scratch" and dice. */
+        applyChanges = changes => {
+            if (changes) {
+                const rollCfg = {};
+                pkg.applyAdjEntries(changes.adj, null, null, true, rollCfg);
+                pkg.applySetEntries(changes.set, null, null, true, rollCfg);
+            }
         },
         
         validateAgentIdList = (list, label) => {
@@ -156,7 +180,16 @@
                 if (self.isCurrent() && self.getProgress().completed) self.doOnSuccess();
             }, STANDARD_DEBOUNCE_MILLIS);
             
+            // Applied after the other attrs so warnings about their set and adj can name the
+            // Operation by its id.
+            const {onSetup, onSuccess} = attrs;
+            delete attrs.onSetup;
+            delete attrs.onSuccess;
+            
             self.callSuper(attrs);
+            
+            self.setOnSetup(onSetup);
+            self.setOnSuccess(onSuccess);
         },
         
         getAsObj: function(cfg) {
@@ -225,24 +258,6 @@
         
         
         // onSetup Config //////////////////////////////////////////////////////
-        setHistoricityAdjustments: function(adjObj) {
-            // Enforce numerical values for adjustments.
-            if (adjObj) {
-                for (const eventId in adjObj) {
-                    const value = adjObj[eventId];
-                    if (typeof value !== 'number') {
-                        delete adjObj[eventId];
-                        console.warn('historicityAdjustment:', eventId, 'NaN', value, 'REMOVING.');
-                    } else if (value < 0) {
-                        delete adjObj[eventId];
-                        console.warn('historicityAdjustment:', eventId, 'negative', value, 'REMOVING.');
-                    }
-                }
-            }
-            this.set('historicityAdjustments', adjObj, true);
-        },
-        getHistoricityAdjustments: function() {return this.historicityAdjustments;},
-        
         setInitialEventSelection: function(initialEventSelection) {
             this.set('initialEventSelection', initialEventSelection, true);
         },
@@ -253,19 +268,16 @@
         },
         getInitialAgentSelection: function() {return this.initialAgentSelection;},
         
-        setAwardCreditsOnSetup: function(v) {this.set('awardCreditsOnSetup', validateCredits(v, 'onSetup.awardCredits'), true);},
-        
         setRevealAgentsOnSetup: function(agentIds) {this.set('revealAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.revealAgents'), true);},
         setAwardAgentsOnSetup: function(agentIds) {this.set('awardAgentsOnSetup', validateAgentIdList(agentIds, 'onSetup.awardAgents'), true);},
         
         setOnSetup: function(onSetupCfg) {
             if (onSetupCfg) {
-                this.setHistoricityAdjustments(onSetupCfg.historicityAdjustments);
+                this.setupChanges = readChanges(this, 'onSetup', onSetupCfg);
                 this.setRevealAgentsOnSetup(onSetupCfg.revealAgents);
                 this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
                 this.setInitialEventSelection(onSetupCfg.initialEventSelection);
                 this.setInitialAgentSelection(onSetupCfg.initialAgentSelection);
-                this.setAwardCreditsOnSetup(onSetupCfg.awardCredits);
             }
         },
         
@@ -274,18 +286,6 @@
         setNextOperation: function(nextOperation) {this.set('nextOperation', nextOperation, true);},
         getNextOperation: function() {
             return pkg.model.getOperationModel(this.nextOperation);
-        },
-        
-        setAwardScore: function(awardScore) {this.set('awardScore', awardScore, true);},
-        grantScore: function() {
-            pkg.model.adjScore((this.awardScore ?? 0) * MISSION_SCORE_MULTIPLIER);
-        },
-        
-        setAwardCreditsOnSuccess: function(v) {this.set('awardCreditsOnSuccess', validateCredits(v, 'onSuccess.awardCredits'), true);},
-        
-        setAwardHQChronal: function(awardHQChronal) {this.set('awardHQChronal', awardHQChronal, true);},
-        grantHQChronal: function() {
-            pkg.model[STAT_ID_CHRONAL].adjValue(this.awardHQChronal ?? 0);
         },
         
         // onSuccess
@@ -302,9 +302,7 @@
             if (onSuccessCfg) {
                 this.setDebrief(onSuccessCfg.debrief);
                 this.setNextOperation(onSuccessCfg.nextOperation);
-                this.setAwardScore(onSuccessCfg.awardScore);
-                this.setAwardHQChronal(onSuccessCfg.awardHQChronal);
-                this.setAwardCreditsOnSuccess(onSuccessCfg.awardCredits);
+                this.successChanges = readChanges(this, 'onSuccess', onSuccessCfg);
                 this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
                 this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
             }
@@ -340,11 +338,10 @@
         doOnSetup: function() {
             if (!this.setupApplied) {
                 const rootModel = pkg.model;
-                rootModel.adjustHistoricity(this.getHistoricityAdjustments());
+                applyChanges(this.setupChanges);
                 pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
-                rootModel.adjCredits(this.awardCreditsOnSetup ?? 0);
                 this.setupApplied = true;
             }
         },
@@ -352,9 +349,7 @@
         doOnSuccess: function() {
             if (!this.successGranted) {
                 const rootModel = pkg.model;
-                this.grantScore();
-                this.grantHQChronal();
-                rootModel.adjCredits(this.awardCreditsOnSuccess ?? 0);
+                applyChanges(this.successChanges);
                 rootModel.revealAgents(this.revealAgentsOnSuccess);
                 rootModel.awardAgents(this.awardAgentsOnSuccess);
                 this.successGranted = true;

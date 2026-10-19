@@ -3,6 +3,8 @@
     
     const {Class:JSClass, Module:JSModule} = JS,
         
+        {max:mathMax, round:mathRound} = Math,
+        
         M = myt,
         BaseModel = M.BaseModel,
         
@@ -15,7 +17,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
+            SCOPE_AGENT, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
@@ -112,20 +114,42 @@
             }
         }),
         
-        /*  The stats an adjustment can change, by the scope that has them: the agent taking the 
-            action or exit, its Event, or the timeline. */
+        // The timeline's score and credits, which set and adj can change like stats.
+        STAT_ID_SCORE = 'score',
+        STAT_ID_CREDITS = 'credits',
+        
+        /*  The stats set and adj can change, by the scope that has them: the agent taking the 
+            action or exit, its Event, any Event by ID ("events.<id>.<stat>"), or the timeline. */
         ADJUSTMENT_STAT_IDS = pkg.ADJUSTMENT_STAT_IDS = {
             [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
             [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
-            [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL]
+            [SCOPE_EVENTS]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
+            [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_SCORE, STAT_ID_CREDITS]
         },
         
         /*  What a parsed key changes, as something stat-like: {value, getAllowedAdj(adj), 
-            adjValue(adj)}. A stat is its NumericStatModel. A Value or scratch entry has no 
-            limits, but only changes while it's a number; otherwise nothing is allowed and a 
-            warning names it. Undefined when there's nothing to change, e.g. no such Value. */
+            adjValue(adj)}. A stat is its NumericStatModel. Score and credits can't go below 0.
+            A Value or scratch entry has no limits, but only changes while it's a number; 
+            otherwise nothing is allowed and a warning names it. Undefined when there's nothing 
+            to change, e.g. no such Event or Value. eventModel is the action's or exit's own 
+            Event, for keys that don't name one. */
         getChangeTarget = (parsed, agentModel, eventModel) => {
-            const numericOnly = (getValue, setValue, what) => ({
+            if (parsed.eventId !== undefined) {
+                eventModel = pkg.model.getEventModel(parsed.eventId);
+                if (!eventModel) {
+                    console.warn('No Event', parsed.eventId, 'to change');
+                    return;
+                }
+            }
+            const rootModel = pkg.model,
+                atLeastZero = (getValue, adjValue) => ({
+                    get value() {return getValue();},
+                    getAllowedAdj: adj => ({adj:mathMax(adj, -getValue())}),
+                    adjValue: adj => {
+                        if (adj !== 0) adjValue(adj);
+                    }
+                }),
+                numericOnly = (getValue, setValue, what) => ({
                 get value() {return getValue();},
                 getAllowedAdj: adj => {
                     if (Number.isFinite(getValue())) return {adj};
@@ -140,8 +164,14 @@
                 case 'stat':
                     switch (parsed.scopeName) {
                         case SCOPE_AGENT: return agentModel?.[parsed.statId];
-                        case SCOPE_EVENT: return eventModel?.[parsed.statId];
-                        case SCOPE_TIMELINE: return pkg.model[parsed.statId];
+                        case SCOPE_EVENT:
+                        case SCOPE_EVENTS: return eventModel?.[parsed.statId];
+                        case SCOPE_TIMELINE:
+                            switch (parsed.statId) {
+                                case STAT_ID_SCORE: return atLeastZero(() => rootModel.getScore(), adj => rootModel.adjScore(adj));
+                                case STAT_ID_CREDITS: return atLeastZero(() => rootModel.getCredits(), adj => rootModel.adjCredits(adj));
+                                default: return rootModel[parsed.statId];
+                            }
                     }
                     return;
                 case 'skill':
@@ -184,6 +214,10 @@
                 {kind:'scratch', statId:'scratch.<name>', name} - e.g. "scratch.origin_knocks".
                 {kind:'value', statId:'values.<id>', valueId} - a Value of the action's or exit's
                     own Event, by its ID, e.g. "bus_arrives".
+                {kind:'stat', scopeName:'events', eventId, statId} - a stat of any Event, e.g. 
+                    "events.collision.historicity".
+                {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
+                    e.g. "events.collision.values.struck".
                 {error} - a phrase for a warning. */
             let parsedKey;
             const [scopeName, statId, ...rest] = String(key).split('.');
@@ -198,10 +232,14 @@
                     warn('names no skill (ignoring it)');
                     return null;
                 }
-            } else if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
+            } else if (scopeName === SCOPE_EVENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) {
+                parsedKey = {kind:'stat', scopeName, eventId:statId, statId:rest[0]};
+            } else if (scopeName === SCOPE_EVENTS && rest.length === 2 && rest[0] === 'values') {
+                parsedKey = {kind:'value', eventId:statId, statId:'values.' + rest[1], valueId:rest[1]};
+            } else if (scopeName !== SCOPE_EVENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -239,6 +277,68 @@
                 return null;
             }
             return retval;
+        },
+        
+        /*  Reads a set or adj block into its usable entries by key. See readChangeEntry. */
+        readChangeEntries = pkg.readChangeEntries = (where, block, options) => {
+            const retval = {};
+            for (const key in block ?? {}) {
+                const entry = readChangeEntry(where + ' ' + key, key, block[key], options);
+                if (entry) retval[key] = entry;
+            }
+            return retval;
+        },
+        
+        /*  Applies a set block's entries for a result: a string entry sets on success and an
+            {onSuccess, onFailure} entry for either result. rollCfg is what the expressions see
+            (agent, event, difficulty, margin). agentModel and eventModel are whose stats and
+            Values keys like "agent.health" and "foundBadge" name; either may be null, e.g. for
+            an Operation. */
+        applySetEntries = pkg.applySetEntries = (entries, agentModel, eventModel, success, rollCfg) => {
+            const {rollValue} = pkg.checks;
+            for (const key in entries) {
+                const {parsedKey, string, onSuccess, onFailure} = entries[key],
+                    isPerResult = string === undefined,
+                    expr = isPerResult ? (success ? onSuccess : onFailure) : (success ? string : undefined);
+                if (expr === undefined) continue;
+                
+                switch (parsedKey.kind) {
+                    case 'scratch': {
+                        // Worked out once, now, rather than kept up to date like a Causator,
+                        // so "scratch.x + 1" counts. Dice roll.
+                        const result = rollValue(expr, rollCfg);
+                        if (result !== undefined) pkg.model.setScratch(parsedKey.name, result);
+                        break;
+                    }
+                    case 'stat':
+                    case 'skill': {
+                        // Worked out once, now, and set within the stat's limits, by adjusting it
+                        // so the stat's own rules apply, e.g. reaching a paradox limit.
+                        const result = rollValue(expr, rollCfg),
+                            target = getChangeTarget(parsedKey, agentModel, eventModel);
+                        if (target && Number.isFinite(result)) {
+                            target.adjValue(target.getAllowedAdj(mathRound(result) - target.value).adj);
+                        }
+                        break;
+                    }
+                    case 'value': {
+                        const valueEventModel = parsedKey.eventId === undefined ? eventModel : pkg.model.getEventModel(parsedKey.eventId),
+                            valueModel = valueEventModel?.values[parsedKey.valueId];
+                        if (!valueModel) {
+                            console.warn('No Value', key, 'to set');
+                        } else if (isPerResult) {
+                            // Set as a literal, so it stays what it was worked out to be.
+                            const result = rollValue(expr, rollCfg);
+                            if (result !== undefined) valueModel.setValueByAction(JSON.stringify(result));
+                        } else {
+                            // A constraint expression, kept up to date. It's the Value's own
+                            // expression, so "event" means the Value's Event.
+                            valueModel.setValueByAction(expr);
+                        }
+                        break;
+                    }
+                }
+            }
         },
         
         ADJUSTMENT_WHEN_SUCCESS = 'success',
@@ -370,6 +470,7 @@
                 switch (this.scopeName) {
                     case SCOPE_AGENT: return name;
                     case SCOPE_EVENT: return 'Event ' + name;
+                    case SCOPE_EVENTS: return (pkg.model.getEventModel(this.parsedKey.eventId)?.name ?? this.parsedKey.eventId) + ' ' + name;
                     default: return 'Timeline ' + name;
                 }
             },
@@ -412,7 +513,7 @@
                 
                 // A broken expression (NaN) does nothing. || 0 so it's never -0.
                 const stat = this.getStat(agentModel),
-                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(Math.round(amount)).adj : 0) || 0;
+                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
                 return {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()};
             }
         }),
@@ -593,7 +694,7 @@
                 expression is broken. A negative amount is a gain, which is what adjustments are
                 for, so it's 0, with a warning the first time. */
             getAmount: function(agentModel) {
-                const amount = Math.round(pkg.checks.getAverageAmount(this.expr, {agent:agentModel, event:this.owner.event}));
+                const amount = mathRound(pkg.checks.getAverageAmount(this.expr, {agent:agentModel, event:this.owner.event}));
                 if (amount < 0) {
                     if (!this.warnedNegative) {
                         this.warnedNegative = true;
@@ -746,12 +847,7 @@
                 Entries that are neither are left out, with a warning. See readChangeEntry, and
                 applySets for how each kind of key is set. */
             setSet: function(set) {
-                const clean = {};
-                for (const key in set ?? {}) {
-                    const entry = readChangeEntry('Event ' + this.event?.id + ' action ' + this.id + ' set ' + key, key, set[key], {keepString:true});
-                    if (entry) clean[key] = entry;
-                }
-                this.set('setObj', clean, true);
+                this.set('setObj', readChangeEntries('Event ' + this.event?.id + ' action ' + this.id + ' set', set, {keepString:true}), true);
             },
             
             /*  An optional condition on the agent who'd take the action, e.g.
@@ -786,51 +882,7 @@
                 sets on success and an {onSuccess, onFailure} entry for either result. Margin 
                 is how well the check went. */
             applySets: function(agentModel, success, margin) {
-                const event = this.event,
-                    {rollValue} = pkg.checks,
-                    rollCfg = {agent:agentModel, event, difficulty:this.getActionSkillDifficulty(), margin};
-                for (const key in this.setObj) {
-                    const {parsedKey, string, onSuccess, onFailure} = this.setObj[key],
-                        isPerResult = string === undefined,
-                        expr = isPerResult ? (success ? onSuccess : onFailure) : (success ? string : undefined);
-                    if (expr === undefined) continue;
-                    
-                    switch (parsedKey.kind) {
-                        case 'scratch': {
-                            // Worked out once, now, rather than kept up to date like a Causator,
-                            // so "scratch.x + 1" counts. Dice roll.
-                            const result = rollValue(expr, rollCfg);
-                            if (result !== undefined) pkg.model.setScratch(parsedKey.name, result);
-                            break;
-                        }
-                        case 'stat':
-                        case 'skill': {
-                            // Worked out once, now, and set within the stat's limits, by adjusting it
-                            // so the stat's own rules apply, e.g. reaching a paradox limit.
-                            const result = rollValue(expr, rollCfg),
-                                target = getChangeTarget(parsedKey, agentModel, event);
-                            if (target && Number.isFinite(result)) {
-                                const adj = target.getAllowedAdj(Math.round(result) - target.value).adj;
-                                target.adjValue(adj);
-                            }
-                            break;
-                        }
-                        case 'value': {
-                            const valueModel = event.values[parsedKey.valueId];
-                            if (!valueModel) {
-                                console.warn('Event', event.id, 'action', this.id, 'sets missing Value', parsedKey.valueId);
-                            } else if (isPerResult) {
-                                // Set as a literal, so it stays what it was worked out to be.
-                                const result = rollValue(expr, rollCfg);
-                                if (result !== undefined) valueModel.setValueByAction(JSON.stringify(result));
-                            } else {
-                                // A constraint expression, kept up to date.
-                                valueModel.setValueByAction(expr);
-                            }
-                            break;
-                        }
-                    }
-                }
+                applySetEntries(this.setObj, agentModel, this.event, success, {agent:agentModel, event:this.event, difficulty:this.getActionSkillDifficulty(), margin});
             },
             
             setDoneCount: function(v) {
@@ -1388,4 +1440,21 @@
                 return isValid;
             }
         });
+    
+    /*  Applies an adj block's entries, read with readChangeEntries, for a result, without 
+        checks of their own, e.g. for an Operation. Each amount is rolled and added within 
+        its target's limits. See applySetEntries for the other parameters. Action and exit 
+        adjustments are StatAdjustmentModels instead, since they can have checks of their 
+        own and show in tooltips. */
+    pkg.applyAdjEntries = (entries, agentModel, eventModel, success, rollCfg) => {
+        for (const key in entries) {
+            const entry = entries[key],
+                expr = success ? entry.onSuccess : entry.onFailure;
+            if (expr === undefined) continue;
+            
+            const amount = pkg.checks.rollAmount(expr, rollCfg),
+                target = getChangeTarget(entry.parsedKey, agentModel, eventModel);
+            if (target && Number.isFinite(amount)) target.adjValue(target.getAllowedAdj(mathRound(amount)).adj);
+        }
+    };
 })(tc);

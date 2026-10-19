@@ -28,19 +28,18 @@
 					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2081, something is about to change the world, and someone wants it to."
 				],
 				"nextOperation":"spring_witness",
-				"awardScore":1000
+				"adj":{
+					"timeline.score":"1000"
+				}
 			}
 		},
 		
-		// The player only watches: attesting the announcement reveals the Events behind it.
-		// The mission after this one will have them change one of the links.
 		"spring_witness":{
 			"name":"Spring Returns - Witness",
 			"description":[
 				"Shanghai, 12 November 2081. The day the world learns it no longer has to grow old."
 			],
 			"onSetup":{
-				"initialAgentSelection":"ME",
 				"initialEventSelection":"lgv_announcement"
 			},
 			"objectives":{
@@ -70,7 +69,9 @@
 					},
 					"<br><br>The device on your wrist pulses, and shows you the Commission’s vote, glowing red. Four votes to keep it secret. It would only take two more."
 				],
-				"awardScore":2000
+				"adj":{
+					"timeline.score":"2000"
+				}
 			}
 		},
 		
@@ -88,9 +89,9 @@
 				"revealAgents":"VQ",
 				"initialAgentSelection":"VQ",
 				"initialEventSelection":"collision",
-				"historicityAdjustments":{
-					"collision":75,
-					"casualties":65
+				"set":{
+					"events.collision.historicity":"75",
+					"events.casualties.historicity":"65"
 				}
 			},
 			"objectives":{
@@ -140,8 +141,10 @@
 					}
 				],
 				"nextOperation":"titanic_rescued",
-				"awardHQChronal":15,
-				"awardScore":5000
+				"adj":{
+					"timeline.chronal":"15",
+					"timeline.score":"5000"
+				}
 			}
 		},
 		
@@ -152,8 +155,8 @@
 				"It is essential that the Titanic sinks, but the massive loss of life must be prevented."
 			],
 			"onSetup":{
-				"historicityAdjustments":{
-					"lifeboat_capacity":25
+				"set":{
+					"events.lifeboat_capacity.historicity":"25"
 				}
 			},
 			"objectives":{
@@ -186,8 +189,10 @@
 					}
 				],
 				"nextOperation":"lusitania_nosink",
-				"awardHQChronal":25,
-				"awardScore":8000,
+				"adj":{
+					"timeline.chronal":"25",
+					"timeline.score":"8000"
+				},
 				"awardAgents":["GO"],
 				"revealAgents":["GO","PI"]
 			}
@@ -200,9 +205,9 @@
 				"Prevent the sinking of the Lusitania."
 			],
 			"onSetup":{
-				"historicityAdjustments":{
-					"torpedo_strike":75,
-					"lusitania_sinks":75
+				"set":{
+					"events.torpedo_strike.historicity":"75",
+					"events.lusitania_sinks.historicity":"75"
 				},
 				"awardAgents":["PI"]
 			},
@@ -238,8 +243,10 @@
 					},
 					"<br><br>This concludes the current campaign."
 				],
-				"awardHQChronal":30,
-				"awardScore":13000
+				"adj":{
+					"timeline.chronal":"30",
+					"timeline.score":"13000"
+				}
 			}
 		}
 	}

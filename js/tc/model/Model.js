@@ -309,22 +309,6 @@
         getCredits: function() {return this.credits;},
         
         
-        // Historicity:Accessors & Methods /////////////////////////////////////
-        adjustHistoricity: function(adjObj) {
-            if (adjObj) {
-                for (const eventId in adjObj) {
-                    const eventModel = this.getEventModel(eventId);
-                    if (eventModel) {
-                        const adjValue = adjObj[eventId];
-                        eventModel[STAT_ID_HISTORICITY].adjValueToNoMoreThan(adjValue, adjValue);
-                    } else {
-                        console.warn('No event for id', eventId);
-                    }
-                }
-            }
-        },
-        
-        
         // Persistence //////////////////////////////////////////////////////////
         /*  The full saveable state. Locations are pure data so they are not included. The 
             PersistenceManager diffs this against a baseline so only changes get saved. */
