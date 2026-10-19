@@ -134,7 +134,7 @@
                 
                 if (!agentModel.isPlayerControlled()) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(actionView, {paddingTop:3, text:'Not under Time Corps control'});
+                    new TextForFlow(actionView, {paddingTop:3, text:'Not taking direction from you'});
                     return;
                 }
                 

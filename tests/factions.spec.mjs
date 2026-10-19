@@ -66,3 +66,34 @@ test('an unknown faction is warned about and leaves the agent unaligned, and the
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('only agents of the Time Corps are offered travel to HQ', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {tc.model.revealAgents(['BR']);});
+    await dismissAgentDossier(page, 'Bravo');
+    await page.evaluate(() => {
+        const bravo = tc.model.getAgentModel('BR');
+        bravo.setPlayerControlled(true);
+        bravo.setEvent('origin');
+        tc.app.selectEventBox('origin');
+    });
+    
+    // Alpha's row offers a recall and unaligned Bravo's doesn't, nor does the HQ header.
+    const recallBtns = page.getByRole('button', {name:/^Recall to/}).filter({visible:true});
+    await expect(recallBtns).toHaveCount(1);
+    await page.evaluate(() => {
+        tc.app.selectAgentRow('BR');
+        tc.app.selectEventBox(tc.model.getHQEventModel());
+    });
+    await page.waitForTimeout(250);
+    await expect(recallBtns).toHaveCount(0);
+    
+    // Once in the Corps, Bravo can go to HQ too.
+    await page.evaluate(() => {
+        tc.model.getAgentModel('BR').setFaction('timecorps');
+        tc.app.selectEventBox('origin');
+    });
+    await expect(recallBtns).toHaveCount(2);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

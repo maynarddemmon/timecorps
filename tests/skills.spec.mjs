@@ -71,7 +71,7 @@ test('a skill point costs a credit, and can only be bought at HQ, by the Corps\'
     expect(out.unknown).toEqual({problem:'No such skill', bought:false, skill:0, credits:5});
     expect(out.toMax).toEqual({problem:null, bought:true, skill:1000, credits:4});
     expect(out.atMax).toEqual({problem:'At its maximum', bought:false, skill:1000, credits:4});
-    expect(out.civilian).toEqual({problem:'Not under Time Corps control', bought:false, skill:50, credits:4});
+    expect(out.civilian).toEqual({problem:'Not taking direction from you', bought:false, skill:50, credits:4});
     expect(out.dead).toEqual({problem:'Deceased', bought:false, skill:50, credits:4});
     expect(problems.pageErrors).toEqual([]);
 });

@@ -429,7 +429,7 @@
             null if they can. */
         getSkillPurchaseProblem: function(skillId) {
             if (!pkg.isSkillId(skillId)) return 'No such skill';
-            if (!this.isPlayerControlled()) return 'Not under Time Corps control';
+            if (!this.isPlayerControlled()) return 'Not taking direction from you';
             if (this.isDead()) return 'Deceased';
             if (!this.isAtHQ()) return 'Only at HQ';
             
