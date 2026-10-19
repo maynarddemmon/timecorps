@@ -645,6 +645,10 @@
                             applyAdjustments(adjustments, logEntry);
                         }
                         
+                        // Taking an exit always succeeds. Its sets apply before the agent 
+                        // arrives, so one that reveals where it leads does so first.
+                        exitModel.applySets(this, true, 0);
+                        
                         this.setEvent(toEvent.id, logEntry);
                         pkg.app.selectEventBox(toEvent);
                     }

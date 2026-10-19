@@ -855,8 +855,31 @@
             doDescriptionChanged: function() {this.event.notifyCollectionOfUpdate();}
         }),
         
+        /*  What an action or exit sets when it's taken. Expects ActionCheckSupport. */
+        SetSupport = new JSModule('SetSupport', {
+            /*  What it sets, by key: a Value of its Event, or "scratch.<name>", or any other 
+                key set and adj share. An entry is either:
+                    - a string, set when the check passes. A Value gets it as a constraint 
+                      expression, kept up to date, and scratch as a check expression, worked 
+                      out once.
+                    - {onSuccess, onFailure}, either optional: check expressions worked out 
+                      once, when it's taken, for the result the check had. They see margin, and
+                      set a Value to a literal. {onBoth} is one for either result.
+                Entries that are neither are left out, with a warning. See readChangeEntry, and
+                applySetEntries for how each kind of key is set. */
+            setSet: function(set) {
+                this.set('setObj', readChangeEntries(this.getSkillCheckOwner() + ' set', set, {keepString:true, isSet:true}), true);
+            },
+            
+            /*  Sets what it sets, by key, for an agent's check result. Margin is how well the 
+                check went. */
+            applySets: function(agentModel, success, margin) {
+                applySetEntries(this.setObj, agentModel, this.event, success, {agent:agentModel, event:this.event, difficulty:this.getActionSkillDifficulty(), margin});
+            }
+        }),
+        
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -886,20 +909,6 @@
             // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
             
-            /*  What the action sets, by key: a Value of its Event, or "scratch.<name>". An 
-                entry is either:
-                    - a string, set when the check passes. A Value gets it as a constraint 
-                      expression, kept up to date, and scratch as a check expression, worked 
-                      out once.
-                    - {onSuccess, onFailure}, either optional: check expressions worked out 
-                      once, when the action is taken, for the result the check had. They see 
-                      margin, and set a Value to a literal. {onBoth} is one for either result.
-                Entries that are neither are left out, with a warning. See readChangeEntry, and
-                applySets for how each kind of key is set. */
-            setSet: function(set) {
-                this.set('setObj', readChangeEntries('Event ' + this.event?.id + ' action ' + this.id + ' set', set, {keepString:true, isSet:true}), true);
-            },
-            
             /*  An optional condition on the agent who'd take the action, e.g.
                 "agent.health.value < agent.health.max". Unlike hidden, which is the same for
                 everyone at the Event, it's a check expression worked out per agent, so the
@@ -927,13 +936,6 @@
             
             /** @overrides AdjustmentSupport */
             isGatedByActionSkillCheck: () => true,
-            
-            /*  Sets what the action sets, by key, for an agent's check result. A string entry 
-                sets on success and an {onSuccess, onFailure} entry for either result. Margin 
-                is how well the check went. */
-            applySets: function(agentModel, success, margin) {
-                applySetEntries(this.setObj, agentModel, this.event, success, {agent:agentModel, event:this.event, difficulty:this.getActionSkillDifficulty(), margin});
-            },
             
             setDoneCount: function(v) {
                 if (this.doneCount !== v) {
@@ -1053,8 +1055,23 @@
             }
         }),
         
+        /*  A way out of an Event into another, taken by an agent there. Taking it always 
+            succeeds; its adj and set apply on the way. An exit with "toHidden":true is offered
+            even while the Event it leads to is hidden, without naming it, so the player can
+            go somewhere unknown. Its set, or anything else, can reveal that Event by changing 
+            what its hidden expression reads, e.g. "set":{"scratch.vault_found":"true"}. */
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport],
+            
+            
+            // Life Cycle //////////////////////////////////////////////////////
+            init: function(attrs) {
+                // Applied after the other attrs so any warnings can name the exit by where it goes.
+                const set = attrs.set;
+                delete attrs.set;
+                this.callSuper(attrs);
+                this.setSet(set);
+            },
             
             
             // Accessors ///////////////////////////////////////////////////////
@@ -1074,6 +1091,22 @@
             },
             getToEventModel: function() {
                 return this._toEventModel ?? (this._toEventModel = pkg.model.getEventModel(this.to));
+            },
+            
+            setToHidden: function(v) {this.toHidden = v === true;},
+            isToHidden: function() {return this.toHidden === true;},
+            
+            /*  Whether the exit can be offered, as far as where it leads goes: the Event is 
+                known, or the exit is allowed to lead somewhere unknown. Its own hidden is 
+                separate. */
+            isDestinationOffered: function() {
+                const toEventModel = this.getToEventModel();
+                return toEventModel != null && (toEventModel.isNotHidden() || this.isToHidden());
+            },
+            
+            /*  Where the exit leads, for a button: the Event's name. */
+            getDestinationPhrase: function() {
+                return this.getToEventModel().name;
             },
             
             

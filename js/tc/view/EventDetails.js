@@ -60,7 +60,7 @@
                 const toEvent = exitModel.getToEventModel();
                 this.setText(
                     exitModel.getModePhrase() + 
-                    (showTargetName ? ' ' + (toEvent?.name ?? exitModel.to) : '') + 
+                    (showTargetName ? ' ' + exitModel.getDestinationPhrase() : '') + 
                     pkg.formatAgentRisks(
                         agentModel.hasChronalChangeRiskFor(exitModel), 
                         // The paradox for entering the Event, or else whether an adjustment changes it.
@@ -171,14 +171,13 @@
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
-                    if (exitModel.isNotHidden()) {
+                    if (exitModel.isNotHidden() && exitModel.isDestinationOffered()) {
                         const toEventModel = exitModel.getToEventModel();
-                        if (toEventModel.isNotHidden()) {
-                            if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
-                            const btn = new UnderlineBtn(exitView, {navEventModel:toEventModel}, [AgentExitBtn, EventNavHover]);
-                            btn.configure(agentModel, exitModel, true);
-                            addedCount++;
-                        }
+                        if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
+                        // An unknown destination isn't shown on hover.
+                        const btn = new UnderlineBtn(exitView, {navEventModel:toEventModel.isNotHidden() ? toEventModel : null}, [AgentExitBtn, EventNavHover]);
+                        btn.configure(agentModel, exitModel, true);
+                        addedCount++;
                     }
                 }
                 

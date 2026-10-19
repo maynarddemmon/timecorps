@@ -329,10 +329,18 @@ Exits are ways to leave an event for another without time travel, so they cost n
 ]
 ```
 
-- **`mode`**: `wait`, `walk`, `swim` or `lifeboat`, which give "Wait til", "Walk to", "Swim to" and "Lifeboat to". Anything else gives "To".
-- **`to`**: the event it leads to. An exit to a hidden event isn't offered.
+- **`mode`**: `wait`, `walk`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled` or `lifeboat`, which give "Wait til", "Walk to", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to" and "Lifeboat to". Anything else gives "To".
+- **`to`**: the event it leads to. An exit to a hidden event isn't offered, unless it's `toHidden`.
+- **`toHidden`**: `true` to offer the exit even while the event it leads to is hidden, so the player can go somewhere unknown. Until the event is revealed, the button doesn't name it ("Enter *somewhere*"), hovering it doesn't show it, and the timeline draws no link to it. Reveal it by giving it a `hidden` expression of its own that the exit's `set` changes; `data.spec` checks it has one:
+
+  ```json5
+  "vault":{"hidden":"!scratch.vault_found", …},
+  …
+  "exits":[{"mode":"enter", "to":"vault", "toHidden":true, "set":{"scratch.vault_found":"true"}}]
+  ```
 - **`hidden`**: hides the exit.
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
+- **`set`**: as for actions, applied as a success when the exit is taken, before the agent arrives.
 - **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
 
 ## Skill checks

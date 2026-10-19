@@ -340,6 +340,30 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 return adjustmentProblems;
             };
     
+        // Checks an action's or exit's set.
+        const checkSets = (where, set, event) => {
+            for (const [key, value] of Object.entries(set ?? {})) {
+                const isScratch = key.startsWith('scratch.'),
+                    keyProblem = checkChangeKey(key, event, true) ?? checkEventDestination(key, value);
+                if (keyProblem) problems.push(where + ' sets ' + key + ', which ' + keyProblem);
+                if (isScratch) counts.scratchSets++;
+                if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+                    // Per result, worked out once with the same parameters as an amount.
+                    const at = where + ' set ' + key,
+                        {problems:exprProblems, rest} = checkResultExprs(at, value);
+                    problems.push(...exprProblems);
+                    if (Object.keys(rest).length > 0) problems.push(at + ' has keys other than onSuccess, onFailure and onBoth');
+                    counts.perResultSets++;
+                } else if (typeof value !== 'string') {
+                    problems.push(where + ' set ' + key + ' is not a string or an object');
+                } else if (key.includes('.')) {
+                    // Scratch, stats and skills are worked out once, as check expressions.
+                    const error = getAmountCompileError(value);
+                    if (error) problems.push(where + ' set ' + key + ' ' + error);
+                }
+            }
+        };
+        
         // The default actions every Event gets are checked as if on an Event of their own, and 
         // each Event's actions as the game sees them: merged over the defaults.
         for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
@@ -362,31 +386,18 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (action.adj !== undefined) problems.push(...checkAdjustments(where, action.adj, true, event));
                 if ('effects' in action) problems.push(where + ' has effects, which is renamed adj');
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
-                for (const [key, value] of Object.entries(action.set ?? {})) {
-                    const isScratch = key.startsWith('scratch.'),
-                        keyProblem = checkChangeKey(key, event, true) ?? checkEventDestination(key, value);
-                    if (keyProblem) problems.push(where + ' sets ' + key + ', which ' + keyProblem);
-                    if (isScratch) counts.scratchSets++;
-                    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-                        // Per result, worked out once with the same parameters as an amount.
-                        const at = where + ' set ' + key,
-                            {problems:exprProblems, rest} = checkResultExprs(at, value);
-                        problems.push(...exprProblems);
-                        if (Object.keys(rest).length > 0) problems.push(at + ' has keys other than onSuccess, onFailure and onBoth');
-                        counts.perResultSets++;
-                    } else if (typeof value !== 'string') {
-                        problems.push(where + ' set ' + key + ' is not a string or an object');
-                    } else if (key.includes('.')) {
-                        // Scratch, stats and skills are worked out once, as check expressions.
-                        const error = getAmountCompileError(value);
-                        if (error) problems.push(where + ' set ' + key + ' ' + error);
-                    }
-                }
+                checkSets(where, action.set, event);
                 if ('injurySkillCheck' in action) problems.push(where + ' has an injurySkillCheck, which adj replaced');
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
                 if (exit.adj !== undefined) problems.push(...checkAdjustments(where, exit.adj, false, event));
+                checkSets(where, exit.set, event);
+                if (exit.toHidden !== undefined) {
+                    if (typeof exit.toHidden !== 'boolean') problems.push(where + ' toHidden is not true or false');
+                    // It leads somewhere unknown, so something must be able to reveal it.
+                    else if (exit.toHidden && typeof events[exit.to]?.hidden !== 'string') problems.push(where + ' is toHidden, but ' + exit.to + ' has no hidden expression of its own to reveal it');
+                }
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');

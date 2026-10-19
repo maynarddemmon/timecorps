@@ -115,7 +115,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_bus_stop"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_bus_stop",
+					"hidden":"event.values.choice.flipCount < event.actionLimit",
+					"set":{"events.origin_bus_stop.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -141,7 +145,6 @@
 			"duration":{"m":5},
 			"location":"origin.city_streets",
 			"actionLimit":1,
-			"hidden":"events.origin_alarm.values.choice.flipCount < events.origin_alarm.actionLimit",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -152,11 +155,31 @@
 				}
 			},
 			"exits":[
-				{"mode":"board", "to":"origin_busride"},
-				{"mode":"bike", "to":"origin_hospital"},
-				{"mode":"bike", "to":"origin_newsroom",},
-				{"mode":"bike", "to":"origin_garage"},
-				{"mode":"bike", "to":"origin_theater"}
+				{
+					"mode":"board", "toHidden":true, "to":"origin_busride",
+					"hidden":"event.values.bus_arrives.value !== 1",
+					"set":{"events.origin_busride.attestation":"1"}
+				},
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_hospital",
+					"hidden":"event.values.bus_arrives.value === 0",
+					"set":{"events.origin_hospital.attestation":"1"}
+				},
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_newsroom",
+					"hidden":"event.values.bus_arrives.value === 0",
+					"set":{"events.origin_newsroom.attestation":"1"}
+				},
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_garage",
+					"hidden":"event.values.bus_arrives.value === 0",
+					"set":{"events.origin_garage.attestation":"1"}
+				},
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_theater",
+					"hidden":"event.values.bus_arrives.value === 0",
+					"set":{"events.origin_theater.attestation":"1"}
+				}
 			],
 			"values":{
 				"bus_arrives":{
@@ -180,7 +203,6 @@
 			"duration":{"m":30},
 			"location":"origin.city_streets",
 			"actionLimit":1,
-			"hidden":"events.origin_bus_stop.values.bus_arrives.value !== 1",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -216,10 +238,22 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_hospital"},
-				{"mode":"walk", "to":"origin_newsroom"},
-				{"mode":"walk", "to":"origin_garage"},
-				{"mode":"walk", "to":"origin_theater"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_hospital",
+					"set":{"events.origin_hospital.attestation":"1"}
+				},
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_newsroom",
+					"set":{"events.origin_newsroom.attestation":"1"}
+				},
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_garage",
+					"set":{"events.origin_garage.attestation":"1"}
+				},
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_theater",
+					"set":{"events.origin_theater.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -245,7 +279,6 @@
 			"duration":{"h":8},
 			"location":"origin.hospital",
 			"actionLimit":2,
-			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -309,7 +342,6 @@
 			"duration":{"h":8},
 			"location":"origin.newsroom",
 			"actionLimit":2,
-			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -373,7 +405,6 @@
 			"duration":{"h":8},
 			"location":"origin.garage",
 			"actionLimit":2,
-			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -437,7 +468,6 @@
 			"duration":{"h":8},
 			"location":"origin.theater",
 			"actionLimit":2,
-			"hidden":"events.origin_bus_stop.values.bus_arrives.value === 0",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
