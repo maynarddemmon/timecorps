@@ -40,7 +40,10 @@
 				"Shanghai, 12 November 2081. The day the world learns it no longer has to grow old."
 			],
 			"onSetup":{
-				"initialEventSelection":"lgv_announcement"
+				"initialEventSelection":"lgv_announcement",
+				"adj":{
+					"agents.ME.skills.chronogation":"100"
+				}
 			},
 			"objectives":{
 				"trial":{

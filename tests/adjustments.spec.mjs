@@ -376,7 +376,7 @@ test('adj must be keyed by a stat, a skill, a Value or scratch, and the old inju
         });
     // A key without a dot names a Value of the Event, which is only looked up when it applies.
     expect(out).toEqual({valid:['health both', 'timeline.paradox both'], notAnObject:[], oldAdjustments:0});
-    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", or "scratch.<name>" (ignoring it): {onSuccess: 1}';
+    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat or skill of another agent, e.g. "agents.ME.chronal" or "agents.ME.skills.agl", or "scratch.<name>" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
         'Event origin exit to aftermath adj agent.luck ' + named,
         'Event origin exit to aftermath adj event.health ' + named,

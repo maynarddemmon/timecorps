@@ -88,3 +88,42 @@ test('an action or exit can change another Event\'s stats and Values', async ({p
     });
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('set and adj can change any agent\'s stats and skills, from a mission or an action', async ({page}) => {
+    await Promise.all([
+        page.route('**/tests/data/operations.json5', route => {
+            const json = readTestData('operations.json5');
+            json.operations.first.onSuccess.adj['agents.BR.skills.chronogation'] = '100';
+            json.operations.first.onSuccess.set = {'agents.BR.chronal':'10'};
+            return route.fulfill({json});
+        }),
+        page.route('**/tests/data/test_scenario.json5', route => {
+            const json = readTestData('test_scenario.json5');
+            json.events.origin.actions.patch = {
+                label:'Patch Up Bravo', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':null},
+                adj:{'agents.BR.health':'-5', 'agents.BR.skills.agl':'25'}
+            };
+            return route.fulfill({json});
+        })
+    ]);
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            bravo = m.getAgentModel('BR'),
+            action = m.getEventModel('origin').getActionModels().patch,
+            read = () => ({chronogation:bravo.getSkill('chronogation'), agl:bravo.getSkill('agl'), chronal:bravo.chronal.value, health:bravo.health.value}),
+            before = read(),
+            phrase = alpha.getAdjustmentsPhrase(action);
+        m.getOperationModel('first').doOnSuccess();
+        alpha.doAction(action);
+        return {before, after:read(), phrase};
+    });
+    expect(out.after).toEqual({
+        chronogation:out.before.chronogation + 100, agl:out.before.agl + 25,
+        chronal:10, health:out.before.health - 5
+    });
+    expect(out.phrase).toMatch(/^Bravo Health: ~-5 if passed.+Bravo Agility: ~\+25 if passed$/);
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

@@ -221,6 +221,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     /*  The stats set and adj can change, by scope. Mirrors tc.ADJUSTMENT_STAT_IDS. */
     const ADJUSTMENT_STAT_IDS = {
         agent:['health', 'chronal', 'paradox'],
+        agents:['health', 'chronal', 'paradox'],
         event:['paradox', 'historicity', 'attestation'],
         events:['paradox', 'historicity', 'attestation'],
         timeline:['paradox', 'chronal', 'score', 'credits']
@@ -262,6 +263,12 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 const [scope, statId, ...rest] = key.split('.');
                 if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation has neither';
                 if (statId === undefined) return event.values?.[key] ? null : 'is not a Value of the Event';
+                if (scope === 'agents') {
+                    if (!agents[statId]) return 'names no agent';
+                    if (rest.length === 1 && ADJUSTMENT_STAT_IDS.agents.includes(rest[0])) return null;
+                    if (rest.length === 2 && rest[0] === 'skills') return Object.hasOwn(skillCfgs, rest[1]) ? null : 'is not a skill';
+                    return 'is not a stat or skill of that agent';
+                }
                 if (scope === 'events') {
                     if (!events[statId]) return 'names no Event';
                     if (rest.length === 1 && ADJUSTMENT_STAT_IDS.events.includes(rest[0])) return null;

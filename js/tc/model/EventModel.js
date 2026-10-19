@@ -17,7 +17,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
+            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
@@ -119,9 +119,11 @@
         STAT_ID_CREDITS = 'credits',
         
         /*  The stats set and adj can change, by the scope that has them: the agent taking the 
-            action or exit, its Event, any Event by ID ("events.<id>.<stat>"), or the timeline. */
+            action or exit, any agent by ID ("agents.<id>.<stat>"), its Event, any Event by ID 
+            ("events.<id>.<stat>"), or the timeline. */
         ADJUSTMENT_STAT_IDS = pkg.ADJUSTMENT_STAT_IDS = {
             [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
+            [SCOPE_AGENTS]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
             [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
             [SCOPE_EVENTS]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
             [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_SCORE, STAT_ID_CREDITS]
@@ -132,8 +134,15 @@
             A Value or scratch entry has no limits, but only changes while it's a number; 
             otherwise nothing is allowed and a warning names it. Undefined when there's nothing 
             to change, e.g. no such Event or Value. eventModel is the action's or exit's own 
-            Event, for keys that don't name one. */
+            Event, and agentModel the agent taking it, for keys that don't name one. */
         getChangeTarget = (parsed, agentModel, eventModel) => {
+            if (parsed.agentId !== undefined) {
+                agentModel = pkg.model.getAgentModel(parsed.agentId);
+                if (!agentModel) {
+                    console.warn('No agent', parsed.agentId, 'to change');
+                    return;
+                }
+            }
             if (parsed.eventId !== undefined) {
                 eventModel = pkg.model.getEventModel(parsed.eventId);
                 if (!eventModel) {
@@ -163,7 +172,8 @@
             switch (parsed.kind) {
                 case 'stat':
                     switch (parsed.scopeName) {
-                        case SCOPE_AGENT: return agentModel?.[parsed.statId];
+                        case SCOPE_AGENT:
+                        case SCOPE_AGENTS: return agentModel?.[parsed.statId];
                         case SCOPE_EVENT:
                         case SCOPE_EVENTS: return eventModel?.[parsed.statId];
                         case SCOPE_TIMELINE:
@@ -216,6 +226,10 @@
                     own Event, by its ID, e.g. "bus_arrives".
                 {kind:'stat', scopeName:'events', eventId, statId} - a stat of any Event, e.g. 
                     "events.collision.historicity".
+                {kind:'stat', scopeName:'agents', agentId, statId} - a stat of any agent, e.g.
+                    "agents.ME.chronal".
+                {kind:'skill', scopeName:'agents', agentId, statId:'skills.<skill>', skillId} - a
+                    skill of any agent, e.g. "agents.ME.skills.chronogation".
                 {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
                     e.g. "events.collision.values.struck".
                 {error} - a phrase for a warning. */
@@ -232,14 +246,23 @@
                     warn('names no skill (ignoring it)');
                     return null;
                 }
+            } else if (scopeName === SCOPE_AGENTS && rest.length === 2 && rest[0] === SCOPE_SKILLS) {
+                if (pkg.isSkillId(rest[1])) {
+                    parsedKey = {kind:'skill', scopeName, agentId:statId, statId:SCOPE_SKILLS + '.' + rest[1], skillId:rest[1]};
+                } else {
+                    warn('names no skill (ignoring it)');
+                    return null;
+                }
+            } else if (scopeName === SCOPE_AGENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_AGENTS].includes(rest[0])) {
+                parsedKey = {kind:'stat', scopeName, agentId:statId, statId:rest[0]};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) {
                 parsedKey = {kind:'stat', scopeName, eventId:statId, statId:rest[0]};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 2 && rest[0] === 'values') {
                 parsedKey = {kind:'value', eventId:statId, statId:'values.' + rest[1], valueId:rest[1]};
-            } else if (scopeName !== SCOPE_EVENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
+            } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat or skill of another agent, e.g. "agents.ME.chronal" or "agents.ME.skills.agl", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -470,6 +493,7 @@
                 switch (this.scopeName) {
                     case SCOPE_AGENT: return name;
                     case SCOPE_EVENT: return 'Event ' + name;
+                    case SCOPE_AGENTS: return (pkg.model.getAgentModel(this.parsedKey.agentId)?.getName() ?? this.parsedKey.agentId) + ' ' + name;
                     case SCOPE_EVENTS: return (pkg.model.getEventModel(this.parsedKey.eventId)?.name ?? this.parsedKey.eventId) + ' ' + name;
                     default: return 'Timeline ' + name;
                 }
