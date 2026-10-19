@@ -47,6 +47,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires(
         'tc.Describable','tc.MediaSupport'
     );
+    file(MODEL_ROOT + 'FactionModel.js').provides('tc.FactionModel').requires('tc.Describable');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
         'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
     );
@@ -57,7 +58,7 @@ JS.Packages(file => {
         'tc.Describable','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
-        'tc.LocationModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
+        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');
@@ -84,6 +85,7 @@ JS.Packages(file => {
         'tc.ChronalBar','tc.ParadoxBar','tc.HealthBar','tc.SkillBar'
     );
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'FactionBrief.js').provides('tc.FactionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'EventBrief.js').provides('tc.EventBrief').requires(
         'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow',
         'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
@@ -95,6 +97,6 @@ JS.Packages(file => {
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
+        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
     );
 });

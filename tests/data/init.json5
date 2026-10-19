@@ -4,6 +4,11 @@
 {
 	"scenarios":["test_scenario"],
 	
+	"factions":{
+		"timecorps":{"label":"Time Corps", "description":"Keeps the causal thread intact."},
+		"unaligned":{"label":"Unaligned", "description":"Answers to no one."}
+	},
+	
 	"skillChecks":{
 		"sure_thing":{
 			"name":"Sure Thing",

@@ -57,6 +57,7 @@
 		},
 		"VQ":{
 			"name":"Vasquez",
+			"faction":"timecorps",
 			"video":true,
 			"event":"collision",
 			"health":{"value":35, "max":85},
@@ -75,6 +76,7 @@
 		},
 		"OK":{
 			"name":"Okonjo",
+			"faction":"timecorps",
 			"health":{"value":50, "max":90},
 			"chronal":{"value":0},
 			"paradox":1,
@@ -93,6 +95,7 @@
 		},
 		"HW":{
 			"name":"Halloway",
+			"faction":"timecorps",
 			"health":{"value":25},
 			"event":"lifeboat_capacity",
 			"skills":{
@@ -113,6 +116,7 @@
 		},
 		"GO":{
 			"name":"Gordon",
+			"faction":"timecorps",
 			"skills":{
 				"investigation":50,
 				"str":-25,
@@ -127,6 +131,7 @@
 		},
 		"PI":{
 			"name":"Pierce",
+			"faction":"timecorps",
 			"video":true,
 			"skills":{
 				"chronogation":200,
@@ -143,6 +148,7 @@
 		},
 		"AA":{
 			"name":"Alexander Aimes",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
 				"investigation":50,
@@ -158,6 +164,7 @@
 		},
 		"AB":{
 			"name":"Arthur Borne",
+			"faction":"timecorps",
 			"paradox":1,
 			"skills":{
 				"chronogation":-25,
@@ -174,6 +181,7 @@
 		},
 		"AC":{
 			"name":"Aaron Crown",
+			"faction":"timecorps",
 			"health":{"value":10},
 			"paradox":2,
 			"skills":{
@@ -191,6 +199,7 @@
 		},
 		"AD":{
 			"name":"Amon Duncan",
+			"faction":"timecorps",
 			"health":{"value":56},
 			"skills":{
 				"chronogation":100,
@@ -207,6 +216,7 @@
 		},
 		"AE":{
 			"name":"Anton Eklund",
+			"faction":"timecorps",
 			"health":{"value":88},
 			"skills":{
 				"chronogation":-50,
@@ -223,6 +233,7 @@
 		},
 		"AF":{
 			"name":"Ambrose Fenwick",
+			"faction":"timecorps",
 			"health":{"value":91},
 			"skills":{
 				"chronogation":75,
@@ -239,6 +250,7 @@
 		},
 		"AG":{
 			"name":"Aurelio Garza",
+			"faction":"timecorps",
 			"health":{"value":93},
 			"skills":{
 				"chronogation":150,
@@ -255,6 +267,7 @@
 		},
 		"AH":{
 			"name":"Axel Harrow",
+			"faction":"timecorps",
 			"health":{"value":79},
 			"paradox":1,
 			"skills":{
@@ -272,6 +285,7 @@
 		},
 		"AI":{
 			"name":"Aldous Ingram",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":-25,
 				"investigation":100,
@@ -287,6 +301,7 @@
 		},
 		"AJ":{
 			"name":"Asher Jansen",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":100,
 				"investigation":25,
@@ -302,6 +317,7 @@
 		},
 		"AK":{
 			"name":"Arjun Kasliwal",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
 				"investigation":75,
@@ -317,6 +333,7 @@
 		},
 		"AL":{
 			"name":"Abram Lowe",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
 				"investigation":0,
@@ -332,6 +349,7 @@
 		},
 		"AM":{
 			"name":"Amadou Mensah",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
 				"investigation":50,
@@ -347,6 +365,7 @@
 		},
 		"AN":{
 			"name":"Ansel Novak",
+			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
 				"chronogation":25,
@@ -363,6 +382,7 @@
 		},
 		"AO":{
 			"name":"Alden Orme",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":-75,
 				"investigation":125,
@@ -378,6 +398,7 @@
 		},
 		"AP":{
 			"name":"Aurelien Pascal",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
 				"investigation":-25,
@@ -393,6 +414,7 @@
 		},
 		"AQ":{
 			"name":"Anya Quill",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
 				"investigation":100,
@@ -408,6 +430,7 @@
 		},
 		"AR":{
 			"name":"Ayumi Reyes",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
 				"investigation":0,
@@ -423,6 +446,7 @@
 		},
 		"AS":{
 			"name":"Ava Sato",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
 				"investigation":75,
@@ -438,6 +462,7 @@
 		},
 		"AT":{
 			"name":"Amara Thorne",
+			"faction":"timecorps",
 			"paradox":1,
 			"skills":{
 				"chronogation":-25,
@@ -454,6 +479,7 @@
 		},
 		"AU":{
 			"name":"Aurora Ueda",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":75,
 				"investigation":25,
@@ -469,6 +495,7 @@
 		},
 		"AV":{
 			"name":"Asha Varga",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
 				"investigation":25,
@@ -484,6 +511,7 @@
 		},
 		"AW":{
 			"name":"Aislin Wren",
+			"faction":"timecorps",
 			"health":{"value":65,"max":75},
 			"skills":{
 				"chronogation":50,
@@ -500,6 +528,7 @@
 		},
 		"AX":{
 			"name":"Alina Xu",
+			"faction":"timecorps",
 			"health":{"value":33},
 			"paradox":1,
 			"skills":{
@@ -517,6 +546,7 @@
 		},
 		"AY":{
 			"name":"Amaya Yoshida",
+			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
 				"chronogation":50,
@@ -533,6 +563,7 @@
 		},
 		"AZ":{
 			"name":"Anika Zeller",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":-50,
 				"investigation":125,
@@ -548,6 +579,7 @@
 		},
 		"BA":{
 			"name":"Blythe Asano",
+			"faction":"timecorps",
 			"health":{"max":95},
 			"skills":{
 				"chronogation":100,
@@ -564,6 +596,7 @@
 		},
 		"BB":{
 			"name":"Bianca Brandt",
+			"faction":"timecorps",
 			"health":{"max":80},
 			"skills":{
 				"chronogation":25,
@@ -580,6 +613,7 @@
 		},
 		"BC":{
 			"name":"Bree Castellanos",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -595,6 +629,7 @@
 		},
 		"BD":{
 			"name":"Brigid Dunne",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
 				"investigation":75,
@@ -610,6 +645,7 @@
 		},
 		"BE":{
 			"name":"Beatriz Esteves",
+			"faction":"timecorps",
 			"health":{"value":98},
 			"skills":{
 				"chronogation":50,
@@ -626,6 +662,7 @@
 		},
 		"BF":{
 			"name":"Bodil Falk",
+			"faction":"timecorps",
 			"health":{"value":50},
 			"skills":{
 				"chronogation":75,
@@ -642,6 +679,7 @@
 		},
 		"BG":{
 			"name":"Bryony Gale",
+			"faction":"timecorps",
 			"health":{"value":80},
 			"paradox":1,
 			"skills":{
@@ -659,6 +697,7 @@
 		},
 		"BH":{
 			"name":"Beatrix Hsu",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":-25,
 				"investigation":150,
@@ -674,6 +713,7 @@
 		},
 		"BI":{
 			"name":"Bella Ionescu",
+			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
 				"chronogation":100,
@@ -690,6 +730,7 @@
 		},
 		"BJ":{
 			"name":"Brynn Jaeger",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":200,
 				"investigation":-50,
@@ -705,6 +746,7 @@
 		},
 		"BK":{
 			"name":"Beatrice Kaur",
+			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
 				"investigation":75,
@@ -720,6 +762,7 @@
 		},
 		"BL":{
 			"name":"Bo Lindqvist",
+			"faction":"timecorps",
 			"health":{"value":95},
 			"paradox":3,
 			"skills":{

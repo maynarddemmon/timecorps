@@ -2,6 +2,19 @@
 	// The scenario files loaded after this one, in order.
 	"scenarios":["origin_scenario", "titanic_scenario", "lusitania_scenario"],
 	
+	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
+	// "faction".
+	"factions":{
+		"timecorps":{
+			"label":"Time Corps",
+			"description":"The Nexus-based service that watches the causal thread and repairs it. Its agents travel under Corps protocols, draw chronal from the HQ pool and answer to Command."
+		},
+		"unaligned":{
+			"label":"Unaligned",
+			"description":"Answers to no one. Whatever they know of time travel, they learned on their own, and no one is coming to get them out."
+		}
+	},
+	
 	"skillChecks":{
 		"coin_flip":{
 			"name":"Coin Flip",

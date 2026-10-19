@@ -13,6 +13,7 @@
 		// Given and revealed by the first mission. Has a video portrait.
 		"AL":{
 			"name":"Alpha",
+			"faction":"timecorps",
 			"video":true,
 			"event":"origin",
 			"health":{"value":65, "max":85},

@@ -11,7 +11,7 @@
         {
             NotifyingNumericStatModel, getConstrainedValueCfg,
             cfg:{
-                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
@@ -162,6 +162,7 @@
             self.hidden = true;
             self.playerControlled = false;
             self.devoured = false;
+            self.faction = FACTION_ID_UNALIGNED;
             
             // The number of actions the Agent has executed in the EventModel they are currently in.
             self.actionExecCount = 0;
@@ -201,7 +202,7 @@
         
         getAsObj: function(cfg) {
             const retval = this.callSuper(cfg);
-            for (const attrName of ['name','event','actionExecCount','hidden','playerControlled']) {
+            for (const attrName of ['name','event','actionExecCount','hidden','playerControlled','faction']) {
                 retval[attrName] = this[attrName];
             }
             for (const attrName of AGENT_STAT_IDS) {
@@ -358,6 +359,21 @@
         },
         isPlayerControlled: function() {return this.playerControlled;},
         
+        /*  The ID of the one Faction the Agent is in. An unknown ID is warned about, and the 
+            Agent is unaligned. */
+        setFaction: function(factionId) {
+            if (!pkg.model.getFactionModel(factionId)) {
+                console.warn('Agent', this.id, 'has unknown faction', factionId, '(using ' + FACTION_ID_UNALIGNED + ')');
+                factionId = FACTION_ID_UNALIGNED;
+            }
+            if (this.faction !== factionId) {
+                this.set('faction', factionId, true);
+                if (this.inited) this.notifyCollectionOfUpdate();
+            }
+        },
+        getFaction: function() {return this.faction;},
+        getFactionModel: function() {return pkg.model.getFactionModel(this.faction);},
+        
         stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
         getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
         
@@ -470,6 +486,7 @@
             const retval = {
                 hidden:getConstrainedValueCfg(this, 'hidden'),
                 playerControlled:this.playerControlled,
+                faction:this.faction,
                 [SCOPE_SKILLS]:{...this[SCOPE_SKILLS]},
                 event:this.event,
                 actionExecCount:this.actionExecCount,
@@ -489,6 +506,7 @@
             }
             if ('hidden' in obj) this.setHidden(obj.hidden);
             if ('playerControlled' in obj) this.setPlayerControlled(obj.playerControlled);
+            if ('faction' in obj) this.setFaction(obj.faction);
             
             // Set directly, since setDevoured would send the Agent to The Void again. The saved
             // event and chronal already have them there.

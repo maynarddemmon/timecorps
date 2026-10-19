@@ -23,6 +23,7 @@
         agentDossier,
         areaBrief,
         eventBrief,
+        factionBrief,
         missionBrief,
         settingsDialog;
     
@@ -42,7 +43,7 @@
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
             cfg:{DATA_BASE_DIR},
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             ICON_SEPARATOR
         } = pkg,
         
@@ -326,7 +327,7 @@
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:600, limitToParent:350,
+                width:5, percentOfParentHeight:100, minValue:630, limitToParent:350,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {
@@ -418,6 +419,9 @@
                     break;
                 case SCOPE_LOCATIONS:
                     areaBrief?.notifyBriefModelChanged(instanceModel);
+                    break;
+                case SCOPE_FACTIONS:
+                    factionBrief?.notifyBriefModelChanged(instanceModel);
                     break;
             }
         },
@@ -553,6 +557,14 @@
             areaBrief ??= new pkg.AreaBrief(appView);
             areaBrief.show(locationModel);
             return areaBrief;
+        },
+        
+        openFactionBrief: factionModel => {
+            if (factionModel) {
+                factionBrief ??= new pkg.FactionBrief(appView);
+                factionBrief.show(factionModel);
+                return factionBrief;
+            }
         },
         
         openEventBrief: eventModel => {

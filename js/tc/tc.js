@@ -159,6 +159,9 @@
                 EVENT_ID_THE_VOID:'the_void',
                 EVENT_ID_TIME_CORPS_HQ:'time_corps_hq',
                 
+                // The Faction of any Agent the data doesn't put in one.
+                FACTION_ID_UNALIGNED:'unaligned',
+                
                 // The absolute minimum chronal needed to deploy an Agent from HQ to an Event.
                 MIN_DEPLOY_CHRONAL:2,
                 
@@ -380,6 +383,7 @@
             SCOPE_TIMELINE:'timeline',
             SCOPE_SCRATCH:'scratch',
             SCOPE_LOCATIONS:'locations',
+            SCOPE_FACTIONS:'factions',
             SCOPE_OPERATIONS:'operations',
             SCOPE_OPERATION:'operation',
             SCOPE_AGENTS:'agents',

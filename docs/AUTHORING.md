@@ -140,6 +140,11 @@ The timeline also has a score and credits, read as plain numbers:
 	// The scenario files loaded after this one, in order.
 	"scenarios":["titanic_scenario", "lusitania_scenario"],
 	
+	"factions":{
+		"timecorps":{"label":"Time Corps", "description":"…"},
+		"unaligned":{"label":"Unaligned", "description":"…"}
+	},
+	
 	"skills":{
 		"str":{"name":"Strength", "description":"Physical prowess and brawn."},
 		…
@@ -156,6 +161,7 @@ The timeline also has a score and credits, read as plain numbers:
 }
 ```
 
+- **`factions`**: the sides an agent can be on, by ID, with a `label` and a `description` (phrases, as for an event, shown as the Faction Brief's field notes). Every agent is in exactly one; `unaligned` must exist, since it's the default. The Agents grid and the dossier show an agent's faction, and clicking it opens the Faction Brief.
 - **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip). The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
 - **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
@@ -471,6 +477,7 @@ HQ and The Void leave out `_investigate` this way.
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
+			"faction":"timecorps",              // Optional. Default: "unaligned".
 			"event":"collision",                // Where they start. Default: HQ.
 			"health":{"value":65, "max":85},   // Or just a number for the value. Default: 100 of 100.
 			"chronal":75,                       // Default 75.

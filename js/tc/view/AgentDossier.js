@@ -59,6 +59,12 @@
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
+            const factionView = self._factionView = new CompactField(row, {label:'Faction', tooltip:'Open the faction brief', layoutHint:1});
+            factionView.setCursor('pointer');
+            self.attachToDom(factionView, '_doFactionClick', 'click');
+            row.getFirstLayout().update();
+            
+            row = new CompactFieldRow(vitalsContainer);
             self._whereView = new CompactField(row, {label:'Where', layoutHint:1});
             self._whenView = new CompactField(row, {label:'When', layoutHint:1});
             self._eventView = new CompactField(row, {label:'Event', layoutHint:1});
@@ -100,6 +106,7 @@
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
                 self._roleView.setValue(agentModel.getRoleLabel());
+                self._factionView.setValue(agentModel.getFactionModel()?.getLabel() ?? '');
                 self._whereView.setValue(eventModel.getLocationModel()?.name);
                 self._whenView.setValue(format(eventModel.getStart()));
                 self._eventView.setValue(eventModel.name);
@@ -156,6 +163,11 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _doFactionClick: function(_event) {
+            pkg.app.openFactionBrief(this.getBriefModel()?.getFactionModel());
+        },
+        
         /*  Updates each skill's bar, label and purchase button. */
         updateSkills: function(agentModel) {
             for (const skillBar of this._skillBars ?? []) {

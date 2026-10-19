@@ -16,7 +16,7 @@
         {floor:mathFloor} = Math,
         
         {
-            NotifyingNumericStatModel, AgentModel, LocationModel, EventModel, OperationModel,
+            NotifyingNumericStatModel, AgentModel, LocationModel, FactionModel, EventModel, OperationModel,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
@@ -25,7 +25,7 @@
                 DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             CHECK_SKILL_EXPR_PREFIX
         } = pkg,
@@ -147,6 +147,7 @@
                 }
             }]);
             model[SCOPE_OPERATIONS] = new TCModelCollection({modelClass:OperationModel, scopeId:SCOPE_OPERATIONS});
+            model[SCOPE_FACTIONS]   = new TCModelCollection({modelClass:FactionModel,   scopeId:SCOPE_FACTIONS});
             
             model.callSuper(parent, attrs);
             
@@ -189,6 +190,11 @@
                 locations:Object.values(locationsUsed).sort((a, b) => a.order - b.order)
             };
         },
+        
+        
+        // Factions:Accessors & Methods ////////////////////////////////////////
+        getFactionModel: id => model[SCOPE_FACTIONS].getById(id),
+        getFactionModelsAsList: filterFunc => model[SCOPE_FACTIONS].getAsList(filterFunc),
         
         
         // Agents:Accessors & Methods //////////////////////////////////////////
@@ -458,7 +464,8 @@
                 commonEventActions[actionId] = defaultEventActions[actionId];
             }
             
-            for (const dataKey of [SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
+            // Factions first, so Agents in the same file can be put in them.
+            for (const dataKey of [SCOPE_FACTIONS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
                     const modelCol = model[dataKey];

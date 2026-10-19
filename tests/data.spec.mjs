@@ -21,6 +21,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         agents = agentsJson.agents,
         operations = operationsJson.operations,
         scratch = Object.assign({}, ...scenarios.map(s => s.scratch ?? {})),
+        factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
     
         // Every string anywhere inside a JSON value.
         collectStrings = (value, accum=[]) => {
@@ -121,6 +122,18 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
         }
         expect(missing).toEqual([]);
+    });
+
+    test('there is an unaligned faction, every faction has a label, and every agent is in a known faction', () => {
+        const problems = [];
+        if (!factions.unaligned) problems.push('no unaligned faction, which agents default to');
+        for (const [factionId, faction] of Object.entries(factions)) {
+            if (typeof faction.label !== 'string' || faction.label.trim() === '') problems.push('faction ' + factionId + ' has no label');
+        }
+        for (const [agentId, agent] of Object.entries(agents)) {
+            if (agent.faction !== undefined && !factions[agent.faction]) problems.push('agent ' + agentId + ' is in unknown faction ' + agent.faction);
+        }
+        expect(problems).toEqual([]);
     });
 
     test('every agent has a portrait and a dossier', () => {

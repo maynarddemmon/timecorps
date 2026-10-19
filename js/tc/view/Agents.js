@@ -32,7 +32,7 @@
         AgentHealthBar = new JSClass('AgentHealthBar', pkg.HealthBar, {include: [AgentBar]}),
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
-            getColIds: () => ['id','name','role','event','where','when',STAT_ID_HEALTH,STAT_ID_PARADOX,STAT_ID_CHRONAL],
+            getColIds: () => ['id','name','role','faction','event','where','when',STAT_ID_HEALTH,STAT_ID_PARADOX,STAT_ID_CHRONAL],
             supportsDoubleClick: () => true,
             doDoubleClick: function() {
                 this.doCellBtnActivated('event');
@@ -45,6 +45,9 @@
                         return;
                     case 'role':
                         this.getRef(colId).setText(this.model.getRoleLabel());
+                        return;
+                    case 'faction':
+                        this.getRef(colId).setText(this.model.getFactionModel()?.getLabel() ?? '');
                         return;
                     case 'event': eventExistsTxtFunc = event => event.name + ' ' + ICON_NAV_FORWARD; break;
                     case 'where': eventExistsTxtFunc = event => event.getLocationModel()?.name;      break;
@@ -65,6 +68,7 @@
                 switch (colId) {
                     case 'id':
                         return SimpleAgentGridMarker;
+                    case 'faction':
                     case 'event':
                     case 'where':
                     case 'when':
@@ -91,6 +95,9 @@
             },
             doCellBtnActivated: function(colId) {
                 switch (colId) {
+                    case 'faction':
+                        pkg.app.openFactionBrief(this.model.getFactionModel());
+                        break;
                     case 'event':
                         pkg.app.selectEventBox(this.model.getEventModel());
                         break;
@@ -124,14 +131,15 @@
             }, [{
                 makeGridHeaders: gridHeader => {
                     const WIDTH_ID = btnHeight + padding,
-                        WIDTH_MISC = 60,
+                        WIDTH_MISC = 55,
                         WIDTH_WHEN = 125,
                         WIDTH_BAR = 65;
                     new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:'ID',         cellXAdj:padding,   cellWidthAdj:-padding});
-                    new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:2000,       text:'Name',  flex:1});
-                    new GridColHdr(gridHeader, {columnId:'role',          minValue:WIDTH_MISC, maxValue:WIDTH_MISC, text:'Role'});
-                    new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:2000,       text:'Event', flex:1});
-                    new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:2000,       text:'Where', flex:1});
+                    new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:1000,       text:'Name',    flex:1});
+                    new GridColHdr(gridHeader, {columnId:'role',          minValue:WIDTH_MISC, maxValue:1000,       text:'Role',    flex:1});
+                    new GridColHdr(gridHeader, {columnId:'faction',       minValue:WIDTH_MISC, maxValue:1000,       text:'Faction', flex:1});
+                    new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:1000,       text:'Event',   flex:1});
+                    new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:1000,       text:'Where',   flex:1});
                     new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:'When'});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_HEALTH,  minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_HEALTH,  cellXAdj:padding/2, cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_PARADOX, cellXAdj:padding/2, cellWidthAdj:-padding});
