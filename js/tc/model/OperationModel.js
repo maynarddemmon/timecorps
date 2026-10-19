@@ -38,7 +38,7 @@
                 if (oldKey in cfg) console.warn(prefix, oldKey, 'is replaced by set and adj (ignoring it)');
             }
             const changes = {
-                set:pkg.readChangeEntries(prefix + ' set', cfg.set, {keepString:true}),
+                set:pkg.readChangeEntries(prefix + ' set', cfg.set, {keepString:true, isSet:true}),
                 adj:pkg.readChangeEntries(prefix + ' adj', cfg.adj)
             };
             for (const block of ['set', 'adj']) {
@@ -240,7 +240,7 @@
         dependsOnEvent: function(eventModel) {
             return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.dependsOnEvent(eventModel));
         },
-
+        
         /*  Whether any Objective is entangled with the Event, i.e. its success expression
             reads a part of the Event the player knows about. The timeline marks these
             Events. */

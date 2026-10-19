@@ -211,10 +211,12 @@
                     a string is short for {onSuccess:<string>}.
                 readRest(rest, warn) - Reads the entry's other keys. Returns false if the 
                     entry can't be used. Without one, other keys make the entry unusable.
+                isSet - True for a set block, which can also put an agent at an Event 
+                    ("agent.event" or "agents.<id>.event"). That can't be adjusted.
             
             Returns {parsedKey, onSuccess, onFailure}, at least one of the two set, or null if
             the entry can't be used. */
-        readChangeEntry = (where, key, cfg, {keepString=false, readRest}={}) => {
+        readChangeEntry = (where, key, cfg, {keepString=false, readRest, isSet=false}={}) => {
             const warn = msg => console.warn(where + ' ' + msg + ':', cfg);
             
             /*  Parse change key. What a set or adj key names, or why it names nothing:
@@ -230,6 +232,8 @@
                     "agents.ME.chronal".
                 {kind:'skill', scopeName:'agents', agentId, statId:'skills.<skill>', skillId} - a
                     skill of any agent, e.g. "agents.ME.skills.chronogation".
+                {kind:'event', scopeName, agentId} - the Event an agent is at, theirs 
+                    ("agent.event") or any agent's ("agents.ME.event"). Set only.
                 {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
                     e.g. "events.collision.values.struck".
                 {error} - a phrase for a warning. */
@@ -253,6 +257,12 @@
                     warn('names no skill (ignoring it)');
                     return null;
                 }
+            } else if ((scopeName === SCOPE_AGENT && statId === SCOPE_EVENT && rest.length === 0) || (scopeName === SCOPE_AGENTS && rest.length === 1 && rest[0] === SCOPE_EVENT)) {
+                if (!isSet) {
+                    warn('can only be set, not adjusted (ignoring it)');
+                    return null;
+                }
+                parsedKey = {kind:'event', scopeName, agentId:scopeName === SCOPE_AGENTS ? statId : undefined, statId:SCOPE_EVENT};
             } else if (scopeName === SCOPE_AGENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_AGENTS].includes(rest[0])) {
                 parsedKey = {kind:'stat', scopeName, agentId:statId, statId:rest[0]};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) {
@@ -262,7 +272,7 @@
             } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat or skill of another agent, e.g. "agents.ME.chronal" or "agents.ME.skills.agl", or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill or Event of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl" or "agents.ME.event", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -341,6 +351,22 @@
                             target = getChangeTarget(parsedKey, agentModel, eventModel);
                         if (target && Number.isFinite(result)) {
                             target.adjValue(target.getAllowedAdj(mathRound(result) - target.value).adj);
+                        }
+                        break;
+                    }
+                    case 'event': {
+                        // Worked out once, now, to an Event's ID, e.g. "'lgv_announcement'", and 
+                        // the agent time travels there as if deployed or jumping, paying the 
+                        // chronal and gaining any paradox, if they can.
+                        const result = rollValue(expr, rollCfg),
+                            travelerModel = parsedKey.agentId === undefined ? agentModel : pkg.model.getAgentModel(parsedKey.agentId),
+                            destinationEventModel = typeof result === 'string' ? pkg.model.getEventModel(result) : null;
+                        if (!travelerModel) {
+                            console.warn('No agent', parsedKey.agentId ?? '', 'to move for', key);
+                        } else if (!destinationEventModel) {
+                            console.warn(key, 'is not an Event ID:', result);
+                        } else {
+                            travelerModel.doDeployToEvent(destinationEventModel);
                         }
                         break;
                     }
@@ -871,7 +897,7 @@
                 Entries that are neither are left out, with a warning. See readChangeEntry, and
                 applySets for how each kind of key is set. */
             setSet: function(set) {
-                this.set('setObj', readChangeEntries('Event ' + this.event?.id + ' action ' + this.id + ' set', set, {keepString:true}), true);
+                this.set('setObj', readChangeEntries('Event ' + this.event?.id + ' action ' + this.id + ' set', set, {keepString:true, isSet:true}), true);
             },
             
             /*  An optional condition on the agent who'd take the action, e.g.

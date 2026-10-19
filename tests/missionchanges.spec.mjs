@@ -127,3 +127,53 @@ test('set and adj can change any agent\'s stats and skills, from a mission or an
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('set can put an agent at an Event, as a deploy or jump that pays its way', async ({page}) => {
+    await Promise.all([
+        page.route('**/tests/data/operations.json5', route => {
+            const json = readTestData('operations.json5'),
+                first = json.operations.first;
+            first.onSetup.set['agents.BR.chronal'] = '50';
+            first.onSetup.set['agents.BR.event'] = "'origin'";
+            // Applied in order, so Charlie has no chronal left when he's sent.
+            first.onSetup.set['agents.CH.chronal'] = '0';
+            first.onSetup.set['agents.CH.event'] = "'origin'";
+            first.onSetup.adj = {'agents.DE.event':"'origin'"};
+            return route.fulfill({json});
+        }),
+        page.route('**/tests/data/test_scenario.json5', route => {
+            const json = readTestData('test_scenario.json5');
+            json.events.origin.actions.leave = {
+                label:'Leave', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':null},
+                set:{'agent.event':"'aftermath'"}
+            };
+            return route.fulfill({json});
+        })
+    ]);
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            bravo = m.getAgentModel('BR'),
+            alphaChronal = alpha.chronal.value;
+        const retval = {
+            bravoAt:bravo.event,
+            bravoArrived:bravo.getLog().at(-1).type,
+            bravoChronalUsed:50 - bravo.chronal.value,
+            charlieAt:m.getAgentModel('CH').event,
+            deltaAt:m.getAgentModel('DE').event
+        };
+        alpha.doAction(m.getEventModel('origin').getActionModels().leave);
+        retval.alphaAt = alpha.event;
+        retval.alphaChronalUsed = alphaChronal - alpha.chronal.value;
+        return retval;
+    });
+    expect(out).toMatchObject({bravoAt:'origin', bravoArrived:'deploy', charlieAt:'boats', deltaAt:'time_corps_hq', alphaAt:'aftermath'});
+    expect(out.bravoChronalUsed).toBeGreaterThan(0);
+    expect(out.alphaChronalUsed).toBeGreaterThan(0);
+    expect(problems.warnings).toEqual([
+        'Operation first onSetup adj agents.DE.event can only be set, not adjusted (ignoring it): \'origin\'',
+        'Cannot time travel CH to origin: Not enough chronal'
+    ]);
+    expect(problems.pageErrors).toEqual([]);
+});

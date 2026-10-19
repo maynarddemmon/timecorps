@@ -74,7 +74,11 @@
 				],
 				"adj":{
 					"timeline.score":"2000"
-				}
+				},
+				"set":{
+					"agents.BA.event":"'lgv_announcement'"
+				},
+				"revealAgents":["BA"]
 			}
 		},
 		

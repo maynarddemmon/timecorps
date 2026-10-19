@@ -259,9 +259,13 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             // stat of the event or timeline, a Value of the event, or a declared scratch entry.
             // The problem with a set or adj key, or null. event is the action's or exit's own 
             // Event, or null for an Operation, which has no agent or Event of its own.
-            checkChangeKey = (key, event) => {
+            checkChangeKey = (key, event, isSet=false) => {
                 const [scope, statId, ...rest] = key.split('.');
                 if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation has neither';
+                if ((scope === 'agent' && statId === 'event' && rest.length === 0) || (scope === 'agents' && rest.length === 1 && rest[0] === 'event')) {
+                    if (!isSet) return 'is where an agent is, which can only be set';
+                    return scope === 'agents' && !agents[statId] ? 'names no agent' : null;
+                }
                 if (statId === undefined) return event.values?.[key] ? null : 'is not a Value of the Event';
                 if (scope === 'agents') {
                     if (!agents[statId]) return 'names no agent';
@@ -279,6 +283,16 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (scope === 'agent' && statId === 'skills' && rest.length === 1) return Object.hasOwn(skillCfgs, rest[0]) ? null : 'is not a skill';
                 if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scope) && ADJUSTMENT_STAT_IDS[scope].includes(statId)) return null;
                 return 'is not a stat, skill, Value or scratch entry';
+            },
+            
+            // A set of where an agent is should give an Event ID as a quoted string, e.g. 
+            // "'origin'". Returns the problem, or null.
+            checkEventDestination = (key, value) => {
+                if (typeof value !== 'string' || !/^agents?\.([^.]+\.)?event$/.test(key)) return null;
+                const quoted = /^'([^']*)'$/.exec(value.trim());
+                if (quoted) return events[quoted[1]] ? null : 'names no Event ' + quoted[1];
+                if (events[value.trim()]) return 'needs the Event ID in quotes, e.g. "\'' + value.trim() + '\'"';
+                return null;
             },
             
             // Returns the problems with the onSuccess, onFailure and onBoth of a set or adj 
@@ -350,7 +364,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (action.costs !== undefined) problems.push(...checkCosts(where, action.costs));
                 for (const [key, value] of Object.entries(action.set ?? {})) {
                     const isScratch = key.startsWith('scratch.'),
-                        keyProblem = checkChangeKey(key, event);
+                        keyProblem = checkChangeKey(key, event, true) ?? checkEventDestination(key, value);
                     if (keyProblem) problems.push(where + ' sets ' + key + ', which ' + keyProblem);
                     if (isScratch) counts.scratchSets++;
                     if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
@@ -385,7 +399,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 for (const block of ['set', 'adj']) {
                     for (const [key, value] of Object.entries(operation[when]?.[block] ?? {})) {
                         const at = operationId + ' ' + when + ' ' + block + ' ' + key,
-                            keyProblem = checkChangeKey(key, null);
+                            keyProblem = checkChangeKey(key, null, block === 'set') ?? checkEventDestination(key, value);
                         if (keyProblem) problems.push(at + ' ' + keyProblem);
                         counts.operationChanges++;
                         if (typeof value === 'string') {
