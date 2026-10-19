@@ -126,8 +126,16 @@ test('no exit button without an exit from the agent\'s event to the selected eve
     // exits names the event too, e.g. "Walk to Aftermath".
     const exitPhrases = /^(Walk to|Wait til|To)( \[.*\])?$/;
     
-    // The agent's own event.
+    // The agent's own event. Looping back to a minute-long event takes more chronogation 
+    // than Alpha's -100, so it's only offered once Alpha has more.
     await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect(visibleButton(page, /Recall to/)).toBeVisible();
+    await expect(visibleButton(page, /Loop back/)).toHaveCount(0);
+    await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.setSkills({...alpha.getSkills(), chronogation:0});
+        alpha.notifyCollectionOfUpdate();
+    });
     await expect(visibleButton(page, /Loop back/)).toBeVisible();
     await expect(page.getByRole('button', {name:exitPhrases}).filter({visible:true})).toHaveCount(0);
     

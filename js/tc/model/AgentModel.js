@@ -15,8 +15,7 @@
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
-                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE,
-                MIN_CHRONOGATION_TO_LOOPBACK
+                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
