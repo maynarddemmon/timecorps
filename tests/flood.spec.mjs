@@ -69,7 +69,9 @@ test('every agent who has been to a flooded Event gains a paradox per visit, whi
                 charlie = m.getAgentModel('CH'),
                 origin = m.getEventModel('origin');
 
-            // Alpha started at the origin, and loops back there once: two visits.
+            // Alpha started at the origin, and loops back there once: two visits. Looping back
+            // to a minute-long Event takes more chronogation than Alpha has.
+            alpha.setSkills({...alpha.getSkills(), chronogation:0});
             alpha.chronal.setValue(alpha.chronal.max);
             alpha.doDeployToEvent(origin);
             alpha.paradox.setValue(0);

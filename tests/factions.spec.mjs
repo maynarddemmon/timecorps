@@ -97,3 +97,42 @@ test('only agents of the Time Corps are offered travel to HQ', async ({page}) =>
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('time travel the buttons don\'t offer is refused, with a warning saying why', async ({page}) => {
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            bravo = m.getAgentModel('BR'),
+            alpha = m.getAgentModel('AL'),
+            origin = m.getEventModel('origin');
+        bravo.setEvent('origin');
+        bravo.chronal.setValue(bravo.chronal.max);
+        alpha.chronal.setValue(alpha.chronal.max);
+        
+        // Unaligned Bravo can't be recalled.
+        bravo.doRecallToHQ();
+        const bravoAt = bravo.event;
+        
+        // Alpha's -100 chronogation can't loop back to the minute-long origin.
+        const visits = alpha.countVisitsToEvent(origin);
+        alpha.doDeployToEvent(origin);
+        const alphaLoopedBack = alpha.countVisitsToEvent(origin) > visits;
+        
+        // Nor can Alpha be recalled without the chronal.
+        alpha.chronal.setValue(0);
+        alpha.doRecallToHQ();
+        return {bravoAt, alphaLoopedBack, alphaAt:alpha.event};
+    });
+    expect(out).toEqual({bravoAt:'origin', alphaLoopedBack:false, alphaAt:'origin'});
+    expect(problems.warnings).toEqual([
+        'Cannot time travel BR to time_corps_hq: Only the Time Corps can go to HQ',
+        'Cannot time travel AL to origin: Not enough chronogation to loop back here',
+        'Cannot time travel AL to time_corps_hq: Not enough chronal'
+    ]);
+    
+    // The recall button is disabled and says why.
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect(page.getByRole('button', {name:/^Recall to/}).filter({visible:true})).toHaveAttribute('title', /Not enough chronal/);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

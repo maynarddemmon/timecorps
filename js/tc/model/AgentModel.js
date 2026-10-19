@@ -42,43 +42,36 @@
             if (eventModel?.isFlooded()) return eventModel;
             return null;
         },
-        isFloodedEventNotBlockingTravel = (agentModel, eventModel) => getFloodedEventBlockingTravel(agentModel, eventModel) == null,
         
-        getInfoForTimeTravel = (agentModel, eventModel) => {
+        /*  Whether, and at what cost, an agent can time travel to an Event: deploy from HQ,
+            jump, loop back to the Event they're at, or be recalled to HQ. All the rules for 
+            where an agent may time travel are here. Returns 
+            {isHQ, chronalNeeded, paradoxCost, permitted, problem}, where permitted is false if
+            it's not an option for them at all, and problem says why they can't go, whether 
+            or not it's permitted, or is null if they can. */
+        getTimeTravelInfo = (agentModel, eventModel) => {
             const isHQ = eventModel.isHQ(),
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
-                chronalAvailable = -agentModel[STAT_ID_CHRONAL].getValueToMin(),
-                hasEnoughChronal = chronalNeeded <= chronalAvailable,
-                paradoxCost = agentModel.calculateParadoxForEntry(eventModel),
-                isAlreadyAtEvent = agentModel.isAtEvent(eventModel),
-                chronogation = agentModel.getSkill(SKILL_ID_CHRONOGATION);
+                retval = {isHQ, chronalNeeded, paradoxCost:agentModel.calculateParadoxForEntry(eventModel), visible:false};
             
-            let disabled = !hasEnoughChronal,
-                text,
-                visible = true,
-                tooltip;
-            if (isHQ) {
-                text = 'Recall to ' + ICON_HQ;
+            // Not permitted: the dead go nowhere, looping back to an Event takes more 
+            // chronogation the shorter it is, and only the Time Corps can go to HQ.
+            if (agentModel.isDead()) {
+                retval.problem = 'Deceased';
+            } else if (agentModel.isAtEvent(eventModel) && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
+                retval.problem = 'Not enough chronogation to loop back here';
+            } else if (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS)) {
+                retval.problem = 'Only the Time Corps can go to HQ';
             } else {
-                text = agentModel.isAtHQ() ? 'Deploy to' : (isAlreadyAtEvent ? 'Loop back' : 'Jump to');
-            }
-            text += pkg.formatAgentRisks(chronalNeeded, paradoxCost);
-            
-            if (
-                agentModel.isDead() ||
-                (isAlreadyAtEvent && chronogation < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) ||
-                (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS))
-            ) {
-                visible = false;
-            } else {
+                retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
                 if (floodedEventModel) {
-                    disabled = true;
-                    tooltip = floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.';
+                    retval.problem = floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.';
+                } else if (chronalNeeded > -agentModel[STAT_ID_CHRONAL].getValueToMin()) {
+                    retval.problem = 'Not enough chronal';
                 }
             }
-            
-            return {disabled, text, tooltip, visible};
+            return retval;
         },
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
@@ -578,47 +571,59 @@
             if (this.inited) this.notifyCollectionOfUpdate();
         },
         
-        updateBtnForTimeTravel: function(btn, eventModel) {
-            btn.callSetters(getInfoForTimeTravel(this, eventModel));
+        updateBtnForTimeTravel: function(btn, destinationEventModel) {
+            const {isHQ, chronalNeeded, paradoxCost, visible, problem} = getTimeTravelInfo(this, destinationEventModel);
+            let text;
+            if (isHQ) {
+                text = 'Recall to ' + ICON_HQ;
+            } else if (this.isAtHQ()) {
+                text = 'Deploy to';
+            } else if (this.isAtEvent(destinationEventModel)) {
+                text = 'Loop back';
+            } else {
+                text = 'Jump to';
+            }
+            
+            btn.callSetters({
+                text:text + pkg.formatAgentRisks(chronalNeeded, paradoxCost),
+                visible,
+                disabled:problem != null,
+                tooltip:problem
+            });
         },
         
         /*  The exit the Agent can take from its current Event to eventModel, or undefined if 
             there's none. As in the Agent's list of exits, hidden exits and exits to hidden 
             Events don't count. */
-        getExitTo: function(eventModel) {
-            if (eventModel?.isNotHidden()) {
+        getExitTo: function(destinationEventModel) {
+            if (destinationEventModel?.isNotHidden()) {
                 const currentEventModel = this.getEventModel();
-                if (eventModel !== currentEventModel) {
+                if (destinationEventModel !== currentEventModel) {
                     return currentEventModel.getExitModels().find(
-                        exitModel => exitModel.isNotHidden() && exitModel.getToEventModel() === eventModel
+                        exitModel => exitModel.isNotHidden() && exitModel.getToEventModel() === destinationEventModel
                     );
                 }
             }
         },
         
-        doDeployToEvent: function(eventModel, isRecall) {
-            if (eventModel && this.isNotDead()) {
-                if (isFloodedEventNotBlockingTravel(this, eventModel)) {
-                    const cost = isRecall ? pkg.getChronalToRecall(this) : pkg.getChronalToDeploy(this, eventModel);
-                    if (cost <= -this[STAT_ID_CHRONAL].getValueToMin()) {
-                        this[STAT_ID_CHRONAL].adjValue(-cost);
-                        this.setEvent_Hard(
-                            eventModel.id, 
-                            {type:isRecall ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:eventModel}
-                        );
-                        pkg.app.selectEventBox(eventModel);
-                    } else {
-                        console.warn('insufficent chronal to ' + (isRecall ? 'recall' : 'deploy'));
-                    }
+        /*  Time travels the Agent to an Event, if they can (see getTimeTravelInfo), paying the 
+            chronal. To HQ it's a recall. */
+        doDeployToEvent: function(destinationEventModel) {
+            if (destinationEventModel) {
+                const {isHQ, chronalNeeded, problem} = getTimeTravelInfo(this, destinationEventModel);
+                if (problem == null) {
+                    this[STAT_ID_CHRONAL].adjValue(-chronalNeeded);
+                    this.setEvent_Hard(destinationEventModel.id, {type:isHQ ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:destinationEventModel});
+                    pkg.app.selectEventBox(destinationEventModel);
                 } else {
-                    console.warn('Cannot time travel into or out of a flooded Event');
+                    console.warn('Cannot time travel', this.id, 'to', destinationEventModel.id + ':', problem);
                 }
             } else {
                 console.warn('doDeployToEvent: no eventModel');
             }
         },
         doRecallToHQ: function() {
-            this.doDeployToEvent(pkg.model.getHQEventModel(), true);
+            this.doDeployToEvent(pkg.model.getHQEventModel());
         },
         doFollowExit: function(exitModel, btnView) {
             if (this.isNotDead() && this.getEventModel() === exitModel.event) {
