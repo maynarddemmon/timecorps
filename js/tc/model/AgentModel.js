@@ -874,6 +874,22 @@
                 }
             }
             return count;
+        },
+        getEventsVisited: function() {
+            const eventsVisited = new Set();
+            for (const entry of this.getLog()) {
+                switch (entry.type) {
+                    case LOG_TYPE_EXIT:
+                        eventsVisited.add(entry.exit.getToEventModel());
+                        break;
+                    case LOG_TYPE_DEPLOY:
+                    case LOG_TYPE_RECALL:
+                    case LOG_TYPE_ORIGIN:
+                        eventsVisited.add(entry.event);
+                        break;
+                }
+            }
+            return eventsVisited;
         }
     });
 })(tc);

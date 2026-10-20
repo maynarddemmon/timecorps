@@ -393,8 +393,10 @@
             eventDetailsView.notifyEventSelectedChanged(event.value);
         },
         
-        _onAgentSelectionChanged: event => { // value is an AgentModel
-            eventDetailsView.notifyAgentSelectedChanged(event.value);
+        _onAgentSelectionChanged: event => {
+            const agentModel = event.value;
+            eventDetailsView.notifyAgentSelectedChanged(agentModel);
+            timelineView.notifyAgentSelectedChanged(agentModel);
         },
         
         notifyModelUpdated: (instanceModel, scopeId) => {

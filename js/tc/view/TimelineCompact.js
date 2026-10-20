@@ -45,6 +45,7 @@
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
+        BOX_VISITED_OUTLINE = [2, 'solid', '#6cf9'],
         
         // Marks the Event boxes the current Operation's Objectives depend on. See index.html.
         DOM_CLASS_ENTANGLED = 'entangled',
@@ -399,8 +400,20 @@
                 timeline.doSelectEvent(timeline._eventModelOrIdToSelect);
             }
             
+            updateVisitedStatusForSelectedAgent(timeline);
+            
             isInitial = false;
         }, STANDARD_DEBOUNCE_MILLIS),
+        
+        updateVisitedStatusForSelectedAgent = debounce(timeline => {
+            // Update for currently selected Agent
+            const {selectedAgentModel, boxesByEventId} = timeline,
+                eventsVisited = selectedAgentModel?.getEventsVisited();
+            for (const eventId in boxesByEventId) {
+                const eventBox = boxesByEventId[eventId];
+                eventBox.setVisited(eventsVisited?.has(eventBox.model) ? true : false);
+            }
+        }, 2*STANDARD_DEBOUNCE_MILLIS),
         
         // History //
         pushOntoHistory = (timeline, eventId) => {
@@ -584,6 +597,11 @@
                 }
             },
             
+            setVisited: function(v) {
+                this.set('visited', v, true);
+                if (this.inited) this.updateUI();
+            },
+            
             /** @private */
             _doValueChanged: function(_event) {
                 if (this.timeline?.animateValueChanges) queueValueChangeAnim(this);
@@ -643,7 +661,19 @@
             updateUI: function() {
                 this.callSuper();
                 
-                this.setOutline(this.selected ? BOX_SELECTED_OUTLINE : null);
+                let outline = null;
+                if (this.selected) {
+                    if (this.visited) {
+                        outline = BOX_VISITED_OUTLINE;
+                    } else {
+                        outline = BOX_SELECTED_OUTLINE;
+                    }
+                } else {
+                    if (this.visited) {
+                        outline = BOX_VISITED_OUTLINE;
+                    }
+                }
+                this.setOutline(outline);
                 
                 let barBgColor;
                 if (this.selected) {
@@ -1096,6 +1126,11 @@
         
         notifyAgentLocOrVisChange: function(_agentModel) {
             if (this.timelineReady) updateTimeLineLayoutDebounced(this); // FIXME: agent only update option?
+        },
+        
+        notifyAgentSelectedChanged: function(agentModel) {
+            this.selectedAgentModel = agentModel;
+            if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
         }
     });
 })(tc);

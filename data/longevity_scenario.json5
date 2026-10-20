@@ -43,6 +43,7 @@
 			"hidden":"!events.safehouse_room.values.heard.value",
 			"actionLimit":1,
 			"actions":{
+				"_investigate":null,
 				"_rest":null,
 				"keynote":{
 					"label":"Listen to the Keynote",
