@@ -28,7 +28,7 @@
 			"onSuccess":{
 				"debrief":[
 					"Yesterday you were an ordinary person with an ordinary life. Tonight you are alone in a stranger’s hideout, sixty years from home, with a dead agent’s mission strapped to your wrist.",
-					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2081, something is about to change the world, and someone wants it to."
+					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2087, something is about to change the world, and someone wants it to."
 				],
 				"nextOperation":"spring_witness",
 				"adj":{
@@ -40,7 +40,7 @@
 		"spring_witness":{
 			"name":"Spring Returns - Witness",
 			"description":[
-				"Shanghai, 12 November 2081. The day the world learns it no longer has to grow old."
+				"Shanghai, 12 November 2087. The day the world learns it no longer has to grow old."
 			],
 			"onSetup":{
 				"initialEventSelection":"lgv_announcement",
