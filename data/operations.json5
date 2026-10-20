@@ -11,7 +11,10 @@
 				"awardAgents":"ME",
 				"revealAgents":"ME",
 				"initialAgentSelection":"ME",
-				"initialEventSelection":"origin_alarm"
+				"initialEventSelection":"origin_alarm",
+				"set":{
+					"events.origin_alarm.historicity":"5"
+				}
 			},
 			"objectives":{
 				"answer":{

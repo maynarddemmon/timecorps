@@ -395,8 +395,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 checkSets(where, exit.set, event);
                 if (exit.toHidden !== undefined) {
                     if (typeof exit.toHidden !== 'boolean') problems.push(where + ' toHidden is not true or false');
-                    // It leads somewhere unknown, so something must be able to reveal it.
-                    else if (exit.toHidden && typeof events[exit.to]?.hidden !== 'string') problems.push(where + ' is toHidden, but ' + exit.to + ' has no hidden expression of its own to reveal it');
+                    // It leads to an Event that may be hidden, so something must be able to reveal it.
+                    else if (exit.toHidden && events[exit.to]?.hidden === 'true') problems.push(where + ' is toHidden, but ' + exit.to + ' is always hidden');
                 }
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));

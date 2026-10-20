@@ -331,12 +331,10 @@ Exits are ways to leave an event for another without time travel, so they cost n
 
 - **`mode`**: `wait`, `walk`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled` or `lifeboat`, which give "Wait til", "Walk to", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to" and "Lifeboat to". Anything else gives "To".
 - **`to`**: the event it leads to. An exit to a hidden event isn't offered, unless it's `toHidden`.
-- **`toHidden`**: `true` to offer the exit even while the event it leads to is hidden, so the player can go somewhere unknown. Until the event is revealed, the button doesn't name it ("Enter *somewhere*"), hovering it doesn't show it, and the timeline draws no link to it. Reveal it by giving it a `hidden` expression of its own that the exit's `set` changes; `data.spec` checks it has one:
+- **`toHidden`**: `true` to offer the exit even while the event it leads to is hidden. The button names the event, but it stays off the timeline until it's revealed, so the player can choose one of several hidden places and only the one they choose appears. Reveal it with the exit's `set`, e.g. by raising its attestation, which reveals an event without a `hidden` of its own, or by changing what its own `hidden` reads:
 
   ```json5
-  "vault":{"hidden":"!scratch.vault_found", …},
-  …
-  "exits":[{"mode":"enter", "to":"vault", "toHidden":true, "set":{"scratch.vault_found":"true"}}]
+  "exits":[{"mode":"bike", "to":"origin_hospital", "toHidden":true, "set":{"events.origin_hospital.attestation":"1"}}]
   ```
 - **`hidden`**: hides the exit.
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.

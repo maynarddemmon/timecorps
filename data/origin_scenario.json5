@@ -61,9 +61,6 @@
 	},
 	
 	"events":{
-		// Act 1: an ordinary Friday. Each event offers one choice, which can't be undone, and
-		// the way on opens once it's made. Choices grant skills (between them, no skill goes
-		// past ±50) and are remembered in the agent's field notes.
 		"origin_alarm":{
 			"name":"The Alarm",
 			"start":"2026-11-13T07:00:00",
@@ -317,7 +314,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_walk_home"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_walk_home",
+					"hidden":"event.values.choice.value === ''",
+					"set":{"events.origin_walk_home.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -380,7 +381,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_walk_home"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_walk_home",
+					"hidden":"event.values.choice.value === ''",
+					"set":{"events.origin_walk_home.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -443,7 +448,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_walk_home"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_walk_home",
+					"hidden":"event.values.choice.value === ''",
+					"set":{"events.origin_walk_home.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -506,7 +515,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"origin_walk_home"}
+				{
+					"mode":"walk", "toHidden":true, "to":"origin_walk_home",
+					"hidden":"event.values.choice.value === ''",
+					"set":{"events.origin_walk_home.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -531,7 +544,6 @@
 			"duration":{"m":30},
 			"location":"origin.street",
 			"actionLimit":1,
-			"hidden":"events.origin_hospital.values.choice.value === '' && events.origin_newsroom.values.choice.value === '' && events.origin_garage.values.choice.value === '' && events.origin_theater.values.choice.value === ''",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -558,7 +570,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"wait", "to":"origin_stranger"}
+				{
+					"mode":"wait", "toHidden":true, "to":"origin_stranger",
+					"hidden":"event.values.choice.value === ''",
+					"set":{"events.origin_stranger.attestation":"1"}
+				}
 			],
 			"values":{
 				"choice":{
@@ -585,7 +601,6 @@
 			"duration":{"m":3},
 			"location":"origin.street",
 			"actionLimit":1,
-			"hidden":"events.origin_walk_home.values.choice.value === ''",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -609,7 +624,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"wait", "to":"origin_masked"}
+				{
+					"mode":"wait", "toHidden":true, "to":"origin_masked",
+					"hidden":"event.values.reaction.value === ''",
+					"set":{"events.origin_masked.attestation":"1"}
+				}
 			],
 			"values":{
 				"reaction":{
@@ -635,7 +654,6 @@
 			"duration":{"m":1},
 			"location":"origin.street",
 			"actionLimit":1,
-			"hidden":"events.origin_stranger.values.reaction.value === ''",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -658,7 +676,10 @@
 			},
 			"exits":[
 				{
-					"mode":"pulled", "to":"safehouse_arrival", "costs":{"agent.chronal":"1"}
+					"mode":"pulled", "toHidden":true, "to":"safehouse_arrival",
+					"hidden":"event.values.response.value === ''",
+					"set":{"events.safehouse_arrival.attestation":"1"},
+					"costs":{"agent.chronal":"1"}
 				}
 			],
 			"values":{
@@ -686,7 +707,6 @@
 			"duration":{"m":10},
 			"location":"safehouse.corridor",
 			"actionLimit":1,
-			"hidden":"events.origin_masked.values.response.value === ''",
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -698,7 +718,11 @@
 				}
 			},
 			"exits":[
-				{"mode":"wait", "to":"safehouse_fight"}
+				{
+					"mode":"wait", "toHidden":true, "to":"safehouse_fight",
+					"hidden":"event.actions.hide.attemptCount === 0",
+					"set":{"events.safehouse_fight.attestation":"1"}
+				}
 			],
 			"values":{
 				"concealed":{
@@ -722,13 +746,16 @@
 			"duration":{"m":2},
 			"location":"safehouse.office",
 			"actionLimit":1,
-			"hidden":"events.safehouse_arrival.actions.hide.attemptCount === 0",
 			"actions":{
 				"_rest":null,
 				"_investigate":{"skillCheck":{"difficulty":"no-roll"}},
 			},
 			"exits":[
-				{"mode":"enter", "to":"safehouse_room"}
+				{
+					"mode":"enter", "toHidden":true, "to":"safehouse_room",
+					"hidden":"event.actions._investigate.attemptCount === 0",
+					"set":{"events.safehouse_room.attestation":"1"}
+				}
 			],
 			"description":[
 				"The argument turns into a fight, fast and ugly. The masked figure has a blade, thin and dark, and the old one is slower than they used to be.",
@@ -748,7 +775,6 @@
 			"duration":{"h":1},
 			"location":"safehouse.office",
 			"actionLimit":3,
-			"hidden":"events.safehouse_fight.actions._investigate.attemptCount === 0",
 			"actions":{
 				"_rest":null,
 				"_investigate":{"skillCheck":{"difficulty":50}},
