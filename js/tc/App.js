@@ -589,7 +589,7 @@
                 openWhenClear(() => {
                     const eventId = eventModel.id,
                         curShownCount = eventBriefShownAt.get(eventId);
-                    if (curShownCount == null || curShownCount === countWhenRequested) {
+                    if (curShownCount == null || curShownCount <= countWhenRequested) {
                         eventBriefShownAt.set(eventId, ++eventBriefShowCount);
                         
                         eventBrief ??= new pkg.EventBrief(appView);
