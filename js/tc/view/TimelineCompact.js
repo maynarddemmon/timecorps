@@ -11,7 +11,7 @@
         {Text, View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
         {
-            SquareBtn, Btn, MiniStatBar,
+            SquareBtn, Btn, MiniStatBar, settings, SETTING_SHOW_VISITED_BORDERS, SETTING_SHOW_AGENT_HISTORY,
             timeUtil:{formatApproxDuration,formatForTimeline},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
@@ -81,12 +81,12 @@
         // arriving at the next one's left.
         VISIT_STYLE = {
             color:VISITED_COLOR, cap:null, thickness:BOX_VISITED_LINE_THICKNESS,
-            startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
+            startCurvature:2*SPLINE_CURVATURE, endCurvature:2*SPLINE_CURVATURE, 
             startGap:BOX_VISITED_LINE_THICKNESS, endGap:BOX_VISITED_LINE_THICKNESS
         },
         
         // Where a visit's arrows meet its box, as a percent of the box's height from the top:
-        // the first visit at 15%, and each later one 5% lower, down to 95%.
+        // the first visit at 55%, and each later one 5% lower, down to 95%.
         getVisitPosition = visitIdx => mathMin(55 + 5*visitIdx, 95) + '%',
         
         ANIM_DURATION = 500,
@@ -420,12 +420,12 @@
         }, STANDARD_DEBOUNCE_MILLIS),
         
         /*  Outlines the Events the selected Agent has visited, and draws arrows from each to the
-            next, in the order the Agent went. An arrow to or from an Event without a visible box,
-            e.g. HQ, is left out. */
+            next, in the order the Agent went, as the settings allow. An arrow to or from an Event
+            without a visible box, e.g. HQ, is left out. */
         updateVisitedStatusForSelectedAgent = debounce(timeline => {
             const {selectedAgentModel, boxesByEventId, flowLayer} = timeline,
                 history = selectedAgentModel?.getVisitHistory() ?? [],
-                eventsVisited = new Set(history);
+                eventsVisited = settings.get(SETTING_SHOW_VISITED_BORDERS) ? new Set(history) : new Set();
             for (const eventId in boxesByEventId) {
                 const eventBox = boxesByEventId[eventId];
                 eventBox.setVisited(eventsVisited.has(eventBox.model));
@@ -436,7 +436,7 @@
             const visitSplineIds = timeline._visitSplineIds = [],
                 visitCounts = new Map();
             let prev = null;
-            for (const eventModel of history) {
+            for (const eventModel of settings.get(SETTING_SHOW_AGENT_HISTORY) ? history : []) {
                 const visitIdx = visitCounts.get(eventModel) ?? 0,
                     box = boxesByEventId[eventModel.id],
                     cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
@@ -1170,6 +1170,11 @@
         
         notifyAgentSelectedChanged: function(agentModel) {
             this.selectedAgentModel = agentModel;
+            if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
+        },
+        
+        /*  The settings for showing the selected Agent's visited borders or history changed. */
+        notifyAgentHistoryDisplayChanged: function() {
             if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
         }
     });

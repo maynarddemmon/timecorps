@@ -143,7 +143,7 @@ test('waiting for the animations runs right away when none are running', async (
 });
 
 /*  The selected Agent's path: an arrow from each Event they entered to the next, leaving the
-    right edge and arriving at the left, 15% from the top for a first visit and 5% lower for 
+    right edge and arriving at the left, 55% from the top for a first visit and 5% lower for 
     each later one. Events without a visible box, e.g. HQ, are left out. */
 test('arrows follow the selected agent from Event to Event', async ({page}) => {
     const problems = await startGame(page);
@@ -160,8 +160,8 @@ test('arrows follow the selected agent from Event to Event', async ({page}) => {
         alpha.doDeployToEvent(origin);
     });
     await expect.poll(readArrows).toEqual([
-        ['origin', 'right', '15%', 'aftermath', 'left', '15%'],
-        ['aftermath', 'right', '15%', 'origin', 'left', '20%']
+        ['origin', 'right', '55%', 'aftermath', 'left', '55%'],
+        ['aftermath', 'right', '55%', 'origin', 'left', '60%']
     ]);
     // The Events visited are outlined, and only those.
     expect(await page.evaluate(() => Object.values(tc.app.getTimelineView().boxesByEventId)

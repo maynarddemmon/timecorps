@@ -79,3 +79,45 @@ test('restarting the campaign keeps settings', async ({page}) => {
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('the selected agent\'s visited borders and history can each be turned off, and back on, at once', async ({page}) => {
+    const problems = await startGame(page);
+    const readTimeline = () => page.evaluate(() => {
+            const timeline = tc.app.getTimelineView();
+            return {
+                borders:Object.values(timeline.boxesByEventId).filter(box => box.visited).length,
+                arrows:timeline.flowLayer.getSplines().filter(spline => spline.splineId.startsWith('visit-')).length
+            };
+        }),
+        toggle = async label => {
+            await visibleButton(page, '⚙').click();
+            await visibleText(page, label).click();
+            await page.keyboard.press('Escape');
+            await expect(visibleText(page, label)).toHaveCount(0);
+        };
+    
+    expect(await page.evaluate(() => [tc.SETTING_SHOW_VISITED_BORDERS, tc.SETTING_SHOW_AGENT_HISTORY].map(id => tc.settings.get(id)))).toEqual([true, true]);
+    await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL');
+        tc.app.selectAgentRow('AL');
+        alpha.doFollowExit(m.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'));
+    });
+    await expect.poll(readTimeline).toEqual({borders:2, arrows:1});
+    
+    await toggle('Show visited borders');
+    await expect.poll(readTimeline).toEqual({borders:0, arrows:1});
+    await toggle('Show agent history');
+    await expect.poll(readTimeline).toEqual({borders:0, arrows:0});
+    
+    // Both stay off after a reload, which starts a fresh campaign, and come back when turned on.
+    await reloadGame(page, {briefExpected:true});
+    await page.evaluate(() => tc.app.selectAgentRow('AL'));
+    await page.waitForTimeout(300);
+    expect(await readTimeline()).toEqual({borders:0, arrows:0});
+    await toggle('Show visited borders');
+    await toggle('Show agent history');
+    await expect.poll(readTimeline).toEqual({borders:1, arrows:0});
+    
+    expect(problems.pageErrors).toEqual([]);
+});

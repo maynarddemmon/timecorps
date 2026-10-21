@@ -72,7 +72,7 @@ JS.Packages(file => {
         'tc.ParadoxBar','tc.ChronalBar','tc.HealthBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
-        'tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar',
+        'tc.settings','tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar',
         'tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(

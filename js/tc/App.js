@@ -459,6 +459,13 @@
             hiddenSaveFileImporter.promptForFile();
         },
         
+        /*  Called when a setting changes, so what shows it can update. */
+        notifySettingChanged: (id, _value) => {
+            if (id === pkg.SETTING_SHOW_VISITED_BORDERS || id === pkg.SETTING_SHOW_AGENT_HISTORY) {
+                timelineView.notifyAgentHistoryDisplayChanged();
+            }
+        },
+        
         notifyTimelineParadoxExceeded: () => {
             if (readyToHandleEvents) {
                 openEndGameDialog(

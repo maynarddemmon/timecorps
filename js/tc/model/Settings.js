@@ -5,6 +5,8 @@
         
         SETTING_SAVE_ON_OPERATION_COMPLETION = pkg.SETTING_SAVE_ON_OPERATION_COMPLETION = 'saveOnOperationCompletion',
         SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = 'openEventBriefOnFirstEntry',
+        SETTING_SHOW_VISITED_BORDERS = pkg.SETTING_SHOW_VISITED_BORDERS = 'showVisitedBorders',
+        SETTING_SHOW_AGENT_HISTORY = pkg.SETTING_SHOW_AGENT_HISTORY = 'showAgentHistory',
         
         /*  Every player setting. The SettingsDialog builds its UI from this list, so adding a
             setting here is enough to make it appear there. */
@@ -20,6 +22,18 @@
             defaultValue:true,
             label:'Open event briefs on first entry',
             description:'Open an Event’s brief the first time any agent enters it.'
+        }, {
+            id:SETTING_SHOW_VISITED_BORDERS,
+            type:'boolean',
+            defaultValue:true,
+            label:'Show visited borders',
+            description:'Outline the Events on the timeline that the selected agent has visited.'
+        }, {
+            id:SETTING_SHOW_AGENT_HISTORY,
+            type:'boolean',
+            defaultValue:true,
+            label:'Show agent history',
+            description:'Draw arrows on the timeline from Event to Event, in the order the selected agent visited them.'
         }],
         
         DEFINITIONS_BY_ID = new Map(DEFINITIONS.map(def => [def.id, def])),
@@ -59,7 +73,8 @@
         overrides = readOverrides();
     
     /*  Player settings that persist across campaigns. Kept apart from the campaign save so
-        Restart Campaign and importing a save leave them alone. */
+        Restart Campaign and importing a save leave them alone. A change is passed on to 
+        pkg.app.notifySettingChanged, so what it affects can update at once. */
     pkg.settings = {
         getDefinitions: () => DEFINITIONS,
         
@@ -85,6 +100,7 @@
                     overrides[id] = value;
                 }
                 writeOverrides(overrides);
+                pkg.app?.notifySettingChanged(id, value);
             }
         }
     };
