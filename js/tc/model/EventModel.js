@@ -905,11 +905,14 @@
             setPrompt: function(promptId) {this.promptId = pkg.readPromptId(this.getSkillCheckOwner(), promptId);},
             
             /*  Opens its prompt, if it has one and it isn't hidden. */
-            openPrompt: function() {pkg.openPrompt(this.getSkillCheckOwner(), this.promptId);}
+            openPrompt: function(finallyCallback) {pkg.openPrompt(this.getSkillCheckOwner(), this.promptId, finallyCallback);}
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport, PromptSupport],
+            include: [
+                ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, 
+                CostsSupport, SetSupport, PromptSupport
+            ],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -1093,7 +1096,10 @@
             go somewhere unknown. Its set, or anything else, can reveal that Event by changing 
             what its hidden expression reads, e.g. "set":{"scratch.vault_found":"true"}. */
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport, PromptSupport],
+            include: [
+                ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, 
+                CostsSupport, SetSupport, PromptSupport
+            ],
             
             
             // Life Cycle //////////////////////////////////////////////////////

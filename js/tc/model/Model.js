@@ -46,9 +46,6 @@
         
         eventsForHiddenAttrSetup = [],
         
-        // The IDs of the prompts waiting to be answered, in the order they were opened.
-        waitingPromptIds = [],
-        
         // The names of the scratch entries the data declares.
         scratchNames = new Set(),
         isScratchValue = value => typeof value === 'boolean' || typeof value === 'string' || Number.isFinite(value),
@@ -201,14 +198,6 @@
         
         getPromptModel: id => model[SCOPE_PROMPTS].getById(id),
         
-        /*  Prompts are waiting from when they're opened until they're answered, and saved 
-            while they are, so a restore shows them again. */
-        addWaitingPrompt: id => {waitingPromptIds.push(id);},
-        removeWaitingPrompt: id => {
-            const idx = waitingPromptIds.indexOf(id);
-            if (idx >= 0) waitingPromptIds.splice(idx, 1);
-        },
-        
         
         // Agents:Accessors & Methods //////////////////////////////////////////
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),
@@ -334,7 +323,6 @@
                 peakScore:model.peakScore,
                 credits:model.credits,
                 scratch,
-                waitingPrompts:[...waitingPromptIds],
                 currentOperation:model.getCurrentOperation()?.id ?? null,
                 selection:pkg.app.getSelectionForSave()
             };
@@ -350,16 +338,6 @@
             if ('credits' in obj) model.setCredits(obj.credits);
             if ('score' in obj) model.setScore(obj.score);
             for (const name in obj.scratch) model.setScratch(name, obj.scratch[name]);
-            if (Array.isArray(obj.waitingPrompts)) {
-                waitingPromptIds.length = 0;
-                for (const id of obj.waitingPrompts) {
-                    if (model.getPromptModel(id)) {
-                        waitingPromptIds.push(id);
-                    } else {
-                        console.warn('Save has unknown waiting prompt', id, '(skipping)');
-                    }
-                }
-            }
             for (const statId of TIMELINE_STAT_IDS) {
                 if (obj[statId]) model[statId].importFromObj(obj[statId]);
             }
@@ -391,9 +369,6 @@
             if (obj.selection) pkg.app.restoreSelectionForLoad(obj.selection);
             
             pkg.app.notifyAgentLocOrVisChange();
-            
-            // The prompts that were waiting to be answered when the game was saved.
-            for (const id of waitingPromptIds) model.getPromptModel(id).show();
         },
         
         
@@ -422,7 +397,6 @@
             model.set('peakScore', STARTING_SCORE, true);
             model.setCredits(STARTING_CREDITS);
             model.setScore(STARTING_SCORE);
-            waitingPromptIds.length = 0;
             
             if (!isInit) {
                 for (const operationModel of model.getOperationModelsAsList()) operationModel.reset();

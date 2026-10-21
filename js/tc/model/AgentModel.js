@@ -626,19 +626,20 @@
             this.doDeployToEvent(pkg.model.getHQEventModel());
         },
         doFollowExit: function(exitModel, btnView) {
-            if (this.isNotDead() && this.getEventModel() === exitModel.event) {
+            const self = this;
+            if (self.isNotDead() && self.getEventModel() === exitModel.event) {
                 const toEvent = exitModel.getToEventModel();
                 if (toEvent) {
                     // Taking the exit always succeeds, but its adjustments may change things on 
                     // the way, e.g. hurt. The result is shown before the adjustments apply since 
                     // that can rebuild the views, btnView included. The first adjustment with its 
                     // own check gives the result.
-                    const costs = this.getCostsFor(exitModel);
+                    const costs = self.getCostsFor(exitModel);
                     if (costs.every(cost => cost.canPay)) {
-                        const adjustments = exitModel.rollAdjustments(this),
+                        const adjustments = exitModel.rollAdjustments(self),
                             logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
                         // Most exits are free, so only those with costs record them.
-                        if (costs.length > 0) this.payCosts(costs, logEntry);
+                        if (costs.length > 0) self.payCosts(costs, logEntry);
                         if (adjustments.length > 0) {
                             const shownCheck = adjustments.find(adjustment => adjustment.check)?.check ?? {success:true, roll:null};
                             showFloatingTextForSkillCheck(btnView, {...shownCheck, adjustments});
@@ -647,16 +648,16 @@
                         
                         // Taking an exit always succeeds. Its sets apply before the agent 
                         // arrives, so one that reveals where it leads does so first.
-                        exitModel.applySets(this, true, 0);
+                        exitModel.applySets(self, true, 0);
                         
-                        exitModel.openPrompt();
-                        
-                        this.setEvent(toEvent.id, logEntry);
-                        pkg.app.selectEventBox(toEvent);
+                        exitModel.openPrompt(() => {
+                            self.setEvent(toEvent.id, logEntry);
+                            pkg.app.selectEventBox(toEvent);
+                        });
                     }
                 }
             } else {
-                console.warn('Agent not at event for exit:', exitModel, this);
+                console.warn('Agent not at event for exit:', exitModel, self);
             }
         },
         

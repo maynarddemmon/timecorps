@@ -87,13 +87,13 @@
         
         // Methods /////////////////////////////////////////////////////////////
         /*  Shows the prompt once the dialogs ahead of it have closed. It's waiting until a 
-            button is clicked. See requestPrompt. */
-        show: function() {
+            button is clicked. */
+        show: function(finallyCallback) {
             const {openAckMsgDialog, openConfirmMsgDialog} = pkg.dialogUtil,
                 {confirm, cancel} = this.buttons,
                 click = button => () => {
-                    pkg.model.removeWaitingPrompt(this.id);
                     pkg.applySuccessChanges(button?.changes);
+                    finallyCallback?.();
                 },
                 title = this.getTitle(),
                 msg = this.getDescription();
@@ -113,23 +113,19 @@
         console.warn(where, 'prompt must be the ID of a prompt (ignoring it):', promptId);
     };
     
-    /*  Puts the prompt with the ID among those waiting to be answered, which are saved, 
-        unless it's hidden. Returns its PromptModel, to show, or null if it's hidden, there's
-        no ID, or there's no such prompt, which warns starting with where. */
-    pkg.requestPrompt = (where, promptId) => {
+    /*  Requests the prompt with the ID, and shows it if it's waiting. */
+    pkg.openPrompt = (where, promptId, finallyCallback) => {
         if (promptId) {
             const promptModel = pkg.model.getPromptModel(promptId);
             if (promptModel) {
                 if (promptModel.isNotHidden()) {
-                    pkg.model.addWaitingPrompt(promptId);
-                    return promptModel;
+                    promptModel.show(finallyCallback);
+                    return;
                 }
             } else {
                 console.warn(where, 'opens no prompt', promptId);
             }
         }
+        finallyCallback?.();
     };
-    
-    /*  Requests the prompt with the ID, and shows it if it's waiting. See requestPrompt. */
-    pkg.openPrompt = (where, promptId) => {pkg.requestPrompt(where, promptId)?.show();};
 })(tc);

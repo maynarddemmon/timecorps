@@ -332,25 +332,18 @@
         },
         
         doOnSuccess: function() {
-            if (!this.successGranted) {
+            const self = this;
+            if (!self.successGranted) {
                 const rootModel = pkg.model;
-                pkg.applySuccessChanges(this.successChanges);
-                rootModel.revealAgents(this.revealAgentsOnSuccess);
-                rootModel.awardAgents(this.awardAgentsOnSuccess);
-                this.successGranted = true;
+                pkg.applySuccessChanges(self.successChanges);
+                rootModel.revealAgents(self.revealAgentsOnSuccess);
+                rootModel.awardAgents(self.awardAgentsOnSuccess);
+                self.successGranted = true;
                 
-                // Waiting from now, so the save made on completion has it, but shown after
-                // the Mission Complete dialog. See openSuccessPrompt.
-                this._successPromptModel = pkg.requestPrompt('Operation ' + this.id + ' onSuccess', this.successPromptId);
-                pkg.app.notifyOperationCompleted(this);
+                pkg.openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
+                    pkg.app.notifyOperationCompleted(self);
+                });
             }
-        },
-        
-        /*  Shows the prompt onSuccess names, if it's waiting. Called once the Mission 
-            Complete dialog has opened, so the prompt follows it. */
-        openSuccessPrompt: function() {
-            this._successPromptModel?.show();
-            this._successPromptModel = null;
         },
         
         doDescriptionChanged: function() {this.notifyCollectionOfUpdate();}
