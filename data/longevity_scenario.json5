@@ -11,37 +11,37 @@
 	"locations":{
 		"lgv.expo":{
 			"name":"Shanghai Expo Centre",
-			"color":"#063",
+			"color":"#0093",
 			"order":1
 		},
 		"lgv.institute":{
 			"name":"Zhangjiang Longevity Institute",
-			"color":"#063c",
+			"color":"#0076",
 			"order":2
 		},
 		"lgv.lanfang":{
 			"name":"Lanfang Tower",
-			"color":"#063c",
+			"color":"#0076",
 			"order":3
 		},
 		"lgv.commission":{
 			"name":"National Health Commission",
-			"color":"#063c",
+			"color":"#0076",
 			"order":4
 		},
 		"lgv.hospice":{
 			"name":"Tiantan Hospice",
-			"color":"#0639",
+			"color":"#0059",
 			"order":5
 		},
 		"lgv.diaoyutai":{
 			"name":"Diaoyutai State Guesthouse",
-			"color":"#0639",
+			"color":"#0059",
 			"order":6
 		},
 		"lgv.tsinghua":{
 			"name":"Tsinghua University",
-			"color":"#0639",
+			"color":"#0059",
 			"order":7
 		}
 	},

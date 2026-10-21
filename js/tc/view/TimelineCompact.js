@@ -12,6 +12,7 @@
         
         {
             SquareBtn, Btn, MiniStatBar, settings, SETTING_SHOW_VISITED_BORDERS, SETTING_SHOW_AGENT_HISTORY,
+            hashToRange,
             timeUtil:{formatApproxDuration,formatForTimeline},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
@@ -25,7 +26,7 @@
             theme:{
                 spacing, cornerRadius, btnHeight, 
                 colorUltraLight, colorLight, colorMedium, colorMediumDark, colorDark, 
-                colorUltraDark, colorMegaDark, colorBtn,
+                colorUltraDark, colorMegaDark, colorBtnLight,
                 colorParadox, colorParadoxDark, colorParadoxLight,
                 fontSizeLarge
             },
@@ -45,7 +46,7 @@
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
-        VISITED_COLOR = '#6cf9',
+        VISITED_COLOR = '#6cf',
         BOX_VISITED_LINE_THICKNESS = 2,
         BOX_VISITED_OUTLINE = [BOX_VISITED_LINE_THICKNESS, 'solid', VISITED_COLOR],
         
@@ -72,17 +73,18 @@
             startStub:6, endStub:6, startGap:0, endGap:0
         },
         EXIT_STYLE = {
-            color:colorBtn, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
+            color:colorBtnLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
             startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
             endArrow:'triangle',
-            startStub:6, endStub:6, startGap:2, endGap:2
+            startStub:3, endStub:3, startGap:2, endGap:2
         },
         // The selected Agent's path from Event to Event, leaving each box's right edge and 
         // arriving at the next one's left.
         VISIT_STYLE = {
             color:VISITED_COLOR, cap:null, thickness:BOX_VISITED_LINE_THICKNESS,
             startCurvature:2*SPLINE_CURVATURE, endCurvature:2*SPLINE_CURVATURE, 
-            startGap:BOX_VISITED_LINE_THICKNESS, endGap:BOX_VISITED_LINE_THICKNESS
+            endArrow:'triangle',
+            startStub:6, endStub:6, startGap:BOX_VISITED_LINE_THICKNESS, endGap:BOX_VISITED_LINE_THICKNESS
         },
         
         // Where a visit's arrows meet its box, as a percent of the box's height from the top:
@@ -532,8 +534,8 @@
                             if (!existingConnection) {
                                 flowLayer.connect({
                                     splineId,
-                                    start:{view:startBox, side:'bottom'},
-                                    end:{view:eventBox, side:'top'}
+                                    start:{view:startBox, side:'bottom', position:hashToRange(startId, 15,65) + '%'},
+                                    end:  {view:eventBox, side:'top',    position:hashToRange(endId, 15,65) + '%'}
                                 });
                             }
                         }
@@ -568,8 +570,8 @@
                     if (fromBox && toBox && !newExitSplinesById[splineId]) {
                         newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
                             splineId,
-                            start:{view:fromBox, side:'bottom', position:'75%'},
-                            end:  {view:toBox,   side:'top',    position:'75%'},
+                            start:{view:fromBox, side:'bottom', position:hashToRange(fromModelId, 25,75) + '%'},
+                            end:  {view:toBox,   side:'top',    position:hashToRange(toModelId, 25,75) + '%'},
                             style:EXIT_STYLE
                         });
                     }

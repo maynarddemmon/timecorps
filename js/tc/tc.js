@@ -222,7 +222,7 @@
                 MAX_HISTORY_LENGTH:1000,
                 
                 // The curvature value used by Splines within the Timeline.
-                SPLINE_CURVATURE:0.25,
+                SPLINE_CURVATURE:0.35,
                 
                 TL_ROW_HEADER_WIDTH:96,
                 TL_COL_WIDTH:120,
@@ -453,6 +453,22 @@
             ICON_DEATH:'☠',
             
             logToBase,
+            
+            /*  A number in [0, 1) that's always the same for the same value: myt's hash, mixed so that
+                similar strings, e.g. IDs that differ in one character, land far apart. */
+            hashToUnit: value => {
+                let h = myt.hash(typeof value === 'string' ? value : myt.stableStringify(value));
+                h ^= h >>> 16;
+                h = Math.imul(h, 0x85ebca6b);
+                h ^= h >>> 13;
+                h = Math.imul(h, 0xc2b2ae35);
+                h ^= h >>> 16;
+                return (h >>> 0) / 2 ** 32;
+            },
+            hashToRange: (value, min, max) => {
+                const actualMin = mathMin(min, max);
+                return mathFloor(TC.hashToUnit(value) * (mathMax(min, max) - actualMin + 1) + actualMin);
+            },
             
             isPlainObject: value => value !== null && typeof value === 'object' && !Array.isArray(value),
             

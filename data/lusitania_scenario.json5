@@ -1,44 +1,10 @@
 {
 	"locationsBaseOrder":200,
 	"locations":{
-		"london.admiralty":{
-			"name":"The Admiralty",
-			"color":"#fdb9",
-			"order":1,
-			"description":[
-				{
-					"text":"Submarine sightings off the Irish coast are logged one by one and never put together on a single chart.",
-					"hidden":"events.admiralty_warnings.values.positionsPlotted.value"
-				},{
-					"text":"Every recent sighting is on one chart, and the danger around the Old Head of Kinsale is plain to see.",
-					"hidden":"!events.admiralty_warnings.values.positionsPlotted.value"
-				},{
-					"text":"No warships have been ordered to meet the Lusitania.",
-					"hidden":"events.admiralty_warnings.values.escortDispatched.value"
-				},{
-					"text":"Destroyers have been ordered out to meet the Lusitania at the Fastnet.",
-					"hidden":"!events.admiralty_warnings.values.escortDispatched.value"
-				}
-			]
-		},
-		"london.westminster":{
-			"name":"Westminster",
-			"color":"#edc9",
-			"order":2,
-			"description":[
-				{
-					"text":"The Lusitania’s bridge log is not among the documents before the inquiry.",
-					"hidden":"events.mersey_inquiry.values.evidenceSubmitted.value"
-				},{
-					"text":"The Lusitania’s bridge log has been entered into the inquiry’s record.",
-					"hidden":"!events.mersey_inquiry.values.evidenceSubmitted.value"
-				}
-			]
-		},
 		"new_york.pier_54":{
 			"name":"Pier 54",
-			"color":"#cfc9",
-			"order":3,
+			"color":"#3303",
+			"order":1,
 			"description":[
 				{
 					"text":"The cartridge cases have gone into the Lusitania’s forward holds.",
@@ -55,9 +21,43 @@
 				}
 			]
 		},
+		"london.westminster":{
+			"name":"Westminster",
+			"color":"#3306",
+			"order":2,
+			"description":[
+				{
+					"text":"The Lusitania’s bridge log is not among the documents before the inquiry.",
+					"hidden":"events.mersey_inquiry.values.evidenceSubmitted.value"
+				},{
+					"text":"The Lusitania’s bridge log has been entered into the inquiry’s record.",
+					"hidden":"!events.mersey_inquiry.values.evidenceSubmitted.value"
+				}
+			]
+		},
+		"london.admiralty":{
+			"name":"The Admiralty",
+			"color":"#3306",
+			"order":3,
+			"description":[
+				{
+					"text":"Submarine sightings off the Irish coast are logged one by one and never put together on a single chart.",
+					"hidden":"events.admiralty_warnings.values.positionsPlotted.value"
+				},{
+					"text":"Every recent sighting is on one chart, and the danger around the Old Head of Kinsale is plain to see.",
+					"hidden":"!events.admiralty_warnings.values.positionsPlotted.value"
+				},{
+					"text":"No warships have been ordered to meet the Lusitania.",
+					"hidden":"events.admiralty_warnings.values.escortDispatched.value"
+				},{
+					"text":"Destroyers have been ordered out to meet the Lusitania at the Fastnet.",
+					"hidden":"!events.admiralty_warnings.values.escortDispatched.value"
+				}
+			]
+		},
 		"lusitania":{
 			"name":"Lusitania",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4,
 			"description":[
 				{
@@ -71,7 +71,7 @@
 		},
 		"lusitania.boilers":{
 			"name":"Boiler room No. 4",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4.1,
 			"description":[
 				{
@@ -85,7 +85,7 @@
 		},
 		"lusitania.holds":{
 			"name":"Forward hold",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4.2,
 			"description":[
 				{
@@ -99,7 +99,7 @@
 		},
 		"lusitania.bridge":{
 			"name":"Bridge",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4.3,
 			"description":[
 				{
@@ -113,7 +113,7 @@
 		},
 		"lusitania.wireless":{
 			"name":"Wireless room",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4.4,
 			"description":[
 				{
@@ -127,7 +127,7 @@
 		},
 		"lusitania.boatdeck":{
 			"name":"Boat deck",
-			"color":"#cdf9",
+			"color":"#0339",
 			"order":4.5,
 			"description":[
 				{
@@ -141,7 +141,7 @@
 		},
 		"atlantic.u20":{
 			"name":"U-20",
-			"color":"#ccc9",
+			"color":"#0339",
 			"order":5,
 			"description":[
 				{
@@ -155,7 +155,7 @@
 		},
 		"atlantic.kinsale":{
 			"name":"Old Head of Kinsale",
-			"color":"#9cf9",
+			"color":"#0339",
 			"order":6,
 			"description":[
 				{
@@ -169,7 +169,7 @@
 		},
 		"queenstown":{
 			"name":"Queenstown",
-			"color":"#fcd9",
+			"color":"#3309",
 			"order":7,
 			"description":[
 				{

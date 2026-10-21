@@ -12,7 +12,7 @@
 	"locations":{
 		"southampton.harland_wolff":{
 			"name":"Harland & Wolff",
-			"color":"#fcc9",
+			"color":"#0363",
 			"order":1,
 			"description":[
 				{
@@ -26,7 +26,7 @@
 		},
 		"southampton.quay.berth_44":{
 			"name":"Berth 44",
-			"color":"#fcc9",
+			"color":"#0363",
 			"order":1.1,
 			"description":[
 				{
@@ -40,12 +40,12 @@
 		},
 		"titanic":{
 			"name":"Titanic",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":1.2
 		},
 		"titanic.pursers":{
 			"name":"Purser’s office",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.1,
 			"description":[
 				{
@@ -59,7 +59,7 @@
 		},
 		"titanic.nest":{
 			"name":"Crow’s nest",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.2,
 			"description":[
 				{
@@ -73,7 +73,7 @@
 		},
 		"titanic.engine":{
 			"name":"Engine room",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.3,
 			"description":[
 				{
@@ -87,7 +87,7 @@
 		},
 		"titanic.bridge":{
 			"name":"Bridge",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.4,
 			"description":[
 				{
@@ -101,7 +101,7 @@
 		},
 		"titanic.wireless":{
 			"name":"Wireless room",
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.5,
 			"description":[
 				{
@@ -122,7 +122,7 @@
 		"titanic.boatdeck":{
 			"name":"Boat deck",
 			"video":true,
-			"color":"#ccf9",
+			"color":"#0366",
 			"order":2.6,
 			"description":[
 				{
@@ -136,7 +136,7 @@
 		},
 		"atlantic.californian":{
 			"name":"SS Californian",
-			"color":"#fcf9",
+			"color":"#0369",
 			"order":3,
 			"description":[
 				{
@@ -752,6 +752,11 @@
 				{"text":"<br><br>On Thursday 18 April the Leyland liner Californian, bound for Boston when she sailed, comes up the Hudson instead, carrying everyone she could pull from Titanic’s boats. She berths here at Pier 54, and 706 survivors come ashore. Her boats reached the scene first, but there were never enough seats in Titanic’s own.", "hidden":"!events.collision.values.struck.value || !events.californian_nearby.values.rescueResponds.value || !events.casualties.values.massLossOfLife.value"},
 				{"text":"<br><br>Guglielmo Marconi himself goes aboard to find Harold Bride, the surviving wireless operator, whose story will fill the next morning’s front page of The New York Times.", "hidden":"event.attestation.value < 20 || !events.collision.values.struck.value"},
 				{"text":"<br><br>The next morning, in the East Room of the Waldorf-Astoria, Senator William Alden Smith opens the United States Senate inquiry into the disaster. His first witness is J. Bruce Ismay, chairman of the White Star Line, who left the ship in one of the last boats.", "hidden":"event.attestation.value < 40 || !events.casualties.values.massLossOfLife.value"}
+			],
+			"exits":[
+				{"mode":"wait", "to":"munitions_manifest"},
+				{"mode":"wait", "to":"embassy_warning"},
+				{"mode":"wait", "to":"new_york_departure"}
 			]
 		}
 	}
