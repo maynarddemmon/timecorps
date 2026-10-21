@@ -2,7 +2,7 @@
 // Actions, exits and missions open them by ID with "prompt", and a button's onClick changes
 // things as a mission's set and adj do.
 import {test, expect} from '@playwright/test';
-import {startGame, readTestData, dialogTitle, dismissCampaignStart, setCausator, reloadGame} from './helpers.mjs';
+import {startGame, readTestData, dialogTitle, dismissCampaignStart, setCausator} from './helpers.mjs';
 
 const offerTitle = page => dialogTitle(page, 'An Offer'),
     clickBtn = (page, name) => page.getByRole('button', {name, exact:true}).filter({visible:true}).click(),
@@ -54,7 +54,7 @@ test('an action opens its prompt when its check passes, and a hidden prompt does
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('an exit opens its prompt on arrival, and its cancel button applies its own changes', async ({page}) => {
+test('an exit opens its prompt before arriving, and its cancel button applies its own changes', async ({page}) => {
     await page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5');
         json.events.origin.exits.find(exit => exit.to === 'aftermath').prompt = 'recruit';
@@ -72,6 +72,8 @@ test('an exit opens its prompt on arrival, and its cancel button applies its own
     await expect(offerTitle(page)).toBeVisible();
     // The description's phrases follow what they read, as other descriptions do.
     await expect(page.getByText('Will Bravo join the Time Corps? He is hurt.', {exact:true})).toBeVisible();
+    // Alpha arrives once it's answered.
+    expect(await page.evaluate(() => tc.model.getAgentModel('AL').event)).toBe('origin');
     await clickBtn(page, 'Decline');
     await expect(offerTitle(page)).toHaveCount(0);
     expect(await readState(page)).toEqual({...before, credits:before.credits + 5});
@@ -81,7 +83,7 @@ test('an exit opens its prompt on arrival, and its cancel button applies its own
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('a mission\'s setup prompt follows its brief, and its success prompt follows Mission Complete', async ({page}) => {
+test('a mission\'s setup prompt follows its brief, and Mission Complete waits for its success prompt', async ({page}) => {
     await page.route('**/tests/data/operations.json5', route => {
         const json = readTestData('operations.json5');
         json.operations.first.onSetup.prompt = 'notice';
@@ -99,49 +101,17 @@ test('a mission\'s setup prompt follows its brief, and its success prompt follow
     
     await setCausator(page, 'plan', 'prepared', true);
     await setCausator(page, 'lever', 'pulled', true);
-    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
-    await expect(offerTitle(page)).toHaveCount(0);
-    await page.getByRole('button', {name:/^Next Mission/}).filter({visible:true}).last().click();
-    
-    // Answered before the next mission's brief.
     await expect(offerTitle(page)).toBeVisible();
-    await expect(dialogTitle(page, 'Mission Brief')).toHaveCount(0);
-    await clickBtn(page, 'Join');
-    await expect(dialogTitle(page, 'Mission Brief')).toHaveText('Mission Brief : Second Mission');
-    expect((await readState(page)).faction).toBe('timecorps');
-    
-    expect(problems.warnings).toEqual([]);
-    expect(problems.pageErrors).toEqual([]);
-});
-
-test('a prompt waiting to be answered is saved, and shown again after a reload', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5');
-        json.operations.first.onSuccess.prompt = 'recruit';
-        return route.fulfill({json});
-    });
-    const problems = await startGame(page),
-        readSave = () => page.evaluate(() => JSON.parse(localStorage.getItem('tc.save')).data);
-    
-    // Completing the mission saves, with the offer waiting behind Mission Complete.
-    await setCausator(page, 'plan', 'prepared', true);
-    await setCausator(page, 'lever', 'pulled', true);
-    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
-    expect((await readSave()).waitingPrompts).toEqual(['recruit']);
-    
-    await reloadGame(page);
-    await expect(offerTitle(page)).toBeVisible();
-    await clickBtn(page, 'Join');
-    await expect(offerTitle(page)).toHaveCount(0);
-    expect((await readState(page)).faction).toBe('timecorps');
-    
-    // Once answered, it's no longer waiting.
-    await page.evaluate(() => tc.persistence.save());
-    expect((await readSave()).waitingPrompts).toBeUndefined();
-    await reloadGame(page);
     await page.waitForTimeout(250);
-    await expect(offerTitle(page)).toHaveCount(0);
-    expect((await readState(page)).faction).toBe('timecorps');
+    await expect(dialogTitle(page, 'Mission Complete')).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem('tc.save'))).toBeNull();
+    await clickBtn(page, 'Join');
+    
+    // The completion's save comes after the answer, so it has it.
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.save')).data.agents.BR.faction)).toBe('timecorps');
+    await page.getByRole('button', {name:/^Next Mission/}).filter({visible:true}).last().click();
+    await expect(dialogTitle(page, 'Mission Brief')).toHaveText('Mission Brief : Second Mission');
     
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);

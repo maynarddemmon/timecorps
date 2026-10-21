@@ -110,6 +110,17 @@
             return retval;
         },
         
+        /*  The Event a log entry put the agent in, or undefined for one that didn't, e.g. an
+            action. */
+        getEnteredEventModel = entry => {
+            switch (entry.type) {
+                case LOG_TYPE_EXIT: return entry.exit.getToEventModel();
+                case LOG_TYPE_DEPLOY:
+                case LOG_TYPE_RECALL:
+                case LOG_TYPE_ORIGIN: return entry.event;
+            }
+        },
+        
         /*  What the next purchase of an Agent's skill gets and costs: {points, credits}. One 
             credit for one point. Kept on its own so the pricing can be tuned. */
         getSkillPurchase = pkg.getSkillPurchase = (_agentModel, _skillId) => ({points:1, credits:1}),
@@ -865,35 +876,11 @@
         pushOntoLog: function(logEntry) {this.log.push(logEntry);},
         getLog: function() {return this.log;},
         countVisitsToEvent: function(eventModel) {
-            let count = 0;
-            for (const entry of this.getLog()) {
-                switch (entry.type) {
-                    case LOG_TYPE_EXIT:
-                        if (entry.exit.getToEventModel() === eventModel) count++;
-                        break;
-                    case LOG_TYPE_DEPLOY:
-                    case LOG_TYPE_RECALL:
-                    case LOG_TYPE_ORIGIN:
-                        if (entry.event === eventModel) count++;
-                        break;
-                }
-            }
-            return count;
+            return this.getLog().filter(entry => getEnteredEventModel(entry) === eventModel).length;
         },
         getEventsVisited: function() {
-            const eventsVisited = new Set();
-            for (const entry of this.getLog()) {
-                switch (entry.type) {
-                    case LOG_TYPE_EXIT:
-                        eventsVisited.add(entry.exit.getToEventModel());
-                        break;
-                    case LOG_TYPE_DEPLOY:
-                    case LOG_TYPE_RECALL:
-                    case LOG_TYPE_ORIGIN:
-                        eventsVisited.add(entry.event);
-                        break;
-                }
-            }
+            const eventsVisited = new Set(this.getLog().map(getEnteredEventModel));
+            eventsVisited.delete(undefined);
             return eventsVisited;
         }
     });

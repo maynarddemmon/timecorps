@@ -341,7 +341,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
 - **`set`**: as for actions, applied as a success when the exit is taken, before the agent arrives.
 - **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
-- **`prompt`**: the ID of a [prompt](#prompts) to open once the agent arrives.
+- **`prompt`**: the ID of a [prompt](#prompts) to open as the exit is taken. The agent arrives once it's answered.
 
 ## Skill checks
 
@@ -545,7 +545,7 @@ HQ and The Void leave out `_investigate` this way.
 				"adj":{"timeline.score":"5000", "timeline.chronal":"15", "timeline.credits":"10"},
 				"revealAgents":["GO", "PI"],
 				"awardAgents":["GO"],
-				"prompt":"recruit"             // Optional. Opens after Mission Complete.
+				"prompt":"recruit"             // Optional. Opens before Mission Complete.
 			}
 		}
 	}
@@ -555,7 +555,7 @@ HQ and The Void leave out `_investigate` this way.
 - **Setup.** When a mission starts, its setup is applied once: its `adj` and `set`, the Mission Brief opened, agents revealed and awarded, and the selection made.
 - **Completion.** A mission is complete when every objective's `success` is true. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
-- **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals; onSuccess's after the Mission Complete dialog, and before the next mission's brief.
+- **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals. onSuccess's opens as the mission completes, and Mission Complete, with its save, waits for the answer.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
@@ -585,7 +585,7 @@ A prompt is a message the player answers with a button, e.g. an offer to join th
 - **`hidden`**: a constraint expression. A hidden prompt doesn't open.
 - **`buttons`**: by ID: `confirm` for either type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
 
-A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open. Until it's answered it's saved with the game, so a reload shows it again.
+A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.
 
 ## Text and media
 

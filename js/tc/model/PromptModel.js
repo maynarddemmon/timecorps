@@ -86,8 +86,9 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
-        /*  Shows the prompt once the dialogs ahead of it have closed. It's waiting until a 
-            button is clicked. */
+        /*  Shows the prompt once the dialogs ahead of it have closed. Clicking a button applies
+            its changes, then calls finallyCallback, so whatever comes next waits for the 
+            answer. */
         show: function(finallyCallback) {
             const {openAckMsgDialog, openConfirmMsgDialog} = pkg.dialogUtil,
                 {confirm, cancel} = this.buttons,
@@ -113,7 +114,9 @@
         console.warn(where, 'prompt must be the ID of a prompt (ignoring it):', promptId);
     };
     
-    /*  Requests the prompt with the ID, and shows it if it's waiting. */
+    /*  Shows the prompt with the ID, unless it's hidden, and calls finallyCallback once it's 
+        answered, or at once if there's no prompt to show. where starts the warning if there's
+        no such prompt. */
     pkg.openPrompt = (where, promptId, finallyCallback) => {
         if (promptId) {
             const promptModel = pkg.model.getPromptModel(promptId);
