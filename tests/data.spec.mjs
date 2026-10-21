@@ -93,8 +93,18 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     test('every operation link points at something that exists', () => {
         const problems = [];
         for (const [operationId, operation] of Object.entries(operations)) {
+            // An Operation's ID, or a check expression whose results, the quoted strings it 
+            // starts with or that follow a ? or :, must all be Operations.
             const next = operation.onSuccess?.nextOperation;
-            if (next && !operations[next]) problems.push(operationId + ': unknown nextOperation ' + next);
+            if (next !== undefined && !operations[next]) {
+                const error = getAmountCompileError(next),
+                    quotedIds = [...String(next).matchAll(/(?:^|[?:])\s*'([^']*)'/g)].map(match => match[1]);
+                if (error || quotedIds.length === 0) {
+                    problems.push(operationId + ': nextOperation is neither an Operation ID nor an expression naming them: ' + next);
+                } else {
+                    for (const id of quotedIds) if (!operations[id]) problems.push(operationId + ': nextOperation names unknown Operation ' + id);
+                }
+            }
         
             const setup = operation.onSetup ?? {},
                 onSuccess = operation.onSuccess ?? {};

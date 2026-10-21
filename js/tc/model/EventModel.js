@@ -32,6 +32,7 @@
                 case 'swim':     return 'Swim to';
                 case 'bike':     return 'Bike to';
                 case 'lifeboat': return 'Lifeboat to';
+                case 'survive': return 'Survive to';
             }
             return 'To';
         },

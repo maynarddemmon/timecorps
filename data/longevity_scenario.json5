@@ -3,30 +3,46 @@
 	// and the three things that made that day happen: a trial that worked, an investor who
 	// paid for it, and a vote to tell everyone. In the first mission the player only watches,
 	// from the announcement. Attesting it reveals its precursors one by one, and the Values
-	// that link them. A later mission changes those links. Its rows sit between Origin's and
-	// the Titanic's.
+	// that link them. In the second, Beniko Asano sends the player to the Commission's vote,
+	// whose research reveals three commissioners the watcher got to first. Swaying two of
+	// them keeps the treatment secret. Its rows sit between Origin's and the Titanic's.
 	"locationsBaseOrder":50,
 
 	"locations":{
 		"lgv.expo":{
 			"name":"Shanghai Expo Centre",
-			"color":"#3c36",
+			"color":"#063",
 			"order":1
 		},
 		"lgv.institute":{
 			"name":"Zhangjiang Longevity Institute",
-			"color":"#3c36",
+			"color":"#063c",
 			"order":2
 		},
 		"lgv.lanfang":{
 			"name":"Lanfang Tower",
-			"color":"#3c36",
+			"color":"#063c",
 			"order":3
 		},
 		"lgv.commission":{
 			"name":"National Health Commission",
-			"color":"#3c36",
+			"color":"#063c",
 			"order":4
+		},
+		"lgv.hospice":{
+			"name":"Tiantan Hospice",
+			"color":"#0639",
+			"order":5
+		},
+		"lgv.diaoyutai":{
+			"name":"Diaoyutai State Guesthouse",
+			"color":"#0639",
+			"order":6
+		},
+		"lgv.tsinghua":{
+			"name":"Tsinghua University",
+			"color":"#0639",
+			"order":7
 		}
 	},
 
@@ -86,7 +102,8 @@
 					"value":"events.lgv_trial.values.reversal.value",
 					"hidden":"events.lgv_trial.hidden",
 					"description":[
-						{"text":"Whatever is announced today, the trial behind it worked.", "hidden":"!event.values.rejuvenation.value"},
+						{"text":"Whatever is announced today, the trial behind it worked.", "hidden":"!event.values.rejuvenation.value || !event.values.goingPublic.value"},
+						{"text":"The trial behind it worked far better than anyone in this hall is being told.", "hidden":"!event.values.rejuvenation.value || event.values.goingPublic.value"},
 						{"text":"Whatever is announced today, the trial behind it failed.", "hidden":"event.values.rejuvenation.value"}
 					]
 				},
@@ -105,7 +122,7 @@
 					"hidden":"events.lgv_commission.hidden",
 					"description":[
 						{"text":"The world is being told.", "hidden":"!event.values.goingPublic.value"},
-						{"text":"The world is not being told.", "hidden":"event.values.goingPublic.value"}
+						{"text":"The world is told a modest truth and a careful lie: real benefits, and nothing of the reversal. That stays with those who can pay for it, in secret.", "hidden":"event.values.goingPublic.value"}
 					]
 				},
 				"watcher":{
@@ -119,13 +136,16 @@
 			},
 			"description":[
 				"The hall is packed, and the feeds are carrying it live to half the world. On the stage, under a banner that reads 还春 · SPRING RETURNS, Dr. Shen Yiran of the Zhangjiang Longevity Institute waits for the noise to die down.",
-				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10"},
-				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20"},
-				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30"},
+				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10 || !event.values.goingPublic.value"},
+				{"text":"<br><br>“Today,” she says, carefully, “we can show you the first results of a treatment for some of the diseases of ageing.”", "hidden":"event.attestation.value < 10 || event.values.goingPublic.value"},
+				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20 || !event.values.goingPublic.value"},
+				{"text":"<br><br>The dataset on the screen is mixed but real: stronger hearts, clearer lungs, sharper memories in volunteers in their seventies. Revolutionary, the commentators will say. No one on the stage says anything about anyone growing younger.", "hidden":"event.attestation.value < 20 || event.values.goingPublic.value"},
+				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
+				{"text":"<br><br>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
 				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
 			]
 		},
-
+		
 		// The precursors. Each is revealed by attesting the announcement, and holds the literal
 		// Value the announcement's own Values follow. Nothing changes them in this mission.
 		"lgv_backer":{
@@ -147,6 +167,29 @@
 			"description":[
 				"The state money has run out, and the Institute’s board has been told to shut the trial down. On the sixty-first floor of Lanfang Tower, a man who has never met Dr. Shen offers to pay for all of it.",
 				{"text":"<br><br>His name is Gao Ruifeng. He is eighty-three years old, and he has been told he has a year to live.", "hidden":"event.attestation.value < 15"}
+			],
+			"exits":[
+				{
+					"mode":"survive", "to":"lgv_trial", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
+						"agent.skills.deception":{"onBoth":"d(4,2)"}
+					}
+				},
+				{
+					"mode":"survive", "to":"lgv_commission", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
+						"agent.skills.persuasion":{"onBoth":"d(4,3)"}
+					}
+				},
+				{
+					"mode":"survive", "to":"lgv_announcement", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(8,2)"},
+						"agent.skills.cha":{"onBoth":"d(4,4)"}
+					}
+				}
 			]
 		},
 		"lgv_trial":{
@@ -168,27 +211,226 @@
 			"description":[
 				"In a windowless room at the Institute, Dr. Shen’s team unblinds the Phase III data.",
 				{"text":"<br><br>The statistician, Ma Jun, runs the analysis three times before he will show it to anyone.", "hidden":"event.attestation.value < 15"}
+			],
+			"exits":[
+				{
+					"mode":"survive", "to":"lgv_commission", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
+						"agent.skills.deception":{"onBoth":"d(4,2)"}
+					}
+				},
+				{
+					"mode":"survive", "to":"lgv_announcement", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
+						"agent.skills.cha":{"onBoth":"d(4,3)"}
+					}
+				}
 			]
 		},
+		// The vote. Seven commissioners vote to release, three of them because the watcher got
+		// to them first. Research here reveals those three, one at each 10 of attestation,
+		// which the fixed observations alone reach. Six votes of eleven decide it, so swaying
+		// any two keeps the treatment secret.
 		"lgv_commission":{
 			"name":"The Closed Session",
 			"start":"2087-09-22T01:00:00",
 			"duration":{"h":4},
 			"location":"lgv.commission",
 			"hidden":"events.lgv_announcement.attestation.value < 35",
+			"actions":{
+				"_investigate":null,
+				"agenda":{
+					"label":"Read the Agenda",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.agenda.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				},
+				"commissioners":{
+					"label":"Study the Commissioners",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.commissioners.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				},
+				"debate":{
+					"label":"Listen to the Debate",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.debate.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				}
+			},
 			"values":{
+				"releaseVotes":{
+					"name":"Votes to Release",
+					"value":"7 - (events.lgv_hospice.values.swayed.value ? 1 : 0) - (events.lgv_banquet.values.swayed.value ? 1 : 0) - (events.lgv_model.values.swayed.value ? 1 : 0)",
+					"description":[
+						{"text":"Seven of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 7"},
+						{"text":"Six of the eleven will vote to tell the world. It is still enough.", "hidden":"event.values.releaseVotes.value !== 6"},
+						{"text":"Only five of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 5"},
+						{"text":"Only four of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 4"}
+					]
+				},
 				"approvedRelease":{
 					"name":"Release Approved",
-					"value":"true",
+					"value":"event.values.releaseVotes.value >= 6",
 					"description":[
-						{"text":"The Commission votes, seven to four, to announce the treatment to the world rather than keep it a state secret.", "hidden":"!event.values.approvedRelease.value"},
-						{"text":"The Commission votes to keep the treatment a state secret.", "hidden":"event.values.approvedRelease.value"}
+						{"text":"The Commission votes to announce the treatment to the world rather than keep it a state secret.", "hidden":"!event.values.approvedRelease.value"},
+						{"text":"The Commission votes to keep the full results a state secret. The world will be told only of the treatment’s lesser benefits, and the early results it publishes will point the wrong way.", "hidden":"event.values.approvedRelease.value"}
 					]
 				}
 			},
 			"description":[
 				"In Beijing, behind closed doors, eleven officials decide what to do with the end of old age.",
-				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15"}
+				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15 || !event.values.approvedRelease.value"},
+				{"text":"<br><br>The warnings carry the room. A world where the rich stop dying, the majority agrees, is not one it wants to announce.", "hidden":"event.attestation.value < 15 || event.values.approvedRelease.value"},
+				{"text":"<br><br>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
+				{"text":"<br><br>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
+			],
+			"exits":[
+				{
+					"mode":"survive", "to":"lgv_announcement", 
+					"adj":{
+						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
+						"agent.skills.cha":{"onBoth":"d(4,2)"}
+					}
+				}
+			]
+		},
+		
+		// The three commissioners the watcher reached. Each is revealed by researching the vote,
+		// and watching there reveals a way to sway them, and more of the watcher. Waiting leads
+		// on to the later ones, and to the vote, so time travel is only needed to go back.
+		"lgv_hospice":{
+			"name":"The Hospice",
+			"start":"2087-09-03T10:00:00",
+			"duration":{"h":2},
+			"location":"lgv.hospice",
+			"hidden":"events.lgv_commission.attestation.value < 10",
+			"actionLimit":6,
+			"actions":{
+				"_rest":null,
+				"watch":{
+					"label":"Sit with the Families",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.watch.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"sway":{
+					"label":"Tell Her What It Will Cost",
+					"skillCheck":{"actionType":"social"},
+					"hidden":"event.attestation.value < 10 || event.values.swayed.value",
+					"set":{"swayed":"true"}
+				}
+			},
+			"values":{
+				"swayed":{
+					"name":"Lu Meilan’s Vote",
+					"value":"false",
+					"description":[
+						{"text":"Lu Meilan will vote to tell the world, so her mother can have it.", "hidden":"event.values.swayed.value"},
+						{"text":"Lu Meilan will vote to keep it secret. Under Lanfang’s licence it would never have reached her mother in time, or anyone else’s.", "hidden":"!event.values.swayed.value"}
+					]
+				}
+			},
+			"description":[
+				"Commissioner Lu Meilan sits by her mother’s bed every Wednesday afternoon. Her mother no longer knows who she is.",
+				{"text":"<br><br>A doctor from Zhangjiang came to see her here last week, Lu Meilan tells the nurse. Once the treatment is announced, he said, nothing could keep it from her mother.", "hidden":"event.attestation.value < 10"},
+				{"text":"<br><br>No one from Zhangjiang has been here. The nurses remember a visitor in a dark suit, and a wrist that caught the light.", "hidden":"event.attestation.value < 20"},
+				{"text":"<br><br>The visitor’s signature in the hospice register is a single character, written twice: 春春.", "hidden":"event.attestation.value < 30"}
+			],
+			"exits":[
+				{"mode":"walk", "to":"lgv_banquet"},
+				{"mode":"walk", "to":"lgv_model"},
+				{"mode":"walk", "to":"lgv_commission"}
+			]
+		},
+		"lgv_banquet":{
+			"name":"The Banquet",
+			"start":"2087-09-10T11:00:00",
+			"duration":{"h":3},
+			"location":"lgv.diaoyutai",
+			"hidden":"events.lgv_commission.attestation.value < 20",
+			"actionLimit":6,
+			"actions":{
+				"_rest":null,
+				"watch":{
+					"label":"Work the Room",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.watch.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"sway":{
+					"label":"Prove the Report Is Forged",
+					"skillCheck":{"actionType":"investigate"},
+					"hidden":"event.attestation.value < 10 || event.values.swayed.value",
+					"set":{"swayed":"true"}
+				}
+			},
+			"values":{
+				"swayed":{
+					"name":"Zhou Kang’s Vote",
+					"value":"false",
+					"description":[
+						{"text":"Vice Minister Zhou Kang will vote to tell the world before the Americans do.", "hidden":"event.values.swayed.value"},
+						{"text":"Vice Minister Zhou Kang will vote to keep it secret. No one else is anywhere close.", "hidden":"!event.values.swayed.value"}
+					]
+				}
+			},
+			"description":[
+				"A state dinner for a trade delegation, with eleven courses and twice as many toasts. Vice Minister Zhou Kang, who sits on the Commission, has barely touched his food.",
+				{"text":"<br><br>Between courses, a foreign trade attaché showed him a report: an American laboratory will announce the same treatment by Christmas. Whoever announces first will own it.", "hidden":"event.attestation.value < 10"},
+				{"text":"<br><br>The attaché’s embassy has never heard of them. The waiters remember a dark suit, and a device on their wrist like yours.", "hidden":"event.attestation.value < 20"},
+				{"text":"<br><br>The report is signed by a laboratory that will not exist for another eleven years.", "hidden":"event.attestation.value < 30"}
+			],
+			"exits":[
+				{"mode":"walk", "to":"lgv_model"},
+				{"mode":"walk", "to":"lgv_commission"}
+			]
+		},
+		"lgv_model":{
+			"name":"The Projection",
+			"start":"2087-09-16T14:00:00",
+			"duration":{"h":2},
+			"location":"lgv.tsinghua",
+			"hidden":"events.lgv_commission.attestation.value < 30",
+			"actionLimit":6,
+			"actions":{
+				"_rest":null,
+				"watch":{
+					"label":"Read Over Her Shoulder",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.watch.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"sway":{
+					"label":"Swap the Projection",
+					"skillCheck":{"actionType":"sneak"},
+					"hidden":"event.attestation.value < 10 || event.values.swayed.value",
+					"set":{"swayed":"true"}
+				}
+			},
+			"values":{
+				"swayed":{
+					"name":"Huang Yi’s Vote",
+					"value":"false",
+					"description":[
+						{"text":"Professor Huang Yi will vote to tell the world. Her projection says the treatment pays for itself.", "hidden":"event.values.swayed.value"},
+						{"text":"Professor Huang Yi will vote to keep it secret. Her projection now shows who would pay for it, and who would not.", "hidden":"!event.values.swayed.value"}
+					]
+				}
+			},
+			"description":[
+				"Professor Huang Yi, the Commission’s economist, works late in a corner office of the School of Economics, with her door open and her tea gone cold.",
+				{"text":"<br><br>On her desk is an anonymous projection: announced and licensed, the treatment pays for itself in a decade, in pensions no one has to draw. She has read it four times.", "hidden":"event.attestation.value < 10"},
+				{"text":"<br><br>The building’s cameras show the projection being left at three in the morning, by someone in a dark suit who looks straight up into the lens, and smiles.", "hidden":"event.attestation.value < 20"},
+				{"text":"<br><br>The projection’s numbers are right. They just stop at the people who can afford the treatment.", "hidden":"event.attestation.value < 30"}
+			],
+			"exits":[
+				{"mode":"walk", "to":"lgv_commission"}
 			]
 		}
 	}

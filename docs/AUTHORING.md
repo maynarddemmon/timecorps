@@ -87,6 +87,8 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 | `event` | The event the agent is at |
 | `timeline` | The overall game state |
 | `scratch.<name>` | A [scratch](#scratch) entry |
+| `events.<id>` | Any event, e.g. `events.collision.attestation.value` |
+| `agents.<id>` | Any agent, e.g. `agents.ME.event`. Skills they don't have are 0, as for `agent` |
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
 | `margin` | Amounts only: how well the deciding check went. See [Adjustments](#adjustments-adj) |
@@ -557,7 +559,7 @@ HQ and The Void leave out `_investigate` this way.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
 - **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals. onSuccess's opens as the mission completes, and Mission Complete, with its save, waits for the answer.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
-- **The campaign.** `nextOperation` links the missions together. The last mission has none.
+- **The campaign.** `nextOperation` links the missions together. The last mission has none. It's a mission's ID, or a [check expression](#check-expressions) that works out to one when the mission is completed, so how it was won can decide what comes next, e.g. `"agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'"`. It's worked out after the success `prompt` is answered.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
 
 ## Prompts

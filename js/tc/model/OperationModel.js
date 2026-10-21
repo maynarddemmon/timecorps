@@ -264,9 +264,22 @@
         
         
         // onSuccess Config ////////////////////////////////////////////////
+        /*  An Operation's ID, or a check expression that works out to one when it's needed, 
+            e.g. "agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'",
+            so how a mission was won can decide what comes next. */
         setNextOperation: function(nextOperation) {this.set('nextOperation', nextOperation, true);},
         getNextOperation: function() {
-            return pkg.model.getOperationModel(this.nextOperation);
+            const next = this.nextOperation;
+            if (next == null) return null;
+            
+            const rootModel = pkg.model;
+            let operationModel = rootModel.getOperationModel(next);
+            if (!operationModel) {
+                const nextId = pkg.checks.rollValue(next);
+                operationModel = rootModel.getOperationModel(nextId);
+                if (!operationModel) console.warn('Operation', this.id, 'nextOperation names no Operation:', next, '→', nextId);
+            }
+            return operationModel ?? null;
         },
         
         // onSuccess

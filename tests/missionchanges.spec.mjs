@@ -177,3 +177,43 @@ test('set can put an agent at an Event, as a deploy or jump that pays its way', 
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('check expressions can read any agent or Event, and nextOperation can be one', async ({page}) => {
+    await Promise.all([
+        page.route('**/tests/data/operations.json5', route => {
+            const json = readTestData('operations.json5'),
+                first = json.operations.first;
+            // Alpha is in the Time Corps, so the first mission leads to the third.
+            first.onSuccess.nextOperation = "agents.AL.faction === 'timecorps' ? 'third' : 'second'";
+            first.onSetup.set['agents.BR.chronal'] = '50';
+            return route.fulfill({json});
+        }),
+        page.route('**/tests/data/test_scenario.json5', route => {
+            const json = readTestData('test_scenario.json5');
+            json.events.origin.actions.summon = {
+                label:'Summon Bravo', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':null},
+                set:{'agents.BR.event':'agents.AL.event'},
+                adj:{'timeline.credits':'events.origin.historicity.value'}
+            };
+            return route.fulfill({json});
+        })
+    ]);
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            creditsBefore = m.getCredits();
+        m.getAgentModel('AL').doAction(m.getEventModel('origin').getActionModels().summon);
+        return {
+            bravoAt:m.getAgentModel('BR').event,
+            creditsGained:m.getCredits() - creditsBefore,
+            next:m.getOperationModel('first').getNextOperation().id
+        };
+    });
+    expect(out).toEqual({bravoAt:'origin', creditsGained:75, next:'third'});
+    
+    await page.evaluate(() => tc.model.getAgentModel('AL').setFaction('unaligned'));
+    expect(await page.evaluate(() => tc.model.getOperationModel('first').getNextOperation().id)).toBe('second');
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

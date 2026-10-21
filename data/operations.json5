@@ -1,6 +1,37 @@
 {
 	"initialOperation":"origin_story",
 	
+	"prompts":{
+		// Beniko's offer, once the vote is kept secret. Accepting puts You in the Time Corps,
+		// which decides what spring_vote leads to.
+		"corps_offer":{
+			"type":"confirm",
+			"title":"Beniko’s Offer",
+			"description":[
+				"The air beside you folds, and Beniko Asano steps out of it, brushing nothing off her coat.",
+				"<br><br>“Not bad, for a civilian,” she says. “You found the thread, and you pulled it back where it belongs. Most of my people couldn’t have done it with a map.”",
+				"<br><br>She looks at the Chronofex on your wrist, then at you. “Whoever wore that before you was one of ours. Whoever was in that hall in the dark suit isn’t. They’ll come for you now, and you’d be safer with us. The Corps could use someone they haven’t got to yet.”",
+				"<br><br>“Well? Will you join us?”"
+			],
+			"buttons":{
+				"confirm":{
+					"label":"Join the Time Corps",
+					"onClick":{
+						"set":{"agents.ME.faction":"'timecorps'"},
+						"adj":{"agents.ME.chronal":"8 + d(6)"}
+					}
+				},
+				"cancel":{
+					"label":"Not Yet"
+				}
+			}
+		}
+	},
+	
+	"scratch":{
+		"transfer":0
+	},
+
 	"operations":{
 		"origin_story":{
 			"name":"Origin Story",
@@ -81,7 +112,73 @@
 				"set":{
 					"agents.BA.event":"'lgv_announcement'"
 				},
-				"revealAgents":["BA"]
+				"revealAgents":["BA"],
+				"nextOperation":"spring_vote"
+			}
+		},
+		
+		// Beniko sends You back to the vote to undo what the watcher did. She lends You her
+		// chronal and unlocks the Chronofex enough to make the jumps. Swaying two of the three
+		// commissioners keeps the treatment secret; then she joins You and makes her offer.
+		"spring_vote":{
+			"name":"Spring Returns - The Vote",
+			"description":[
+				"Beijing, 22 September 2087. Seven votes to four, the Commission decides to tell the world. It wasn’t supposed to."
+			],
+			"onSetup":{
+				"initialAgentSelection":"ME",
+				"initialEventSelection":"lgv_commission",
+				// Beniko tops up Your chronal from her own, and unlocks the Chronofex.
+				"set":{
+					"scratch.transfer":"Math.min(agents.ME.chronal.max - agents.ME.chronal.value, agents.BA.chronal.value)",
+					"agents.BA.chronal":"agents.BA.chronal.value - scratch.transfer",
+					"agents.ME.chronal":"agents.ME.chronal.value + scratch.transfer"
+				},
+				"adj":{
+					"agents.ME.skills.chronogation":"50"
+				}
+			},
+			"objectives":{
+				"secret":{
+					"name":"Keep It Secret",
+					"description":["The Commission must vote to keep the treatment a state secret."],
+					"success":"!events.lgv_commission.values.approvedRelease.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					{"text":"Six votes to five, the Commission votes to keep the full results of the trial a state secret.", "hidden":"events.lgv_commission.values.releaseVotes.value !== 5"},
+					{"text":"Seven votes to four, the Commission votes to keep the full results of the trial a state secret.", "hidden":"events.lgv_commission.values.releaseVotes.value !== 4"},
+					"In November, Dr. Shen will show the world a treatment for some of the diseases of ageing, and nothing more.",
+					"<br><br>The reversal will reach the people who can pay for it, quietly, and no one else. That is how it went the first time, Beniko says. It isn’t yours to like. It’s yours to put back.",
+					"<br><br>Somewhere in Beijing, someone in a dark suit has just found out what you did."
+				],
+				"adj":{
+					"timeline.score":"3000",
+					"agents.ME.skills.chronogation":"50"
+				},
+				// Beniko joins You wherever You are, and makes her offer.
+				"set":{
+					"agents.BA.event":"agents.ME.event"
+				},
+				"prompt":"corps_offer",
+				"nextOperation":"agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'"
+			}
+		},
+		
+		// Declining Beniko's offer leads here: the watcher reveals themselves, and offers You a
+		// place in the Syndicate. Not written yet, so its objective can't be met.
+		"syndicate_offer":{
+			"name":"The Watcher",
+			"description":[
+				"You turned the Corps down. Someone else has noticed."
+			],
+			"objectives":{
+				"meet":{
+					"name":"Meet the Watcher",
+					"description":["Find out who was in the dark suit. (To be continued.)"],
+					"success":"false"
+				}
 			}
 		},
 		
@@ -102,6 +199,9 @@
 				"set":{
 					"events.collision.historicity":"75",
 					"events.casualties.historicity":"65"
+				},
+				"adj":{
+					"agents.ME.skills.chronogation":"agents.ME.faction === 'timecorps' ? 100 : 0"
 				}
 			},
 			"objectives":{

@@ -9,6 +9,10 @@
 			"label":"Time Corps",
 			"description":"The Nexus-based service that watches the causal thread and repairs it. Its agents travel under Corps protocols, draw chronal from the HQ pool and answer to Command."
 		},
+		"syndicate":{
+			"label":"The Syndicate",
+			"description":"Time travellers who answer to no Command and keep no protocols. They change history for whoever pays them, or for reasons of their own, and the Corps has never found out who leads them."
+		},
 		"unaligned":{
 			"label":"Unaligned",
 			"description":"Answers to no one. Whatever they know of time travel, they learned on their own, and no one is coming to get them out."
