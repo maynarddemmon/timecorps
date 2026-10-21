@@ -153,3 +153,32 @@ test('the brief\'s Where opens the area brief over it', async ({page}) => {
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('the dossier\'s Event opens the brief over it, and a brief queued for that Event is then not shown again', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {
+        const m = tc.model;
+        tc.app.openAgentDossier(m.getAgentModel('AL'));
+        // Both wait behind the dossier.
+        tc.app.openEventBrief(m.getEventModel('origin'));
+        tc.app.openEventBrief(m.getEventModel('aftermath'));
+    });
+    await expect(dialogTitle(page, 'Agent Dossier')).toHaveText('Agent Dossier : Alpha');
+    await expect(briefTitle(page)).toHaveCount(0);
+    
+    // Alpha is at Origin, and its brief opens at once.
+    await page.locator('.myt-AgentDossier').getByText('Origin', {exact:true}).click();
+    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await page.keyboard.press('Escape');
+    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(dialogTitle(page, 'Agent Dossier')).toBeVisible();
+    
+    // Closing the dossier skips the queued Origin brief, just seen, and opens Aftermath's.
+    await page.keyboard.press('Escape');
+    await expect(briefTitle(page)).toHaveText('Event Brief : Aftermath');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(250);
+    await expect(briefTitle(page)).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

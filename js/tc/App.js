@@ -23,6 +23,7 @@
         agentDossier,
         areaBrief,
         eventBrief,
+        eventBriefShowCount = 0, // How many times an Event Brief has been shown.
         factionBrief,
         missionBrief,
         settingsDialog;
@@ -48,6 +49,9 @@
         } = pkg,
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
+        
+        // The value of eventBriefShowCount when each Event's brief was last shown, by Event ID.
+        eventBriefShownAt = new Map(),
         
         checkForActiveRoster = () => {
             const activeAgents = pkg.model.getActiveAgentsAsList();
@@ -576,12 +580,22 @@
             }
         },
         
+        /*  Opens the Event's brief once the dialogs ahead of it have closed, or at once if 
+            forceIt, e.g. from the Agent Dossier. A brief that waited its turn doesn't open if 
+            the Event's brief was shown in the meantime (generally requires it to be forced). */
         openEventBrief: (eventModel, forceIt) => {
             if (readyToHandleEvents) {
+                const countWhenRequested = eventBriefShowCount;
                 openWhenClear(() => {
-                    eventBrief ??= new pkg.EventBrief(appView);
-                    eventBrief.show(eventModel);
-                    return eventBrief;
+                    const eventId = eventModel.id,
+                        curShownCount = eventBriefShownAt.get(eventId);
+                    if (curShownCount == null || curShownCount === countWhenRequested) {
+                        eventBriefShownAt.set(eventId, ++eventBriefShowCount);
+                        
+                        eventBrief ??= new pkg.EventBrief(appView);
+                        eventBrief.show(eventModel);
+                        return eventBrief;
+                    }
                 }, forceIt);
             }
         },

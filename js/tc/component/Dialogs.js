@@ -298,9 +298,10 @@
             while (dialogQueue.length > 0 && showingQueuedDialogs.size === 0) dialogQueue.shift()();
         },
         
-        /*  Calls openFunc now if no QueuedDialog is showing, returning what it returns. 
-            Otherwise it's called once the dialogs ahead of it have closed, and this returns
-            undefined. */
+        /*  Calls openFunc now if no QueuedDialog is showing, or if forceIt, returning what it 
+            returns. Otherwise it's called once the dialogs ahead of it have closed, and this 
+            returns undefined. An openFunc that finds it has nothing to open by then can just 
+            return, and the next one waiting is called. */
         openWhenClear = (openFunc, forceIt) => {
             if (forceIt || showingQueuedDialogs.size === 0) {
                 return openFunc();
