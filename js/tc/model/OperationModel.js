@@ -28,36 +28,16 @@
             }
         }),
         
-        /*  Reads the set and adj blocks of an onSetup or onSuccess config. They change the
-            same things as an action's, but name Events by ID, since an Operation has no Event
+        /*  Reads an onSetup or onSuccess config's set and adj, which change the same things 
+            as an action's, but name Events and agents by ID, since an Operation has no Event
             or agent of its own, e.g. "events.collision.historicity", "timeline.score" or 
-            "timeline.credits". They're applied as a success, so onFailure is never used. */
+            "agents.ME.chronal". */
         readChanges = (operationModel, where, cfg) => {
             const prefix = 'Operation ' + operationModel.id + ' ' + where;
             for (const oldKey of ['historicityAdjustments', 'awardScore', 'awardCredits', 'awardHQChronal']) {
                 if (oldKey in cfg) console.warn(prefix, oldKey, 'is replaced by set and adj (ignoring it)');
             }
-            const changes = {
-                set:pkg.readChangeEntries(prefix + ' set', cfg.set, {keepString:true, isSet:true}),
-                adj:pkg.readChangeEntries(prefix + ' adj', cfg.adj)
-            };
-            for (const block of ['set', 'adj']) {
-                for (const key in changes[block]) {
-                    const {onSuccess, onFailure} = changes[block][key];
-                    if (onFailure !== undefined && onFailure !== onSuccess) console.warn(prefix, block, key, 'has onFailure, which an Operation never uses');
-                }
-            }
-            return changes;
-        },
-        
-        /*  Applies changes read by readChanges: the adjustments, then the sets, as for an 
-            action. Expressions see no agent or event, just "timeline", "scratch" and dice. */
-        applyChanges = changes => {
-            if (changes) {
-                const rollCfg = {};
-                pkg.applyAdjEntries(changes.adj, null, null, true, rollCfg);
-                pkg.applySetEntries(changes.set, null, null, true, rollCfg);
-            }
+            return pkg.readSuccessChanges(prefix, cfg, 'an Operation');
         },
         
         validateAgentIdList = (list, label) => {
@@ -274,6 +254,7 @@
         setOnSetup: function(onSetupCfg) {
             if (onSetupCfg) {
                 this.setupChanges = readChanges(this, 'onSetup', onSetupCfg);
+                this.setupPromptId = pkg.readPromptId('Operation ' + this.id + ' onSetup', onSetupCfg.prompt);
                 this.setRevealAgentsOnSetup(onSetupCfg.revealAgents);
                 this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
                 this.setInitialEventSelection(onSetupCfg.initialEventSelection);
@@ -303,6 +284,7 @@
                 this.setDebrief(onSuccessCfg.debrief);
                 this.setNextOperation(onSuccessCfg.nextOperation);
                 this.successChanges = readChanges(this, 'onSuccess', onSuccessCfg);
+                this.successPromptId = pkg.readPromptId('Operation ' + this.id + ' onSuccess', onSuccessCfg.prompt);
                 this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
                 this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
             }
@@ -338,23 +320,37 @@
         doOnSetup: function() {
             if (!this.setupApplied) {
                 const rootModel = pkg.model;
-                applyChanges(this.setupChanges);
+                pkg.applySuccessChanges(this.setupChanges);
                 pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
                 this.setupApplied = true;
+                
+                // After the Mission Brief and the dossiers of the Agents it reveals.
+                pkg.openPrompt('Operation ' + this.id + ' onSetup', this.setupPromptId);
             }
         },
         
         doOnSuccess: function() {
             if (!this.successGranted) {
                 const rootModel = pkg.model;
-                applyChanges(this.successChanges);
+                pkg.applySuccessChanges(this.successChanges);
                 rootModel.revealAgents(this.revealAgentsOnSuccess);
                 rootModel.awardAgents(this.awardAgentsOnSuccess);
                 this.successGranted = true;
+                
+                // Waiting from now, so the save made on completion has it, but shown after
+                // the Mission Complete dialog. See openSuccessPrompt.
+                this._successPromptModel = pkg.requestPrompt('Operation ' + this.id + ' onSuccess', this.successPromptId);
                 pkg.app.notifyOperationCompleted(this);
             }
+        },
+        
+        /*  Shows the prompt onSuccess names, if it's waiting. Called once the Mission 
+            Complete dialog has opened, so the prompt follows it. */
+        openSuccessPrompt: function() {
+            this._successPromptModel?.show();
+            this._successPromptModel = null;
         },
         
         doDescriptionChanged: function() {this.notifyCollectionOfUpdate();}

@@ -305,6 +305,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
 - **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
+- **`prompt`**: the ID of a [prompt](#prompts) to open when the check passes, after everything else the action does.
 
 Every action counts how many times it's been taken, pass or fail, as its `doneCount`, e.g. `event.actions.recover.doneCount`. Any expression can read it, and constraints update when it changes, so `"hidden":"event.actions.recover.doneCount >= 3"` allows three tries. An action's adjustments are worked out before its own `doneCount`, and the `flipCount` of the values it sets, go up, so they see the counts before this take.
 
@@ -340,6 +341,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
 - **`set`**: as for actions, applied as a success when the exit is taken, before the agent arrives.
 - **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
+- **`prompt`**: the ID of a [prompt](#prompts) to open once the agent arrives.
 
 ## Skill checks
 
@@ -372,7 +374,7 @@ Adjustments change stats as the result of an action or exit. They go in its `adj
 | `events.<id>` | `attestation`, `historicity`, `paradox` | Any event, by its ID, e.g. `"events.collision.historicity"` |
 | `agents.<id>` | `health`, `chronal`, `paradox` | Any agent, by their ID, e.g. `"agents.ME.chronal"` |
 
-A key can also name a Value of any event, as `"events.<id>.values.<value>"`, e.g. `"events.aftermath.values.lost"`, or a skill of any agent, as `"agents.<id>.skills.<skill>"`, e.g. `"agents.ME.skills.chronogation"`. So an action can change another event, and an exit can change the event it leads to, e.g. `"adj":{"events.aftermath.attestation":"5"}`. A `set` (not an `adj`) can also move an agent to an event, keyed `"agent.event"` for the agent taking the action, or `"agents.<id>.event"` for any agent. Its expression is worked out once to an event ID, so a fixed one needs quotes: `"set":{"agents.BA.event":"'lgv_announcement'"}`. The move is a deploy (from HQ) or a jump, with all its rules: the chronal is paid and any paradox for a revisit is gained, and if the agent can't go, e.g. for want of chronal, they stay put, with a warning. Use it in a mission's `onSetup` to put agents where the mission starts.
+A key can also name a Value of any event, as `"events.<id>.values.<value>"`, e.g. `"events.aftermath.values.lost"`, or a skill of any agent, as `"agents.<id>.skills.<skill>"`, e.g. `"agents.ME.skills.chronogation"`. So an action can change another event, and an exit can change the event it leads to, e.g. `"adj":{"events.aftermath.attestation":"5"}`. A `set` (not an `adj`) can also move an agent to an event, keyed `"agent.event"` for the agent taking the action, or `"agents.<id>.event"` for any agent. Its expression is worked out once to an event ID, so a fixed one needs quotes: `"set":{"agents.BA.event":"'lgv_announcement'"}`. The move is a deploy (from HQ) or a jump, with all its rules: the chronal is paid and any paradox for a revisit is gained, and if the agent can't go, e.g. for want of chronal, they stay put, with a warning. Use it in a mission's `onSetup` to put agents where the mission starts. A `set` can also put an agent in a faction, keyed `"agent.faction"` or `"agents.<id>.faction"`, with the faction's ID in quotes, e.g. `"set":{"agents.ME.faction":"'timecorps'"}`.
 
 These name the event or agent by ID, so they work in a mission's `set` and `adj` too. An adjustment to another event or agent shows in tooltips by its name, e.g. "Aftermath Attestation" or "You Chronogation".
 
@@ -526,7 +528,8 @@ HQ and The Void leave out `_investigate` this way.
 				"initialEventSelection":"collision",
 				// Optional. As for an action, but keyed by event ID, e.g. each event's historicity.
 				"set":{"events.collision.historicity":"75", "events.casualties.historicity":"65"},
-				"adj":{"timeline.credits":"20"}  // Optional. Credits to start the mission with.
+				"adj":{"timeline.credits":"20"}, // Optional. Credits to start the mission with.
+				"prompt":"welcome"               // Optional. Opens after the brief.
 			},
 			"objectives":{
 				"avoid":{
@@ -541,7 +544,8 @@ HQ and The Void leave out `_investigate` this way.
 				// The rewards: score, HQ chronal, and credits on top of those the score earns.
 				"adj":{"timeline.score":"5000", "timeline.chronal":"15", "timeline.credits":"10"},
 				"revealAgents":["GO", "PI"],
-				"awardAgents":["GO"]
+				"awardAgents":["GO"],
+				"prompt":"recruit"             // Optional. Opens after Mission Complete.
 			}
 		}
 	}
@@ -551,9 +555,37 @@ HQ and The Void leave out `_investigate` this way.
 - **Setup.** When a mission starts, its setup is applied once: its `adj` and `set`, the Mission Brief opened, agents revealed and awarded, and the selection made.
 - **Completion.** A mission is complete when every objective's `success` is true. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
+- **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals; onSuccess's after the Mission Complete dialog, and before the next mission's brief.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
+
+## Prompts
+
+A prompt is a message the player answers with a button, e.g. an offer to join the Time Corps. Actions, exits and missions open one by its ID with `"prompt"`. Prompts can go in any data file, under `"prompts"`.
+
+```json5
+"prompts":{
+	"recruit":{
+		"type":"confirm",
+		"title":"An Offer",
+		"description":["Beniko holds out her hand. “The Corps could use you.”"],
+		"hidden":"agents.ME.faction === 'timecorps'",
+		"buttons":{
+			"confirm":{"label":"Join", "onClick":{"set":{"agents.ME.faction":"'timecorps'"}}},
+			"cancel":{"label":"Not Yet"}
+		}
+	}
+}
+```
+
+- **`type`**: `ack`, one button, or `confirm`, two. Default: `ack`.
+- **`title`**: the dialog's title.
+- **`description`**: the message. Phrases, as for an event.
+- **`hidden`**: a constraint expression. A hidden prompt doesn't open.
+- **`buttons`**: by ID: `confirm` for either type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
+
+A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open. Until it's answered it's saved with the game, so a reload shows it again.
 
 ## Text and media
 

@@ -2,8 +2,42 @@
 //   first - origin not struck: prepare the plan and pull the lever.
 //   second - origin struck, but nobody lost: release the lever and build enough boats.
 //   third - clear the backlog.
+// And two prompts, which nothing opens unless a test adds a "prompt" naming them.
 {
 	"initialOperation":"first",
+	
+	"prompts":{
+		// Asks Bravo to join the Time Corps, unless he already has.
+		"recruit":{
+			"type":"confirm",
+			"title":"An Offer",
+			"description":[
+				"Will Bravo join the Time Corps?",
+				{"text":" He is hurt.", "hidden":"agents.BR.health.value === agents.BR.health.max"}
+			],
+			"hidden":"agents.BR.faction === 'timecorps'",
+			"buttons":{
+				"confirm":{
+					"label":"Join",
+					"onClick":{
+						"set":{"agents.BR.faction":"'timecorps'"},
+						"adj":{"timeline.score":"100"}
+					}
+				},
+				"cancel":{
+					"label":"Decline",
+					"onClick":{"adj":{"timeline.credits":"5"}}
+				}
+			}
+		},
+		"notice":{
+			"title":"A Notice",
+			"description":["Noted."],
+			"buttons":{
+				"confirm":{"onClick":{"adj":{"timeline.score":"10"}}}
+			}
+		}
+	},
 	
 	"operations":{
 		"first":{

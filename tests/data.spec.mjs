@@ -22,6 +22,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         operations = operationsJson.operations,
         scratch = Object.assign({}, ...scenarios.map(s => s.scratch ?? {})),
         factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
+        // Prompts can be in any data file.
+        prompts = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.prompts ?? {})),
     
         // Every string anywhere inside a JSON value.
         collectStrings = (value, accum=[]) => {
@@ -79,7 +81,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 for (const ref of findBadRefs(str, eventId)) problems.push('event ' + eventId + ': ' + ref);
             }
         }
-        const others = {locations, agentDefaults:agentsJson.agentDefaults, agents, operations};
+        const others = {locations, agentDefaults:agentsJson.agentDefaults, agents, operations, prompts};
         for (const [label, data] of Object.entries(others)) {
             for (const str of collectStrings(data)) {
                 for (const ref of findBadRefs(str, null)) problems.push(label + ': ' + ref);
@@ -109,6 +111,54 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
 
+    test('every prompt has a known type, a title and only the buttons its type has', () => {
+        const problems = [],
+            BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel']};
+        for (const [promptId, prompt] of Object.entries(prompts)) {
+            const where = 'prompt ' + promptId,
+                {type='ack', title, description, hidden, buttons, ...unknown} = prompt;
+            for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
+            if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack" or "confirm"');
+            if (typeof title !== 'string' || title.trim() === '') problems.push(where + ' has no title');
+            if (description === undefined) problems.push(where + ' has no description');
+            if (hidden !== undefined && typeof hidden !== 'string' && typeof hidden !== 'boolean') problems.push(where + ' hidden is not a string or a boolean');
+            for (const [buttonId, button] of Object.entries(buttons ?? {})) {
+                const at = where + ' button ' + buttonId;
+                if (!BUTTONS_BY_TYPE[type]?.includes(buttonId)) problems.push(at + ' is not a button of its type');
+                if (button === null || typeof button !== 'object' || Array.isArray(button)) {
+                    problems.push(at + ' is not an object');
+                    continue;
+                }
+                const {label, onClick, ...rest} = button;
+                for (const key of Object.keys(rest)) problems.push(at + ' has unknown key ' + key);
+                if (label !== undefined && typeof label !== 'string') problems.push(at + ' label is not a string');
+                if (onClick !== undefined) {
+                    if (onClick === null || typeof onClick !== 'object' || Array.isArray(onClick)) {
+                        problems.push(at + ' onClick is not an object');
+                    } else {
+                        for (const key of Object.keys(onClick)) if (key !== 'set' && key !== 'adj') problems.push(at + ' onClick has unknown key ' + key);
+                    }
+                }
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
+    test('every prompt an action, exit or operation opens exists', () => {
+        const problems = [],
+            check = (where, promptId) => {
+                if (promptId !== undefined && !Object.hasOwn(prompts, promptId)) problems.push(where + ' opens unknown prompt ' + promptId);
+            };
+        for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
+            for (const [actionId, action] of Object.entries(event.actions ?? {})) check(eventId + '.' + actionId, action?.prompt);
+            for (const exit of event.exits ?? []) check(eventId + ' exit to ' + exit.to, exit.prompt);
+        }
+        for (const [operationId, operation] of Object.entries(operations)) {
+            for (const when of ['onSetup', 'onSuccess']) check(operationId + ' ' + when, operation[when]?.prompt);
+        }
+        expect(problems).toEqual([]);
+    });
+    
     test('every location has an image and an area brief', () => {
         const missing = [];
         for (const locationId of Object.keys(locations)) {
@@ -236,7 +286,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     test('every investigate, action skill check, action cost, action scratch set and action and exit adjustment is valid, including the default event actions', () => {
         const problems = [],
-            counts = {actionAdjustments:0, exitAdjustments:0, costs:0, scratchSets:0, perResultSets:0, operationChanges:0},
+            counts = {actionAdjustments:0, exitAdjustments:0, costs:0, scratchSets:0, perResultSets:0, successChanges:0},
             
             // Returns the problems with an action's costs. null leaves them all out.
             checkCosts = (where, costs) => {
@@ -261,9 +311,13 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             // Event, or null for an Operation, which has no agent or Event of its own.
             checkChangeKey = (key, event, isSet=false) => {
                 const [scope, statId, ...rest] = key.split('.');
-                if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation has neither';
+                if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation or prompt has neither';
                 if ((scope === 'agent' && statId === 'event' && rest.length === 0) || (scope === 'agents' && rest.length === 1 && rest[0] === 'event')) {
                     if (!isSet) return 'is where an agent is, which can only be set';
+                    return scope === 'agents' && !agents[statId] ? 'names no agent' : null;
+                }
+                if ((scope === 'agent' && statId === 'faction' && rest.length === 0) || (scope === 'agents' && rest.length === 1 && rest[0] === 'faction')) {
+                    if (!isSet) return 'is the Faction an agent is in, which can only be set';
                     return scope === 'agents' && !agents[statId] ? 'names no agent' : null;
                 }
                 if (statId === undefined) return event.values?.[key] ? null : 'is not a Value of the Event';
@@ -285,13 +339,15 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 return 'is not a stat, skill, Value or scratch entry';
             },
             
-            // A set of where an agent is should give an Event ID as a quoted string, e.g. 
-            // "'origin'". Returns the problem, or null.
+            // A set of where an agent is, or the Faction they're in, should give the ID as a 
+            // quoted string, e.g. "'origin'" or "'timecorps'". Returns the problem, or null.
             checkEventDestination = (key, value) => {
-                if (typeof value !== 'string' || !/^agents?\.([^.]+\.)?event$/.test(key)) return null;
-                const quoted = /^'([^']*)'$/.exec(value.trim());
-                if (quoted) return events[quoted[1]] ? null : 'names no Event ' + quoted[1];
-                if (events[value.trim()]) return 'needs the Event ID in quotes, e.g. "\'' + value.trim() + '\'"';
+                const match = typeof value === 'string' ? /^agents?\.(?:[^.]+\.)?(event|faction)$/.exec(key) : null;
+                if (!match) return null;
+                const [ids, what] = match[1] === 'event' ? [events, 'Event'] : [factions, 'Faction'],
+                    quoted = /^'([^']*)'$/.exec(value.trim());
+                if (quoted) return ids[quoted[1]] ? null : 'names no ' + what + ' ' + quoted[1];
+                if (ids[value.trim()]) return 'needs the ' + what + ' ID in quotes, e.g. "\'' + value.trim() + '\'"';
                 return null;
             },
             
@@ -404,29 +460,36 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
         }
         
-        // Operations' set and adj, applied as a success.
-        for (const [operationId, operation] of Object.entries(operations)) {
-            for (const when of ['onSetup', 'onSuccess']) {
-                for (const block of ['set', 'adj']) {
-                    for (const [key, value] of Object.entries(operation[when]?.[block] ?? {})) {
-                        const at = operationId + ' ' + when + ' ' + block + ' ' + key,
-                            keyProblem = checkChangeKey(key, null, block === 'set') ?? checkEventDestination(key, value);
-                        if (keyProblem) problems.push(at + ' ' + keyProblem);
-                        counts.operationChanges++;
-                        if (typeof value === 'string') {
-                            // A Value is set to a constraint expression, which isn't checked here.
-                            const error = /^events\.[^.]+\.values\./.test(key) ? null : getAmountCompileError(value);
-                            if (error) problems.push(at + ' ' + error);
-                        } else if (isPlainObject(value)) {
-                            const {problems:exprProblems, rest} = checkResultExprs(at, value);
-                            problems.push(...exprProblems);
-                            if (Object.keys(rest).length > 0) problems.push(at + ' has keys other than onSuccess, onFailure and onBoth');
-                            if (value.onFailure !== undefined) problems.push(at + ' has onFailure, which an Operation never uses');
-                        } else {
-                            problems.push(at + ' is not a string or an object');
-                        }
+        // The set and adj of something with no agent or Event, applied as a success: an 
+        // Operation's onSetup and onSuccess, and a prompt button's onClick.
+        const checkSuccessChanges = (where, cfg, owner) => {
+            for (const block of ['set', 'adj']) {
+                for (const [key, value] of Object.entries(cfg?.[block] ?? {})) {
+                    const at = where + ' ' + block + ' ' + key,
+                        keyProblem = checkChangeKey(key, null, block === 'set') ?? checkEventDestination(key, value);
+                    if (keyProblem) problems.push(at + ' ' + keyProblem);
+                    counts.successChanges++;
+                    if (typeof value === 'string') {
+                        // A Value is set to a constraint expression, which isn't checked here.
+                        const error = /^events\.[^.]+\.values\./.test(key) ? null : getAmountCompileError(value);
+                        if (error) problems.push(at + ' ' + error);
+                    } else if (isPlainObject(value)) {
+                        const {problems:exprProblems, rest} = checkResultExprs(at, value);
+                        problems.push(...exprProblems);
+                        if (Object.keys(rest).length > 0) problems.push(at + ' has keys other than onSuccess, onFailure and onBoth');
+                        if (value.onFailure !== undefined) problems.push(at + ' has onFailure, which ' + owner + ' never uses');
+                    } else {
+                        problems.push(at + ' is not a string or an object');
                     }
                 }
+            }
+        };
+        for (const [operationId, operation] of Object.entries(operations)) {
+            for (const when of ['onSetup', 'onSuccess']) checkSuccessChanges(operationId + ' ' + when, operation[when], 'an Operation');
+        }
+        for (const [promptId, prompt] of Object.entries(prompts)) {
+            for (const [buttonId, button] of Object.entries(prompt?.buttons ?? {})) {
+                if (isPlainObject(button?.onClick)) checkSuccessChanges('prompt ' + promptId + ' ' + buttonId + ' onClick', button.onClick, 'a prompt');
             }
         }
         expect(problems).toEqual([]);
@@ -437,7 +500,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             expect(counts.exitAdjustments).toBeGreaterThan(0);
             expect(counts.costs).toBeGreaterThan(0);
             expect(counts.scratchSets).toBeGreaterThan(0);
-            expect(counts.operationChanges).toBeGreaterThan(0);
+            expect(counts.successChanges).toBeGreaterThan(0);
         }
     });
 

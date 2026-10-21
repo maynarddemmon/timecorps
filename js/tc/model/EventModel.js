@@ -114,6 +114,10 @@
             }
         }),
         
+        // What set, but not adj, can change about an agent: the Event they're at and the
+        // Faction they're in, e.g. "agents.ME.faction".
+        SET_ONLY_AGENT_KEYS = [SCOPE_EVENT, 'faction'],
+        
         // The timeline's score and credits, which set and adj can change like stats.
         STAT_ID_SCORE = 'score',
         STAT_ID_CREDITS = 'credits',
@@ -212,7 +216,8 @@
                 readRest(rest, warn) - Reads the entry's other keys. Returns false if the 
                     entry can't be used. Without one, other keys make the entry unusable.
                 isSet - True for a set block, which can also put an agent at an Event 
-                    ("agent.event" or "agents.<id>.event"). That can't be adjusted.
+                    ("agent.event" or "agents.<id>.event") or in a Faction ("agent.faction" or
+                    "agents.<id>.faction"). Those can't be adjusted.
             
             Returns {parsedKey, onSuccess, onFailure}, at least one of the two set, or null if
             the entry can't be used. */
@@ -234,6 +239,8 @@
                     skill of any agent, e.g. "agents.ME.skills.chronogation".
                 {kind:'event', scopeName, agentId} - the Event an agent is at, theirs 
                     ("agent.event") or any agent's ("agents.ME.event"). Set only.
+                {kind:'faction', scopeName, agentId} - the Faction an agent is in, theirs 
+                    ("agent.faction") or any agent's ("agents.ME.faction"). Set only.
                 {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
                     e.g. "events.collision.values.struck".
                 {error} - a phrase for a warning. */
@@ -257,12 +264,13 @@
                     warn('names no skill (ignoring it)');
                     return null;
                 }
-            } else if ((scopeName === SCOPE_AGENT && statId === SCOPE_EVENT && rest.length === 0) || (scopeName === SCOPE_AGENTS && rest.length === 1 && rest[0] === SCOPE_EVENT)) {
+            } else if ((scopeName === SCOPE_AGENT && rest.length === 0 && SET_ONLY_AGENT_KEYS.includes(statId)) || (scopeName === SCOPE_AGENTS && rest.length === 1 && SET_ONLY_AGENT_KEYS.includes(rest[0]))) {
                 if (!isSet) {
                     warn('can only be set, not adjusted (ignoring it)');
                     return null;
                 }
-                parsedKey = {kind:'event', scopeName, agentId:scopeName === SCOPE_AGENTS ? statId : undefined, statId:SCOPE_EVENT};
+                const kind = scopeName === SCOPE_AGENTS ? rest[0] : statId;
+                parsedKey = {kind, scopeName, agentId:scopeName === SCOPE_AGENTS ? statId : undefined, statId:kind};
             } else if (scopeName === SCOPE_AGENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_AGENTS].includes(rest[0])) {
                 parsedKey = {kind:'stat', scopeName, agentId:statId, statId:rest[0]};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) {
@@ -272,7 +280,7 @@
             } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill or Event of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl" or "agents.ME.event", or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -367,6 +375,19 @@
                             console.warn(key, 'is not an Event ID:', result);
                         } else {
                             travelerModel.doDeployToEvent(destinationEventModel);
+                        }
+                        break;
+                    }
+                    case 'faction': {
+                        // Worked out once, now, to a Faction's ID, e.g. "'timecorps'".
+                        const result = rollValue(expr, rollCfg),
+                            memberModel = parsedKey.agentId === undefined ? agentModel : pkg.model.getAgentModel(parsedKey.agentId);
+                        if (!memberModel) {
+                            console.warn('No agent', parsedKey.agentId ?? '', 'to put in a Faction for', key);
+                        } else if (typeof result !== 'string' || !pkg.model.getFactionModel(result)) {
+                            console.warn(key, 'is not a Faction ID:', result);
+                        } else {
+                            memberModel.setFaction(result);
                         }
                         break;
                     }
@@ -878,8 +899,17 @@
             }
         }),
         
+        /*  The prompt an action or exit opens when it's taken and its check passes, by ID, 
+            e.g. "recruit". Expects ActionCheckSupport. */
+        PromptSupport = new JSModule('PromptSupport', {
+            setPrompt: function(promptId) {this.promptId = pkg.readPromptId(this.getSkillCheckOwner(), promptId);},
+            
+            /*  Opens its prompt, if it has one and it isn't hidden. */
+            openPrompt: function() {pkg.openPrompt(this.getSkillCheckOwner(), this.promptId);}
+        }),
+        
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport, PromptSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
@@ -893,16 +923,18 @@
                 this.doneCount = 0;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
-                const {skillCheck, available, set} = attrs;
+                const {skillCheck, available, set, prompt} = attrs;
                 delete attrs.skillCheck;
                 delete attrs.available;
                 delete attrs.set;
+                delete attrs.prompt;
                 
                 this.callSuper(attrs);
                 
                 this.setSkillCheck(skillCheck);
                 this.setAvailable(available);
                 this.setSet(set);
+                this.setPrompt(prompt);
             },
             
             
@@ -1061,16 +1093,18 @@
             go somewhere unknown. Its set, or anything else, can reveal that Event by changing 
             what its hidden expression reads, e.g. "set":{"scratch.vault_found":"true"}. */
         EventExitModel = new JSClass('EventExitModel', BaseModel, {
-            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport],
+            include: [ConstrainableToParentEvent, HideableEventPart, ActionCheckSupport, AdjustmentSupport, CostsSupport, SetSupport, PromptSupport],
             
             
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 // Applied after the other attrs so any warnings can name the exit by where it goes.
-                const set = attrs.set;
+                const {set, prompt} = attrs;
                 delete attrs.set;
+                delete attrs.prompt;
                 this.callSuper(attrs);
                 this.setSet(set);
+                this.setPrompt(prompt);
             },
             
             
@@ -1538,6 +1572,34 @@
             const amount = pkg.checks.rollAmount(expr, rollCfg),
                 target = getChangeTarget(entry.parsedKey, agentModel, eventModel);
             if (target && Number.isFinite(amount)) target.adjValue(target.getAllowedAdj(mathRound(amount)).adj);
+        }
+    };
+    
+    /*  Reads the set and adj blocks of something with no agent or Event of its own, e.g. an
+        Operation's onSetup or a prompt button's onClick, so they name Events and agents by
+        ID, e.g. "events.collision.historicity" or "agents.ME.faction". They're applied as a
+        success, so an onFailure warns, naming what never uses it, e.g. "an Operation". */
+    pkg.readSuccessChanges = (where, cfg, owner) => {
+        const changes = {
+            set:readChangeEntries(where + ' set', cfg.set, {keepString:true, isSet:true}),
+            adj:readChangeEntries(where + ' adj', cfg.adj)
+        };
+        for (const block of ['set', 'adj']) {
+            for (const key in changes[block]) {
+                const {onSuccess, onFailure} = changes[block][key];
+                if (onFailure !== undefined && onFailure !== onSuccess) console.warn(where, block, key, 'has onFailure, which ' + owner + ' never uses');
+            }
+        }
+        return changes;
+    };
+    
+    /*  Applies changes read by readSuccessChanges: the adjustments, then the sets, as for an
+        action. Expressions see no agent or event, just "timeline", "scratch" and dice. */
+    pkg.applySuccessChanges = changes => {
+        if (changes) {
+            const rollCfg = {};
+            pkg.applyAdjEntries(changes.adj, null, null, true, rollCfg);
+            applySetEntries(changes.set, null, null, true, rollCfg);
         }
     };
 })(tc);

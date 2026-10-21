@@ -389,6 +389,7 @@
             SCOPE_SCRATCH:'scratch',
             SCOPE_LOCATIONS:'locations',
             SCOPE_FACTIONS:'factions',
+            SCOPE_PROMPTS:'prompts',
             SCOPE_OPERATIONS:'operations',
             SCOPE_OPERATION:'operation',
             SCOPE_AGENTS:'agents',
@@ -452,6 +453,8 @@
             ICON_DEATH:'☠',
             
             logToBase,
+            
+            isPlainObject: value => value !== null && typeof value === 'object' && !Array.isArray(value),
             
             // Formatting //
             wrapInStyledSpan,

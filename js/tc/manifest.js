@@ -48,6 +48,7 @@ JS.Packages(file => {
         'tc.Describable','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'FactionModel.js').provides('tc.FactionModel').requires('tc.Describable');
+    file(MODEL_ROOT + 'PromptModel.js').provides('tc.PromptModel').requires('tc.DescribableHideable');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
         'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
     );
@@ -58,7 +59,8 @@ JS.Packages(file => {
         'tc.Describable','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
-        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
+        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel',
+        'tc.PromptModel'
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');

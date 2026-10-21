@@ -487,6 +487,9 @@
             
             // Wait for the timeline to finish showing the changes that completed the mission.
             timelineView.doWhenValueChangeAnimsDone(() => {
+                // Prompts are done before the Operation completes.
+                operationModel.openSuccessPrompt();
+                
                 if (operationModel.getNextOperation()) {
                     openConfirmMsgDialog(
                         title, debrief,

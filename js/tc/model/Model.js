@@ -16,7 +16,8 @@
         {floor:mathFloor} = Math,
         
         {
-            NotifyingNumericStatModel, AgentModel, LocationModel, FactionModel, EventModel, OperationModel,
+            NotifyingNumericStatModel, AgentModel, LocationModel, FactionModel, EventModel, OperationModel, PromptModel,
+            isPlainObject,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
@@ -25,15 +26,13 @@
                 DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
-            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
+            SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_PROMPTS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
             CHECK_SKILL_EXPR_PREFIX
         } = pkg,
         
         // The data key for default skill checks by action type.
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
-        
-        isPlainObject = value => value !== null && typeof value === 'object' && !Array.isArray(value),
         
         /*  Merges a config over a base: objects key by key, all the way down, and anything else,
             arrays included, replaces what's there. Changes and returns the base, or returns 
@@ -46,6 +45,9 @@
         },
         
         eventsForHiddenAttrSetup = [],
+        
+        // The IDs of the prompts waiting to be answered, in the order they were opened.
+        waitingPromptIds = [],
         
         // The names of the scratch entries the data declares.
         scratchNames = new Set(),
@@ -148,6 +150,7 @@
             }]);
             model[SCOPE_OPERATIONS] = new TCModelCollection({modelClass:OperationModel, scopeId:SCOPE_OPERATIONS});
             model[SCOPE_FACTIONS]   = new TCModelCollection({modelClass:FactionModel,   scopeId:SCOPE_FACTIONS});
+            model[SCOPE_PROMPTS]    = new TCModelCollection({modelClass:PromptModel,    scopeId:SCOPE_PROMPTS});
             
             model.callSuper(parent, attrs);
             
@@ -195,6 +198,16 @@
         // Factions:Accessors & Methods ////////////////////////////////////////
         getFactionModel: id => model[SCOPE_FACTIONS].getById(id),
         getFactionModelsAsList: filterFunc => model[SCOPE_FACTIONS].getAsList(filterFunc),
+        
+        getPromptModel: id => model[SCOPE_PROMPTS].getById(id),
+        
+        /*  Prompts are waiting from when they're opened until they're answered, and saved 
+            while they are, so a restore shows them again. */
+        addWaitingPrompt: id => {waitingPromptIds.push(id);},
+        removeWaitingPrompt: id => {
+            const idx = waitingPromptIds.indexOf(id);
+            if (idx >= 0) waitingPromptIds.splice(idx, 1);
+        },
         
         
         // Agents:Accessors & Methods //////////////////////////////////////////
@@ -321,6 +334,7 @@
                 peakScore:model.peakScore,
                 credits:model.credits,
                 scratch,
+                waitingPrompts:[...waitingPromptIds],
                 currentOperation:model.getCurrentOperation()?.id ?? null,
                 selection:pkg.app.getSelectionForSave()
             };
@@ -336,6 +350,16 @@
             if ('credits' in obj) model.setCredits(obj.credits);
             if ('score' in obj) model.setScore(obj.score);
             for (const name in obj.scratch) model.setScratch(name, obj.scratch[name]);
+            if (Array.isArray(obj.waitingPrompts)) {
+                waitingPromptIds.length = 0;
+                for (const id of obj.waitingPrompts) {
+                    if (model.getPromptModel(id)) {
+                        waitingPromptIds.push(id);
+                    } else {
+                        console.warn('Save has unknown waiting prompt', id, '(skipping)');
+                    }
+                }
+            }
             for (const statId of TIMELINE_STAT_IDS) {
                 if (obj[statId]) model[statId].importFromObj(obj[statId]);
             }
@@ -367,6 +391,9 @@
             if (obj.selection) pkg.app.restoreSelectionForLoad(obj.selection);
             
             pkg.app.notifyAgentLocOrVisChange();
+            
+            // The prompts that were waiting to be answered when the game was saved.
+            for (const id of waitingPromptIds) model.getPromptModel(id).show();
         },
         
         
@@ -395,6 +422,7 @@
             model.set('peakScore', STARTING_SCORE, true);
             model.setCredits(STARTING_CREDITS);
             model.setScore(STARTING_SCORE);
+            waitingPromptIds.length = 0;
             
             if (!isInit) {
                 for (const operationModel of model.getOperationModelsAsList()) operationModel.reset();
@@ -449,7 +477,7 @@
             }
             
             // Factions first, so Agents in the same file can be put in them.
-            for (const dataKey of [SCOPE_FACTIONS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS]) {
+            for (const dataKey of [SCOPE_FACTIONS, SCOPE_LOCATIONS, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_PROMPTS, SCOPE_OPERATIONS]) {
                 const data = json[dataKey];
                 if (data) {
                     const modelCol = model[dataKey];

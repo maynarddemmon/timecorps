@@ -649,6 +649,8 @@
                         // arrives, so one that reveals where it leads does so first.
                         exitModel.applySets(this, true, 0);
                         
+                        exitModel.openPrompt();
+                        
                         this.setEvent(toEvent.id, logEntry);
                         pkg.app.selectEventBox(toEvent);
                     }
@@ -698,6 +700,8 @@
                 
                 if (check.success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 this.pushOntoLog(logEntry);
+                
+                if (check.success) actionModel.openPrompt();
             }
         },
         
