@@ -878,10 +878,11 @@
         countVisitsToEvent: function(eventModel) {
             return this.getLog().filter(entry => getEnteredEventModel(entry) === eventModel).length;
         },
-        getEventsVisited: function() {
-            const eventsVisited = new Set(this.getLog().map(getEnteredEventModel));
-            eventsVisited.delete(undefined);
-            return eventsVisited;
+        
+        /*  The Events the Agent has entered, in the order they entered them, with an Event 
+            entered again listed again. */
+        getVisitHistory: function() {
+            return this.getLog().map(getEnteredEventModel).filter(eventModel => eventModel != null);
         }
     });
 })(tc);

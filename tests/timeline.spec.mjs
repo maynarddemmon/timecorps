@@ -141,3 +141,35 @@ test('waiting for the animations runs right away when none are running', async (
         return ran;
     })).toBe(true);
 });
+
+/*  The selected Agent's path: an arrow from each Event they entered to the next, leaving the
+    right edge and arriving at the left, 15% from the top for a first visit and 5% lower for 
+    each later one. Events without a visible box, e.g. HQ, are left out. */
+test('arrows follow the selected agent from Event to Event', async ({page}) => {
+    const problems = await startGame(page);
+    const readArrows = () => page.evaluate(() => tc.app.getTimelineView().flowLayer.getSplines()
+        .filter(spline => spline.splineId.startsWith('visit-'))
+        .map(spline => [spline.startView.model.id, spline.startSide, spline.startPosition, spline.endView.model.id, spline.endSide, spline.endPosition]));
+    
+    await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            origin = m.getEventModel('origin');
+        tc.app.selectAgentRow('AL');
+        alpha.doFollowExit(origin.getExitModels().find(exit => exit.to === 'aftermath'));
+        alpha.doDeployToEvent(origin);
+    });
+    await expect.poll(readArrows).toEqual([
+        ['origin', 'right', '15%', 'aftermath', 'left', '15%'],
+        ['aftermath', 'right', '15%', 'origin', 'left', '20%']
+    ]);
+    // The Events visited are outlined, and only those.
+    expect(await page.evaluate(() => Object.values(tc.app.getTimelineView().boxesByEventId)
+        .filter(box => box.visited).map(box => box.model.id).sort())).toEqual(['aftermath', 'origin']);
+    
+    // Another agent who hasn't gone anywhere has no path.
+    await page.evaluate(() => tc.app.selectAgentRow('BR'));
+    await expect.poll(readArrows).toEqual([]);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

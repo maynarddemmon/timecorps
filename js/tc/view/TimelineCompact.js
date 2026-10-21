@@ -45,13 +45,16 @@
         COL_EXTENT = COL_WIDTH + TL_COL_SPACING,
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
-        BOX_VISITED_OUTLINE = [2, 'solid', '#6cf9'],
+        VISITED_COLOR = '#6cf9',
+        BOX_VISITED_LINE_THICKNESS = 2,
+        BOX_VISITED_OUTLINE = [BOX_VISITED_LINE_THICKNESS, 'solid', VISITED_COLOR],
         
         // Marks the Event boxes the current Operation's Objectives depend on. See index.html.
         DOM_CLASS_ENTANGLED = 'entangled',
         
         SPLINE_ID_PREFIX_AFFECT = 'affect-',
         SPLINE_ID_PREFIX_EXIT = 'exit-',
+        SPLINE_ID_PREFIX_VISIT = 'visit-',
         
         Z_IDX_EVENT = 1,
         Z_IDX_FLOW = 2,
@@ -74,6 +77,17 @@
             endArrow:'triangle',
             startStub:6, endStub:6, startGap:2, endGap:2
         },
+        // The selected Agent's path from Event to Event, leaving each box's right edge and 
+        // arriving at the next one's left.
+        VISIT_STYLE = {
+            color:VISITED_COLOR, cap:null, thickness:BOX_VISITED_LINE_THICKNESS,
+            startCurvature:SPLINE_CURVATURE, endCurvature:SPLINE_CURVATURE, 
+            startGap:BOX_VISITED_LINE_THICKNESS, endGap:BOX_VISITED_LINE_THICKNESS
+        },
+        
+        // Where a visit's arrows meet its box, as a percent of the box's height from the top:
+        // the first visit at 15%, and each later one 5% lower, down to 95%.
+        getVisitPosition = visitIdx => mathMin(55 + 5*visitIdx, 95) + '%',
         
         ANIM_DURATION = 500,
         animateAttr = (target, attrName, newValue, easingFunction='inOutQuad', duration=ANIM_DURATION) => {
@@ -405,13 +419,39 @@
             isInitial = false;
         }, STANDARD_DEBOUNCE_MILLIS),
         
+        /*  Outlines the Events the selected Agent has visited, and draws arrows from each to the
+            next, in the order the Agent went. An arrow to or from an Event without a visible box,
+            e.g. HQ, is left out. */
         updateVisitedStatusForSelectedAgent = debounce(timeline => {
-            // Update for currently selected Agent
-            const {selectedAgentModel, boxesByEventId} = timeline,
-                eventsVisited = selectedAgentModel?.getEventsVisited();
+            const {selectedAgentModel, boxesByEventId, flowLayer} = timeline,
+                history = selectedAgentModel?.getVisitHistory() ?? [],
+                eventsVisited = new Set(history);
             for (const eventId in boxesByEventId) {
                 const eventBox = boxesByEventId[eventId];
-                eventBox.setVisited(eventsVisited?.has(eventBox.model) ? true : false);
+                eventBox.setVisited(eventsVisited.has(eventBox.model));
+            }
+            
+            // Drawn afresh each time, since a revisit moves where later arrows meet a box.
+            for (const splineId of timeline._visitSplineIds ?? []) flowLayer.disconnect(splineId);
+            const visitSplineIds = timeline._visitSplineIds = [],
+                visitCounts = new Map();
+            let prev = null;
+            for (const eventModel of history) {
+                const visitIdx = visitCounts.get(eventModel) ?? 0,
+                    box = boxesByEventId[eventModel.id],
+                    cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
+                visitCounts.set(eventModel, visitIdx + 1);
+                if (prev && cur) {
+                    const splineId = SPLINE_ID_PREFIX_VISIT + visitSplineIds.length;
+                    flowLayer.connect({
+                        splineId,
+                        start:{view:prev.box, side:'right', position:prev.position},
+                        end:  {view:cur.box,  side:'left',  position:cur.position},
+                        style:VISIT_STYLE
+                    });
+                    visitSplineIds.push(splineId);
+                }
+                prev = cur;
             }
         }, 2*STANDARD_DEBOUNCE_MILLIS),
         
