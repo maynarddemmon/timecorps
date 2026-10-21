@@ -576,13 +576,13 @@
             }
         },
         
-        openEventBrief: eventModel => {
+        openEventBrief: (eventModel, forceIt) => {
             if (readyToHandleEvents) {
                 openWhenClear(() => {
                     eventBrief ??= new pkg.EventBrief(appView);
                     eventBrief.show(eventModel);
                     return eventBrief;
-                });
+                }, forceIt);
             }
         },
         

@@ -301,11 +301,11 @@
         /*  Calls openFunc now if no QueuedDialog is showing, returning what it returns. 
             Otherwise it's called once the dialogs ahead of it have closed, and this returns
             undefined. */
-        openWhenClear = openFunc => {
-            if (showingQueuedDialogs.size > 0) {
-                dialogQueue.push(openFunc);
-            } else {
+        openWhenClear = (openFunc, forceIt) => {
+            if (forceIt || showingQueuedDialogs.size === 0) {
                 return openFunc();
+            } else {
+                dialogQueue.push(openFunc);
             }
         },
         

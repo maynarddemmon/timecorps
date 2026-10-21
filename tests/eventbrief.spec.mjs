@@ -126,3 +126,30 @@ test('an agent at an event when it is revealed counts as a first visit, and a re
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('the brief\'s Where opens the area brief over it', async ({page}) => {
+    const problems = await startGame(page);
+    // The area brief already exists, so it has to come forward rather than being made on top.
+    await page.evaluate(() => {tc.app.openAreaBrief(tc.model.getEventModel('origin').getLocationModel());});
+    await page.keyboard.press('Escape');
+    await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
+    
+    await page.evaluate(() => {tc.app.openEventBrief(tc.model.getEventModel('origin'));});
+    await expect(briefTitle(page)).toBeVisible();
+    const where = (await briefState(page)).where;
+    await page.locator('.myt-EventBrief').getByText(where, {exact:true}).click();
+    await expect(dialogTitle(page, 'Area Brief')).toHaveText('Area Brief : ' + where);
+    
+    // It's the one on top.
+    expect(await page.evaluate(() => {
+        const rect = document.querySelector('.myt-AreaBrief').model.getPanelView().getIDE().getBoundingClientRect();
+        return document.elementFromPoint(rect.x + rect.width/2, rect.y + 10)?.closest('.myt-AreaBrief, .myt-EventBrief')?.className;
+    })).toContain('AreaBrief');
+    
+    // Closing it goes back to the event brief.
+    await page.keyboard.press('Escape');
+    await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
+    await expect(briefTitle(page)).toBeVisible();
+    
+    expect(problems.pageErrors).toEqual([]);
+});

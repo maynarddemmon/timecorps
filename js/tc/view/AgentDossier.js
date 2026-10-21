@@ -59,15 +59,17 @@
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
-            const factionView = self._factionView = new CompactField(row, {label:'Faction', tooltip:'Open the faction brief', layoutHint:1});
-            factionView.setCursor('pointer');
+            const factionView = self._factionView = new CompactField(row, {label:'Faction', tooltip:'Open the faction brief', cursor:'pointer', layoutHint:1});
             self.attachToDom(factionView, '_doFactionClick', 'click');
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
-            self._whereView = new CompactField(row, {label:'Where', layoutHint:1});
+            const whereView = self._whereView = new CompactField(row, {label:'Where', tooltip:'Open the area brief', cursor:'pointer', layoutHint:1});
+            self.attachToDom(whereView, '_doWhereClick', 'click');
+            
             self._whenView = new CompactField(row, {label:'When', layoutHint:1});
-            self._eventView = new CompactField(row, {label:'Event', layoutHint:1});
+            const eventView = self._eventView = new CompactField(row, {label:'Event', tooltip:'Open the event brief', cursor:'pointer', layoutHint:1});
+            self.attachToDom(eventView, '_doEventClick', 'click');
             row.getFirstLayout().update();
             
             const skillsContainer = self._skills = new WideView(vitalsContainer);
@@ -163,6 +165,19 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _doWhereClick: function(_event) {
+            const eventModel = this.getBriefModel()?.getEventModel(),
+                locationModel = eventModel?.getLocationModel();
+            if (locationModel) pkg.app.openAreaBrief(locationModel);
+        },
+        
+        /** @private */
+        _doEventClick: function(_event) {
+            const eventModel = this.getBriefModel()?.getEventModel();
+            if (eventModel) pkg.app.openEventBrief(eventModel, true);
+        },
+        
         /** @private */
         _doFactionClick: function(_event) {
             pkg.app.openFactionBrief(this.getBriefModel()?.getFactionModel());

@@ -50,7 +50,8 @@
             
             row = new CompactFieldRow(factsContainer);
             self._idView = new CompactField(row, {label:'ID', layoutHint:1});
-            self._whereView = new CompactField(row, {label:'Where', layoutHint:2});
+            const whereView = self._whereView = new CompactField(row, {label:'Where', tooltip:'Open the area brief', cursor:'pointer', layoutHint:2});
+            self.attachToDom(whereView, '_doWhereClick', 'click');
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(factsContainer);
@@ -92,6 +93,12 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _doWhereClick: function(_event) {
+            const locationModel = this.getBriefModel()?.getLocationModel();
+            if (locationModel) pkg.app.openAreaBrief(locationModel);
+        },
+        
         updateStats: function(eventModel) {
             this._historicityView.updateForStat(eventModel[STAT_ID_HISTORICITY]);
             this._attestationView.updateForStat(eventModel[STAT_ID_ATTESTATION]);
