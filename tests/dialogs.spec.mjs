@@ -93,3 +93,35 @@ test('a confirm opened while an ack shows waits its turn with the acks', async (
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+/*  The briefs and the dossier are as tall as their content, up to the window, past which the 
+    field notes and report scroll. */
+test('a brief is only as tall as its content, and scrolls when that is taller than the window', async ({page}) => {
+    await page.route('**/tests/data/location/office.txt', route => route.fulfill({body:'A long report.\n\n'.repeat(80)}));
+    const problems = await startGame(page);
+    const openBrief = (kind, id) => page.evaluate(([kind, id]) => {
+            const m = tc.model;
+            if (kind === 'faction') tc.app.openFactionBrief(m.getFactionModel(id));
+            if (kind === 'area') tc.app.openAreaBrief(m.getLocation(id));
+        }, [kind, id]),
+        // The open brief's panel and window heights, and whether its notes and report scroll.
+        measure = kind => page.evaluate(kind => {
+            const brief = document.querySelector(kind === 'faction' ? '.myt-FactionBrief' : '.myt-AreaBrief').model,
+                profile = brief.getProfile().getIDE();
+            return {panel:brief.getPanelView().height, window:brief.height, scrolls:profile.scrollHeight > profile.clientHeight};
+        }, kind);
+    
+    await openBrief('faction', 'timecorps');
+    await expect.poll(async () => (await measure('faction')).panel).toBeLessThan(300);
+    expect((await measure('faction')).scrolls).toBe(false);
+    await page.keyboard.press('Escape');
+    
+    // The long report fills the window, less the padding, and scrolls.
+    await openBrief('area', 'office');
+    await expect.poll(async () => (await measure('area')).scrolls).toBe(true);
+    const area = await measure('area');
+    expect(area.panel).toBeLessThan(area.window);
+    expect(area.panel).toBeGreaterThan(area.window - 50);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

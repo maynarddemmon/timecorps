@@ -51,6 +51,10 @@
                     case 'simpleCentered':
                         positionAttrs = {align:'center', valign:'middle'};
                         break;
+                    case 'fit':
+                        // As tall, but only as high as its content. See setContentHeightToFit.
+                        positionAttrs = {align:'center', valign:'middle', width:tallWidth};
+                        break;
                     case 'tall':
                     default:
                         positionAttrs = {
@@ -65,6 +69,7 @@
                     roundedCorners:cornerRadius, bgColor:colorMegaDark, overflow:'hidden',
                     ...positionAttrs
                 }, [M.SizeToParent]);
+                if (sizingStrategy === 'fit') self.syncTo(self, '_updateFitHeight', 'height');
                 
                 if (cancelable) {
                     const header = self.getHeaderView();
@@ -98,6 +103,24 @@
             getCloseBtn: function() {return this._closeBtn;},
             getDefaultBtn: M.NOOP,
             getFooterView: function() {return this._footerView;},
+            
+            /*  For the 'fit' sizing strategy: makes the dialog just tall enough for content of 
+                this height, but no taller than the window allows, past which the content 
+                should scroll. */
+            setContentHeightToFit: function(contentHeight) {
+                this._contentHeightToFit = contentHeight;
+                this._updateFitHeight();
+            },
+            
+            /** @private */
+            _updateFitHeight: function(_event) {
+                const contentHeight = this._contentHeightToFit;
+                if (contentHeight == null) return;
+                
+                const panelView = this.getPanelView(),
+                    fitHeight = this.getContentView().y + contentHeight + (this.getFooterView()?.height ?? 0);
+                panelView.setHeight(mathMin(fitHeight, this.height - 2*padding));
+            },
             
             /*  Esc is handled in the capture phase because myt buttons (and checkboxes) stop 
                 keydown from bubbling, so a focused one would otherwise swallow it. Returning 

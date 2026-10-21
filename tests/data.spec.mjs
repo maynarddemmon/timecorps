@@ -20,9 +20,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         defaultEventActions = Object.assign({}, ...scenarios.map(s => s.defaultEventActions ?? {})),
         agents = agentsJson.agents,
         operations = operationsJson.operations,
-        scratch = Object.assign({}, ...scenarios.map(s => s.scratch ?? {})),
+        // Scratch entries and prompts can be in any data file.
+        scratch = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.scratch ?? {})),
         factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
-        // Prompts can be in any data file.
         prompts = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.prompts ?? {})),
     
         // Every string anywhere inside a JSON value.
@@ -516,18 +516,22 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     test('every scratch entry is named as an identifier and starts as a number, a boolean or a string', () => {
         const problems = [];
-        SCENARIO_FILES.forEach((file, idx) => {
-            const cfg = scenarios[idx].scratch;
-            if (cfg === undefined) return;
+        const files = [
+            ...SCENARIO_FILES.map((file, idx) => [file, scenarios[idx]]),
+            [DATA_DIR + '/agents.json5', agentsJson], [DATA_DIR + '/operations.json5', operationsJson]
+        ];
+        for (const [file, json] of files) {
+            const cfg = json.scratch;
+            if (cfg === undefined) continue;
             if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
                 problems.push(file + ' scratch is not an object');
-                return;
+                continue;
             }
             for (const [name, value] of Object.entries(cfg)) {
                 if (!/^[A-Za-z_$][\w$]*$/.test(name)) problems.push(file + ' scratch entry ' + name + ' is not an identifier');
                 if (!['boolean', 'string'].includes(typeof value) && !Number.isFinite(value)) problems.push(file + ' scratch entry ' + name + ' does not start as a number, a boolean or a string');
             }
-        });
+        }
         expect(problems).toEqual([]);
     });
 

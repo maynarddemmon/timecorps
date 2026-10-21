@@ -14,7 +14,8 @@
     
     /*  For dialogs that brief the player on a model: an optional photo, handwritten field 
         notes from the model's Describable phrases, and a typed report loaded from a text file.
-        Mix into a ModalDialog.
+        Mix into a ModalDialog. The dialog is only as tall as its content, up to the 
+        window's height, past which the field notes and report scroll.
         
         Attrs:
             photoWidth - A fixed photo width. Without one the photo spans the dialog.
@@ -44,6 +45,7 @@
             delete attrs.photoWidth;
             delete attrs.photoHeight;
             delete attrs.reservePhotoSpace;
+            attrs.sizingStrategy ??= 'fit';
             
             self.callSuper(parent, attrs);
             
@@ -97,6 +99,12 @@
             new M.SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
             
             placeProfile(false);
+            
+            // The content is the photo's space, if it's used, and the field notes and report,
+            // whose container grows as the report loads.
+            self._profileContainer = profileContainer;
+            self.syncTo(profile, '_fitToContent', 'y');
+            self.syncTo(profileContainer, '_fitToContent', 'height');
         },
         
         
@@ -133,6 +141,13 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _fitToContent: function(_event) {
+            const profile = this.getProfile(),
+                profileContainer = this._profileContainer;
+            if (profile && profileContainer) this.setContentHeightToFit(profile.y + profileContainer.height + padding / 2);
+        },
+        
         /*  The dynamic part of the brief: the visible Describable phrases, which change
             as the timeline changes. The row is hidden when nothing is visible. */
         updateFieldNotes: function() {
