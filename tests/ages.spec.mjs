@@ -12,17 +12,19 @@ const YEAR = 365 * 24 * 60 * 60 * 1000,
         return {age:agentModel.getAge(), effectiveAge:agentModel.getEffectiveAge(), healthMax:agentModel.health.max, dead:agentModel.isDead()};
     }, agentId);
 
-test('an agent starts at the age they were born to their starting Event, or to HQ\'s present if that\'s before they were born', async ({page}) => {
+test('an agent starts at the age the data gives, or 30, and their effective age as that unless the data gives one', async ({page}) => {
+    await page.route('**/tests/data/agents.json5', route => {
+        const json = readTestData('agents.json5');
+        json.agents.AL.age = 31.5;
+        json.agents.BR.age = 40;
+        json.agents.BR.effectiveAge = 33;
+        return route.fulfill({json});
+    });
     const problems = await startGame(page);
-    const out = await page.evaluate(() => ['AL', 'CH', 'BR'].map(id => {
+    expect(await page.evaluate(() => ['AL', 'BR', 'CH'].map(id => {
         const agentModel = tc.model.getAgentModel(id);
-        return [agentModel.born, agentModel.getEventModel().getStart(), tc.model.getHQEventModel().getStart(), agentModel.getAge(), agentModel.getEffectiveAge()];
-    }));
-    for (const [born, eventStart, hqStart, age, effectiveAge] of out) {
-        const bornMillis = Date.parse(born);
-        expect(age).toBeCloseTo(((eventStart > bornMillis ? eventStart : hqStart) - bornMillis) / YEAR, 6);
-        expect(effectiveAge).toBe(age);
-    }
+        return [agentModel.getAge(), agentModel.getEffectiveAge()];
+    }))).toEqual([[31.5, 31.5], [40, 33], [30, 30]]);
     expect(problems.warnings).toEqual([]);
 });
 
@@ -111,17 +113,6 @@ test('maximum health declines with effective age, to death at 85; treatments win
     await setAge(85);
     expect(await readAges(page, 'AL')).toMatchObject({healthMax:0, dead:true});
     expect(problems.pageErrors).toEqual([]);
-});
-
-test('an agent without a birth date is warned about and given a default age', async ({page}) => {
-    await page.route('**/tests/data/agents.json5', route => {
-        const json = readTestData('agents.json5');
-        delete json.agents.BR.born;
-        return route.fulfill({json});
-    });
-    const problems = await startGame(page);
-    expect(problems.warnings).toEqual(['Agent BR needs a birth date as "born", e.g. "2140-06-12" (using an age of 30): undefined']);
-    expect((await readAges(page, 'BR')).age).toBe(30);
 });
 
 test('an exit that is time travel, a jump or a pull, ages only the rest of the Event left', async ({page}) => {

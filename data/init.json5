@@ -194,6 +194,21 @@
 					}
 				},
 				
+				// Agents can reduce their effective age.
+				"_rejuvinate":{
+					"label":"Rejuvinate",
+					"available":"agent.effectiveAge > 25",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"timeline.credits":"10"
+					},
+					"adj":{
+						"agent.effectiveAge":{
+							"onSuccess":"-1"
+						}
+					}
+				},
+				
 				// Agents can be treated to remove paradox, one point at a time.
 				"_stabilize":{
 					"label":"Causality Stabilization Treatment",

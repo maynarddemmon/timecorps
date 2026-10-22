@@ -18,7 +18,7 @@
                 AGENT_DEFAULT_AGE, AGE_MIN_EFFECTIVE,
                 PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
-            timeUtil:{MILLIS_PER_YEAR, stringToMillis},
+            timeUtil:{MILLIS_PER_YEAR},
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
@@ -217,12 +217,10 @@
             self.initAges(age, effectiveAge);
         },
         
-        /*  Ages are in years. The lived age is the time from the birth date ("born" in the 
-            data, e.g. "2140-06-12") to the start of the Agent's starting Event, or, for an 
-            Agent who starts in an Event before they were born, to HQ's, the present they 
-            came from. It grows with every action and exit. The effective age is the body's: it grows as the lived age 
-            does, treatments wind it back, and it decides the Agent's maximum health. It starts
-            as the lived age unless the data gives an "effectiveAge". */
+        /*  Ages are in years. The lived age starts as the data's "age", or AGENT_DEFAULT_AGE,
+            and grows with every action and exit. The effective age is the body's: it grows as
+            the lived age does, treatments wind it back, and it decides the Agent's maximum 
+            health. It starts as the lived age unless the data gives an "effectiveAge". */
         initAges: function(age, effectiveAge) {
             const self = this;
             age ??= AGENT_DEFAULT_AGE;

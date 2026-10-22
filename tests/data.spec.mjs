@@ -208,7 +208,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
-    test('every agent has a birth date, before HQ\'s present, and any effective age is a number', () => {
+    test('every agent has a birth date, before HQ\'s present, and any age and effective age are numbers', () => {
         const problems = [],
             hq = events.time_corps_hq;
         for (const [agentId, agent] of Object.entries(agents)) {
@@ -220,7 +220,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             } else if (!(born < start)) {
                 problems.push(agentId + ' is born after HQ\'s present');
             }
-            if (agent.effectiveAge !== undefined && !Number.isFinite(agent.effectiveAge)) problems.push(agentId + ' effectiveAge is not a number');
+            for (const key of ['age', 'effectiveAge']) {
+                if (agent[key] !== undefined && !Number.isFinite(agent[key])) problems.push(agentId + ' ' + key + ' is not a number');
+            }
         }
         expect(problems).toEqual([]);
     });

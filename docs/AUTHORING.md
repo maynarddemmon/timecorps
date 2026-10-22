@@ -493,8 +493,9 @@ HQ and The Void leave out `_investigate` this way.
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
-			"born":"2139-05-14",                // Required. See Ages below.
-			"effectiveAge":31,                  // Optional. Default: their lived age.
+			"born":"2139-05-14",                // Required. For the record.
+			"age":34,                           // Optional, in years. Default: 30. See Ages below.
+			"effectiveAge":31,                  // Optional. Default: their age.
 			"faction":"timecorps",              // Optional. Default: "unaligned".
 			"event":"collision",                // Where they start. Default: HQ.
 			"health":{"value":65, "max":85},   // Or just a number for the value. Default: 100 of 100.
@@ -512,7 +513,7 @@ HQ and The Void leave out `_investigate` this way.
 
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
-- <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the time from `born` to the start of the agent's starting event, or, for an agent who starts in an event before they were born, to HQ's present. It grows by the time the agent lives through:
+- <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:
   - **An action** lives through the event's duration divided by its `actionLimit`, so taking every action lives through all of it. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival.
   - **An exit** lives through the rest of the event left, e.g. its unused actions, then the time from its end to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel and skip the time between.
   - **Time travel** (deploy, jump, recall, loop back) lives through nothing, not even the rest of the event left.
