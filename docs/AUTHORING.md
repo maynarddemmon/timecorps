@@ -61,6 +61,7 @@ What an expression can refer to:
 | `agents.<id>` | Any agent | Everywhere |
 | `operations.<id>` | Any operation | Everywhere |
 | `timeline` | The overall game state, e.g. `timeline.paradox.value` | Everywhere |
+| `timeline.cfg.<KEY>` | A game setting from `cfg` in `js/tc/tc.js`, e.g. `timeline.cfg.AGE_MIN_EFFECTIVE`. Read only | Everywhere |
 | `scratch.<name>` | A [scratch](#scratch) entry | Everywhere |
 
 Locations have none of the "self" names, so their phrases use `events.<id>` or `timeline`. Using a self name where it isn't available, e.g. `event` in an agent's expression, warns at load.
@@ -86,6 +87,7 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 | `agent` | The agent making the check. `agent.skills.<id>` is 0 for any skill the agent doesn't have |
 | `event` | The event the agent is at |
 | `timeline` | The overall game state |
+| `timeline.cfg.<KEY>` | A game setting from `cfg` in `js/tc/tc.js`, e.g. `timeline.cfg.AGE_MIN_EFFECTIVE`. Read only |
 | `scratch.<name>` | A [scratch](#scratch) entry |
 | `events.<id>` | Any event, e.g. `events.collision.attestation.value` |
 | `agents.<id>` | Any agent, e.g. `agents.ME.event`. Skills they don't have are 0, as for `agent` |

@@ -5,6 +5,15 @@ import path from 'node:path';
 import JSON5 from 'json5';
 import {readJson, fileExists, getScenarioFiles, TEST_DATA_DIR, ROOT} from './helpers.mjs';
 
+/*  The keys of tc.cfg, which expressions read as "timeline.cfg.<KEY>", taken from the cfg 
+    block in js/tc/tc.js. */
+const CFG_KEYS = (() => {
+    const src = fs.readFileSync(path.join(ROOT, 'js/tc/tc.js'), 'utf8').replace(/\r/g, ''),
+        start = src.indexOf('\n            cfg: {\n'),
+        end = src.indexOf('\n            },\n', start);
+    return new Set([...src.slice(start, end).matchAll(/^ {16}([A-Z][A-Z0-9_]*)\s*:/gm)].map(match => match[1]));
+})();
+
 /*  Checks the game's data, so problems in it show up without playing, and the test data that
     the other tests play with, so it stays valid too. */
 for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
@@ -57,6 +66,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             for (const [ref, name] of expr.matchAll(/(?<![\w.])scratch\.(\w+)/g)) {
                 if (!Object.hasOwn(scratch, name)) bad.push(ref);
             }
+            for (const [ref, key] of expr.matchAll(/(?<![\w.])timeline\.cfg\.(\w+)/g)) {
+                if (!CFG_KEYS.has(key)) bad.push(ref);
+            }
             return bad;
         };
 
@@ -75,13 +87,15 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     });
 
     test('every constraint reference resolves', () => {
+        // The cfg keys were found, so a misspelled one is caught rather than all of them.
+        expect(CFG_KEYS.has('AGE_MIN_EFFECTIVE')).toBe(true);
         const problems = [];
         for (const [eventId, event] of Object.entries(events)) {
             for (const str of collectStrings(event)) {
                 for (const ref of findBadRefs(str, eventId)) problems.push('event ' + eventId + ': ' + ref);
             }
         }
-        const others = {locations, agentDefaults:agentsJson.agentDefaults, agents, operations, prompts};
+        const others = {locations, agentDefaults:agentsJson.agentDefaults, agents, operations, prompts, defaultEventActions};
         for (const [label, data] of Object.entries(others)) {
             for (const str of collectStrings(data)) {
                 for (const ref of findBadRefs(str, null)) problems.push(label + ': ' + ref);

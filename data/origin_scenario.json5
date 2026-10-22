@@ -63,6 +63,7 @@
 	"events":{
 		"origin_alarm":{
 			"name":"The Alarm",
+			"image":true,
 			"start":"2026-11-13T07:00:00",
 			"duration":{"h":1},
 			"location":"origin.home",
@@ -138,6 +139,7 @@
 		
 		"origin_bus_stop":{
 			"name":"The Bus Stop",
+			"image":true,
 			"start":"2026-11-13T08:03:00",
 			"duration":{"m":5},
 			"location":"origin.city_streets",
