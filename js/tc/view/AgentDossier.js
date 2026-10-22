@@ -61,6 +61,8 @@
             row = new CompactFieldRow(vitalsContainer);
             const factionView = self._factionView = new CompactField(row, {label:'Faction', tooltip:'Open the faction brief', cursor:'pointer', layoutHint:1});
             self.attachToDom(factionView, '_doFactionClick', 'click');
+            self._ageView = new CompactField(row, {label:'Age', tooltip:'Years lived', layoutHint:1});
+            self._effectiveAgeView = new CompactField(row, {label:'Biological Age', tooltip:'The body’s age, which treatments can wind back. From 35 it lowers the maximum health, to nothing at 85.', layoutHint:1});
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
@@ -213,6 +215,10 @@
             this._chronalView.updateForStat(agentModel[STAT_ID_CHRONAL]);
             this._paradoxView.updateForStat(agentModel[STAT_ID_PARADOX]);
             this._healthView.updateForStat(agentModel[STAT_ID_HEALTH]);
+            
+            // In whole years.
+            this._ageView.setValue(agentModel.getAge().toFixed(2));
+            this._effectiveAgeView.setValue(agentModel.getEffectiveAge().toFixed(2));
         },
         
         /** @overrides BriefSupport */

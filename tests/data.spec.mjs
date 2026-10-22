@@ -208,6 +208,23 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
+    test('every agent has a birth date, before HQ\'s present, and any effective age is a number', () => {
+        const problems = [],
+            hq = events.time_corps_hq;
+        for (const [agentId, agent] of Object.entries(agents)) {
+            // An agent who starts before they were born is reckoned from HQ, the present.
+            const born = Date.parse(agent.born),
+                start = Date.parse(hq.start + 'Z');
+            if (typeof agent.born !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(agent.born) || isNaN(born)) {
+                problems.push(agentId + ' has no birth date as "born", e.g. "2140-06-12"');
+            } else if (!(born < start)) {
+                problems.push(agentId + ' is born after HQ\'s present');
+            }
+            if (agent.effectiveAge !== undefined && !Number.isFinite(agent.effectiveAge)) problems.push(agentId + ' effectiveAge is not a number');
+        }
+        expect(problems).toEqual([]);
+    });
+    
     const skillChecks = Object.assign({}, ...scenarios.map(s => s.skillChecks ?? {})),
     
         // A difficulty is optional, and is an integer or "no-roll", which always succeeds.
@@ -280,8 +297,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     /*  The stats set and adj can change, by scope. Mirrors tc.ADJUSTMENT_STAT_IDS. */
     const ADJUSTMENT_STAT_IDS = {
-        agent:['health', 'chronal', 'paradox'],
-        agents:['health', 'chronal', 'paradox'],
+        agent:['health', 'chronal', 'paradox', 'effectiveAge'],
+        agents:['health', 'chronal', 'paradox', 'effectiveAge'],
         event:['paradox', 'historicity', 'attestation'],
         events:['paradox', 'historicity', 'attestation'],
         timeline:['paradox', 'chronal', 'score', 'credits']

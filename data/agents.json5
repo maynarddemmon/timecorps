@@ -27,6 +27,7 @@
 		// those choices.
 		"ME":{
 			"name":"You",
+			"born":"1995-08-01",
 			"event":"origin_alarm",
 			"health":{"value":70, "max":70},
 			"chronal":{"value":0, "max":25},
@@ -57,6 +58,7 @@
 		},
 		"VQ":{
 			"name":"Vasquez",
+			"born":"2139-01-27",
 			"faction":"timecorps",
 			"video":true,
 			"event":"collision",
@@ -76,6 +78,7 @@
 		},
 		"OK":{
 			"name":"Okonjo",
+			"born":"2143-09-06",
 			"faction":"timecorps",
 			"health":{"value":50, "max":90},
 			"chronal":{"value":0},
@@ -95,6 +98,7 @@
 		},
 		"HW":{
 			"name":"Halloway",
+			"born":"2144-11-05",
 			"faction":"timecorps",
 			"health":{"value":25},
 			"event":"lifeboat_capacity",
@@ -116,6 +120,7 @@
 		},
 		"GO":{
 			"name":"Gordon",
+			"born":"2135-01-07",
 			"faction":"timecorps",
 			"skills":{
 				"investigation":50,
@@ -131,6 +136,7 @@
 		},
 		"PI":{
 			"name":"Pierce",
+			"born":"2141-04-27",
 			"faction":"timecorps",
 			"video":true,
 			"skills":{
@@ -148,6 +154,7 @@
 		},
 		"AA":{
 			"name":"Alexander Aimes",
+			"born":"2146-03-20",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
@@ -164,6 +171,7 @@
 		},
 		"AB":{
 			"name":"Arthur Borne",
+			"born":"2131-02-19",
 			"faction":"timecorps",
 			"paradox":1,
 			"skills":{
@@ -181,6 +189,7 @@
 		},
 		"AC":{
 			"name":"Aaron Crown",
+			"born":"2122-05-23",
 			"faction":"timecorps",
 			"health":{"value":10},
 			"paradox":2,
@@ -199,6 +208,7 @@
 		},
 		"AD":{
 			"name":"Amon Duncan",
+			"born":"2138-06-26",
 			"faction":"timecorps",
 			"health":{"value":56},
 			"skills":{
@@ -216,6 +226,7 @@
 		},
 		"AE":{
 			"name":"Anton Eklund",
+			"born":"2140-12-28",
 			"faction":"timecorps",
 			"health":{"value":88},
 			"skills":{
@@ -233,6 +244,7 @@
 		},
 		"AF":{
 			"name":"Ambrose Fenwick",
+			"born":"2149-10-26",
 			"faction":"timecorps",
 			"health":{"value":91},
 			"skills":{
@@ -250,6 +262,7 @@
 		},
 		"AG":{
 			"name":"Aurelio Garza",
+			"born":"2136-09-12",
 			"faction":"timecorps",
 			"health":{"value":93},
 			"skills":{
@@ -267,6 +280,7 @@
 		},
 		"AH":{
 			"name":"Axel Harrow",
+			"born":"2141-01-01",
 			"faction":"timecorps",
 			"health":{"value":79},
 			"paradox":1,
@@ -285,6 +299,7 @@
 		},
 		"AI":{
 			"name":"Aldous Ingram",
+			"born":"2128-06-13",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":-25,
@@ -301,6 +316,7 @@
 		},
 		"AJ":{
 			"name":"Asher Jansen",
+			"born":"2150-04-24",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":100,
@@ -317,6 +333,7 @@
 		},
 		"AK":{
 			"name":"Arjun Kasliwal",
+			"born":"2137-03-24",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
@@ -333,6 +350,7 @@
 		},
 		"AL":{
 			"name":"Abram Lowe",
+			"born":"2134-02-03",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
@@ -349,6 +367,7 @@
 		},
 		"AM":{
 			"name":"Amadou Mensah",
+			"born":"2133-09-18",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
@@ -365,6 +384,7 @@
 		},
 		"AN":{
 			"name":"Ansel Novak",
+			"born":"2118-05-03",
 			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
@@ -382,6 +402,7 @@
 		},
 		"AO":{
 			"name":"Alden Orme",
+			"born":"2147-01-21",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":-75,
@@ -398,6 +419,7 @@
 		},
 		"AP":{
 			"name":"Aurelien Pascal",
+			"born":"2144-05-03",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
@@ -414,6 +436,7 @@
 		},
 		"AQ":{
 			"name":"Anya Quill",
+			"born":"2142-08-01",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
@@ -430,6 +453,7 @@
 		},
 		"AR":{
 			"name":"Ayumi Reyes",
+			"born":"2148-12-07",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
@@ -446,6 +470,7 @@
 		},
 		"AS":{
 			"name":"Ava Sato",
+			"born":"2145-08-15",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":25,
@@ -462,6 +487,7 @@
 		},
 		"AT":{
 			"name":"Amara Thorne",
+			"born":"2139-12-09",
 			"faction":"timecorps",
 			"paradox":1,
 			"skills":{
@@ -479,6 +505,7 @@
 		},
 		"AU":{
 			"name":"Aurora Ueda",
+			"born":"2146-02-28",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":75,
@@ -495,6 +522,7 @@
 		},
 		"AV":{
 			"name":"Asha Varga",
+			"born":"2143-01-17",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":125,
@@ -511,6 +539,7 @@
 		},
 		"AW":{
 			"name":"Aislin Wren",
+			"born":"2152-04-22",
 			"faction":"timecorps",
 			"health":{"value":65,"max":75},
 			"skills":{
@@ -528,6 +557,7 @@
 		},
 		"AX":{
 			"name":"Alina Xu",
+			"born":"2141-11-22",
 			"faction":"timecorps",
 			"health":{"value":33},
 			"paradox":1,
@@ -546,6 +576,7 @@
 		},
 		"AY":{
 			"name":"Amaya Yoshida",
+			"born":"2138-07-20",
 			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
@@ -563,6 +594,7 @@
 		},
 		"AZ":{
 			"name":"Anika Zeller",
+			"born":"2146-03-06",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":-50,
@@ -579,6 +611,7 @@
 		},
 		"BA":{
 			"name":"Beniko Asano",
+			"born":"2140-07-09",
 			"faction":"timecorps",
 			"health":{"max":95},
 			"skills":{
@@ -596,6 +629,7 @@
 		},
 		"BB":{
 			"name":"Bianca Brandt",
+			"born":"2147-08-01",
 			"faction":"timecorps",
 			"health":{"max":80},
 			"skills":{
@@ -613,6 +647,7 @@
 		},
 		"BC":{
 			"name":"Bree Castellanos",
+			"born":"2142-02-26",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
@@ -629,6 +664,7 @@
 		},
 		"BD":{
 			"name":"Brigid Dunne",
+			"born":"2145-07-25",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":0,
@@ -645,6 +681,7 @@
 		},
 		"BE":{
 			"name":"Beatriz Esteves",
+			"born":"2144-09-18",
 			"faction":"timecorps",
 			"health":{"value":98},
 			"skills":{
@@ -662,6 +699,7 @@
 		},
 		"BF":{
 			"name":"Bodil Falk",
+			"born":"2139-09-15",
 			"faction":"timecorps",
 			"health":{"value":50},
 			"skills":{
@@ -679,6 +717,7 @@
 		},
 		"BG":{
 			"name":"Bryony Gale",
+			"born":"2144-05-20",
 			"faction":"timecorps",
 			"health":{"value":80},
 			"paradox":1,
@@ -697,6 +736,7 @@
 		},
 		"BH":{
 			"name":"Beatrix Hsu",
+			"born":"2143-03-09",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":-25,
@@ -713,6 +753,7 @@
 		},
 		"BI":{
 			"name":"Bella Ionescu",
+			"born":"2140-07-26",
 			"faction":"timecorps",
 			"paradox":2,
 			"skills":{
@@ -730,6 +771,7 @@
 		},
 		"BJ":{
 			"name":"Brynn Jaeger",
+			"born":"2146-06-13",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":200,
@@ -746,6 +788,7 @@
 		},
 		"BK":{
 			"name":"Beatrice Kaur",
+			"born":"2141-04-19",
 			"faction":"timecorps",
 			"skills":{
 				"chronogation":50,
@@ -762,6 +805,7 @@
 		},
 		"BL":{
 			"name":"Bo Lindqvist",
+			"born":"2145-05-23",
 			"faction":"timecorps",
 			"health":{"value":95},
 			"paradox":3,

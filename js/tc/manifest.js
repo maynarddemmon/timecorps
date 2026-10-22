@@ -50,7 +50,7 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'FactionModel.js').provides('tc.FactionModel').requires('tc.Describable');
     file(MODEL_ROOT + 'PromptModel.js').provides('tc.PromptModel').requires('tc.DescribableHideable');
     file(MODEL_ROOT + 'AgentModel.js').provides('tc.AgentModel').requires(
-        'tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
+        'tc.timeUtil','tc.NotifyingNumericStatModel','tc.Describable','tc.MediaSupport','tc.checks'
     );
     file(MODEL_ROOT + 'EventModel.js').provides('tc.EventModel').requires(
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel','tc.MediaSupport'

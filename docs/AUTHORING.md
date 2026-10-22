@@ -370,11 +370,11 @@ Adjustments change stats as the result of an action or exit. They go in its `adj
 
 | Scope | Stats | Whose |
 |---|---|---|
-| `agent` | `health`, `chronal`, `paradox` | The agent taking the action or exit |
+| `agent` | `health`, `chronal`, `paradox`, `effectiveAge` | The agent taking the action or exit. `effectiveAge` is in years; see [Ages](#ages) |
 | `event` | `attestation`, `historicity`, `paradox` | The event the action or exit belongs to |
 | `timeline` | `paradox`, `chronal`, `score`, `credits` | The timeline. Score and credits can't go below 0 |
 | `events.<id>` | `attestation`, `historicity`, `paradox` | Any event, by its ID, e.g. `"events.collision.historicity"` |
-| `agents.<id>` | `health`, `chronal`, `paradox` | Any agent, by their ID, e.g. `"agents.ME.chronal"` |
+| `agents.<id>` | `health`, `chronal`, `paradox`, `effectiveAge` | Any agent, by their ID, e.g. `"agents.ME.chronal"` |
 
 A key can also name a Value of any event, as `"events.<id>.values.<value>"`, e.g. `"events.aftermath.values.lost"`, or a skill of any agent, as `"agents.<id>.skills.<skill>"`, e.g. `"agents.ME.skills.chronogation"`. So an action can change another event, and an exit can change the event it leads to, e.g. `"adj":{"events.aftermath.attestation":"5"}`. A `set` (not an `adj`) can also move an agent to an event, keyed `"agent.event"` for the agent taking the action, or `"agents.<id>.event"` for any agent. Its expression is worked out once to an event ID, so a fixed one needs quotes: `"set":{"agents.BA.event":"'lgv_announcement'"}`. The move is a deploy (from HQ) or a jump, with all its rules: the chronal is paid and any paradox for a revisit is gained, and if the agent can't go, e.g. for want of chronal, they stay put, with a warning. Use it in a mission's `onSetup` to put agents where the mission starts. A `set` can also put an agent in a faction, keyed `"agent.faction"` or `"agents.<id>.faction"`, with the faction's ID in quotes, e.g. `"set":{"agents.ME.faction":"'timecorps'"}`.
 
@@ -493,6 +493,8 @@ HQ and The Void leave out `_investigate` this way.
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
+			"born":"2139-05-14",                // Required. See Ages below.
+			"effectiveAge":31,                  // Optional. Default: their lived age.
 			"faction":"timecorps",              // Optional. Default: "unaligned".
 			"event":"collision",                // Where they start. Default: HQ.
 			"health":{"value":65, "max":85},   // Or just a number for the value. Default: 100 of 100.
@@ -510,6 +512,12 @@ HQ and The Void leave out `_investigate` this way.
 
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
+- <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the time from `born` to the start of the agent's starting event, or, for an agent who starts in an event before they were born, to HQ's present. It grows by the time the agent lives through:
+  - **An action** lives through the event's duration divided by its `actionLimit`, so taking every action lives through all of it. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival.
+  - **An exit** lives through the time from the end of the event left to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel.
+  - **Time travel** (deploy, jump, recall, loop back) lives through nothing.
+  
+  The effective age is the body's. It grows with the lived age, and treatments wind it back: `set` or `adj` on `agent.effectiveAge`, in whole years, e.g. `"adj":{"agent.effectiveAge":"-10"}`, though never below 25 (`AGE_MIN_EFFECTIVE`). From an effective age of 35 the agent's maximum health declines, slowly at first and then faster, to 0, and death, at 85. The `health` max in the data is the agent's in their prime. The thresholds and curve are `AGE_*` in `js/tc/tc.js`. The Agent Dossier shows both ages.
 - **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, for 1 credit a point. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
 
 ## Operations (missions)

@@ -3,7 +3,8 @@
     
     const {
             max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil, 
-            log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom
+            log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom,
+            exp:mathExp
         } = Math,
         
         logToBase = (v, base) => mathLog(v) / mathLog(base),
@@ -61,6 +62,7 @@
         STAT_ID_HEALTH = 'health',
         STAT_ID_HISTORICITY = 'historicity',
         STAT_ID_ATTESTATION = 'attestation',
+        STAT_ID_EFFECTIVE_AGE = 'effectiveAge',
         
         I18N_PARADOX = 'Parad' + ICON_PARADOX + 'x',
         I18N_CHRONAL = 'Chr' + ICON_CHRONAL + 'nal',
@@ -74,6 +76,8 @@
             [STAT_ID_HEALTH]:I18N_HEALTH,
             [STAT_ID_HISTORICITY]:I18N_HISTORICITY,
             [STAT_ID_ATTESTATION]:I18N_ATTESTATION,
+            // An agent's, in years, which set and adj can change like a stat.
+            [STAT_ID_EFFECTIVE_AGE]:'Effective Age',
             // The timeline's, which set and adj can change like stats.
             score:'Score',
             credits:'Credits'
@@ -184,6 +188,17 @@
                 // An Agent's normal maximum health, and the most it can ever be raised to.
                 AGENT_DEFAULT_HEALTH:100,
                 AGENT_HEALTH_LIMIT:150,
+                
+                // Ages, in years. An Agent without a birth date in the data is this old.
+                AGENT_DEFAULT_AGE:30,
+                // From this effective age an Agent's maximum health declines, slowly at first
+                // and faster with age, reaching 0, and death, at AGE_HEALTH_ZERO. The larger
+                // the curve, the more the decline is held back until late.
+                AGE_HEALTH_DECLINE_START:35,
+                AGE_HEALTH_ZERO:85,
+                AGE_HEALTH_DECLINE_CURVE:3,
+                // Treatments can't wind an Agent's effective age back below this.
+                AGE_MIN_EFFECTIVE:25,
                 
                 // The most an Agent's skill can be raised to by purchasing it.
                 MAX_SKILL_VALUE:1000,
@@ -308,6 +323,15 @@
             },
             
             // Chronal Util
+            /*  The fraction of an Agent's maximum health left at an effective age, in years: 1 
+                up to AGE_HEALTH_DECLINE_START, falling exponentially faster to 0 at 
+                AGE_HEALTH_ZERO. */
+            getAgeHealthFactor: effectiveAge => {
+                const {AGE_HEALTH_DECLINE_START:start, AGE_HEALTH_ZERO:end, AGE_HEALTH_DECLINE_CURVE:curve} = TC.cfg,
+                    t = mathMin(1, mathMax(0, (effectiveAge - start) / (end - start)));
+                return 1 - (mathExp(curve * t) - 1) / (mathExp(curve) - 1);
+            },
+            
             getChronalToDeploy: (agentModel, eventModel) => {
                 const eventTime = eventModel.getStart(),
                     agentEvent = agentModel.getEventModel();
@@ -406,6 +430,7 @@
             STAT_ID_HEALTH,
             STAT_ID_HISTORICITY,
             STAT_ID_ATTESTATION,
+            STAT_ID_EFFECTIVE_AGE,
             
             // Skill IDS: these should match up to the ID of skills defined in init.json5.
             SKILL_ID_CHRONOGATION:'chronogation',

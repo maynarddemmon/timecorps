@@ -13,6 +13,7 @@
 		// Given and revealed by the first mission. Has a video portrait.
 		"AL":{
 			"name":"Alpha",
+			"born":"1870-03-15",
 			"faction":"timecorps",
 			"video":true,
 			"event":"origin",
@@ -33,6 +34,7 @@
 		// Revealed and given by the tests. No chronal, and a paradox already.
 		"BR":{
 			"name":"Bravo",
+			"born":"2144-06-01",
 			"health":{"value":50, "max":90},
 			"chronal":0,
 			"paradox":1,
@@ -52,6 +54,7 @@
 		// Revealed once the boats are known about.
 		"CH":{
 			"name":"Charlie",
+			"born":"1871-11-20",
 			"health":{"value":25},
 			"event":"boats",
 			"paradox":2,
@@ -66,6 +69,7 @@
 		// Revealed and given by completing the second mission.
 		"DE":{
 			"name":"Delta",
+			"born":"2146-09-09",
 			"skills":{
 				"investigation":50,
 				"cha":150,
@@ -76,6 +80,7 @@
 		// video portrait.
 		"EC":{
 			"name":"Echo",
+			"born":"2150-01-31",
 			"video":true,
 			"skills":{
 				"chronogation":200,

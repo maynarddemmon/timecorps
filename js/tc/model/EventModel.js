@@ -11,7 +11,7 @@
         {
             NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
-            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL,
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_EFFECTIVE_AGE,
             cfg:{
                 EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
@@ -127,8 +127,8 @@
             action or exit, any agent by ID ("agents.<id>.<stat>"), its Event, any Event by ID 
             ("events.<id>.<stat>"), or the timeline. */
         ADJUSTMENT_STAT_IDS = pkg.ADJUSTMENT_STAT_IDS = {
-            [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
-            [SCOPE_AGENTS]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX],
+            [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_EFFECTIVE_AGE],
+            [SCOPE_AGENTS]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_EFFECTIVE_AGE],
             [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
             [SCOPE_EVENTS]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
             [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_SCORE, STAT_ID_CREDITS]
@@ -178,7 +178,16 @@
                 case 'stat':
                     switch (parsed.scopeName) {
                         case SCOPE_AGENT:
-                        case SCOPE_AGENTS: return agentModel?.[parsed.statId];
+                        case SCOPE_AGENTS:
+                            // In whole years. Treatments wind it back, but not below the minimum.
+                            if (parsed.statId === STAT_ID_EFFECTIVE_AGE) return agentModel && {
+                                get value() {return agentModel.getEffectiveAge();},
+                                getAllowedAdj: adj => ({adj:agentModel.getAllowedEffectiveAgeAdj(adj)}),
+                                adjValue: adj => {
+                                    if (adj !== 0) agentModel.adjEffectiveAge(adj);
+                                }
+                            };
+                            return agentModel?.[parsed.statId];
                         case SCOPE_EVENT:
                         case SCOPE_EVENTS: return eventModel?.[parsed.statId];
                         case SCOPE_TIMELINE:
@@ -1123,6 +1132,10 @@
             },
             
             setMode: function(mode) {this.set('mode', mode, true);},
+            
+            /*  Whether taking the exit is time travel, as "jump" and "pulled" are, rather than
+                living through the time between the Events. */
+            isTimeTravel: function() {return this.mode === 'jump' || this.mode === 'pulled';},
             
             setTo: function(to) {
                 if (this.to !== to) {

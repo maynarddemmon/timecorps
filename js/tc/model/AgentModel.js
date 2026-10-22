@@ -15,8 +15,10 @@
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
+                AGENT_DEFAULT_AGE, AGE_MIN_EFFECTIVE,
                 PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
+            timeUtil:{MILLIS_PER_YEAR, stringToMillis},
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
@@ -202,7 +204,37 @@
             // Nullish event during init is assumed to be the HQ.
             attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
             
+            // Worked out once the Agent is at their starting Event. See initAges.
+            const effectiveAge = attrs.effectiveAge;
+            delete attrs.effectiveAge;
+            
             self.callSuper(attrs);
+            
+            self.initAges(effectiveAge);
+        },
+        
+        /*  Ages are in years. The lived age is the time from the birth date ("born" in the 
+            data, e.g. "2140-06-12") to the start of the Agent's starting Event, or, for an 
+            Agent who starts in an Event before they were born, to HQ's, the present they 
+            came from. It grows with every action and exit. The effective age is the body's: it grows as the lived age 
+            does, treatments wind it back, and it decides the Agent's maximum health. It starts
+            as the lived age unless the data gives an "effectiveAge". */
+        initAges: function(effectiveAge) {
+            const self = this,
+                bornMillis = typeof self.born === 'string' ? stringToMillis(self.born) : NaN,
+                eventStartMillis = self.getEventModel()?.getStart(),
+                startMillis = eventStartMillis > bornMillis ? eventStartMillis : pkg.model.getHQEventModel()?.getStart();
+            let age = AGENT_DEFAULT_AGE;
+            if (Number.isFinite(bornMillis) && Number.isFinite(startMillis)) {
+                age = (startMillis - bornMillis) / MILLIS_PER_YEAR;
+            } else {
+                console.warn('Agent', self.id, 'needs a birth date as "born", e.g. "2140-06-12" (using an age of ' + AGENT_DEFAULT_AGE + '):', self.born);
+            }
+            self.set('age', age, true);
+            
+            // What the data gives as the maximum health is the Agent's in their prime.
+            self.healthMaxInPrime = self[STAT_ID_HEALTH].getMax();
+            self.setEffectiveAge(typeof effectiveAge === 'number' ? effectiveAge : age);
         },
         
         getAsObj: function(cfg) {
@@ -271,6 +303,41 @@
             }
         },
         
+        setBorn: function(born) {this.set('born', born, true);},
+        
+        /*  The lived age and effective age, in years. See initAges. */
+        getAge: function() {return this.age;},
+        getEffectiveAge: function() {return this.effectiveAge;},
+        setEffectiveAge: function(years) {
+            if (this.effectiveAge !== years) {
+                this.set('effectiveAge', years, true);
+                
+                // Declines from the prime, and reaching 0 kills.
+                const statHealth = this[STAT_ID_HEALTH];
+                statHealth.setMax(mathRound(this.healthMaxInPrime * pkg.getAgeHealthFactor(years)));
+                
+                if (this.inited) this.notifyCollectionOfUpdate();
+            }
+        },
+        
+        /*  How much of an adjustment to the effective age, in years, can apply: all of it, 
+            except a treatment can't wind it back below AGE_MIN_EFFECTIVE. */
+        getAllowedEffectiveAgeAdj: function(adj) {
+            return adj >= 0 ? adj : mathMax(adj, mathMin(0, AGE_MIN_EFFECTIVE - this.effectiveAge));
+        },
+        adjEffectiveAge: function(adj) {
+            this.setEffectiveAge(this.effectiveAge + this.getAllowedEffectiveAgeAdj(adj));
+        },
+        
+        /*  Ages the Agent by time they live through, in milliseconds: both ages grow. */
+        ageBy: function(millis) {
+            if (millis > 0 && this.isNotDead()) {
+                const years = millis / MILLIS_PER_YEAR;
+                this.set('age', this.age + years, true);
+                this.setEffectiveAge(this.effectiveAge + years);
+            }
+        },
+        
         setActionExecCount: function(v, noEventUpdate) {
             if (this.actionExecCount !== v) {
                 this.setAndNotifyCollection('actionExecCount', v, true);
@@ -304,6 +371,12 @@
                 
                 this.pushOntoLog(logEntry ?? {type:LOG_TYPE_ORIGIN, event:this.getEventModel()});
                 accrueEntryParadox(this, newEventModel);
+                
+                // An Event that allows no actions is lived through whole on arrival. Otherwise
+                // each action lives through a share of it. See doAction.
+                if (this.inited && newEventModel?.isRegularEvent() && newEventModel.getActionLimit() === 0) {
+                    this.ageBy(newEventModel.getDuration());
+                }
                 oldEventModel?.notifyCollectionOfUpdate();
                 newEventModel?.notifyCollectionOfUpdate();
                 pkg.app.notifyAgentLocOrVisChange(this, false);
@@ -501,6 +574,8 @@
                 actionExecCount:this.actionExecCount,
                 arrivalOrder:this.arrivalOrder,
                 devoured:this.devoured,
+                age:this.age,
+                effectiveAge:this.effectiveAge,
                 log:this.log.map(exportLogEntry)
             };
             for (const statId of AGENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
@@ -536,6 +611,10 @@
                 }
             }
             if ('actionExecCount' in obj) this.setActionExecCount(obj.actionExecCount, true);
+            
+            // Set directly, since the saved health already has the maximum they give.
+            if ('age' in obj) this.set('age', obj.age, true);
+            if ('effectiveAge' in obj) this.set('effectiveAge', obj.effectiveAge, true);
             
             if (obj.log) {
                 const log = [];
@@ -662,6 +741,9 @@
                         exitModel.applySets(self, true, 0);
                         
                         exitModel.openPrompt(() => {
+                            // The time between leaving one Event and arriving at the next is
+                            // lived through on the way, unless the exit is time travel.
+                            if (!exitModel.isTimeTravel()) self.ageBy(toEvent.getStart() - exitModel.event.getEnd());
                             self.setEvent(toEvent.id, logEntry);
                             pkg.app.selectEventBox(toEvent);
                         });
@@ -712,6 +794,12 @@
                 
                 if (check.success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 this.pushOntoLog(logEntry);
+                
+                // Each action lives through an equal share of the Event, so taking them all 
+                // lives through the whole of it.
+                const eventModel = actionModel.event,
+                    actionLimit = eventModel.getActionLimit();
+                if (eventModel.isRegularEvent() && actionLimit > 0) this.ageBy(eventModel.getDuration() / actionLimit);
                 
                 if (check.success) actionModel.openPrompt();
             }
