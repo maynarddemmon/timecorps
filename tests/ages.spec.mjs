@@ -26,7 +26,7 @@ test('an agent starts at the age they were born to their starting Event, or to H
     expect(problems.warnings).toEqual([]);
 });
 
-test('actions age by a share of the Event, exits by the time between Events, and time travel not at all', async ({page}) => {
+test('actions age by a share of the Event, exits by the rest of it and the time between Events, and time travel not at all', async ({page}) => {
     await page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5');
         json.events.origin.actions.wait = {label:'Wait', skillCheck:{difficulty:'no-roll'}};
@@ -47,18 +47,24 @@ test('actions age by a share of the Event, exits by the time between Events, and
         steps.push(alpha.getAge());
         alpha.doDeployToEvent(origin);
         steps.push(alpha.getAge());
+        // Leaving by time travel doesn't live through the rest of the Event.
+        alpha.doRecallToHQ();
+        steps.push(alpha.getAge());
         return {
             steps, effectiveAge:alpha.getEffectiveAge(),
             share:origin.getDuration() / origin.getActionLimit(),
-            gap:aftermath.getStart() - origin.getEnd(), stay:aftermath.getDuration(), at:alpha.event
+            duration:origin.getDuration(), gap:aftermath.getStart() - origin.getEnd(), stay:aftermath.getDuration(), at:alpha.event
         };
     });
-    const [start, afterAction, afterExit, afterDeploy] = out.steps;
+    const [start, afterAction, afterExit, afterDeploy, afterRecall] = out.steps;
     expect(afterAction - start).toBeCloseTo(out.share / YEAR, 9);
-    expect(afterExit - afterAction).toBeCloseTo((Math.max(0, out.gap) + out.stay) / YEAR, 9);
-    expect(out.at).toBe('origin');
+    // The rest of Origin, its unused actions, then the way to Aftermath, then all of it.
+    expect(out.gap).toBeGreaterThan(0);
+    expect(afterExit - afterAction).toBeCloseTo((out.duration - out.share + out.gap + out.stay) / YEAR, 9);
+    expect(out.at).toBe('time_corps_hq');
     expect(afterDeploy).toBe(afterExit);
-    expect(out.effectiveAge).toBe(afterDeploy);
+    expect(afterRecall).toBe(afterDeploy);
+    expect(out.effectiveAge).toBe(afterRecall);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -118,7 +124,7 @@ test('an agent without a birth date is warned about and given a default age', as
     expect((await readAges(page, 'BR')).age).toBe(30);
 });
 
-test('an exit that is time travel, a jump or a pull, ages nothing', async ({page}) => {
+test('an exit that is time travel, a jump or a pull, ages only the rest of the Event left', async ({page}) => {
     await page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5');
         json.events.origin.exits.find(exit => exit.to === 'aftermath').mode = 'pulled';
@@ -128,10 +134,12 @@ test('an exit that is time travel, a jump or a pull, ages nothing', async ({page
     const out = await page.evaluate(() => {
         const m = tc.model,
             alpha = m.getAgentModel('AL'),
+            origin = m.getEventModel('origin'),
             before = alpha.getAge();
-        alpha.doFollowExit(m.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'));
-        return {at:alpha.event, aged:alpha.getAge() - before};
+        alpha.doFollowExit(origin.getExitModels().find(exit => exit.to === 'aftermath'));
+        return {at:alpha.event, aged:alpha.getAge() - before, rest:origin.getDuration()};
     });
-    expect(out).toEqual({at:'aftermath', aged:0});
+    expect(out.at).toBe('aftermath');
+    expect(out.aged).toBeCloseTo(out.rest / YEAR, 9);
     expect(problems.pageErrors).toEqual([]);
 });
