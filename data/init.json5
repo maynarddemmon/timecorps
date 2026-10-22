@@ -195,16 +195,16 @@
 				},
 				
 				// Agents can reduce their effective age.
-				"_rejuvinate":{
-					"label":"Rejuvinate",
-					"available":"agent.effectiveAge > 25",
+				"_rejuvenate":{
+					"label":"Rejuvenate",
+					"available":"agent.effectiveAge > timeline.cfg.AGE_MIN_EFFECTIVE",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
-						"timeline.credits":"10"
+						"timeline.credits":"50"
 					},
 					"adj":{
 						"agent.effectiveAge":{
-							"onSuccess":"-1"
+							"onSuccess":"-5"
 						}
 					}
 				},

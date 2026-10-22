@@ -152,6 +152,11 @@
             model.callSuper(parent, attrs);
             
             model.reset(true);
+            
+            // Exposes tc.cfg to constraints and expressions. We freeze it as well so gameplay
+            // can't accidentally change the cfg.
+            Object.freeze(tc.cfg);
+            model.cfg = tc.cfg;
         },
         
         
