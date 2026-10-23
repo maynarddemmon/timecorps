@@ -270,9 +270,6 @@
                             }
                             
                             openAckMsgDialog(title, msg);
-                            // Use a timeout so the confirm dialog can close, focus restores, then
-                            // open the ack dialog which then pulls focus again.
-                            //setTimeout(() => openAckMsgDialog(title, msg), 0);
                         }
                     );
                 }
