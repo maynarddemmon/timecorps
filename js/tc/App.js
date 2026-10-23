@@ -9,6 +9,7 @@
         persistence,
         hiddenSaveFileImporter,
         
+        timelineParadoxBar,
         saveBtn,
         
         timelineView,
@@ -45,7 +46,7 @@
             },
             cfg:{DATA_BASE_DIR},
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
-            ICON_SEPARATOR
+            ICON_SEPARATOR, STAT_ID_PARADOX
         } = pkg,
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
@@ -148,6 +149,7 @@
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         if (eventsValid) {
                             timelineView.setup(model);
+                            timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
                             teamView.setup(model);
                             model.reset();
                             
@@ -234,10 +236,23 @@
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
             
-            new PlainText(topView, {valign:'middle', text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            new PlainText(topView, {text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            
             new pkg.Spacer(topView);
             
-            saveBtn = new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
+            (new pkg.LabeledValue(topView, {label:'Score', textColor:colorUltraDark, valueTextColor:colorUltraLight}, [{
+                update: function(_event) {this.callSuper(model.score.toLocaleString());}
+            }])).attachTo(model, 'update', 'score');
+            
+            (new pkg.LabeledValue(topView, {label:'Credits', textColor:colorUltraDark, valueTextColor:colorUltraLight, paddingRight:padding}, [{
+                update: function(_event) {this.callSuper(model.credits.toLocaleString());}
+            }])).attachTo(model, 'update', 'credits');
+            
+            timelineParadoxBar = new pkg.ParadoxBar(topView, {labelTemplate:'Timeline {label}'}, [pkg.BigStatBar]);
+            
+            new pkg.Spacer(topView);
+            
+            saveBtn = new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Save Campaign',
@@ -254,14 +269,15 @@
                                 msg = 'Your progress could not be saved. The browser may be blocking storage for this site.';
                             }
                             
+                            openAckMsgDialog(title, msg);
                             // Use a timeout so the confirm dialog can close, focus restores, then
                             // open the ack dialog which then pulls focus again.
-                            setTimeout(() => openAckMsgDialog(title, msg), 0);
+                            //setTimeout(() => openAckMsgDialog(title, msg), 0);
                         }
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Restart Campaign',
@@ -271,9 +287,9 @@
                 }
             }]);
             
-            new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
+            new PlainText(topView, {text:ICON_SEPARATOR});
             
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_IMPORT, fontSize:fontSizeLarge, tooltip:'Import a “save” file.'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_IMPORT, fontSize:fontSizeLarge, tooltip:'Import a “save” file.'}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
                         'Import Save File',
@@ -282,21 +298,22 @@
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file of your current progress.'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file of your current progress.'}, [{
                 doActivated: persistence.export.bind(persistence)
             }]);
             
-            new PlainText(topView, {valign:'middle', text:ICON_SEPARATOR});
+            new PlainText(topView, {text:ICON_SEPARATOR});
             
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'}, [{
                 doActivated: appView.openSettings
             }]);
             
-            new SquareBtn(topView, {buttonType:'underline', valign:'middle', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
                 doActivated: () => {appView.openHelp();}
             }]);
             
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
+            new M.ConstantLayout(topView, {targetAttrName:'valign', targetValue:'middle'});
         },
         
         buildMiddleView: middleView => {
