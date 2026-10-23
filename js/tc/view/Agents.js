@@ -1,6 +1,8 @@
 (pkg => {
     'use strict';
     
+    let rootModel;
+    
     const JSClass = JS.Class,
         
         {Grid:{SORT_ORDER_ASC}} = myt,
@@ -119,11 +121,6 @@
             self.callSuper(parent, attrs);
             
             // Build UI
-            const header = self.getHeaderView();
-            self.chronalBar = new pkg.ChronalBar(header, {
-                valign:'middle', labelTemplate:'HQ {label} Pool'
-            }, [pkg.BigStatBar]);
-            
             self.gridWrapper = new pkg.InfiniteGridWrapper(self, {
                 selectable:true,
                 rowClasses:AgentRow,
@@ -273,9 +270,8 @@
         },
         
         setup: function(model) {
-            this.model = model;
-            this.chronalBar.watchStatModel(model[STAT_ID_CHRONAL]);
-            this.gridWrapper.setModelCollection(model[SCOPE_AGENTS]);
+            rootModel = model;
+            this.gridWrapper.setModelCollection(rootModel[SCOPE_AGENTS]);
         }
     });
 })(tc);

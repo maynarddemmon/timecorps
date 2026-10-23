@@ -1,6 +1,8 @@
 (pkg => {
     'use strict';
     
+    let rootModel;
+    
     const JSClass = JS.Class,
         
         {
@@ -20,7 +22,7 @@
             },
             ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ,
             ICON_THE_VOID, ICON_NIL,
-            STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
+            STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
         } = pkg,
         
         // Agent Row
@@ -148,7 +150,7 @@
                 const isHQ = eventModel.isHQ();
                 recallBtn.setVisible(!isHQ);
                 
-                if (!isHQ) agentModel.updateBtnForTimeTravel(recallBtn, pkg.model.getHQEventModel());
+                if (!isHQ) agentModel.updateBtnForTimeTravel(recallBtn, rootModel.getHQEventModel());
                 
                 // Update Actions
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
@@ -265,10 +267,10 @@
             
             self.hqBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
-            }, [{doActivated: () => {pkg.app.selectEventBox(pkg.model.getHQEventModel());}}]);
+            }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
-            }, [{doActivated: () => {pkg.app.selectEventBox(pkg.model.getTheVoidEventModel());}}]);
+            }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getTheVoidEventModel());}}]);
             
             new View(header, {width:padding}); // Spacer
             
@@ -309,6 +311,12 @@
             self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
             self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
             self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
+            
+            self.chronalBar = new pkg.ChronalBar(detailsContainer, {
+                x:spacing, percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
+                labelTemplate:'HQ {label} Pool', visible:false
+            }, [SizeToParent, pkg.BigStatBar]);
+            
             new View(detailsContainer, {height:2}); // Spacer.
             
             // Agents
@@ -384,6 +392,7 @@
             
             if (hasModel) {
                 const isHQ = eventModel.isHQ();
+                self.chronalBar.setVisible(isHQ);
                 self.hqBtn.setDisabled(isHQ);
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
                 
@@ -490,6 +499,11 @@
         /** @private */
         _doTitleClick: function(_event) {
             if (this.eventModel) pkg.app.openEventBrief(this.eventModel);
+        },
+        
+        setup: function(model) {
+            rootModel = model;
+            this.chronalBar.watchStatModel(rootModel[STAT_ID_CHRONAL]);
         }
     });
 })(tc);

@@ -151,6 +151,7 @@
                             timelineView.setup(model);
                             timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
                             teamView.setup(model);
+                            eventDetailsView.setup(model);
                             model.reset();
                             
                             // The baseline is the fresh campaign a save gets applied on top of.

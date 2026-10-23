@@ -909,10 +909,7 @@
             self.getContentView().setBgColor(colorMedium);
             
             // Build UI
-            const header = self.getHeaderView();
-            
-            const 
-                scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
+            const scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
                     _handleScroll: event => {
                         const {x, y} = M.ScrollObservable.getScrollFromEvent(event),
                             negX = -x,

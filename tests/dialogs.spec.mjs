@@ -94,7 +94,7 @@ test('a confirm opened while an ack shows waits its turn with the acks', async (
     expect(problems.pageErrors).toEqual([]);
 });
 
-/*  The briefs and the dossier are as tall as their content, up to the window, past which the 
+/*  The briefs and the dossier are as tall as their content, up to the window less the top bar, past which the 
     field notes and report scroll. */
 test('a brief is only as tall as its content, and scrolls when that is taller than the window', async ({page}) => {
     await page.route('**/tests/data/location/office.txt', route => route.fulfill({body:'A long report.\n\n'.repeat(80)}));
@@ -120,8 +120,10 @@ test('a brief is only as tall as its content, and scrolls when that is taller th
     await openBrief('area', 'office');
     await expect.poll(async () => (await measure('area')).scrolls).toBe(true);
     const area = await measure('area');
-    expect(area.panel).toBeLessThan(area.window);
-    expect(area.panel).toBeGreaterThan(area.window - 50);
+    // Clear of the top bar, above and below, so the credits stay in sight.
+    const clear = 2 * await page.evaluate(() => tc.cfg.TOP_VIEW_HEIGHT);
+    expect(area.panel).toBeLessThanOrEqual(area.window - clear);
+    expect(area.panel).toBeGreaterThan(area.window - clear - 50);
     
     expect(problems.pageErrors).toEqual([]);
 });
