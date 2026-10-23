@@ -236,6 +236,9 @@
                 // The maximum length of the next/prev Event history.
                 MAX_HISTORY_LENGTH:1000,
                 
+                // The height of the top "header" view in the App.
+                TOP_VIEW_HEIGHT:40,
+                
                 // The curvature value used by Splines within the Timeline.
                 SPLINE_CURVATURE:0.35,
                 

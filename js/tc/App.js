@@ -44,7 +44,7 @@
                 colorUltraLight, colorLight, colorMedium, colorUltraDark,
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
-            cfg:{DATA_BASE_DIR},
+            cfg:{DATA_BASE_DIR, TOP_VIEW_HEIGHT},
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_EVENTS, SCOPE_OPERATIONS,
             ICON_SEPARATOR, STAT_ID_PARADOX
         } = pkg,
@@ -218,7 +218,7 @@
             persistence = pkg.persistence = new pkg.PersistenceManager(model);
             
             // Build UI
-            appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:40}));
+            appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:TOP_VIEW_HEIGHT}));
             appView.buildMiddleView(new WideView(appView, {layoutHint:1}));
             
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});

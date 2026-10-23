@@ -134,3 +134,33 @@ test('an exit that is time travel, a jump or a pull, ages only the rest of the E
     expect(out.aged).toBeCloseTo(out.rest / YEAR, 9);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('an action ages by the actions it spends, a free one not at all, and actions at HQ age too', async ({page}) => {
+    await page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        Object.assign(json.events.time_corps_hq.actions, {
+            week:{label:'A Week', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':'7'}},
+            glance:{label:'A Glance', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':null}}
+        });
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            hq = m.getHQEventModel(),
+            actions = hq.getActionModels();
+        alpha.setEvent('time_corps_hq');
+        const steps = [alpha.getAge()];
+        alpha.doAction(actions.glance);
+        steps.push(alpha.getAge());
+        alpha.doAction(actions.week);
+        steps.push(alpha.getAge());
+        return {steps, day:hq.getDuration() / hq.getActionLimit(), left:alpha.getActionsRemaining()};
+    });
+    const [start, afterGlance, afterWeek] = out.steps;
+    expect(afterGlance).toBe(start);
+    expect(afterWeek - afterGlance).toBeCloseTo(7 * out.day / YEAR, 9);
+    expect(out.left).toBe(23);
+    expect(problems.pageErrors).toEqual([]);
+});

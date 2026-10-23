@@ -201,7 +201,7 @@
                 skillBar.updateIncreaseBtn(
                     trainLabel,
                     problem != null,
-                    trainLabel + ' for ' + credits + (credits === 1 ? ' credit' : ' credits') + (problem ? ICON_SEPARATOR + problem : '')
+                    trainLabel + ' for ' + credits + (credits === 1 ? ' credit' : ' credits') + ' and an action' + (problem ? ICON_SEPARATOR + problem : '')
                 );
             }
         },

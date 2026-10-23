@@ -136,13 +136,29 @@
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters",
 			"start":"2174-10-14T00:00:00",
-			"duration":{"d":1},
+			"duration":{"d":30},
 			"location":"_nexus",
 			"hidden":"true",
-			"actionLimit":5,
+			"actionLimit":30,
 			// There's nothing to learn about HQ.
 			"actions":{
 				"_investigate":null,
+				
+				// Agents can heal critical health damage here.
+				"_heal":{
+					"label":"Infirmary Stay",
+					"available":"agent.health.value < agent.health.max",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"agent.action":"7",
+						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
+					},
+					"adj":{
+						"agent.health":{
+							"onSuccess":"d(8,6)"
+						}
+					}
+				},
 				
 				"_restockChronal":{
 					"label":"Restock Chronal +1",
@@ -179,27 +195,13 @@
 					}
 				},
 				
-				// Agents can heal critical health damage here.
-				"_heal":{
-					"label":"Infirmary Stay",
-					"available":"agent.health.value < agent.health.max",
-					"skillCheck":{"difficulty":"no-roll"},
-					"costs":{
-						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
-					},
-					"adj":{
-						"agent.health":{
-							"onSuccess":"d(8,6)"
-						}
-					}
-				},
-				
 				// Agents can reduce their effective age.
 				"_rejuvenate":{
 					"label":"Rejuvenate",
 					"available":"agent.effectiveAge > timeline.cfg.AGE_MIN_EFFECTIVE",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
+						"agent.action":"7",
 						"timeline.credits":"50"
 					},
 					"adj":{
@@ -215,6 +217,7 @@
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
+						"agent.action":"7",
 						"timeline.credits":"30"
 					},
 					"adj":{

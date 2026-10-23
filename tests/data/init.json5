@@ -72,9 +72,11 @@
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters",
 			"start":"2174-10-14T00:00:00",
-			"duration":{"d":1},
+			// A month, a day an action, as in the game.
+			"duration":{"d":30},
 			"location":"_nexus",
 			"hidden":"true",
+			"actionLimit":30,
 			"actions":{"_investigate":null}
 		}
 	},

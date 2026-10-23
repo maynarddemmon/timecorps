@@ -4,7 +4,7 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs} = Math,
+    const {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs, floor:mathFloor} = Math,
         
         M = myt,
         
@@ -125,7 +125,11 @@
         
         /*  What the next purchase of an Agent's skill gets and costs: {points, credits}. One 
             credit for one point. Kept on its own so the pricing can be tuned. */
-        getSkillPurchase = pkg.getSkillPurchase = (_agentModel, _skillId) => ({points:1, credits:1}),
+        getSkillPurchase = pkg.getSkillPurchase = (agentModel, skillId) => ({
+            points:1, 
+            // A credit for a point near 0, and one more for every 100 the skill is from 0.
+            credits:1 + mathFloor(mathAbs(agentModel.getSkill(skillId)) / 100)
+        }),
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
             const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, 1); // 1 because we will have just pushed an entry event of some kind onto the log.
@@ -323,6 +327,16 @@
             this.setEffectiveAge(this.effectiveAge + this.getAllowedEffectiveAgeAdj(adj));
         },
         
+        /*  Lives through the share of the Event that a number of its actions take: its 
+            duration divided by its action limit, for each. Nothing in The Void. */
+        liveThroughActions: function(actions) {
+            const eventModel = this.getEventModel(),
+                actionLimit = eventModel?.getActionLimit();
+            if (actions > 0 && actionLimit > 0 && !eventModel.isTheVoid()) {
+                this.liveThroughEvent(eventModel.getDuration() / actionLimit * actions);
+            }
+        },
+        
         /*  Lives through some of the Agent's Event, in milliseconds, aging them by it. */
         liveThroughEvent: function(millis) {
             this.timeLivedAtEvent += millis;
@@ -510,23 +524,28 @@
             if (!this.isPlayerControlled()) return 'Not taking direction from you';
             if (this.isDead()) return 'Deceased';
             if (!this.isAtHQ()) return 'Only at HQ';
+            if (!this.canAct()) return 'No days left this visit';
             
             const {points, credits} = getSkillPurchase(this, skillId);
             if (this.getSkill(skillId) + points > MAX_SKILL_VALUE) return 'At its maximum';
             if (credits > pkg.model.getCredits()) return 'Not enough credits';
             return null;
         },
-        canPurchaseSkill: function(skillId) {return this.getSkillPurchaseProblem(skillId) == null;},
         
-        /*  Spends credits to raise a skill, by getSkillPurchase. Returns true if it was bought. */
+        /*  Spends credits, and an action of the Agent's time at HQ, to raise a skill, by 
+            getSkillPurchase. Returns true if it was bought. */
         purchaseSkill: function(skillId) {
-            if (!this.canPurchaseSkill(skillId)) return false;
-            
-            const {points, credits} = getSkillPurchase(this, skillId);
-            pkg.model.adjCredits(-credits);
-            this[SCOPE_SKILLS] = {...this[SCOPE_SKILLS], [skillId]:this.getSkill(skillId) + points};
-            this.notifyCollectionOfUpdate();
-            return true;
+            // First check if there are any problems preventing purchase of a skill.
+            if (this.getSkillPurchaseProblem(skillId) == null) {
+                const {points, credits} = getSkillPurchase(this, skillId);
+                pkg.model.adjCredits(-credits);
+                this.setActionExecCount(this.getActionExecCount() + 1);
+                this.liveThroughActions(1);
+                this[SCOPE_SKILLS] = {...this[SCOPE_SKILLS], [skillId]:this.getSkill(skillId) + points};
+                this.notifyCollectionOfUpdate();
+                return true;
+            }
+            return false;
         },
         
         getSkillInfo: function() {
@@ -803,11 +822,9 @@
                 if (check.success) actionModel.setDoneCount(actionModel.getDoneCount() + 1);
                 this.pushOntoLog(logEntry);
                 
-                // Each action lives through an equal share of the Event, so taking them all 
-                // lives through the whole of it.
-                const eventModel = actionModel.event,
-                    actionLimit = eventModel.getActionLimit();
-                if (eventModel.isRegularEvent() && actionLimit > 0) this.liveThroughEvent(eventModel.getDuration() / actionLimit);
+                // Each action spent lives through an equal share of the Event, so spending them
+                // all lives through the whole of it. A free action takes no time.
+                this.liveThroughActions(costs.find(({cost}) => cost.isActionCost())?.amount ?? 0);
                 
                 if (check.success) actionModel.openPrompt();
             }

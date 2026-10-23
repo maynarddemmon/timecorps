@@ -1,4 +1,5 @@
-// Buying skill points: at HQ, from the agent's dossier, for credits, up to MAX_SKILL_VALUE.
+// Buying skill points: at HQ, from the agent's dossier, for credits and a day (an action), up to
+// MAX_SKILL_VALUE. A point costs a credit, and one more for every 100 the skill is from 0.
 import {test, expect} from '@playwright/test';
 import {startGame, reloadGame, readTestData} from './helpers.mjs';
 
@@ -22,7 +23,7 @@ const
         credits:tc.model.getCredits()
     }), skillId);
 
-test('a skill point costs a credit, and can only be bought at HQ, by the Corps\' own living agents, up to the maximum', async ({page}) => {
+test('a skill point costs a credit and an action, and can only be bought at HQ, by the Corps\' own living agents, up to the maximum', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const m = tc.model,
@@ -51,6 +52,9 @@ test('a skill point costs a credit, and can only be bought at HQ, by the Corps\'
             r.unknown = buy(alpha, 'nope');
 
             alpha.setSkills({...alpha.getSkills(), agl:tc.cfg.MAX_SKILL_VALUE - 1});
+            // 999 is 9 hundreds from 0.
+            r.maxPrice = tc.getSkillPurchase(alpha, 'agl');
+            m.setCredits(14);
             r.toMax = buy(alpha, 'agl');
             r.atMax = buy(alpha, 'agl');
 
@@ -69,6 +73,7 @@ test('a skill point costs a credit, and can only be bought at HQ, by the Corps\'
     expect(out.second).toEqual({problem:null, bought:true, skill:1, credits:0});
     expect(out.broke).toEqual({problem:'Not enough credits', bought:false, skill:26, credits:0});
     expect(out.unknown).toEqual({problem:'No such skill', bought:false, skill:0, credits:5});
+    expect(out.maxPrice).toEqual({points:1, credits:10});
     expect(out.toMax).toEqual({problem:null, bought:true, skill:1000, credits:4});
     expect(out.atMax).toEqual({problem:'At its maximum', bought:false, skill:1000, credits:4});
     expect(out.civilian).toEqual({problem:'Not taking direction from you', bought:false, skill:50, credits:4});
@@ -82,7 +87,7 @@ test('the dossier\'s buttons buy skill points, and say why when they can\'t', as
 
     const agility = buyBtn(page, 'Agility');
     await expect(agility).toHaveText('Train Agility +1');
-    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit');
+    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit and an action');
 
     await agility.click();
     await expect(page.getByText('Agility : 26', {exact:true}).filter({visible:true})).toBeVisible();
@@ -94,7 +99,7 @@ test('the dossier\'s buttons buy skill points, and say why when they can\'t', as
     // Out of credits, every button is disabled, and a click does nothing.
     await expect(agility).toHaveClass(/disabled/);
     await expect(buyBtn(page, 'Strength')).toHaveClass(/disabled/);
-    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit · Not enough credits');
+    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit and an action · Not enough credits');
     await agility.click({force:true});
     expect(await readAlpha(page, 'agl')).toEqual({skill:27, credits:0});
 
@@ -105,7 +110,7 @@ test('the dossier\'s buttons buy skill points, and say why when they can\'t', as
     // Away from HQ, they're disabled.
     await page.evaluate(() => tc.model.getAgentModel('AL').setEvent('origin'));
     await expect(agility).toHaveClass(/disabled/);
-    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit · Only at HQ');
+    await expect(agility).toHaveAttribute('title', 'Train Agility +1 for 1 credit and an action · Only at HQ');
 
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
@@ -207,5 +212,43 @@ test('skills changed by adjustments show in the dossier and survive a save and r
     await page.evaluate(() => tc.persistence.save());
     await reloadGame(page);
     expect((await readAlpha(page, 'agl')).skill).toBe(before + 15);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a point costs one more credit for every 100 the skill is from 0, either way', async ({page}) => {
+    const problems = await startGame(page);
+    expect(await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        return [-250, -100, -99, 0, 99, 100, 101, 250].map(value => {
+            alpha.setSkills({...alpha.getSkills(), cha:value});
+            return tc.getSkillPurchase(alpha, 'cha').credits;
+        });
+    })).toEqual([3, 2, 1, 1, 1, 2, 2, 3]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('training takes a day of the agent\'s month at HQ, aging them, until the month is used up', async ({page}) => {
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            hq = m.getHQEventModel();
+        alpha.setEvent('time_corps_hq');
+        m.setCredits(1000);
+        const age = alpha.getAge();
+        alpha.purchaseSkill('disguise');
+        const r = {day:hq.getDuration() / hq.getActionLimit(), agedForOne:alpha.getAge() - age, limit:hq.getActionLimit()};
+        while (alpha.purchaseSkill('disguise'));
+        r.bought = alpha.getSkill('disguise');
+        r.problem = alpha.getSkillPurchaseProblem('disguise');
+        r.agedForAll = alpha.getAge() - age;
+        r.month = hq.getDuration();
+        return r;
+    });
+    const YEAR = 365 * 24 * 60 * 60 * 1000;
+    expect(out.day).toBe(24 * 60 * 60 * 1000);
+    expect(out.agedForOne).toBeCloseTo(out.day / YEAR, 9);
+    expect(out).toMatchObject({limit:30, bought:30, problem:'No days left this visit'});
+    expect(out.agedForAll).toBeCloseTo(out.month / YEAR, 9);
     expect(problems.pageErrors).toEqual([]);
 });

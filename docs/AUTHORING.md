@@ -516,12 +516,12 @@ HQ and The Void leave out `_investigate` this way.
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
 - <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:
-  - **An action** lives through the event's duration divided by its `actionLimit`, so taking every action lives through all of it. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival.
+  - **An action** lives through the event's duration divided by its `actionLimit`, for each action it costs, so spending every action lives through all of it. A free action (`"agent.action":null`) takes no time. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival. HQ counts too: it's a month of 30 actions, a day each, so a week-long treatment costs 7.
   - **An exit** lives through the rest of the event left, e.g. its unused actions, then the time from its end to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel and skip the time between.
   - **Time travel** (deploy, jump, recall, loop back) lives through nothing, not even the rest of the event left.
   
   The effective age is the body's. It grows with the lived age, and treatments wind it back: `set` or `adj` on `agent.effectiveAge`, in whole years, e.g. `"adj":{"agent.effectiveAge":"-10"}`, though never below 25 (`AGE_MIN_EFFECTIVE`). From an effective age of 35 the agent's maximum health declines, slowly at first and then faster, to 0, and death, at 85. The `health` max in the data is the agent's in their prime. The thresholds and curve are `AGE_*` in `js/tc/tc.js`. The Agent Dossier shows both ages.
-- **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, for 1 credit a point. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
+- **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, a point at a time. Each point takes an action (a day at HQ, which ages the agent) and costs a credit, plus one for every 100 the skill is from 0, either way: 99 to 100 costs 1, 100 to 101 costs 2. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
 
 ## Operations (missions)
 
