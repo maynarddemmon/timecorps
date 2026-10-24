@@ -389,6 +389,7 @@
         },
         
         selectTimelineTab: () => timelineTabBtn.doActivated(),
+        selectAgentsTab: () => agentsTabBtn.doActivated(),
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,

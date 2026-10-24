@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, setCausator, reloadGame, dialogTitle} from './helpers.mjs';
+import {startGame, setCausator, reloadGame, dialogTitle, showTab} from './helpers.mjs';
 
 /*  A causal chain of Events, which are hidden at the start of the campaign. */
 const CHAIN = ['plan', 'relay', 'signal'],
@@ -171,5 +171,16 @@ test('arrows follow the selected agent from Event to Event', async ({page}) => {
     await page.evaluate(() => tc.app.selectAgentRow('BR'));
     await expect.poll(readArrows).toEqual([]);
     
+    expect(problems.pageErrors).toEqual([]);
+});
+
+/*  Mission Complete waits for the timeline's animations, which must still finish while the 
+    Agents tab hides the timeline. */
+test('the Mission Complete dialog still opens while the agents tab is showing', async ({page}) => {
+    const problems = await startGame(page);
+    await showTab(page, 'Agents');
+    await setCausator(page, 'plan', 'prepared', true);
+    await setCausator(page, 'lever', 'pulled', true);
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
     expect(problems.pageErrors).toEqual([]);
 });

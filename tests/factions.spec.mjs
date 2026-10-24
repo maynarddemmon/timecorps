@@ -1,7 +1,7 @@
 // Factions: every Agent is in one, "unaligned" unless the data says otherwise. The Agents grid
 // and the Agent Dossier show it, and clicking it opens the Faction Brief.
 import {test, expect} from '@playwright/test';
-import {startGame, dialogTitle, reloadGame, dismissAgentDossier} from './helpers.mjs';
+import {startGame, dialogTitle, reloadGame, dismissAgentDossier, showTab} from './helpers.mjs';
 
 const fieldNotes = page => page.evaluate(() => {
     const brief = document.querySelector('.myt-FactionBrief').model;
@@ -21,6 +21,7 @@ test('the agents grid shows the faction, and clicking it opens the faction brief
     const problems = await startGame(page);
     await page.evaluate(() => {tc.model.revealAgents(['BR']);});
     await dismissAgentDossier(page, 'Bravo');
+    await showTab(page, 'Agents');
     
     const grid = page.locator('.myt-Agents');
     await expect(grid.getByText('Faction', {exact:true})).toBeVisible();

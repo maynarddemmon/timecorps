@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText} from './helpers.mjs';
+import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText, showTab} from './helpers.mjs';
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
@@ -224,6 +224,7 @@ test('agent health shows in the dossier and the agents grid, and follows changes
     await page.keyboard.press('Escape');
     
     // The grid has a Health column whose bar tracks the stat.
+    await showTab(page, 'Agents');
     await expect(page.getByText('Health', {exact:true}).filter({visible:true})).toHaveCount(1);
     await expect(page.locator(`[title="${healthTooltip(60, 100)}"]`).filter({visible:true})).not.toHaveCount(0);
     

@@ -3,7 +3,7 @@
 // agent who has been there gains a paradox per visit. In the test data the origin leads to the
 // aftermath, which leads to the finale. The tests' limits are 4 for an Event and 3 for an agent.
 import {test, expect} from '@playwright/test';
-import {startGame, reloadGame, readTestData} from './helpers.mjs';
+import {startGame, reloadGame, readTestData, showTab} from './helpers.mjs';
 
 const
     /*  Raises an Event's paradox to its limit. */
@@ -287,17 +287,24 @@ test('a flooded Event\'s box takes the paradox color, darker under the mouse and
 
 test('a devoured agent\'s markers are tinted the paradox color', async ({page}) => {
     const problems = await startGame(page),
-        markerClasses = () => page.evaluate(() => [...document.querySelectorAll('.myt-SimpleAgentGridMarker, .myt-SimpleAgentMarker')]
+        // Whether each agent marker showing in a panel, the agents list or the timeline, is 
+        // tinted. A hidden panel is moved off screen.
+        markerClasses = selector => page.evaluate(selector => [...document.querySelectorAll(selector + ' .myt-SimpleAgentGridMarker, ' + selector + ' .myt-AgentToken')]
             .filter(marker => marker.getBoundingClientRect().x >= 0)
-            .map(marker => marker.classList.contains('agent-devoured')));
-    await expect.poll(markerClasses).not.toContain(true);
+            .map(marker => marker.classList.contains('agent-devoured')), selector);
     
+    // The dialogs that tell of it cover the tabs, so the agents list is shown first. Its rows
+    // are only drawn while it shows.
+    await showTab(page, 'Agents');
+    await expect.poll(() => markerClasses('.myt-Agents')).toEqual([false]);
     await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL');
         alpha.paradox.setValue(alpha.paradox.max);
     });
     // In the agents list, and in The Void on the timeline.
-    await expect.poll(markerClasses).toEqual([true, true]);
+    await expect.poll(() => markerClasses('.myt-Agents')).toEqual([true]);
+    await page.evaluate(() => tc.app.selectTimelineTab());
+    await expect.poll(() => markerClasses('.myt-TimelineCompact')).toEqual([true]);
     expect(await page.evaluate(() => getComputedStyle(document.querySelector('.agent-devoured'), '::after').mixBlendMode)).toBe('color');
     expect(problems.pageErrors).toEqual([]);
 });
