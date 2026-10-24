@@ -23,6 +23,9 @@
 		--font:AdventPro, sans-serif;
 		--fontSize:12px;
 		--colorMegaDark:#310;
+		--colorDark:#530;
+		--colorMedium:#990;
+		--colorMedLight:#bb0;
 		--colorUltraLight:#ff9;
 		--fgBtn:#840;
 		--fgBtnBright:#a50;
@@ -130,6 +133,20 @@
 	.tc-Btn.plain:hover {background-color:#fff6;}
 	.tc-Btn.plain:active {background-color:#fff7;}
 	.tc-Btn.plain.disabled:hover {}
+	
+	.tc-Btn.tab {
+		font-size:16px;
+		color:var(--colorMedium);
+		background-color:var(--colorDark);
+		border-radius:3px 3px 0px 0px;
+		border:1px solid transparent;
+	}
+	.tc-Btn.tab:hover {color:var(--colorMedLight);}
+	.tc-Btn.tab.at {
+		background-color:var(--colorMegaDark);
+		opacity:1;
+	}
+	.tc-Btn.tab.at:hover {}
 	
 	.tc-Btn.locHdr {background-color:#fff3; border:1px solid transparent; 
 		text-shadow:

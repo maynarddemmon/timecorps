@@ -148,4 +148,27 @@
             this.callSuper(parent, attrs);
         }
     });
+    
+    pkg.TabBtn = new JSClass('TabBtn', Btn, {
+        include: [M.Selectable],
+        
+        initNode: function(parent, attrs) {
+            attrs.y ??= 2;
+            attrs.buttonType ??= 'tab';
+            this.tabView = attrs.tabView ??= parent;
+            delete attrs.tabView;
+            
+            this.callSuper(parent, attrs);
+        },
+        
+        setSelected: function(v) {
+            this.callSuper(v);
+            this[v ? 'addDomClass' : 'removeDomClass']('at');
+            this.setDisabled(v);
+        },
+        
+        doActivated: function() {
+            if (!this.selected) this.tabView.select(this);
+        }
+    });
 })(tc);

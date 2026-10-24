@@ -35,9 +35,12 @@
         
         AgentRow = new JSClass('AgentRow', pkg.SelectableGridRow, {
             getColIds: () => ['id','name','role','faction','event','where','when',STAT_ID_HEALTH,STAT_ID_PARADOX,STAT_ID_CHRONAL],
-            supportsDoubleClick: () => true,
-            doDoubleClick: function() {
-                this.doCellBtnActivated('event');
+            doActivated: function() {
+                if (this.selected) {
+                    this.doCellBtnActivated('event');
+                } else {
+                    this.callSuper();
+                }
             },
             notifyCellUpdated: function(colId) {
                 let eventExistsTxtFunc;
@@ -101,7 +104,7 @@
                         pkg.app.openFactionBrief(this.model.getFactionModel());
                         break;
                     case 'event':
-                        pkg.app.selectEventBox(this.model.getEventModel());
+                        pkg.app.selectEventBox(this.model.getEventModel(), true);
                         break;
                     case 'where':
                         pkg.app.getTimelineView().scrollToLocation(this.model.getEventModel().getLocation());
@@ -113,7 +116,7 @@
             }
         });
     
-    pkg.Agents = new JSClass('Agents', pkg.Panel, {
+    pkg.Agents = new JSClass('Agents', pkg.TallView, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             const self = this;
@@ -243,12 +246,12 @@
         // Accessors ///////////////////////////////////////////////////////////
         setWidth: function(v) {
             this.callSuper(v);
-            if (this.ready) this.gridWrapper.setWidth(this.getContentView().width);
+            if (this.ready) this.gridWrapper.setWidth(this.width);
         },
         
         setHeight: function(v) {
             this.callSuper(v);
-            if (this.ready) this.gridWrapper.setHeight(this.getContentView().height);
+            if (this.ready) this.gridWrapper.setHeight(this.height);
         },
         
         

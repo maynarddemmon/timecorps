@@ -883,7 +883,7 @@
             }
         });
     
-    pkg.TimelineCompact = new JSClass('TimelineCompact', pkg.Panel, {
+    pkg.TimelineCompact = new JSClass('TimelineCompact', pkg.TallView, {
         include: [M.SelectionManager],
         
         
@@ -903,10 +903,9 @@
             
             attrs.maxSelected = 1;
             attrs.itemSelectionId = 'eventId';
+            attrs.bgColor ??= colorMedium;
             
             self.callSuper(parent, attrs);
-            
-            self.getContentView().setBgColor(colorMedium);
             
             // Build UI
             const scrollCaptureView = self.scrollCaptureView = new View(self, {overflow:'auto'}, [{
@@ -973,7 +972,7 @@
             self.callSuper(v);
             if (self.ready) {
                 const {rowHeaders, rowHeadersContainer, colHeadersContainer, flowContainer, scrollCaptureView, hLine} = self,
-                    width = self.getContentView().width;
+                    width = self.width;
                 flowContainer.setWidth(width - flowContainer.x);
                 scrollCaptureView.setWidth(width);
                 hLine.setWidth(width);
@@ -989,7 +988,7 @@
             self.callSuper(v);
             if (self.ready) {
                 const {rowHeadersContainer, colHeaders, colHeadersContainer, flowContainer, scrollCaptureView, vLine} = self,
-                    height = self.getContentView().height;
+                    height = self.height;
                 flowContainer.setHeight(height - flowContainer.y);
                 scrollCaptureView.setHeight(height);
                 vLine.setHeight(height);
@@ -1080,7 +1079,11 @@
             const eventBox = this.getEventBox(eventModelOrId);
             if (eventBox) {
                 this._eventModelOrIdToSelect = null;
-                this.select(eventBox);
+                if (eventBox.selected) {
+                    this.scrollToEventBox(eventBox);
+                } else {
+                    this.select(eventBox);
+                }
             } else {
                 this._eventModelOrIdToSelect = eventModelOrId;
             }
@@ -1105,12 +1108,14 @@
             if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly);
         },
         
-        scrollToLocation: function(locId, smoothly=true) {
+        scrollToLocation: function(locId, smoothly=true, selectTab=true) {
+            if (selectTab) pkg.app.selectTimelineTab();
             const locationColumn = this.colsByLocId[locId];
             if (locationColumn) this.scrollCaptureView.scrollXTo(locationColumn.x, true, smoothly);
         },
         
-        scrollToTime: function(millis, smoothly=true) {
+        scrollToTime: function(millis, smoothly=true, selectTab=true) {
+            if (selectTab) pkg.app.selectTimelineTab();
             const tick = this.ticksByTime[millis];
             if (tick) this.scrollCaptureView.scrollYTo(tick.y, true, smoothly);
         },

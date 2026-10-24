@@ -18,6 +18,9 @@
         dividerV,
         dividerH,
         
+        timelineTabBtn,
+        agentsTabBtn,
+        
         opsView,
         teamView,
         
@@ -37,11 +40,11 @@
         {View, PlainText, ResizeLayout, SizeToParent, global:G, NOOP} = M,
         
         {
-            SquareBtn, WideView, wrapInStyledSpan,
+            TabBtn, SquareBtn, WideView, wrapInStyledSpan,
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog, openWhenClear},
             theme:{
-                layoutSpacing, spacing, padding, 
-                colorUltraLight, colorLight, colorMedium, colorUltraDark,
+                layoutSpacing, spacing, padding, rowHeight,
+                colorUltraLight, colorLight, colorMedium, colorDarkMedium, colorUltraDark,
                 fontSizeMedium, fontSizeLarge, fontSizeVeryLarge
             },
             cfg:{DATA_BASE_DIR, TOP_VIEW_HEIGHT},
@@ -315,18 +318,38 @@
         },
         
         buildMiddleView: middleView => {
-            teamView = new pkg.Agents(middleView, {title:'Agents'});
+            const tabView = new View(middleView, {
+                ignorePlacement:true, height:rowHeight, bgColor:colorDarkMedium,
+                inset:spacing, spacing, collapse:false
+            }, [M.TabContainer]);
+            timelineTabBtn = new TabBtn(tabView, {text:'Timeline'}, [{
+                setSelected: function(v) {
+                    this.callSuper(v);
+                    timelineView.setVisible(v);
+                }
+            }]);
+            agentsTabBtn = new TabBtn(tabView, {text:'Agents'}, [{
+                setSelected: function(v) {
+                    this.callSuper(v);
+                    teamView.setVisible(v);
+                }
+            }]);
+            
+            const panelY = tabView.height + layoutSpacing,
+                panelAttrs = {y:panelY, visible:false, percentOfParentHeightOffset:-panelY};
+            teamView = new pkg.Agents(middleView, panelAttrs);
+            timelineView = new pkg.TimelineCompact(middleView, panelAttrs);
+            
             opsView = new pkg.OperationDetails(middleView);
-            timelineView = new pkg.TimelineCompact(middleView, {title:'Timeline'});
             eventDetailsView = new pkg.EventDetails(middleView);
             
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
-                height:5, percentOfParentWidth:100, minValue:133, limitToParent:200,
+                height:5, minValue:133, limitToParent:200,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
-            }, [SizeToParent, {
+            }, [{
                 setValue: function(v) {
                     this.callSuper(v);
                     this.updateLayout();
@@ -335,18 +358,14 @@
                     const v = this.value,
                         upperHeight = v + 2;
                     opsView.setHeight(upperHeight);
-                    teamView.setHeight(upperHeight);
                     
                     eventDetailsView.setY(upperHeight + layoutSpacing);
                     eventDetailsView.setHeight(middleView.height - eventDetailsView.y);
-                    
-                    timelineView.setY(upperHeight + layoutSpacing);
-                    timelineView.setHeight(middleView.height - timelineView.y);
                 }
             }]);
             
             dividerH = new M.HorizontalDivider(middleView, {
-                width:5, percentOfParentHeight:100, minValue:630, limitToParent:350,
+                width:5, percentOfParentHeight:100, minValue:352, limitToParent:350,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [SizeToParent, {
                 setValue: function(v) {
@@ -356,8 +375,8 @@
                 updateLayout: function() {
                     const v = this.value,
                         leftWidth = v + 2;
-                    for (const sv of [teamView, timelineView]) sv.setWidth(leftWidth);
-                    for (const sv of [opsView, eventDetailsView]) {
+                    for (const sv of [tabView, teamView, timelineView]) sv.setWidth(leftWidth);
+                    for (const sv of [opsView, dividerV, eventDetailsView]) {
                         sv.setX(leftWidth + layoutSpacing);
                         sv.setWidth(middleView.width - sv.x);
                     }
@@ -366,7 +385,10 @@
             
             dividerV.syncTo(middleView, 'updateLayout', 'height');
             dividerH.syncTo(middleView, 'updateLayout', 'width');
+            timelineTabBtn.doActivated();
         },
+        
+        selectTimelineTab: () => timelineTabBtn.doActivated(),
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
@@ -393,7 +415,8 @@
         selectAgentRow: agentModelOrId => {
             teamView.selectAgent(typeof agentModelOrId === 'string' ? agentModelOrId : agentModelOrId.id);
         },
-        selectEventBox: eventModelOrId => {
+        selectEventBox: (eventModelOrId, selectTab=false) => {
+            if (selectTab) appView.selectTimelineTab();
             timelineView.doSelectEvent(eventModelOrId);
         },
         
