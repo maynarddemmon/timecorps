@@ -26,6 +26,7 @@
 		// skills start at 0 and Origin Story's choices move them. Their field notes list
 		// those choices.
 		"ME":{
+			"name":"?",
 			"nameExpr":"scratch.avatar_name",
 			"born":"1997-08-13", "age":29.25,
 			"event":"origin_alarm",
