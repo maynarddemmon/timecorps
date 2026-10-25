@@ -227,7 +227,7 @@
                 TIMELINE_STARTING_PARADOX:0,
                 
                 // The maximum paradox for the Timeline is this fixed amount plus 
-                // TIMELINE_PARADOX_LIMIT_PER_EVENT for each regular Event that isn't hidden, so
+                // TIMELINE_PARADOX_LIMIT_PER_EVENT for each non-hub Event that isn't hidden, so
                 // it grows as Events are revealed.
                 TIMELINE_PARADOX_LIMIT:9,
                 TIMELINE_PARADOX_LIMIT_PER_EVENT:0.25,

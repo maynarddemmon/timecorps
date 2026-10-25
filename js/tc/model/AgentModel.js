@@ -413,7 +413,7 @@
                 
                 // An Event that allows no actions is lived through whole on arrival. Otherwise
                 // each action lives through a share of it. See doAction.
-                if (this.inited && newEventModel?.isRegularEvent() && newEventModel.getActionLimit() === 0) {
+                if (this.inited && newEventModel.getActionLimit() === 0) {
                     this.liveThroughEvent(newEventModel.getDuration());
                 }
                 oldEventModel?.notifyCollectionOfUpdate();
@@ -428,14 +428,13 @@
             either of them being revealed, the Event is marked visited and, if the player 
             wants, its brief opens. */
         tryToOpenEventBrief: function() {
-            const eventModel = this.getEventModel();
-            if (
-                eventModel?.isRegularEvent() && eventModel.isNotHidden() && 
-                this.isNotHidden() && !eventModel.hasBeenVisited()
-            ) {
-                eventModel.setBeenVisited(true);
-                if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
-                    pkg.app.openEventBrief(eventModel);
+            if (this.isNotHidden()) {
+                const eventModel = this.getEventModel();
+                if (eventModel.isNotHidden() && !eventModel.hasBeenVisited()) {
+                    eventModel.setBeenVisited(true);
+                    if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
+                        pkg.app.openEventBrief(eventModel);
+                    }
                 }
             }
         },
@@ -787,14 +786,17 @@
                         exitModel.applySets(self, true, 0);
                         
                         exitModel.openPrompt(() => {
-                            // Leaving by an exit lives through the rest of the Event, e.g. 
-                            // its unused actions. Time travel from an Event doesn't.
+                            // Leaving by an exit lives through the rest of the Event. This is true
+                            // even if the exit mode is time travel since those are still assumed
+                            // to occur at the end of the Event.
                             const fromEvent = exitModel.event;
-                            if (fromEvent.isRegularEvent()) self.ageBy(fromEvent.getDuration() - self.timeLivedAtEvent);
+                            self.ageBy(fromEvent.getDuration() - self.timeLivedAtEvent);
                             
                             // The time between leaving one Event and arriving at the next is
-                            // lived through on the way, unless the exit is time travel.
+                            // lived through on the way, unless the exit is itself a form of time
+                            // travel.
                             if (!exitModel.isTimeTravel()) self.ageBy(toEvent.getStart() - fromEvent.getEnd());
+                            
                             self.setEvent(toEvent.id, logEntry);
                             pkg.app.selectEventBox(toEvent);
                         });
@@ -858,12 +860,9 @@
         // Paradox //
         calculateParadoxForEntry: function(eventModelOrId, permittedVisitCount=0) {
             const eventModel = typeof eventModelOrId === 'string' ? pkg.model.getEventModel(eventModelOrId) : eventModelOrId;
-            if (eventModel) {
-                // Paradox is only to enter regular events.
-                if (eventModel.isRegularEvent()) {
-                    // More paradox the more times the Agent has already visited the Event.
-                    return this.countVisitsToEvent(eventModel) - permittedVisitCount;
-                }
+            if (eventModel?.isNotHub()) {
+                // More paradox the more times the Agent has already visited the Event.
+                return this.countVisitsToEvent(eventModel) - permittedVisitCount;
             }
             return 0;
         },

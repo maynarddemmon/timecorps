@@ -183,7 +183,7 @@
                     }
                 }
                 
-                if (addedCount === 0) new TextForFlow(exitView, {text:'No exits available.'});
+                exitView.setVisible(addedCount > 0);
             }
         }),
         
@@ -266,10 +266,10 @@
                 timelineView = pkg.app.getTimelineView();
             
             self.hqBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
             }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
             }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getTheVoidEventModel());}}]);
             
             new View(header, {width:padding}); // Spacer
@@ -364,8 +364,10 @@
             this.updateForEventModel();
         },
         
+        /*  The HQ and The Void buttons show once those Events are revealed, so a change to
+            either updates them too. */
         notifyEventModelChanged: function(eventModel) {
-            if (eventModel && this.eventModel === eventModel) this.updateForEventModel();
+            if (eventModel && (this.eventModel === eventModel || eventModel.isHQ() || eventModel.isTheVoid())) this.updateForEventModel();
         },
         
         notifyAgentSelectedChanged: function(agentModel) {
@@ -393,8 +395,12 @@
             if (hasModel) {
                 const isHQ = eventModel.isHQ();
                 self.chronalBar.setVisible(isHQ);
+                
                 self.hqBtn.setDisabled(isHQ);
+                self.hqBtn.setVisible(!rootModel.getHQEventModel().isHidden());
+                
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
+                self.theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
                 
                 Layout.incrementGlobalLock();
                 

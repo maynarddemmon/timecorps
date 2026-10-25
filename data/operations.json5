@@ -35,7 +35,11 @@
 				"confirm":{
 					"label":"Join the Time Corps",
 					"onClick":{
-						"set":{"agents.ME.faction":"'timecorps'"},
+						"set":{
+							"agents.ME.faction":"'timecorps'",
+							"scratch.time_corps_hq_hidden":"false",
+							"scratch.the_void_hidden":"false"
+						},
 						"adj":{"agents.ME.chronal":"8 + d(6)"}
 					}
 				},
@@ -49,7 +53,7 @@
 	"scratch":{
 		"transfer":0
 	},
-
+	
 	"operations":{
 		"origin_story":{
 			"name":"Origin Story",

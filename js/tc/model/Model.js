@@ -393,11 +393,11 @@
         },*/
         
         /*  Sets the Timeline's maximum paradox: TIMELINE_PARADOX_LIMIT plus 
-            TIMELINE_PARADOX_LIMIT_PER_EVENT for each regular Event that isn't hidden. Lowering 
+            TIMELINE_PARADOX_LIMIT_PER_EVENT for each non-hub Event that isn't hidden. Lowering 
             it below the current paradox clamps the paradox, which destabilizes the Timeline. */
         updateTimelineParadoxMax: () => {
             if (pkg.isAppReady()) {
-                const visCount = model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && eventModel.isNotHidden()).length;
+                const visCount = model.getEventModelsAsList(eventModel => eventModel.isNotHub() && eventModel.isNotHidden()).length;
                 model[STAT_ID_PARADOX].setMax(
                     mathFloor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT * visCount)
                 );

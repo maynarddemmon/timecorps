@@ -1186,7 +1186,7 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
-                self.hidden = self.flooded = self._beenVisited = false;
+                self.hub = self.hidden = self.flooded = self._beenVisited = false;
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -1238,7 +1238,7 @@
                 // will be serialized both for Save and for an Event grid (once it is introduced).
                 const retval = this.callSuper(cfg);
                 for (const attrName of [
-                    'name','start','duration','hidden','actionLimit','actions','values',
+                    'name','hub','start','duration','hidden','actionLimit','actions','values',
                     'exits','hideAffectedBy'
                 ]) {
                     retval[attrName] = this[attrName];
@@ -1268,8 +1268,11 @@
             
             isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ;},
             isTheVoid: function() {return this.id === EVENT_ID_THE_VOID;},
-            isNotRegularEvent: function() {return this.isHQ() || this.isTheVoid();},
-            isRegularEvent: function() {return !this.isNotRegularEvent();},
+            
+            // Hubs are free from paradox. Events like the HQ and The Void are hubs.
+            setHub: function(v) {this.set('hub', v, true);},
+            isHub: function() {return this.hub;},
+            isNotHub: function() {return !this.isHub();},
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
@@ -1495,6 +1498,7 @@
                 for (const id in values) valuesObj[id] = values[id].exportToObj();
                 if (this.flooded) retval.flooded = true;
                 if (this._beenVisited) retval.beenVisited = true;
+                if (this.hub) retval.hub = true;
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1509,6 +1513,7 @@
                 }
                 if ('flooded' in obj) this.setFlooded(obj.flooded);
                 if ('beenVisited' in obj) this.setBeenVisited(obj.beenVisited);
+                if ('hub' in obj) this.setHub(obj.hub);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {

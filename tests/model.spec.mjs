@@ -101,7 +101,7 @@ test('every Event offers Investigate first, except the HQ and The Void, hidden o
         DEFAULTS = getDefaultInvestigate(),
         out = await page.evaluate(() => {
             const out = {missing:[], notFirst:[]};
-            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent())) {
+            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isNotHub())) {
                 const actionIds = Object.keys(eventModel.getActionModels());
                 if (!actionIds.includes('_investigate')) out.missing.push(eventModel.id);
                 else if (actionIds[0] !== '_investigate') out.notFirst.push(eventModel.id);
@@ -534,11 +534,11 @@ test('agent health comes from the data, with a constitution that can rise to the
     expect(problems.warnings).toEqual([]);
 });
 
-/*  The Timeline's paradox limit, what the formula says it should be, and the regular Events
+/*  The Timeline's paradox limit, what the formula says it should be, and the non-hub Events
     that aren't hidden. */
 const readParadoxLimit = page => page.evaluate(() => {
     const {TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT} = tc.cfg,
-        visibleCount = tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent() && !eventModel.isHidden()).length;
+        visibleCount = tc.model.getEventModelsAsList(eventModel => eventModel.isNotHub() && !eventModel.isHidden()).length;
     return {
         max:tc.model.paradox.max,
         expected:Math.floor(TIMELINE_PARADOX_LIMIT + TIMELINE_PARADOX_LIMIT_PER_EVENT*visibleCount),
@@ -546,12 +546,12 @@ const readParadoxLimit = page => page.evaluate(() => {
     };
 });
 
-test('the timeline paradox limit grows with each regular event that isn\'t hidden', async ({page}) => {
+test('the timeline paradox limit grows with each non-hub event that isn\'t hidden', async ({page}) => {
     const problems = await startGame(page),
         start = await readParadoxLimit(page);
     expect(start.max).toBe(start.expected);
     
-    // The HQ and The Void aren't regular Events, so showing them doesn't count.
+    // The HQ and The Void are hubs, so showing them doesn't count.
     await page.evaluate(() => {
         tc.model.getHQEventModel().setHidden(false);
         tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID).setHidden(false);

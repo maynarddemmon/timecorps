@@ -108,7 +108,7 @@
             }
         });
     
-    /*  A grid of the known Events, and HQ and The Void: their times, the agents at them and their stats. Its
+    /*  A grid of the known Events: their times, the agents at them and their stats. Its
         selection follows the timeline's, and selecting a row selects the Event. */
     pkg.Events = new JSClass('Events', pkg.TallView, {
         // Life Cycle //////////////////////////////////////////////////////////
@@ -145,7 +145,7 @@
                     const sortAsc = ascending ? 1 : -1;
                     return (a, b) => a.id.localeCompare(b.id) * sortAsc;
                 },
-                getFilterFunction: () => eventModel => eventModel.isNotHidden() || eventModel.isNotRegularEvent(),
+                getFilterFunction: () => eventModel => eventModel.isNotHidden(),
                 getSortFunction: function(sortColumnId, ascending, tieBreakerSortFunc) {
                     const sortAsc = ascending ? 1 : -1,
                         byNumber = getValue => (a, b) => {

@@ -1,4 +1,4 @@
-// The Events tab: a grid of the known Events, and HQ and The Void, whose selection follows the timeline's.
+// The Events tab: a grid of the known Events, whose selection follows the timeline's.
 import {test, expect} from '@playwright/test';
 import {startGame, showTab} from './helpers.mjs';
 
@@ -17,19 +17,20 @@ const grid = page => page.locator('.myt-Events'),
                 attestation:row.getRef('attestation').value
             }));
     }),
+    // The known Events, in the grid's order.
+    readKnownIds = page => page.evaluate(() => tc.model.getEventModelsAsList(eventModel => eventModel.isNotHidden())
+        .sort((a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id)).map(eventModel => eventModel.id)),
     selectedIds = page => page.evaluate(() => ({
         grid:tc.app.getEventsView().getSelectedEventId(),
         timeline:tc.app.getTimelineView().getSelectedEventId(),
         details:tc.app.getEventDetailsView().eventModel?.id ?? null
     }));
 
-test('the events tab lists the known Events, HQ and The Void by start, with the agents at them, and keeps up', async ({page}) => {
+test('the events tab lists the known Events by start, with the agents at them, and keeps up', async ({page}) => {
     const problems = await startGame(page);
     await showTab(page, 'Events');
-    const known = await page.evaluate(() => tc.model.getEventModelsAsList(eventModel => eventModel.isNotHidden() || eventModel.isNotRegularEvent())
-        .sort((a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id)).map(eventModel => eventModel.id));
+    const known = await readKnownIds(page);
     await expect.poll(async () => (await readRows(page)).map(row => row.id)).toEqual(known);
-    expect(known).toEqual(expect.arrayContaining(['time_corps_hq', 'the_void']));
     
     const rows = await readRows(page);
     expect(rows.find(row => row.id === 'origin')).toMatchObject({name:'Origin', agents:['AL']});
@@ -55,15 +56,16 @@ test('the grid\'s selection follows the timeline\'s, selecting a row selects the
     
     await showTab(page, 'Events');
     await page.evaluate(() => tc.model.getEventModel('aftermath').attestation.setValue(30));
+    // That reveals its neighbors, and the grid redraws a moment later, moving the rows, so wait
+    // for it before clicking.
+    await expect.poll(async () => (await readRows(page)).map(row => row.id)).toEqual(['boats', 'origin', 'aftermath', 'finale']);
     const aftermathRow = grid(page).getByText('Aftermath', {exact:true});
     await aftermathRow.click();
     await expect.poll(() => selectedIds(page)).toEqual({grid:'aftermath', timeline:'aftermath', details:'aftermath'});
     // Still on the Events tab.
     await expect(grid(page)).toBeVisible();
     
-    // Activating the selected row shows it on the timeline. Selecting redraws the grid, which can
-    // put another row under a mouse that hasn't moved, so move it off first.
-    await page.mouse.move(0, 0);
+    // Activating the selected row shows it on the timeline.
     await aftermathRow.click();
     await expect(page.locator('.myt-TimelineCompact')).toBeVisible();
     await expect(grid(page)).toBeHidden();
@@ -72,5 +74,22 @@ test('the grid\'s selection follows the timeline\'s, selecting a row selects the
     // Clearing the timeline's selection clears the grid's.
     await page.evaluate(() => tc.app.getTimelineView().deselectAll());
     await expect.poll(() => selectedIds(page)).toMatchObject({grid:null, timeline:null});
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('the event details only offer HQ and The Void once they\'re revealed, whatever Event is showing', async ({page}) => {
+    const problems = await startGame(page),
+        readBtns = () => page.evaluate(() => {
+            const details = tc.app.getEventDetailsView();
+            return {hq:details.hqBtn.visible, theVoid:details.theVoidBtn.visible};
+        });
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect.poll(readBtns).toEqual({hq:false, theVoid:false});
+    
+    // Revealing them shows their buttons without selecting another Event.
+    await page.evaluate(() => tc.model.getHQEventModel().setHidden(false));
+    await expect.poll(readBtns).toEqual({hq:true, theVoid:false});
+    await page.evaluate(() => tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID).setHidden(false));
+    await expect.poll(readBtns).toEqual({hq:true, theVoid:true});
     expect(problems.pageErrors).toEqual([]);
 });

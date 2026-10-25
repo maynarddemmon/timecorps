@@ -675,11 +675,11 @@ test('adjustments can change the event and the timeline too, each within its sta
 });
 
 
-test('every regular event offers Rest, hidden when the event is under an hour', async ({page}) => {
+test('every non-hub event offers Rest, hidden when the event is under an hour', async ({page}) => {
     const problems = await startGame(page),
         out = await page.evaluate(() => {
             const out = {missing:[], wrongHidden:[]};
-            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isRegularEvent())) {
+            for (const eventModel of tc.model.getEventModelsAsList(eventModel => eventModel.isNotHub())) {
                 const rest = eventModel.getActionModels()._rest;
                 if (!rest) {
                     out.missing.push(eventModel.id);

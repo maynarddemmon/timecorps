@@ -326,33 +326,38 @@
         
         buildMiddleView: middleView => {
             const tabView = new View(middleView, {
-                ignorePlacement:true, height:rowHeight, bgColor:colorDarkMedium,
-                inset:spacing, spacing, collapse:false
-            }, [M.TabContainer]);
-            timelineTabBtn = new TabBtn(tabView, {text:'Timeline'}, [{
+                height:rowHeight, bgColor:colorDarkMedium, maxSelected:1
+            }, [M.SelectionManager]);
+            
+            timelineTabBtn = new TabBtn(tabView, {text:pkg.ICON_CHRONAL + ' Timeline'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     timelineView.setVisible(v);
                 }
             }]);
-            eventsTabBtn = new TabBtn(tabView, {text:'Events'}, [{
+            eventsTabBtn = new TabBtn(tabView, {text:pkg.ICON_EVENT + ' Events'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     eventsView.setVisible(v);
                 }
             }]);
-            missionsTabBtn = new TabBtn(tabView, {text:'Missions'}, [{
+            
+            new pkg.Spacer(tabView);
+            
+            missionsTabBtn = new TabBtn(tabView, {text:pkg.ICON_MISSION + ' Missions'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     missionsView.setVisible(v);
                 }
             }]);
-            agentsTabBtn = new TabBtn(tabView, {text:'Agents'}, [{
+            agentsTabBtn = new TabBtn(tabView, {text:'♟ Agents'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     teamView.setVisible(v);
                 }
             }]);
+            
+            new ResizeLayout(tabView, {inset:spacing, spacing, outset:spacing});
             
             const panelY = tabView.height + layoutSpacing,
                 panelAttrs = {y:panelY, visible:false, percentOfParentHeightOffset:-panelY};

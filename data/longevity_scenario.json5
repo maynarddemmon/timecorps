@@ -93,7 +93,7 @@
 					"skillCheck":{"actionType":"investigate", "difficulty":150},
 					"hidden":"event.actions.crowd.attemptCount > 0",
 					"set":{"watcher":"true"},
-					"adj":{"event.attestation":{"onSuccess":"5"}}
+					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
 				}
 			},
 			"values":{

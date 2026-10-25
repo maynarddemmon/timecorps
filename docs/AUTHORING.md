@@ -116,7 +116,7 @@ Every stat has a value and a range, and changes stay within it.
 | `agent.chronal` | 0–100 | Spent to time travel. Default starting value 75 |
 | `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (5) | Raised by revisiting an event. Reaching the limit devours the agent |
 | `timeline.chronal` | 0–100 | HQ's reserve, used to reload agents. Starts at 25 |
-| `timeline.paradox` | 0–limit | The limit is 9 plus 0.25 per known regular event. Reaching it destabilizes the timeline |
+| `timeline.paradox` | 0–limit | The limit is 9 plus 0.25 per known event that isn't a hub. Reaching it destabilizes the timeline |
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
 
@@ -208,6 +208,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"duration":{"m":1},              // Any of "w", "d", "h", "m", "s", "ms".
 	"location":"titanic.bridge",
 	"actionLimit":2,                 // Optional. Actions an agent can take per visit.
+	"hub":false,                     // Optional. See below.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
@@ -223,6 +224,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 
 - **Time and place.** Two events at the same location can't overlap. An event must also start no earlier than the end of every event its values depend on. Both are checked at startup, which halts with a warning if either fails.
 - **`actionLimit`.** Defaults to `DEFAULT_ACTION_LIMIT`, which `index.html` sets to 3.
+- **`hub`.** A hub, such as HQ or The Void, is free of paradox: visiting it again costs none, and it doesn't raise the timeline's paradox limit. Default: false.
 - **`hidden`.** Leave it out for the usual rule: an event is hidden while nothing is known about it, meaning its attestation and historicity are both 0. It's also revealed once a *descendant* (an event whose values depend on it) reaches attestation 15, or a *precursor* (an event it depends on) reaches 25. Give your own expression to replace that rule, e.g. to reveal it only from one particular event.
 - **`description`.** An array of phrases. A phrase is a string, or `{"text":…, "hidden":…}` to show it only sometimes, typically as attestation rises. Phrases are joined with spaces. HTML such as `<br>` works.
 

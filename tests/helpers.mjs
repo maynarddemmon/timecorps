@@ -121,7 +121,8 @@ export const dismissMissionBrief = async page => {
     Timeline shows at the start. */
 const TAB_VIEW_CLASSES = {Timeline:'.myt-TimelineCompact', Events:'.myt-Events', Missions:'.myt-Missions', Agents:'.myt-Agents'};
 export const showTab = async (page, name) => {
-    await page.getByRole('button', {name, exact:true}).filter({visible:true}).click();
+    // A tab's button has an icon before its name.
+    await page.getByRole('button', {name:new RegExp('^\\S+ ' + name + '$')}).filter({visible:true}).click();
     await expect(page.locator(TAB_VIEW_CLASSES[name])).toBeVisible();
 };
 

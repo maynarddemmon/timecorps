@@ -63,6 +63,7 @@
 	"events":{
 		"the_void":{
 			"name":"⦰ The Void",
+			"hub":true,
 			"start":"0000-01-01T00:00:00",
 			"duration":{"s":0},
 			"location":"_nowhere",
@@ -71,6 +72,7 @@
 		},
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters",
+			"hub":true,
 			"start":"2174-10-14T00:00:00",
 			// A month, a day an action, as in the game.
 			"duration":{"d":30},
