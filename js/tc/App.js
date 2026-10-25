@@ -20,11 +20,13 @@
         
         timelineTabBtn,
         eventsTabBtn,
+        missionsTabBtn,
         agentsTabBtn,
         
         opsView,
         teamView,
         eventsView,
+        missionsView,
         
         agentDossier,
         areaBrief,
@@ -157,6 +159,7 @@
                             timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
                             teamView.setup(model);
                             eventsView.setup(model);
+                            missionsView.setup(model);
                             eventDetailsView.setup(model);
                             model.reset();
                             
@@ -172,6 +175,7 @@
                                     model.setCurrentOperation(model.getInitialOperation());
                                 }
                                 ready = true;
+                                model.setupRevealedOperations();
                                 model.updateTimelineParadoxMax();
                                 updateLastSaved();
                                 
@@ -337,6 +341,12 @@
                     eventsView.setVisible(v);
                 }
             }]);
+            missionsTabBtn = new TabBtn(tabView, {text:'Missions'}, [{
+                setSelected: function(v) {
+                    this.callSuper(v);
+                    missionsView.setVisible(v);
+                }
+            }]);
             agentsTabBtn = new TabBtn(tabView, {text:'Agents'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
@@ -348,6 +358,7 @@
                 panelAttrs = {y:panelY, visible:false, percentOfParentHeightOffset:-panelY};
             teamView = new pkg.Agents(middleView, panelAttrs);
             eventsView = new pkg.Events(middleView, panelAttrs);
+            missionsView = new pkg.Missions(middleView, panelAttrs);
             timelineView = new pkg.TimelineCompact(middleView, panelAttrs);
             
             opsView = new pkg.OperationDetails(middleView);
@@ -356,6 +367,7 @@
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
             appView.attachTo(eventsView,'_onEventRowSelectionChanged', 'selectionChanged');
+            appView.attachTo(missionsView,'_onMissionRowSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
                 height:5, minValue:133, limitToParent:200,
@@ -386,7 +398,7 @@
                 updateLayout: function() {
                     const v = this.value,
                         leftWidth = v + 2;
-                    for (const sv of [tabView, teamView, eventsView, timelineView]) sv.setWidth(leftWidth);
+                    for (const sv of [tabView, teamView, eventsView, missionsView, timelineView]) sv.setWidth(leftWidth);
                     for (const sv of [opsView, dividerV, eventDetailsView]) {
                         sv.setX(leftWidth + layoutSpacing);
                         sv.setWidth(middleView.width - sv.x);
@@ -401,11 +413,13 @@
         
         selectTimelineTab: () => timelineTabBtn.doActivated(),
         selectEventsTab: () => eventsTabBtn.doActivated(),
+        selectMissionsTab: () => missionsTabBtn.doActivated(),
         selectAgentsTab: () => agentsTabBtn.doActivated(),
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
         getEventsView: () => eventsView,
+        getMissionsView: () => missionsView,
         getEventDetailsView: () => eventDetailsView,
         getOpsView: () => opsView,
         
@@ -458,6 +472,12 @@
             } else if (timelineView.getSelectedEventBox()) {
                 timelineView.deselectAll();
             }
+        },
+        
+        /*  Selecting a row in the Missions grid makes that mission the current one. */
+        _onMissionRowSelectionChanged: event => { // value is an OperationModel
+            const operationModel = event.value;
+            if (operationModel && operationModel !== model.getCurrentOperation()) model.setCurrentOperation(operationModel);
         },
         
         _onAgentSelectionChanged: event => {
@@ -540,6 +560,18 @@
                     'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.'
                 );
             }
+        },
+        
+        /*  Called when the current Operation changes, from previousOperationModel, which
+            can be null. */
+        notifyCurrentOperationChanged: (previousOperationModel, operationModel) => {
+            opsView.notifyOperationSelectedChanged(operationModel);
+            timelineView.updateEntanglements();
+            missionsView.selectOperation(operationModel);
+            
+            // Their states depend on which is current.
+            previousOperationModel?.notifyCollectionOfUpdate();
+            operationModel?.notifyCollectionOfUpdate();
         },
         
         /*  Called when an Operation has completed successfully */

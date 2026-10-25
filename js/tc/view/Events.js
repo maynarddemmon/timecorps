@@ -2,7 +2,11 @@
     'use strict';
     
     let rootModel,
-        gridWrapper;
+        gridWrapper,
+        
+        // True while the selection is following the timeline, so it isn't sent back. The
+        // follow is debounced, so it could otherwise undo a newer selection.
+        isFollowing = false;
     
     const JSClass = JS.Class,
         
@@ -135,7 +139,7 @@
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX,     text:I18N_PARADOX,     ...barAttrs});
                 },
                 doRowModelSelected: model => {
-                    self.fireEvent('selectionChanged', model);
+                    if (!isFollowing) self.fireEvent('selectionChanged', model);
                 },
                 getTieBreakerSortFunction: (_sortColumnId, ascending) => {
                     const sortAsc = ascending ? 1 : -1;
@@ -190,12 +194,14 @@
         selectEvent: M.debounce(function(eventModel) {
             const grid = gridWrapper.getGrid();
             if (grid.selectedRowModel !== eventModel) {
+                isFollowing = true;
                 if (eventModel) {
                     gridWrapper.selectRowForModelOrId(eventModel);
                 } else {
                     grid.setSelectedRowModel(null);
                     grid.refreshListUI();
                 }
+                isFollowing = false;
             }
         }, STANDARD_DEBOUNCE_MILLIS),
         

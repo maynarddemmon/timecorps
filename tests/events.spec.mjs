@@ -60,7 +60,9 @@ test('the grid\'s selection follows the timeline\'s, selecting a row selects the
     // Still on the Events tab.
     await expect(grid(page)).toBeVisible();
     
-    // Activating the selected row shows it on the timeline.
+    // Activating the selected row shows it on the timeline. Selecting redraws the grid, which can
+    // put another row under a mouse that hasn't moved, so move it off first.
+    await page.mouse.move(0, 0);
     await aftermathRow.click();
     await expect(page.locator('.myt-TimelineCompact')).toBeVisible();
     await expect(grid(page)).toBeHidden();

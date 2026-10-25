@@ -6,7 +6,7 @@
         {debounce, BaseModel} = myt,
         
         {
-            ConstrainableAttrSupport, Describable, setConstrainedValue,
+            ConstrainableAttrSupport, Describable, Hideable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS},
             SCOPE_OPERATION
         } = pkg,
@@ -39,6 +39,12 @@
             }
             return pkg.readSuccessChanges(prefix, cfg, 'an Operation');
         },
+        
+        // Where the player stands with an Operation. See OperationModel.getState.
+        OPERATION_STATE_HIDDEN = pkg.OPERATION_STATE_HIDDEN = 'hidden',
+        OPERATION_STATE_ACTIVE = pkg.OPERATION_STATE_ACTIVE = 'active',
+        OPERATION_STATE_CURRENT = pkg.OPERATION_STATE_CURRENT = 'current',
+        OPERATION_STATE_COMPLETED = pkg.OPERATION_STATE_COMPLETED = 'completed',
         
         validateAgentIdList = (list, label) => {
             if (list) {
@@ -127,8 +133,13 @@
             doDescriptionChanged: function() {this.operation.notifyCollectionOfUpdate();}
         });
     
+    /*  A mission. It's hidden until it becomes the current Operation, e.g. as the initial
+        Operation or another's nextOperation, or until its "hidden" expression, if it has one,
+        works out to false. Revealing it applies its onSetup, and it stays revealed from then
+        on. While revealed and not yet completed it's active: it completes once all its
+        Objectives are met, whether or not it's the current Operation. */
     pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
-        include: [ConstrainableAttrSupport, Describable, pkg.MediaSupport],
+        include: [ConstrainableAttrSupport, Hideable, Describable, pkg.MediaSupport],
         
         /** @overrides ConstrainableAttrSupport */
         getConstraintScopeName: () => SCOPE_OPERATION,
@@ -153,11 +164,15 @@
             const self = this;
             
             self.objectives = {};
+            self.hidden = true;
+            
+            // Set here so expressions can observe them, e.g. "operations.first.successGranted".
+            self.setupApplied = self.successGranted = false;
             
             // We need to give the Objectives a chance to settle since events must propogate
             // to update success/failure.
             self.determineSuccessfulCompletion = debounce(() => {
-                if (self.isCurrent() && self.getProgress().completed) self.doOnSuccess();
+                if (self.isActive() && self.getProgress().completed) self.doOnSuccess();
             }, STANDARD_DEBOUNCE_MILLIS);
             
             // Applied after the other attrs so warnings about their set and adj can name the
@@ -184,6 +199,17 @@
         
         // Accessors ///////////////////////////////////////////////////////
         isCurrent: function() {return pkg.model.getCurrentOperation() === this;},
+        
+        /*  Revealed and not yet completed, so progress can be made on it. */
+        isActive: function() {return !!this.setupApplied && !this.successGranted;},
+        
+        /*  "hidden" until revealed, "completed" once its success is granted, "current" while
+            it's the Operation the player is focused on, and "active" otherwise. */
+        getState: function() {
+            if (this.isHidden()) return OPERATION_STATE_HIDDEN;
+            if (this.successGranted) return OPERATION_STATE_COMPLETED;
+            return this.isCurrent() ? OPERATION_STATE_CURRENT : OPERATION_STATE_ACTIVE;
+        },
         
         setName: function(name) {this.set('name', name, true);},
         getName: function() {return this.name;},
@@ -312,14 +338,18 @@
         /*  Restoring these before the current Operation is set keeps doOnSetup and the success
             rewards from being applied a second time. */
         importFromObj: function(obj) {
-            if ('setupApplied' in obj) this.setupApplied = obj.setupApplied;
-            if ('successGranted' in obj) this.successGranted = obj.successGranted;
+            if ('setupApplied' in obj) {
+                this.setupApplied = obj.setupApplied;
+                if (obj.setupApplied) this.setHidden(false);
+            }
+            if ('successGranted' in obj) this.set('successGranted', obj.successGranted, true);
         },
         
         
         // Methods /////////////////////////////////////////////////////////
         reset: function() {
-            this.setupApplied = this.successGranted = false;
+            this.setupApplied = false;
+            this.set('successGranted', false, true);
         },
         
         // Notifications and Triggers
@@ -330,17 +360,32 @@
             }
         },
         
+        /*  A "hidden" expression revealing the Operation sets it up, once the campaign has
+            started. Until then, Model.setupRevealedOperations does. */
+        doHiddenChanged: function(hidden) {
+            if (!hidden && pkg.isAppReady()) this.doOnSetup();
+        },
+        
         doOnSetup: function() {
             if (!this.setupApplied) {
                 const rootModel = pkg.model;
+                this.setupApplied = true;
+                
+                // Revealed for good, whatever its expression works out to from here on.
+                this.setHidden(false);
+                
                 pkg.applySuccessChanges(this.setupChanges);
                 pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
-                this.setupApplied = true;
                 
                 // After the Mission Brief and the dossiers of the Agents it reveals.
                 pkg.openPrompt('Operation ' + this.id + ' onSetup', this.setupPromptId);
+                
+                this.notifyCollectionOfUpdate();
+                
+                // Its Objectives may already be met.
+                this.determineSuccessfulCompletion();
             }
         },
         
@@ -351,7 +396,8 @@
                 pkg.applySuccessChanges(self.successChanges);
                 rootModel.revealAgents(self.revealAgentsOnSuccess);
                 rootModel.awardAgents(self.awardAgentsOnSuccess);
-                self.successGranted = true;
+                self.set('successGranted', true, true);
+                self.notifyCollectionOfUpdate();
                 
                 pkg.openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
                     pkg.app.notifyOperationCompleted(self);

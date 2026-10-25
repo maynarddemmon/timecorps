@@ -259,10 +259,10 @@
         getInitialOperation: () => model.getOperationModel(model.initialOperation),
         
         setCurrentOperation: operationModel => {
+            const previousOperationModel = model.currentOperationModel;
             model.currentOperationModel = operationModel;
             operationModel?.doOnSetup();
-            pkg.app.getOpsView().notifyOperationSelectedChanged(model.getCurrentOperation());
-            pkg.app.getTimelineView().updateEntanglements();
+            pkg.app.notifyCurrentOperationChanged(previousOperationModel, operationModel);
             
             // Objectives may already be satisfied on arrival (e.g. the player completed
             // them while working an earlier op), so check now rather than waiting for
@@ -270,6 +270,14 @@
             operationModel?.determineSuccessfulCompletion();
         },
         getCurrentOperation: () => model.currentOperationModel,
+        
+        /*  Sets up the Operations whose "hidden" expressions revealed them before the 
+            campaign started. Once it has, a reveal sets the Operation up as it happens. */
+        setupRevealedOperations: () => {
+            for (const operationModel of model.getOperationModelsAsList()) {
+                if (operationModel.isNotHidden()) operationModel.doOnSetup();
+            }
+        },
         
         
         // Scratch:Accessors & Methods /////////////////////////////////////////

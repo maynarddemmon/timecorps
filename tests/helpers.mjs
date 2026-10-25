@@ -117,9 +117,9 @@ export const dismissMissionBrief = async page => {
     await expect(missionBriefTitle(page)).toHaveCount(0);
 };
 
-/*  Shows a tab: Timeline, Events or Agents, which share the left of the screen. The 
+/*  Shows a tab: Timeline, Events, Missions or Agents, which share the left of the screen. The 
     Timeline shows at the start. */
-const TAB_VIEW_CLASSES = {Timeline:'.myt-TimelineCompact', Events:'.myt-Events', Agents:'.myt-Agents'};
+const TAB_VIEW_CLASSES = {Timeline:'.myt-TimelineCompact', Events:'.myt-Events', Missions:'.myt-Missions', Agents:'.myt-Agents'};
 export const showTab = async (page, name) => {
     await page.getByRole('button', {name, exact:true}).filter({visible:true}).click();
     await expect(page.locator(TAB_VIEW_CLASSES[name])).toBeVisible();

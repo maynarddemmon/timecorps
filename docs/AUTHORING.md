@@ -534,6 +534,8 @@ HQ and The Void leave out `_investigate` this way.
 			"name":"Titanic - Avoid the Iceberg",
 			"image":true,                      // There's img/mission/<id>.jpg. Optional for missions.
 			"description":[…],                 // The brief's field notes. Phrases, as for events.
+			// Optional. Reveals the mission when it's false, e.g. once another is completed.
+			"hidden":"!operations.titanic_intro.successGranted",
 			"onSetup":{
 				"revealAgents":"VQ",           // An ID or an array of them.
 				"awardAgents":"VQ",
@@ -565,8 +567,9 @@ HQ and The Void leave out `_investigate` this way.
 }
 ```
 
-- **Setup.** When a mission starts, its setup is applied once: its `adj` and `set`, the Mission Brief opened, agents revealed and awarded, and the selection made.
-- **Completion.** A mission is complete when every objective's `success` is true. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
+- **Revealing.** A mission is hidden until it's revealed: by becoming the current mission, as `initialOperation` or another's `nextOperation`, or by its `hidden`, a [constraint expression](#constraint-expressions), becoming false. `operations.<id>.successGranted` is true once that mission is completed, so completing one can reveal several. Once revealed, a mission stays revealed. The Missions tab lists the revealed missions: `active`, `current` (the one selected, whose objectives the timeline marks) or `completed`.
+- **Setup.** When a mission is revealed, its setup is applied once: its `adj` and `set`, the Mission Brief opened, and agents revealed and awarded. Its selection is made whenever it becomes the current mission.
+- **Completion.** A revealed mission is complete when every objective's `success` is true, whether or not it's the current one. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
 - **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals. onSuccess's opens as the mission completes, and Mission Complete, with its save, waits for the answer.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
