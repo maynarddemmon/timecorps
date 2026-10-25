@@ -64,7 +64,7 @@
 	
 	"events":{
 		"origin_alarm":{
-			"name":"The Alarm",
+			"name":"The Alarm", "chronoLocked":"true",
 			"image":true,
 			"start":"2026-11-13T07:00:00",
 			"duration":{"h":1},
@@ -140,7 +140,7 @@
 		},
 		
 		"origin_bus_stop":{
-			"name":"The Bus Stop",
+			"name":"The Bus Stop", "chronoLocked":"true",
 			"image":true,
 			"start":"2026-11-13T08:03:00",
 			"duration":{"m":5},
@@ -199,7 +199,7 @@
 		},
 		
 		"origin_busride":{
-			"name":"The Bus",
+			"name":"The Bus", "chronoLocked":"true",
 			"start":"2026-11-13T08:15:00",
 			"duration":{"m":30},
 			"location":"origin.city_streets",
@@ -275,7 +275,7 @@
 		},
 		
 		"origin_hospital":{
-			"name":"A Shift at St. Brendan’s",
+			"name":"A Shift at St. Brendan’s", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.hospital",
@@ -342,7 +342,7 @@
 		},
 		
 		"origin_newsroom":{
-			"name":"Deadline at the Ledger",
+			"name":"Deadline at the Ledger", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.newsroom",
@@ -409,7 +409,7 @@
 		},
 		
 		"origin_garage":{
-			"name":"Under the Hood at Delgado’s",
+			"name":"Under the Hood at Delgado’s", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.garage",
@@ -476,7 +476,7 @@
 		},
 		
 		"origin_theater":{
-			"name":"The Matinee at the Orpheum",
+			"name":"The Matinee at the Orpheum", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.theater",
@@ -543,7 +543,7 @@
 		},
 		
 		"origin_walk_home":{
-			"name":"The Walk Home",
+			"name":"The Walk Home", "chronoLocked":"true",
 			"start":"2026-11-13T17:20:00",
 			"duration":{"m":30},
 			"location":"origin.street",
@@ -600,7 +600,7 @@
 		
 		// Act 2: the encounter.
 		"origin_stranger":{
-			"name":"The Stranger",
+			"name":"The Stranger", "chronoLocked":"true",
 			"start":"2026-11-13T17:52:00",
 			"duration":{"m":3},
 			"location":"origin.street",
@@ -653,7 +653,7 @@
 		},
 		
 		"origin_masked":{
-			"name":"The Masked Figure",
+			"name":"The Masked Figure", "chronoLocked":"true",
 			"start":"2026-11-13T17:55:00",
 			"duration":{"m":1},
 			"location":"origin.street",
@@ -706,7 +706,7 @@
 		
 		// Act 3: a safe house, late in the 2080s. Hidden until the device is on your wrist.
 		"safehouse_arrival":{
-			"name":"Elsewhere",
+			"name":"Elsewhere", "chronoLocked":"true",
 			"start":"2087-03-09T23:41:00",
 			"duration":{"m":10},
 			"location":"safehouse.corridor",
@@ -745,7 +745,7 @@
 		},
 		
 		"safehouse_fight":{
-			"name":"The Fight",
+			"name":"The Fight", "chronoLocked":"true",
 			"start":"2087-03-09T23:51:00",
 			"duration":{"m":2},
 			"location":"safehouse.office",

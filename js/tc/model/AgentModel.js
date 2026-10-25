@@ -45,6 +45,16 @@
             return null;
         },
         
+        /*  The chrono locked Event, if any, that keeps the Agent from time traveling to 
+            eventModel: the one they'd leave, or the one they'd arrive at. null if neither is
+            locked. */
+        getChronoLockedEventBlockingTravel = (agentModel, eventModel) => {
+            const from = agentModel.getEventModel();
+            if (from?.isChronoLocked()) return from;
+            if (eventModel.isChronoLocked()) return eventModel;
+            return null;
+        },
+        
         /*  Whether, and at what cost, an agent can time travel to an Event: deploy from HQ,
             jump, loop back to the Event they're at, or be recalled to HQ. All the rules for 
             where an agent may time travel are here. Returns 
@@ -55,21 +65,20 @@
             const isHQ = eventModel.isHQ(),
                 isAtEvent = agentModel.isAtEvent(eventModel),
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
-                retval = {isHQ, chronalNeeded, paradoxCost:agentModel.calculateParadoxForEntry(eventModel), visible:false};
+                retval = {isHQ, chronalNeeded, paradoxCost:agentModel.calculateParadoxForEntry(eventModel), visible:false},
+                chronoLockedEventModel = getChronoLockedEventBlockingTravel(agentModel, eventModel);
             
-            // Not permitted: the dead go nowhere, looping back to an Event takes more 
+            // Not permitted: the dead go nowhere, no one time travels into or out of a chrono
+            // locked Event or loops back at a hub, looping back to an Event takes more 
             // chronogation the shorter it is, and only the Time Corps can go to HQ.
             if (agentModel.isDead()) {
                 retval.problem = 'Deceased';
-            } else if (eventModel.isChronoLocked()) {
-                retval.problem = 'Chrono Locked';
+            } else if (chronoLockedEventModel) {
+                retval.problem = chronoLockedEventModel.name + ' is chrono locked. No one can time travel into or out of it.';
             } else if (isAtEvent && eventModel.isHub()) {
                 retval.problem = 'Looping back not possible at chronal hubs';
             } else if (isAtEvent && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
                 retval.problem = 'Not enough chronogation to loop back here';
-            } else if (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS)) {
-                retval.problem = 'Only the Time Corps can go to HQ';
-                // FIXME: rework this as chronoLocked when that supports expressions
             } else {
                 retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);

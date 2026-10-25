@@ -1274,8 +1274,21 @@
             isHub: function() {return this.hub;},
             isNotHub: function() {return !this.isHub();},
             
-            // Chrono Locked Events do not ordinarily allow time travel into or out of them.
-            setChronoLocked: function(v) {this.set('chronoLocked', v, true);},
+            /*  No one can time travel into or out of a chrono locked Event, though an exit can
+                still lead there or away. Accepts a boolean or a constraint expression, e.g.
+                "!scratch.vault_open", so gameplay can lock and unlock it. Not saved, since 
+                it's worked out again from what it reads. */
+            setChronoLocked: function(value, isActual) {
+                if (isActual) {
+                    value = !!value;
+                    if (this.chronoLocked !== value) {
+                        this.set('chronoLocked', value, true);
+                        this.notifyCollectionOfUpdate();
+                    }
+                } else {
+                    setConstrainedValue(this.getConstraintScope(), this, 'chronoLocked', String(value));
+                }
+            },
             isChronoLocked: function() {return this.chronoLocked;},
             isNotChronoLocked: function() {return !this.isChronoLocked();},
             
@@ -1504,7 +1517,6 @@
                 if (this.flooded) retval.flooded = true;
                 if (this._beenVisited) retval.beenVisited = true;
                 if (this.hub) retval.hub = true;
-                if (this.chronoLocked) retval.chronoLocked = true;
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1520,7 +1532,6 @@
                 if ('flooded' in obj) this.setFlooded(obj.flooded);
                 if ('beenVisited' in obj) this.setBeenVisited(obj.beenVisited);
                 if ('hub' in obj) this.setHub(obj.hub);
-                if ('chronoLocked' in obj) this.setChronoLocked(obj.chronoLocked);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {

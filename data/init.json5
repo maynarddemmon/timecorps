@@ -130,12 +130,15 @@
 	
 	"events":{
 		"the_void":{
-			"name":"⦰ The Void", "hub":true, "chronoLocked":true, "hidden":"scratch.the_void_hidden",
+			"name":"⦰ The Void", "hub":true, "chronoLocked":"true",
+			"hidden":"scratch.the_void_hidden",
 			"start":"+100000-01-01T00:00:00", "duration":{"s":0}, "location":"_etherium",
 			"actions":{"_investigate":null}
 		},
 		"time_corps_hq":{
-			"name":"❉ Time Corps Headquarters", "hub":true, "hidden":"scratch.time_corps_hq_hidden",
+			"name":"❉ Time Corps Headquarters", "hub":true,
+			"chronoLocked":"agents.ME.faction !== 'timecorps'",
+			"hidden":"scratch.time_corps_hq_hidden",
 			"start":"2174-10-14T00:00:00", "duration":{"d":30}, "location":"_nexus",
 			"actionLimit":30,
 			"actions":{

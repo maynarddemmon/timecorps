@@ -138,30 +138,57 @@ test('time travel the buttons don\'t offer is refused, with a warning saying why
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('no one time travels into a chrono locked Event, or loops back at a hub', async ({page}) => {
+test('no one time travels into or out of a chrono locked Event, which an expression can lock and unlock, or loops back at a hub', async ({page}) => {
     await page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5');
-        json.events.boats.chronoLocked = true;
+        json.events.boats.chronoLocked = 'scratch.plan_noteCount < 2';
         return route.fulfill({json});
     });
     const problems = await startGame(page);
     const out = await page.evaluate(() => {
         const m = tc.model,
             alpha = m.getAgentModel('AL'),
-            hq = m.getHQEventModel();
+            boats = m.getEventModel('boats'),
+            hq = m.getHQEventModel(),
+            retval = {};
         alpha.chronal.setValue(alpha.chronal.max);
-        alpha.doDeployToEvent(m.getEventModel('boats'));
-        const alphaAt = alpha.event;
         
+        // Locked, so Alpha can't go there.
+        alpha.doDeployToEvent(boats);
+        retval.lockedAt = alpha.event;
+        
+        // Unlocked, Alpha can.
+        m.setScratch('plan_noteCount', 2);
+        alpha.doDeployToEvent(boats);
+        retval.unlockedAt = alpha.event;
+        
+        // Locked again, Alpha can't leave by time travel either.
+        m.setScratch('plan_noteCount', 0);
+        alpha.doRecallToHQ();
+        alpha.doDeployToEvent(m.getEventModel('origin'));
+        retval.relockedAt = alpha.event;
+        
+        // Nor loop back at a hub.
         alpha.setEvent(hq.id);
         const visits = alpha.countVisitsToEvent(hq);
         alpha.doDeployToEvent(hq);
-        return {alphaAt, loopedBack:alpha.countVisitsToEvent(hq) > visits};
+        retval.loopedBack = alpha.countVisitsToEvent(hq) > visits;
+        return retval;
     });
-    expect(out).toEqual({alphaAt:'origin', loopedBack:false});
+    expect(out).toEqual({lockedAt:'origin', unlockedAt:'boats', relockedAt:'boats', loopedBack:false});
+    const LOCKED = 'Boats is chrono locked. No one can time travel into or out of it.';
     expect(problems.warnings).toEqual([
-        'Cannot time travel AL to boats: Chrono Locked',
+        'Cannot time travel AL to boats: ' + LOCKED,
+        'Cannot time travel AL to time_corps_hq: ' + LOCKED,
+        'Cannot time travel AL to origin: ' + LOCKED,
         'Cannot time travel AL to time_corps_hq: Looping back not possible at chronal hubs'
     ]);
+    
+    // The lock is worked out again after a reload.
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    expect(await page.evaluate(() => tc.model.getEventModel('boats').isChronoLocked())).toBe(true);
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 3));
+    expect(await page.evaluate(() => tc.model.getEventModel('boats').isChronoLocked())).toBe(false);
     expect(problems.pageErrors).toEqual([]);
 });

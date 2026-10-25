@@ -326,10 +326,13 @@
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
             self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
-                doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
-            }]);
-            self.recallAgentBtn = new AgentBtn(headerView, {y:1}, [{
-                doActivated: () => {self.selectedAgentModel.doRecallToHQ();}
+                doActivated: () => {
+                    if (self.eventModel.isHQ()) {
+                        self.selectedAgentModel.doRecallToHQ();
+                    } else {
+                        self.selectedAgentModel.doDeployToEvent(self.eventModel);
+                    }
+                }
             }]);
             
             // Causators
@@ -455,42 +458,25 @@
         
         updateForSelectedAgent: debounce(function() {
             const self = this,
-                eventModel = self.eventModel,
-                hasEventModel = eventModel != null;
-            
-            if (hasEventModel) {
-                const {selectedAgentModel, followExitBtn, agentsRowBtnSeparator, deployAgentBtn, recallAgentBtn} = self,
-                    isHQ = eventModel.isHQ(),
-                    hasAgentModel = selectedAgentModel != null,
-                    canDirectAgent = hasAgentModel && selectedAgentModel.isPlayerControlled() && !selectedAgentModel.isDead();
-                
+                eventModel = self.eventModel;
+            if (eventModel != null) {
                 // An exit from where the Agent is to this Event, offered alongside jumping here.
-                const exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;
+                const {selectedAgentModel, followExitBtn, deployAgentBtn} = self,
+                    canDirectAgent = selectedAgentModel != null && selectedAgentModel.isPlayerControlled() && !selectedAgentModel.isDead(),
+                    exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;
                 followExitBtn.setVisible(exitModel != null);
                 if (exitModel) {
                     followExitBtn.configure(selectedAgentModel, exitModel, false);
                     followExitBtn.setBtnModel(selectedAgentModel);
                 }
-                recallAgentBtn.setVisible(canDirectAgent && isHQ && !selectedAgentModel.isAtEvent(eventModel));
-                deployAgentBtn.setVisible(canDirectAgent && eventModel.isNotHidden());
-                let sepIsVisible = false;
-                if (canDirectAgent) {
-                    let btn;
-                    if (recallAgentBtn.visible) {
-                        btn = recallAgentBtn;
-                    } else if (deployAgentBtn.visible) {
-                        btn = deployAgentBtn;
-                    }
-                    if (btn) {
-                        sepIsVisible = followExitBtn.visible;
-                        agentsRowBtnSeparator.setVisible();
-                        
-                        btn.setBtnModel(selectedAgentModel);
-                        selectedAgentModel.updateBtnForTimeTravel(btn, eventModel);
-                    }
-                }
                 
-                agentsRowBtnSeparator.setVisible(sepIsVisible);
+                deployAgentBtn.setBtnModel(selectedAgentModel);
+                if (canDirectAgent) {
+                    selectedAgentModel.updateBtnForTimeTravel(deployAgentBtn, eventModel);
+                } else {
+                    deployAgentBtn.setVisible(false);
+                }
+                self.agentsRowBtnSeparator.setVisible(followExitBtn.visible && deployAgentBtn.visible);
             }
         }, 25),
         
