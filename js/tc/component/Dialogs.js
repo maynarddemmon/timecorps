@@ -2,7 +2,8 @@
     'use strict';
     
     let confirmMsgDialog,
-        ackMsgDialog;
+        ackMsgDialog,
+        textInputDialog;
     
     const {Class:JSClass, Module:JSModule} = JS,
         
@@ -15,7 +16,7 @@
             UnderlineBtn,
             theme:{
                 spacing, padding, cornerRadius,
-                colorDark, colorMegaDark, colorSuccess, colorError,
+                colorDark, colorMegaDark, colorLight, colorUltraLight, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge, fontFamilyMono
             },
             cfg:{DEFAULT_TALL_DIALOG_WIDTH, DIALOG_FOOTER_HEIGHT, TOP_VIEW_HEIGHT}
@@ -287,6 +288,76 @@
             include: [MsgDialog]
         }),
         
+        /*  A message with a text field below it, and a button that confirms the text, 
+            trimmed. The button can't be used while the field is blank. */
+        TextInputDialog = pkg.TextInputDialog = new JSClass('TextInputDialog', AckMsgDialog, {
+            initNode: function(parent, attrs) {
+                const self = this;
+                self.callSuper(parent, attrs);
+                const input = self._inputTxt = new M.InputText(self, {
+                    x:padding, fontFamily:fontFamilyMono,
+                    bgColor:colorMegaDark, textColor:colorUltraLight, 
+                    border:[1, 'solid', colorLight], roundedCorners:cornerRadius
+                }, [{
+                    /*  The key filter misses characters that arrive without a keypress, 
+                        e.g. from an IME, so they're filtered here too. */
+                    setValue: function(v) {
+                        const allowedChars = this.allowedChars;
+                        if (allowedChars && typeof v === 'string') {
+                            const filtered = M.BaseInputText.filterChars(v, allowedChars);
+                            if (filtered !== v) {
+                                this.setDomValue(filtered);
+                                v = filtered;
+                            }
+                        }
+                        this.callSuper(v);
+                        if (this.inited) self._updateAckBtn();
+                    }
+                }]);
+                input.getIDS().padding = padding/2 + 'px';
+                
+                // The field keeps Enter from reaching the dialog, so it confirms itself.
+                self.attachToDom(self._inputTxt, '_inputKeyDown', 'keydown');
+            },
+            
+            getInputTxt: function() {return this._inputTxt;},
+            
+            getText: function() {return (this.getInputTxt().value ?? '').trim();},
+            
+            /*  inputCfg is {value, maxLength, allowedChars, placeholder}, each optional. */
+            show: function(title, msg, confirmFunc, cancelFunc, inputCfg) {
+                const {value='', maxLength, allowedChars, placeholder=''} = inputCfg ?? {},
+                    inputTxt = this.getInputTxt();
+                inputTxt.setMaxLength(maxLength);
+                inputTxt.setAllowedChars(allowedChars);
+                inputTxt.setPlaceholder(placeholder);
+                inputTxt.setText(value);
+                
+                this.callSuper(title, msg, confirmFunc, cancelFunc);
+                
+                const panelView = this.getPanelView();
+                inputTxt.setWidth(panelView.width - 2*padding);
+                inputTxt.setY(this.getMsgTxt().height);
+                panelView.setHeight(panelView.height + inputTxt.height + padding);
+                this._updateAckBtn();
+                inputTxt.focus();
+            },
+            
+            doConfirm: function() {
+                if (this.getText() !== '') this.callSuper();
+            },
+            
+            /** @private */
+            _inputKeyDown: function(event) {
+                if (M.KeyObservable.getCodeFromEvent(event) === globalKeys.CODE_ENTER) this.doConfirm();
+            },
+            
+            /** @private */
+            _updateAckBtn: function() {
+                this.getFooterView().ackBtn.setDisabled(this.getText() === '');
+            }
+        }),
+        
         // The QueuedDialogs showing now, and the functions waiting to open a dialog.
         showingQueuedDialogs = new Set(),
         dialogQueue = [],
@@ -328,6 +399,16 @@
             return confirmMsgDialog;
         }),
         openAckMsgDialog,
+        
+        /*  confirmFunc is called with the text, trimmed. See TextInputDialog.show for 
+            inputCfg. */
+        openTextInputDialog: (title, msg, confirmFunc, inputCfg, btnLabel=DEFAULT_ACK_LABEL) => openWhenClear(() => {
+            textInputDialog ??= new TextInputDialog(pkg.app);
+            textInputDialog.show(title, msg, () => confirmFunc(textInputDialog.getText()), null, inputCfg);
+            textInputDialog.getFooterView().ackBtn.setText(btnLabel ?? DEFAULT_ACK_LABEL);
+            return textInputDialog;
+        }),
+        
         openWhenClear
     };
 })(tc);

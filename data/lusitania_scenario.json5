@@ -594,7 +594,6 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"lifeboats_fail"},
 				{"mode":"walk", "to":"rescue_delayed"}
 			],
 			"values":{

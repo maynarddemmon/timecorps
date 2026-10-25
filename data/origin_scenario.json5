@@ -54,6 +54,8 @@
 	},
 	
 	"scratch":{
+		// Your name, from the avatar_name prompt.
+		"avatar_name":"?",
 		"backstory_run":false,
 		"backstory_guitar":false,
 		"backstory_news":false,

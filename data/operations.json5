@@ -2,6 +2,24 @@
 	"initialOperation":"origin_story",
 	
 	"prompts":{
+		// Names You, as the first thing the Origin Story asks. ME's nameExpr reads what's typed.
+		"avatar_name":{
+			"type":"text",
+			"title":"Yesterday’s Mail",
+			"description":[
+				"You turn on the coffee maker and go through the mail from yesterday. A few bills and some credit card offers, all made out to you:"
+			],
+			"input":{
+				"scratch":"avatar_name",
+				"maxLength":25,
+				"allowedChars":"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝ -'’.",
+				"placeholder":"Your name"
+			},
+			"buttons":{
+				"confirm":{"label":"That’s Me"}
+			}
+		},
+		
 		// Beniko's offer, once the vote is kept secret. Accepting puts You in the Time Corps,
 		// which decides what spring_vote leads to.
 		"corps_offer":{
@@ -45,7 +63,8 @@
 				"initialEventSelection":"origin_alarm",
 				"set":{
 					"events.origin_alarm.historicity":"5"
-				}
+				},
+				"prompt":"avatar_name"
 			},
 			"objectives":{
 				"answer":{

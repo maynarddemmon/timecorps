@@ -135,14 +135,25 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
 
-    test('every prompt has a known type, a title and only the buttons its type has', () => {
+    test('every prompt has a known type, a title, only the buttons its type has, and an input for a declared scratch entry if it takes text', () => {
         const problems = [],
-            BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel']};
+            BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel'], text:['confirm']};
         for (const [promptId, prompt] of Object.entries(prompts)) {
             const where = 'prompt ' + promptId,
-                {type='ack', title, description, hidden, buttons, ...unknown} = prompt;
+                {type='ack', title, description, hidden, buttons, input, ...unknown} = prompt;
             for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
-            if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack" or "confirm"');
+            if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack", "confirm" or "text"');
+            if (type === 'text') {
+                const {scratch:scratchName, maxLength, allowedChars, placeholder, ...rest} = input ?? {};
+                if (!Object.hasOwn(scratch, scratchName ?? '')) problems.push(where + ' input scratch is not a declared scratch entry');
+                if (typeof scratch[scratchName] !== 'string') problems.push(where + ' input scratch entry is not a string');
+                for (const key of Object.keys(rest)) problems.push(where + ' input has unknown key ' + key);
+                if (maxLength !== undefined && !(Number.isInteger(maxLength) && maxLength > 0)) problems.push(where + ' input maxLength is not a whole number above 0');
+                if (allowedChars !== undefined && (typeof allowedChars !== 'string' || allowedChars === '')) problems.push(where + ' input allowedChars is not a string of characters');
+                if (placeholder !== undefined && typeof placeholder !== 'string') problems.push(where + ' input placeholder is not a string');
+            } else if (input !== undefined) {
+                problems.push(where + ' has an input but isn\'t a "text" prompt');
+            }
             if (typeof title !== 'string' || title.trim() === '') problems.push(where + ' has no title');
             if (description === undefined) problems.push(where + ' has no description');
             if (hidden !== undefined && typeof hidden !== 'string' && typeof hidden !== 'boolean') problems.push(where + ' hidden is not a string or a boolean');

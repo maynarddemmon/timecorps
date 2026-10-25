@@ -9,7 +9,7 @@
         M = myt,
         
         {
-            NotifyingNumericStatModel, getConstrainedValueCfg,
+            NotifyingNumericStatModel, getConstrainedValueCfg, setConstrainedValue,
             cfg:{
                 EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED, FACTION_ID_TIMECORPS,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
@@ -250,8 +250,32 @@
         
         
         // Accessors ///////////////////////////////////////////////////////////
-        setName: function(name) {this.setAndNotifyCollection('name', name, true);},
+        /*  The name from the data. "nameExpr" overrides it while that works out to a 
+            non-empty string. */
+        setName: function(name) {
+            this.dataName = name;
+            this._updateName();
+        },
         getName: function() {return this.name;},
+        
+        /*  A constraint expression for the name, e.g. "scratch.avatar_name", which a prompt
+            fills in. While it works out to anything but a non-empty string, the data's "name" 
+            is used. */
+        setNameExpr: function(nameExpr, isActual) {
+            if (isActual) {
+                this.nameFromExpr = nameExpr;
+                this._updateName();
+            } else {
+                setConstrainedValue(this.getConstraintScope(), this, 'nameExpr', String(nameExpr));
+            }
+        },
+        
+        /** @private */
+        _updateName: function() {
+            const nameFromExpr = this.nameFromExpr,
+                name = typeof nameFromExpr === 'string' && nameFromExpr.trim() !== '' ? nameFromExpr.trim() : this.dataName;
+            if (name !== this.name) this.setAndNotifyCollection('name', name, true);
+        },
         
         /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
             to the max. */

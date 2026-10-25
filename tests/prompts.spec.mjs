@@ -151,7 +151,7 @@ test('set can put an agent in a Faction, and problems with prompts are warned ab
     
     expect(loadWarnings).toEqual([
         'Event origin action ask adj agent.faction can only be set, not adjusted (ignoring it): 1',
-        'Prompt bad type must be "ack" or "confirm" (using "ack"): choice',
+        'Prompt bad type must be "ack", "confirm", "text" (using "ack"): choice',
         'Prompt bad button cancel is not a button of its type, "ack", which has confirm (ignoring it)',
         'Prompt bad button confirm has keys other than label and onClick (ignoring them): extra',
         'Prompt bad button confirm label must be a string (ignoring it): 3',

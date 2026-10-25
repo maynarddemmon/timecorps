@@ -495,6 +495,7 @@ HQ and The Void leave out `_investigate` this way.
 	"agents":{
 		"VQ":{
 			"name":"Vasquez",
+			"nameExpr":"scratch.vasquez_alias",  // Optional. Replaces the name. See below.
 			"born":"2139-05-14",                // Required. For the record.
 			"age":34,                           // Optional, in years. Default: 30. See Ages below.
 			"effectiveAge":31,                  // Optional. Default: their age.
@@ -514,6 +515,7 @@ HQ and The Void leave out `_investigate` this way.
 ```
 
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
+- **`nameExpr`.** A [constraint expression](#constraint-expressions) for the agent's name. While it works out to a non-empty string, trimmed, that's the name. Otherwise `name` is. The Origin Story's `avatar_name` prompt sets `scratch.avatar_name`, which You's `nameExpr` reads.
 - **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
 - <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:
   - **An action** lives through the event's duration divided by its `actionLimit`, for each action it costs, so spending every action lives through all of it. A free action (`"agent.action":null`) takes no time. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival. HQ counts too: it's a month of 30 actions, a day each, so a week-long treatment costs 7.
@@ -582,6 +584,13 @@ A prompt is a message the player answers with a button, e.g. an offer to join th
 
 ```json5
 "prompts":{
+	"avatar_name":{
+		"type":"text",
+		"title":"Yesterday’s Mail",
+		"description":["A few bills and some credit card offers, all made out to you:"],
+		"input":{"scratch":"avatar_name", "maxLength":20, "allowedChars":"abc…XYZ -'.", "placeholder":"Your name"},
+		"buttons":{"confirm":{"label":"That’s Me"}}
+	},
 	"recruit":{
 		"type":"confirm",
 		"title":"An Offer",
@@ -595,13 +604,14 @@ A prompt is a message the player answers with a button, e.g. an offer to join th
 }
 ```
 
-- **`type`**: `ack`, one button, or `confirm`, two. Default: `ack`.
+- **`type`**: `ack`, one button, `confirm`, two, or `text`, a text field and one button. Default: `ack`.
 - **`title`**: the dialog's title.
 - **`description`**: the message. Phrases, as for an event.
 - **`hidden`**: a constraint expression. A hidden prompt doesn't open.
-- **`buttons`**: by ID: `confirm` for either type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
+- **`input`**: for a `text` prompt, required: `scratch`, the [scratch](#scratch) entry the text goes in, and optionally `maxLength`, `allowedChars`, a string of the characters that can be typed, and `placeholder`, shown while the field is empty. The field starts with the entry's value. Confirm can't be clicked while it's blank, and the text is trimmed and put in the entry before its `onClick`. A `text` prompt without a usable `input` is shown as an `ack`.
+- **`buttons`**: by ID: `confirm` for any type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
 
-A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.
+A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open, and its text when it opens. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.
 
 ## Text and media
 
