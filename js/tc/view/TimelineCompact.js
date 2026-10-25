@@ -86,6 +86,9 @@
             endArrow:'triangle',
             startStub:6, endStub:6, startGap:BOX_VISITED_LINE_THICKNESS, endGap:BOX_VISITED_LINE_THICKNESS
         },
+        // Thicker to or from the selected Event, as its causator splines are, so the way in and
+        // out can be followed through a busy history.
+        SELECTED_VISIT_STYLE = {...VISIT_STYLE, thickness:4},
         
         // Where a visit's arrows meet its box, as a percent of the box's height from the top:
         // the first visit at 55%, and each later one 5% lower, down to 95%.
@@ -423,7 +426,8 @@
         
         /*  Outlines the Events the selected Agent has visited, and draws arrows from each to the
             next, in the order the Agent went, as the settings allow. An arrow to or from an Event
-            without a visible box, e.g. HQ, is left out. */
+            without a visible box, e.g. HQ, is left out, and one to or from the selected Event is
+            thicker. */
         updateVisitedStatusForSelectedAgent = debounce(timeline => {
             const {selectedAgentModel, boxesByEventId, flowLayer} = timeline,
                 history = selectedAgentModel?.getVisitHistory() ?? [],
@@ -449,7 +453,7 @@
                         splineId,
                         start:{view:prev.box, side:'right', position:prev.position},
                         end:  {view:cur.box,  side:'left',  position:cur.position},
-                        style:VISIT_STYLE
+                        style:prev.box.selected || cur.box.selected ? SELECTED_VISIT_STYLE : VISIT_STYLE
                     });
                     visitSplineIds.push(splineId);
                 }
@@ -1028,6 +1032,7 @@
             this._eventModelOrIdToSelect = null;
             const selectedEvent = this.getSelectedEventBox();
             refreshExitSplines(this);
+            if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
             this.fireEvent('selectionChanged', selectedEvent);
             pushOntoHistory(this, selectedEvent.model.id);
             
@@ -1037,6 +1042,7 @@
         /** @overrides SelectionManager */
         doDeselected: function() {
             refreshExitSplines(this);
+            if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
             this.fireEvent('selectionChanged', this.getSelectedEventBox());
         },
         

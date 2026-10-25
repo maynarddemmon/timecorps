@@ -144,12 +144,16 @@ test('waiting for the animations runs right away when none are running', async (
 
 /*  The selected Agent's path: an arrow from each Event they entered to the next, leaving the
     right edge and arriving at the left, 55% from the top for a first visit and 5% lower for 
-    each later one. Events without a visible box, e.g. HQ, are left out. */
+    each later one. Events without a visible box, e.g. HQ, are left out. Arrows to or from the
+    selected Event are thicker. */
 test('arrows follow the selected agent from Event to Event', async ({page}) => {
     const problems = await startGame(page);
     const readArrows = () => page.evaluate(() => tc.app.getTimelineView().flowLayer.getSplines()
         .filter(spline => spline.splineId.startsWith('visit-'))
         .map(spline => [spline.startView.model.id, spline.startSide, spline.startPosition, spline.endView.model.id, spline.endSide, spline.endPosition]));
+    const readThicknesses = () => page.evaluate(() => tc.app.getTimelineView().flowLayer.getSplines()
+        .filter(spline => spline.splineId.startsWith('visit-'))
+        .map(spline => spline.style.thickness));
     
     await page.evaluate(() => {
         const m = tc.model,
@@ -163,6 +167,12 @@ test('arrows follow the selected agent from Event to Event', async ({page}) => {
         ['origin', 'right', '55%', 'aftermath', 'left', '55%'],
         ['aftermath', 'right', '55%', 'origin', 'left', '60%']
     ]);
+    // Selecting an Event thickens the arrows into and out of it, and deselecting it thins them.
+    await page.evaluate(() => tc.app.selectEventBox('aftermath'));
+    await expect.poll(readThicknesses).toEqual([4, 4]);
+    await page.evaluate(() => tc.app.getTimelineView().deselectAll());
+    await expect.poll(readThicknesses).toEqual([2, 2]);
+    
     // The Events visited are outlined, and only those.
     expect(await page.evaluate(() => Object.values(tc.app.getTimelineView().boxesByEventId)
         .filter(box => box.visited).map(box => box.model.id).sort())).toEqual(['aftermath', 'origin']);
