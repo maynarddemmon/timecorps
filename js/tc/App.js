@@ -474,10 +474,11 @@
             }
         },
         
-        /*  Selecting a row in the Missions grid makes that mission the current one. */
+        /*  Selecting a row in the Missions grid makes that mission the current one, and 
+            deselecting it leaves no mission current. */
         _onMissionRowSelectionChanged: event => { // value is an OperationModel
-            const operationModel = event.value;
-            if (operationModel && operationModel !== model.getCurrentOperation()) model.setCurrentOperation(operationModel);
+            const operationModel = event.value ?? null;
+            if (operationModel !== model.getCurrentOperation()) model.setCurrentOperation(operationModel);
         },
         
         _onAgentSelectionChanged: event => {

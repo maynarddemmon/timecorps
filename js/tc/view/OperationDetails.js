@@ -119,7 +119,7 @@
             }, [{doActivated: function() {self.operationModel.proceed();}}]);
             
             self.noSelectionTxt = new PaddedPlainText(self, {
-                padding, whiteSpace:'normal', text:"Select an Operation to see more about it here."
+                padding, whiteSpace:'normal', text:'Select a mission in the Missions tab to see more about it here.'
             });
             
             const detailsContainer = self.detailsContainer = new WideView(self, {

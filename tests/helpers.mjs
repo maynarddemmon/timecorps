@@ -97,7 +97,7 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBr
 
 /*  Waits until the game has started a campaign, whether fresh or restored. */
 export const waitForGame = page => page.waitForFunction(() => 
-    window.tc?.model?.getCurrentOperation?.() != null && 
+    window.tc?.isAppReady?.() === true && 
     window.tc?.app?.getTimelineView?.()?.timelineReady === true
 );
 

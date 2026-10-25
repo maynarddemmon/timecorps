@@ -368,8 +368,10 @@
             
             const timelineView = pkg.app.getTimelineView();
             if ('currentOperation' in obj) {
-                const operationModel = model.getOperationModel(obj.currentOperation);
-                if (operationModel) {
+                // Null when the player left no mission current.
+                const operationId = obj.currentOperation,
+                    operationModel = operationId === null ? null : model.getOperationModel(operationId);
+                if (operationId === null || operationModel) {
                     timelineView.deselectAll();
                     model.setCurrentOperation(operationModel);
                 } else {
