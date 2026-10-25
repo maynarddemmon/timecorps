@@ -19,10 +19,12 @@
         dividerH,
         
         timelineTabBtn,
+        eventsTabBtn,
         agentsTabBtn,
         
         opsView,
         teamView,
+        eventsView,
         
         agentDossier,
         areaBrief,
@@ -154,6 +156,7 @@
                             timelineView.setup(model);
                             timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
                             teamView.setup(model);
+                            eventsView.setup(model);
                             eventDetailsView.setup(model);
                             model.reset();
                             
@@ -328,6 +331,12 @@
                     timelineView.setVisible(v);
                 }
             }]);
+            eventsTabBtn = new TabBtn(tabView, {text:'Events'}, [{
+                setSelected: function(v) {
+                    this.callSuper(v);
+                    eventsView.setVisible(v);
+                }
+            }]);
             agentsTabBtn = new TabBtn(tabView, {text:'Agents'}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
@@ -338,6 +347,7 @@
             const panelY = tabView.height + layoutSpacing,
                 panelAttrs = {y:panelY, visible:false, percentOfParentHeightOffset:-panelY};
             teamView = new pkg.Agents(middleView, panelAttrs);
+            eventsView = new pkg.Events(middleView, panelAttrs);
             timelineView = new pkg.TimelineCompact(middleView, panelAttrs);
             
             opsView = new pkg.OperationDetails(middleView);
@@ -345,6 +355,7 @@
             
             appView.attachTo(teamView,'_onAgentSelectionChanged', 'selectionChanged');
             appView.attachTo(timelineView,'_onEventSelectionChanged', 'selectionChanged');
+            appView.attachTo(eventsView,'_onEventRowSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
                 height:5, minValue:133, limitToParent:200,
@@ -375,7 +386,7 @@
                 updateLayout: function() {
                     const v = this.value,
                         leftWidth = v + 2;
-                    for (const sv of [tabView, teamView, timelineView]) sv.setWidth(leftWidth);
+                    for (const sv of [tabView, teamView, eventsView, timelineView]) sv.setWidth(leftWidth);
                     for (const sv of [opsView, dividerV, eventDetailsView]) {
                         sv.setX(leftWidth + layoutSpacing);
                         sv.setWidth(middleView.width - sv.x);
@@ -389,10 +400,12 @@
         },
         
         selectTimelineTab: () => timelineTabBtn.doActivated(),
+        selectEventsTab: () => eventsTabBtn.doActivated(),
         selectAgentsTab: () => agentsTabBtn.doActivated(),
         
         getTimelineView: () => timelineView,
         getTeamView: () => teamView,
+        getEventsView: () => eventsView,
         getEventDetailsView: () => eventDetailsView,
         getOpsView: () => opsView,
         
@@ -434,6 +447,17 @@
         // Event Dispatching
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
+            eventsView.selectEvent(event.value?.model);
+        },
+        
+        /*  Selecting a row in the Events grid selects the Event, as the timeline does. */
+        _onEventRowSelectionChanged: event => { // value is an EventModel
+            const eventModel = event.value;
+            if (eventModel) {
+                if (timelineView.getSelectedEventId() !== eventModel.id) timelineView.doSelectEvent(eventModel);
+            } else if (timelineView.getSelectedEventBox()) {
+                timelineView.deselectAll();
+            }
         },
         
         _onAgentSelectionChanged: event => {

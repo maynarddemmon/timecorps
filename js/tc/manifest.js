@@ -71,6 +71,10 @@ JS.Packages(file => {
         'tc.timeUtil','tc.Panel','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker',
         'tc.ParadoxBar','tc.ChronalBar','tc.HealthBar','tc.BigStatBar'
     );
+    file(VIEW_ROOT + 'Events.js').provides('tc.Events').requires(
+        'tc.timeUtil','tc.TallView','tc.InfiniteGridWrapper','tc.SimpleAgentGridMarker',
+        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+    );
     file(VIEW_ROOT + 'TimelineCompact.js').provides('tc.TimelineCompact').requires(
         'tc.settings','tc.timeUtil','tc.Panel','tc.SquareBtn','tc.SimpleAgentMarker','tc.HistoricityBar',
         'tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
@@ -97,7 +101,7 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Spacer','tc.WideView','tc.Panel',
+        'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Events','tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
         'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
     );

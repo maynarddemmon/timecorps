@@ -1,7 +1,8 @@
 (pkg => {
     'use strict';
     
-    let rootModel;
+    let rootModel,
+        gridWrapper;
     
     const JSClass = JS.Class,
         
@@ -124,7 +125,7 @@
             self.callSuper(parent, attrs);
             
             // Build UI
-            self.gridWrapper = new pkg.InfiniteGridWrapper(self, {
+            gridWrapper = self.gridWrapper = new pkg.InfiniteGridWrapper(self, {
                 selectable:true,
                 rowClasses:AgentRow,
                 initialSort:['id', SORT_ORDER_ASC]
@@ -246,12 +247,12 @@
         // Accessors ///////////////////////////////////////////////////////////
         setWidth: function(v) {
             this.callSuper(v);
-            if (this.ready) this.gridWrapper.setWidth(this.width);
+            if (this.ready) gridWrapper.setWidth(this.width);
         },
         
         setHeight: function(v) {
             this.callSuper(v);
-            if (this.ready) this.gridWrapper.setHeight(this.height);
+            if (this.ready) gridWrapper.setHeight(this.height);
         },
         
         
@@ -269,12 +270,12 @@
         },
         
         getSelectedAgentId: function() {
-            return this.gridWrapper.getGrid().selectedRowModel?.id ?? null;
+            return gridWrapper.getGrid().selectedRowModel?.id ?? null;
         },
         
         setup: function(model) {
             rootModel = model;
-            this.gridWrapper.setModelCollection(rootModel[SCOPE_AGENTS]);
+            gridWrapper.setModelCollection(rootModel[SCOPE_AGENTS]);
         }
     });
 })(tc);

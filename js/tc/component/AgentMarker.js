@@ -216,8 +216,6 @@
     });
     
     pkg.SimpleAgentGridMarker = new JSClass('SimpleAgentGridMarker', SimpleAgentMarker, {
-        include: [M.MouseEventsBubbleUp],
-        
         initNode: function(parent, attrs) {
             attrs.y ??= 1;
             this.callSuper(parent, attrs);

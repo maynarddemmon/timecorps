@@ -192,7 +192,7 @@
                 rowHeight:rowHeight,
                 rowSpacing:1,
                 layoutHint:1,
-                bgColor:colorMedium,
+                bgColor:colorDark,
                 textColor:colorDark
             }, [{
                 getSortFunction: () => {
