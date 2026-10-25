@@ -53,6 +53,7 @@
             or not it's permitted, or is null if they can. */
         getTimeTravelInfo = (agentModel, eventModel) => {
             const isHQ = eventModel.isHQ(),
+                isAtEvent = agentModel.isAtEvent(eventModel),
                 chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
                 retval = {isHQ, chronalNeeded, paradoxCost:agentModel.calculateParadoxForEntry(eventModel), visible:false};
             
@@ -60,10 +61,15 @@
             // chronogation the shorter it is, and only the Time Corps can go to HQ.
             if (agentModel.isDead()) {
                 retval.problem = 'Deceased';
-            } else if (agentModel.isAtEvent(eventModel) && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
+            } else if (eventModel.isChronoLocked()) {
+                retval.problem = 'Chrono Locked';
+            } else if (isAtEvent && eventModel.isHub()) {
+                retval.problem = 'Looping back not possible at chronal hubs';
+            } else if (isAtEvent && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
                 retval.problem = 'Not enough chronogation to loop back here';
             } else if (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS)) {
                 retval.problem = 'Only the Time Corps can go to HQ';
+                // FIXME: rework this as chronoLocked when that supports expressions
             } else {
                 retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);

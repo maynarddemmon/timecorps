@@ -447,7 +447,7 @@
                     box = boxesByEventId[eventModel.id],
                     cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
                 visitCounts.set(eventModel, visitIdx + 1);
-                if (prev && cur) {
+                if (prev && cur && cur.box.model.isNotHub() && prev.box.model.isNotHub()) {
                     const splineId = SPLINE_ID_PREFIX_VISIT + visitSplineIds.length;
                     flowLayer.connect({
                         splineId,

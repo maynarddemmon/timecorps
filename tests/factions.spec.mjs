@@ -1,7 +1,7 @@
 // Factions: every Agent is in one, "unaligned" unless the data says otherwise. The Agents grid
 // and the Agent Dossier show it, and clicking it opens the Faction Brief.
 import {test, expect} from '@playwright/test';
-import {startGame, dialogTitle, reloadGame, dismissAgentDossier, showTab} from './helpers.mjs';
+import {startGame, readTestData, dialogTitle, reloadGame, dismissAgentDossier, showTab} from './helpers.mjs';
 
 const fieldNotes = page => page.evaluate(() => {
     const brief = document.querySelector('.myt-FactionBrief').model;
@@ -135,5 +135,33 @@ test('time travel the buttons don\'t offer is refused, with a warning saying why
     await page.evaluate(() => tc.app.selectEventBox('origin'));
     await expect(page.getByRole('button', {name:/^Recall to/}).filter({visible:true})).toHaveAttribute('title', /Not enough chronal/);
     
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('no one time travels into a chrono locked Event, or loops back at a hub', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.boats.chronoLocked = true;
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            hq = m.getHQEventModel();
+        alpha.chronal.setValue(alpha.chronal.max);
+        alpha.doDeployToEvent(m.getEventModel('boats'));
+        const alphaAt = alpha.event;
+        
+        alpha.setEvent(hq.id);
+        const visits = alpha.countVisitsToEvent(hq);
+        alpha.doDeployToEvent(hq);
+        return {alphaAt, loopedBack:alpha.countVisitsToEvent(hq) > visits};
+    });
+    expect(out).toEqual({alphaAt:'origin', loopedBack:false});
+    expect(problems.warnings).toEqual([
+        'Cannot time travel AL to boats: Chrono Locked',
+        'Cannot time travel AL to time_corps_hq: Looping back not possible at chronal hubs'
+    ]);
     expect(problems.pageErrors).toEqual([]);
 });

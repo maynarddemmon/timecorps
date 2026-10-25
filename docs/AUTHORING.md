@@ -209,6 +209,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"location":"titanic.bridge",
 	"actionLimit":2,                 // Optional. Actions an agent can take per visit.
 	"hub":false,                     // Optional. See below.
+	"chronoLocked":false,            // Optional. See below.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
@@ -224,7 +225,8 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 
 - **Time and place.** Two events at the same location can't overlap. An event must also start no earlier than the end of every event its values depend on. Both are checked at startup, which halts with a warning if either fails.
 - **`actionLimit`.** Defaults to `DEFAULT_ACTION_LIMIT`, which `index.html` sets to 3.
-- **`hub`.** A hub, such as HQ or The Void, is free of paradox: visiting it again costs none, and it doesn't raise the timeline's paradox limit. Default: false.
+- **`hub`.** A hub, such as HQ or The Void, is free of paradox: visiting it again costs none, and it doesn't raise the timeline's paradox limit. An agent can't loop back at a hub, and the selected agent's history arrows leave hubs out. Default: false.
+- **`chronoLocked`.** No one can time travel into a chrono locked event, e.g. The Void, which only being devoured gets an agent into. Exits still lead there. Default: false.
 - **`hidden`.** Leave it out for the usual rule: an event is hidden while nothing is known about it, meaning its attestation and historicity are both 0. It's also revealed once a *descendant* (an event whose values depend on it) reaches attestation 15, or a *precursor* (an event it depends on) reaches 25. Give your own expression to replace that rule, e.g. to reveal it only from one particular event.
 - **`description`.** An array of phrases. A phrase is a string, or `{"text":…, "hidden":…}` to show it only sometimes, typically as attestation rises. Phrases are joined with spaces. HTML such as `<br>` works.
 

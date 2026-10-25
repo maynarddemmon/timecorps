@@ -109,17 +109,17 @@
 	},
 	
 	"locations":{
-		"_nexus":{
-			"name":"The Nexus",
-			"color":"#fff",
-			"textColor":"#000",
-			"order":-2
-		},
-		"_nowhere":{
-			"name":"Nowhere",
+		"_etherium":{
+			"name":"Etherium",
 			"color":"#000",
 			"textColor":"#fff",
-			"order":-1
+			"order":0
+		},
+		"_nexus":{
+			"name":"The Nexus",
+			"color":"#000",
+			"textColor":"#fff",
+			"order":1
 		}
 	},
 	
@@ -130,8 +130,8 @@
 	
 	"events":{
 		"the_void":{
-			"name":"⦰ The Void", "hub":true, "hidden":"scratch.the_void_hidden",
-			"start":"0000-01-01T00:00:00", "duration":{"s":0}, "location":"_nowhere",
+			"name":"⦰ The Void", "hub":true, "chronoLocked":true, "hidden":"scratch.the_void_hidden",
+			"start":"+100000-01-01T00:00:00", "duration":{"s":0}, "location":"_etherium",
 			"actions":{"_investigate":null}
 		},
 		"time_corps_hq":{

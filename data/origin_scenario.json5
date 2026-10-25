@@ -3,7 +3,7 @@
 	// until a stranger straps a device to their wrist and it carries them to a safe house in
 	// 2087. Its rows sit left of the Titanic's, whose orders start at 1 (negative orders
 	// aren't shown).
-	"locationsBaseOrder":0,
+	"locationsBaseOrder":25,
 	
 	"locations":{
 		"origin.home":{

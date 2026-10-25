@@ -1186,7 +1186,7 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
-                self.hub = self.hidden = self.flooded = self._beenVisited = false;
+                self.chronoLocked = self.hub = self.hidden = self.flooded = self._beenVisited = false;
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -1238,7 +1238,7 @@
                 // will be serialized both for Save and for an Event grid (once it is introduced).
                 const retval = this.callSuper(cfg);
                 for (const attrName of [
-                    'name','hub','start','duration','hidden','actionLimit','actions','values',
+                    'name','hub','chronoLocked','start','duration','hidden','actionLimit','actions','values',
                     'exits','hideAffectedBy'
                 ]) {
                     retval[attrName] = this[attrName];
@@ -1273,6 +1273,11 @@
             setHub: function(v) {this.set('hub', v, true);},
             isHub: function() {return this.hub;},
             isNotHub: function() {return !this.isHub();},
+            
+            // Chrono Locked Events do not ordinarily allow time travel into or out of them.
+            setChronoLocked: function(v) {this.set('chronoLocked', v, true);},
+            isChronoLocked: function() {return this.chronoLocked;},
+            isNotChronoLocked: function() {return !this.isChronoLocked();},
             
             setName: function(name) {this.set('name', name, true);},
             getName: function() {return this.name;},
@@ -1499,6 +1504,7 @@
                 if (this.flooded) retval.flooded = true;
                 if (this._beenVisited) retval.beenVisited = true;
                 if (this.hub) retval.hub = true;
+                if (this.chronoLocked) retval.chronoLocked = true;
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1514,6 +1520,7 @@
                 if ('flooded' in obj) this.setFlooded(obj.flooded);
                 if ('beenVisited' in obj) this.setBeenVisited(obj.beenVisited);
                 if ('hub' in obj) this.setHub(obj.hub);
+                if ('chronoLocked' in obj) this.setChronoLocked(obj.chronoLocked);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {
