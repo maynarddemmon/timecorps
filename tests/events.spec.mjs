@@ -1,4 +1,4 @@
-// The Events tab: a grid of the known Events, whose selection follows the timeline's.
+// The Events tab: a grid of the known Events, and HQ and The Void, whose selection follows the timeline's.
 import {test, expect} from '@playwright/test';
 import {startGame, showTab} from './helpers.mjs';
 
@@ -23,12 +23,13 @@ const grid = page => page.locator('.myt-Events'),
         details:tc.app.getEventDetailsView().eventModel?.id ?? null
     }));
 
-test('the events tab lists the known Events by start, with the agents at them, and keeps up', async ({page}) => {
+test('the events tab lists the known Events, HQ and The Void by start, with the agents at them, and keeps up', async ({page}) => {
     const problems = await startGame(page);
     await showTab(page, 'Events');
-    const known = await page.evaluate(() => tc.model.getEventModelsAsList(eventModel => eventModel.isNotHidden())
+    const known = await page.evaluate(() => tc.model.getEventModelsAsList(eventModel => eventModel.isNotHidden() || eventModel.isNotRegularEvent())
         .sort((a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id)).map(eventModel => eventModel.id));
     await expect.poll(async () => (await readRows(page)).map(row => row.id)).toEqual(known);
+    expect(known).toEqual(expect.arrayContaining(['time_corps_hq', 'the_void']));
     
     const rows = await readRows(page);
     expect(rows.find(row => row.id === 'origin')).toMatchObject({name:'Origin', agents:['AL']});
