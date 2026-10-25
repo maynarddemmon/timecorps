@@ -79,6 +79,8 @@
                 retval.problem = 'Looping back not possible at chronal hubs';
             } else if (isAtEvent && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
                 retval.problem = 'Not enough chronogation to loop back here';
+            } else if (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS)) {
+                retval.problem = 'Only the Time Corps can go to HQ';
             } else {
                 retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
