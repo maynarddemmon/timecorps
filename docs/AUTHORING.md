@@ -504,7 +504,7 @@ HQ and The Void leave out `_investigate` this way.
 			"age":34,                           // Optional, in years. Default: 30. See Ages below.
 			"effectiveAge":31,                  // Optional. Default: their age.
 			"faction":"timecorps",              // Optional. Default: "unaligned".
-			"event":"collision",                // Where they start. Default: HQ.
+			"event":"collision",                // Where they start. Default: their faction's HQ.
 			"health":{"value":65, "max":85},   // Or just a number for the value. Default: 100 of 100.
 			"chronal":75,                       // Default 75.
 			"paradox":0,

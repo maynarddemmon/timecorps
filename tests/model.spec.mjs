@@ -106,7 +106,7 @@ test('every Event offers Investigate first, except the HQ and The Void, hidden o
                 if (!actionIds.includes('_investigate')) out.missing.push(eventModel.id);
                 else if (actionIds[0] !== '_investigate') out.notFirst.push(eventModel.id);
             }
-            out.special = [tc.model.getHQEventModel(), tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID)]
+            out.special = [tc.model.getEventModel('time_corps_hq'), tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID)]
                 .map(eventModel => eventModel.getActionModels()._investigate ?? null);
             
             const plan = tc.model.getEventModel('plan'),
@@ -553,7 +553,7 @@ test('the timeline paradox limit grows with each non-hub event that isn\'t hidde
     
     // The HQ and The Void are hubs, so showing them doesn't count.
     await page.evaluate(() => {
-        tc.model.getHQEventModel().setHidden(false);
+        tc.model.getEventModel('time_corps_hq').setHidden(false);
         tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID).setHidden(false);
     });
     expect(await readParadoxLimit(page)).toEqual(start);

@@ -232,7 +232,7 @@ test('training takes a day of the agent\'s month at HQ, aging them, until the mo
     const out = await page.evaluate(() => {
         const m = tc.model,
             alpha = m.getAgentModel('AL'),
-            hq = m.getHQEventModel();
+            hq = m.getEventModel('time_corps_hq');
         alpha.setEvent('time_corps_hq');
         m.setCredits(1000);
         const age = alpha.getAge();

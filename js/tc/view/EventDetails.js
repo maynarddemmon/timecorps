@@ -393,7 +393,6 @@
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                // The HQ chronal pool, and the button, are the Time Corps'.
                 self.chronalBar.setVisible(eventModel.isHQ());
                 
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
@@ -472,8 +471,10 @@
                 }
                 self.agentsRowBtnSeparator.setVisible(followExitBtn.visible && deployAgentBtn.visible);
                 
-                hqBtn.setDisabled(eventModel.isHQ());
-                hqBtn.setVisible(selectedAgentModel.getHQEventModel()?.isNotHidden());
+                // Selects the selected Agent's HQ, once it's known.
+                const hqEventModel = selectedAgentModel?.getHQEventModel();
+                hqBtn.setDisabled(eventModel === hqEventModel);
+                hqBtn.setVisible(hqEventModel?.isNotHidden() ?? false);
             }
         }, 25),
         

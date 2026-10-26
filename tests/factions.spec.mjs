@@ -83,9 +83,12 @@ test('only agents of the Time Corps are offered travel to HQ', async ({page}) =>
     const recallBtns = page.getByRole('button', {name:/^Recall to/}).filter({visible:true});
     await expect(recallBtns).toHaveCount(1);
     await page.evaluate(() => {
+        const hq = tc.model.getEventModel('time_corps_hq');
+        hq.setHidden(false);
         tc.app.selectAgentRow('BR');
-        tc.app.selectEventBox(tc.model.getHQEventModel());
+        tc.app.selectEventBox(hq);
     });
+    await expect.poll(() => page.evaluate(() => tc.app.getEventDetailsView().eventModel?.id)).toBe('time_corps_hq');
     await page.waitForTimeout(250);
     await expect(recallBtns).toHaveCount(0);
     
@@ -112,7 +115,7 @@ test('time travel the buttons don\'t offer is refused, with a warning saying why
         
         // Unaligned Bravo has no HQ to be recalled to, and can't go to the Time Corps'.
         bravo.doRecallToHQ();
-        bravo.doDeployToEvent(m.getHQEventModel());
+        bravo.doDeployToEvent(m.getEventModel('time_corps_hq'));
         const bravoAt = bravo.event;
         
         // Alpha's -100 chronogation can't loop back to the minute-long origin.
@@ -151,7 +154,7 @@ test('no one time travels into or out of a chrono locked Event, which an express
         const m = tc.model,
             alpha = m.getAgentModel('AL'),
             boats = m.getEventModel('boats'),
-            hq = m.getHQEventModel(),
+            hq = m.getEventModel('time_corps_hq'),
             retval = {};
         alpha.chronal.setValue(alpha.chronal.max);
         
@@ -209,7 +212,7 @@ test('each faction has its own HQ, which only its agents can go to, and which th
             alpha = m.getAgentModel('AL'),
             bravo = m.getAgentModel('BR'),
             boats = m.getEventModel('boats'),
-            hq = m.getHQEventModel();
+            hq = m.getEventModel('time_corps_hq');
         bravo.setPlayerControlled(true);
         bravo.setFaction('syndicate');
         bravo.setEvent('origin');

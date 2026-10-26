@@ -77,7 +77,7 @@ test('the grid\'s selection follows the timeline\'s, selecting a row selects the
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('the event details only offer HQ and The Void once they\'re revealed, whatever Event is showing', async ({page}) => {
+test('the event details only offer the selected agent\'s HQ and The Void once they\'re revealed, whatever Event is showing', async ({page}) => {
     const problems = await startGame(page),
         readBtns = () => page.evaluate(() => {
             const details = tc.app.getEventDetailsView();
@@ -87,9 +87,17 @@ test('the event details only offer HQ and The Void once they\'re revealed, whate
     await expect.poll(readBtns).toEqual({hq:false, theVoid:false});
     
     // Revealing them shows their buttons without selecting another Event.
-    await page.evaluate(() => tc.model.getHQEventModel().setHidden(false));
+    await page.evaluate(() => tc.model.getEventModel('time_corps_hq').setHidden(false));
     await expect.poll(readBtns).toEqual({hq:true, theVoid:false});
     await page.evaluate(() => tc.model.getEventModel(tc.cfg.EVENT_ID_THE_VOID).setHidden(false));
     await expect.poll(readBtns).toEqual({hq:true, theVoid:true});
+    
+    // The HQ button is the selected agent's: unaligned Bravo has none, and with no agent 
+    // selected there's none to offer.
+    await page.evaluate(() => tc.app.selectAgentRow('BR'));
+    await expect.poll(readBtns).toEqual({hq:false, theVoid:true});
+    await page.evaluate(() => tc.app.getTeamView().gridWrapper.getGrid().setSelectedRowModel(null));
+    await expect.poll(() => page.evaluate(() => tc.app.getEventDetailsView().selectedAgentModel ?? null)).toBeNull();
+    await expect.poll(readBtns).toEqual({hq:false, theVoid:true});
     expect(problems.pageErrors).toEqual([]);
 });

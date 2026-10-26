@@ -148,7 +148,7 @@ test('an action ages by the actions it spends, a free one not at all, and action
     const out = await page.evaluate(() => {
         const m = tc.model,
             alpha = m.getAgentModel('AL'),
-            hq = m.getHQEventModel(),
+            hq = m.getEventModel('time_corps_hq'),
             actions = hq.getActionModels();
         alpha.setEvent('time_corps_hq');
         const steps = [alpha.getAge()];

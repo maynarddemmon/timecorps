@@ -230,8 +230,9 @@
             if (attrs.faction) {
                 self.setFaction(attrs.faction);
                 delete attrs.faction;
-                attrs.event ??= self.getHQEventModel().id;
+                attrs.event ??= self.getHQEventModel()?.id;
             }
+            if (attrs.event == null) console.warn('Agent', attrs.id, 'has no event, and no faction HQ to start at');
             
             // Worked out once the Agent is at their starting Event.
             const {age, effectiveAge} = attrs;
