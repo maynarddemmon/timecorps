@@ -11,7 +11,7 @@
         {
             NotifyingNumericStatModel, getConstrainedValueCfg, setConstrainedValue,
             cfg:{
-                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED,
+                EVENT_ID_THE_VOID, FACTION_ID_UNALIGNED,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
@@ -226,8 +226,12 @@
                 }
             }]);
             
-            // Nullish event during init is assumed to be the HQ.
-            attrs.event ??= EVENT_ID_TIME_CORPS_HQ;
+            // Set Faction early so we can give nullish events the Faction HQ as a default.
+            if (attrs.faction) {
+                self.setFaction(attrs.faction);
+                delete attrs.faction;
+                attrs.event ??= self.getHQEventModel().id;
+            }
             
             // Worked out once the Agent is at their starting Event.
             const {age, effectiveAge} = attrs;
