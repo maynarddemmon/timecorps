@@ -4,7 +4,8 @@
     const {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
         
         {
-            SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, SCOPE_AGENTS,
+            SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
+            SCOPE_AGENTS, SCOPE_FACTIONS,
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
@@ -17,7 +18,7 @@
         PARAM_MARGIN = 'margin',
         FUNC_PARAMS = [
             SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, 
-            PARAM_DIE, PARAM_MARGIN, SCOPE_SCRATCH, SCOPE_EVENTS, SCOPE_AGENTS
+            PARAM_DIE, PARAM_MARGIN, SCOPE_SCRATCH, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_FACTIONS
         ],
         
         // An arbitrary limit on the number of dice in one d(sides, count).
@@ -111,7 +112,8 @@
                 const rootModel = pkg.model;
                 return func(
                     getAgentView(agent), event, rootModel, difficulty, die, margin, rootModel[SCOPE_SCRATCH],
-                    rootModel.getEventModels(), new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER)
+                    rootModel.getEventModels(), new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER),
+                    rootModel.getFactionModels()
                 );
             } catch (err) {
                 console.warn('Check expression threw (' + err.message + '):', expr);

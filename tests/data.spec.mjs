@@ -63,6 +63,9 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             for (const [ref, operationId] of expr.matchAll(/\boperations\.(\w+)/g)) {
                 if (!operations[operationId]) bad.push(ref);
             }
+            for (const [ref, factionId] of expr.matchAll(/\bfactions\.(\w+)/g)) {
+                if (!factions[factionId]) bad.push(ref);
+            }
             for (const [ref, name] of expr.matchAll(/(?<![\w.])scratch\.(\w+)/g)) {
                 if (!Object.hasOwn(scratch, name)) bad.push(ref);
             }

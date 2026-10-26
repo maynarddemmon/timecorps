@@ -12,8 +12,8 @@
                     Defaults to the model itself.
                 getConstraintScopeName() - Implemented by models that can BE a constraint scope.
                     Names the variable ("event", "agent", "operation") that refers to the scope
-                    in expressions. Without one, only "timeline", "events", "agents" and
-                    "operations" are available. */
+                    in expressions. Without one, only "timeline", "scratch", "events", "agents",
+                    "operations" and "factions" are available. */
         ConstrainableAttrSupport = pkg.ConstrainableAttrSupport = new JSModule('ConstrainableAttrSupport', {
             getConstraintScope: function() {return this;},
             getConstraintScopeName: NOOP // function() {}

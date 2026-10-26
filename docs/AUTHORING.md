@@ -60,6 +60,7 @@ What an expression can refer to:
 | `events.<id>` | Any event | Everywhere |
 | `agents.<id>` | Any agent | Everywhere |
 | `operations.<id>` | Any operation | Everywhere |
+| `factions.<id>` | Any [faction](#initjson5), e.g. `factions.timecorps.hq` | Everywhere |
 | `timeline` | The overall game state, e.g. `timeline.paradox.value` | Everywhere |
 | `timeline.cfg.<KEY>` | A game setting from `cfg` in `js/tc/tc.js`, e.g. `timeline.cfg.AGE_MIN_EFFECTIVE`. Read only | Everywhere |
 | `scratch.<name>` | A [scratch](#scratch) entry | Everywhere |
@@ -91,6 +92,7 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 | `scratch.<name>` | A [scratch](#scratch) entry |
 | `events.<id>` | Any event, e.g. `events.collision.attestation.value` |
 | `agents.<id>` | Any agent, e.g. `agents.ME.event`. Skills they don't have are 0, as for `agent` |
+| `factions.<id>` | Any faction, e.g. `factions[agent.faction].hq` |
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
 | `margin` | Amounts only: how well the deciding check went. See [Adjustments](#adjustments-adj) |

@@ -198,6 +198,7 @@
         
         // Factions:Accessors & Methods ////////////////////////////////////////
         getFactionModel: id => model[SCOPE_FACTIONS].getById(id),
+        getFactionModels: () => model[SCOPE_FACTIONS].getAll(),
         
         /*  The Faction whose HQ the Event is, or null if it's no Faction's. */
         getFactionModelForHQ: eventModel => {

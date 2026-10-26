@@ -46,6 +46,36 @@ test('agent, agents and operations scopes bind and update', async ({page}) => {
     expect(problems.warnings).toEqual([]);
 });
 
+test('the factions scope binds and updates in constraints, and is readable in check expressions', async ({page}) => {
+    const problems = await startGame(page);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            bravo = m.getAgentModel('BR'),
+            timecorps = m.getFactionModel('timecorps'),
+            struck = m.getEventModel('origin').getValueModels().struck,
+            eventModel = new tc.EventModel({id:'factions_test', actions:{
+                report:{label:'Report', set:{}, available:"factions[agent.faction].hq === 'time_corps_hq'"}
+            }}),
+            out = {};
+        
+        // A constraint follows a faction's attribute as it changes.
+        struck.setHidden("factions.timecorps.label !== 'The Corps'");
+        out.before = struck.isHidden();
+        timecorps.setLabel('The Corps');
+        out.after = struck.isHidden();
+        
+        // A check expression can look up the agent's own faction.
+        const actionModel = eventModel.getActionModels().report;
+        out.available = [alpha, bravo].map(agentModel => actionModel.isAvailableFor(agentModel));
+        eventModel.destroy();
+        return out;
+    });
+    expect(out).toEqual({before:true, after:false, available:[true, false]});
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('a self scope that does not match the model warns', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => tc.model.getAgentModel('DE').setHidden('event.attestation.value > 0'));

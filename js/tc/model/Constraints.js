@@ -8,19 +8,21 @@
         
         {
             SCOPE_TIMELINE, SCOPE_SCRATCH,
-            SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS, 
-            SCOPE_EVENT,  SCOPE_AGENT,  SCOPE_OPERATION
+            SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS,
+            SCOPE_EVENT,  SCOPE_AGENT,  SCOPE_OPERATION,
+            SCOPE_FACTIONS,
         } = pkg,
         
         /*  Scopes that name a collection. The next path segment is a model ID, e.g.
             "agents.VQ.paradox.value". */
-        COLLECTION_SCOPE_NAMES = [SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS],
+        COLLECTION_SCOPE_NAMES = [SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS, SCOPE_FACTIONS],
         getCollectionScope = name => {
             const rootModel = pkg.model;
             switch (name) {
                 case SCOPE_EVENTS: return rootModel.getEventModels();
                 case SCOPE_AGENTS: return rootModel.getAgentModels();
                 case SCOPE_OPERATIONS: return rootModel.getOperationModels();
+                case SCOPE_FACTIONS: return rootModel.getFactionModels();
             }
         },
         
@@ -122,7 +124,7 @@
             
             // Remember all constraints so they can be reapplied when necessary
             //target[REF_CONSTRAINTS][name] = constraintTxt;
-                
+            
             if (bindingPaused) {
                 pausedBinding.push(resolveTarget, target, funcName, propPaths);
             } else {
@@ -154,7 +156,7 @@
                         path.shift();
                     } else if (SELF_SCOPE_NAMES.includes(scopeName)) {
                         if (scopeName !== selfScopeName) {
-                            console.warn('Scope "' + scopeName + '" is not available here. Use "' + (selfScopeName ?? 'events/agents/operations') + '" instead:', funcName, resolveTarget);
+                            console.warn('Scope "' + scopeName + '" is not available here. Use "' + (selfScopeName ?? 'events/agents/operations/factions') + '" instead:', funcName, resolveTarget);
                             return;
                         }
                         path.shift();
@@ -235,11 +237,11 @@
     /*  The observer method name used for a constrained attribute, so code can pick out
         one constraint's dependencies in getAllObservables/getAllObservers. */
     pkg.getConstraintFuncName = generateConstraintName;
-
+    
     /*  The value or expression last given to setConstrainedValue for an attribute. This is
         what gets saved, since re-applying it restores both literals and expressions. */
     pkg.getConstrainedValueCfg = (target, name) => target[generateConfigAttrName(name)];
-
+    
     pkg.setConstrainedValue = (resolveTarget, target, name, constraintValue) => {
         const cfgName = generateConfigAttrName(name);
         if (target[cfgName] !== constraintValue) {
