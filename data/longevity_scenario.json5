@@ -85,13 +85,11 @@
 				"reporter":{
 					"label":"Talk to a Reporter",
 					"skillCheck":{"actionType":"social"},
-					"hidden":"event.actions.reporter.attemptCount > 0",
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
 				},
 				"crowd":{
 					"label":"Watch the Crowd",
 					"skillCheck":{"actionType":"investigate", "difficulty":150},
-					"hidden":"event.actions.crowd.attemptCount > 0",
 					"set":{"watcher":"true"},
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
 				}
@@ -239,6 +237,7 @@
 			"duration":{"h":4},
 			"location":"lgv.commission",
 			"hidden":"events.lgv_announcement.attestation.value < 35",
+			"actionLimit":4,
 			"actions":{
 				"_investigate":null,
 				"agenda":{
@@ -258,6 +257,15 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"hidden":"event.actions.debate.doneCount > 0",
 					"adj":{"event.attestation":"10"}
+				},
+				"meet":{
+					"label":"Meet the Clerk",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.meet.doneCount > 0 || events.lgv_hospice.attestation.value < 10 || events.lgv_banquet.attestation.value < 10 || events.lgv_model.attestation.value < 10",
+					"set":{
+						"agents.AF.hidden":{"onSuccess":"false"},
+						"agents.BA.hidden":{"onSuccess":"true"}
+					}
 				}
 			},
 			"values":{

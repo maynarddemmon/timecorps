@@ -384,17 +384,21 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     if (!agents[statId]) return 'names no agent';
                     if (rest.length === 1 && ADJUSTMENT_STAT_IDS.agents.includes(rest[0])) return null;
                     if (rest.length === 2 && rest[0] === 'skills') return Object.hasOwn(skillCfgs, rest[1]) ? null : 'is not a skill';
+                    // Any other attribute can be set. The game warns at load if it has no setter.
+                    if (rest.length === 1 && isSet) return null;
                     return 'is not a stat or skill of that agent';
                 }
                 if (scope === 'events') {
                     if (!events[statId]) return 'names no Event';
                     if (rest.length === 1 && ADJUSTMENT_STAT_IDS.events.includes(rest[0])) return null;
                     if (rest.length === 2 && rest[0] === 'values') return events[statId].values?.[rest[1]] ? null : 'is not a Value of that Event';
+                    if (rest.length === 1 && isSet) return null;
                     return 'is not a stat or Value of that Event';
                 }
                 if (scope === 'scratch' && rest.length === 0) return Object.hasOwn(scratch, statId) ? null : 'is not declared';
                 if (scope === 'agent' && statId === 'skills' && rest.length === 1) return Object.hasOwn(skillCfgs, rest[0]) ? null : 'is not a skill';
                 if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scope) && ADJUSTMENT_STAT_IDS[scope].includes(statId)) return null;
+                if (rest.length === 0 && isSet && (scope === 'agent' || scope === 'event')) return null;
                 return 'is not a stat, skill, Value or scratch entry';
             },
             

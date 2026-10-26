@@ -245,7 +245,8 @@
 		"AF":{
 			"name":"Ambrose Fenwick",
 			"born":"2149-10-26", "age":27,
-			"faction":"timecorps",
+			"faction":"syndicate",
+			"event":"lgv_commission",
 			"health":{"value":91},
 			"skills":{
 				"chronogation":75,

@@ -376,13 +376,13 @@ test('adj must be keyed by a stat, a skill, a Value or scratch, and the old inju
         });
     // A key without a dot names a Value of the Event, which is only looked up when it applies.
     expect(out).toEqual({valid:['health both', 'timeline.paradox both'], notAnObject:[], oldAdjustments:0});
-    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", or "scratch.<name>" (ignoring it): {onSuccess: 1}';
+    const named = 'must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", an attribute with a setter of an agent or Event, e.g. "agents.AF.hidden", or "scratch.<name>" (ignoring it): {onSuccess: 1}';
     expect(problems.warnings).toEqual([
-        'Event origin exit to aftermath adj agent.luck ' + named,
-        'Event origin exit to aftermath adj event.health ' + named,
+        'Event origin exit to aftermath adj agent.luck names no stat, or attribute that can be set, of an agent (ignoring it): {onSuccess: 1}',
+        'Event origin exit to aftermath adj event.health names no stat, or attribute that can be set, of an Event (ignoring it): {onSuccess: 1}',
         'Event origin exit to aftermath adj agent.health.value ' + named,
         'Event origin exit to aftermath adj toString.health ' + named,
-        'Event origin exit to aftermath adj agent.skills ' + named,
+        'Event origin exit to aftermath adj agent.skills names no stat, or attribute that can be set, of an agent (ignoring it): {onSuccess: 1}',
         'Event origin exit to aftermath adj agent.skills.agl.max ' + named,
         'Event origin exit to aftermath adj event.skills.agl ' + named,
         'Event origin exit to aftermath adj agent.health must be a string or an object (ignoring it): -5',

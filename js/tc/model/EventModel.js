@@ -119,6 +119,18 @@
         // Faction they're in, e.g. "agents.ME.faction".
         SET_ONLY_AGENT_KEYS = [SCOPE_EVENT, 'faction'],
         
+        // Attributes a set can't change, though they have setters: the ID, and collections
+        // that have keys of their own, e.g. "agent.skills.agl" or "events.x.values.y".
+        UNSETTABLE_ATTR_NAMES = ['id', SCOPE_SKILLS, 'actions', 'values', 'exits'],
+        
+        /*  Whether set can change an attribute of an agent or Event, e.g. "hidden": anything
+            with a setter, other than what has a key of its own. */
+        isSettableAttr = (isAgent, attrName) => {
+            if (UNSETTABLE_ATTR_NAMES.includes(attrName)) return false;
+            const modelClass = isAgent ? pkg.AgentModel : pkg.EventModel;
+            return typeof modelClass.prototype[M.AccessorSupport.generateSetterName(attrName)] === 'function';
+        },
+        
         // The timeline's score and credits, which set and adj can change like stats.
         STAT_ID_SCORE = 'score',
         STAT_ID_CREDITS = 'credits',
@@ -253,6 +265,9 @@
                     ("agent.faction") or any agent's ("agents.ME.faction"). Set only.
                 {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
                     e.g. "events.collision.values.struck".
+                {kind:'attr', scopeName, agentId, eventId, statId:attrName, attrName} - any 
+                    other attribute with a setter of an agent or Event, theirs or any by ID, 
+                    e.g. "agents.AF.hidden" or "event.chronoLocked". Set only.
                 {error} - a phrase for a warning. */
             let parsedKey;
             const [scopeName, statId, ...rest] = String(key).split('.');
@@ -289,8 +304,28 @@
                 parsedKey = {kind:'value', eventId:statId, statId:'values.' + rest[1], valueId:rest[1]};
             } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
+            } else if (
+                ((scopeName === SCOPE_AGENT || scopeName === SCOPE_EVENT) && rest.length === 0) ||
+                ((scopeName === SCOPE_AGENTS || scopeName === SCOPE_EVENTS) && rest.length === 1)
+            ) {
+                const byId = rest.length === 1,
+                    attrName = byId ? rest[0] : statId,
+                    isAgent = scopeName === SCOPE_AGENT || scopeName === SCOPE_AGENTS;
+                if (!isSettableAttr(isAgent, attrName)) {
+                    warn('names no stat, or attribute that can be set, of ' + (isAgent ? 'an agent' : 'an Event') + ' (ignoring it)');
+                    return null;
+                }
+                if (!isSet) {
+                    warn('can only be set, not adjusted (ignoring it)');
+                    return null;
+                }
+                parsedKey = {
+                    kind:'attr', scopeName, statId:attrName, attrName,
+                    agentId:byId && isAgent ? statId : undefined,
+                    eventId:byId && !isAgent ? statId : undefined
+                };
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", an attribute with a setter of an agent or Event, e.g. "agents.AF.hidden", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -338,6 +373,14 @@
                 if (entry) retval[key] = entry;
             }
             return retval;
+        },
+        
+        /*  Sets an attribute of an agent or Event, e.g. "hidden", to a constraint expression,
+            which may be a literal, e.g. "false". It replaces any expression the attribute had,
+            and is saved, so it survives a reload. */
+        setAttrByAction = pkg.setAttrByAction = (model, attrName, expr) => {
+            (model.attrsSetByAction ??= {})[attrName] = expr;
+            setConstrainedValue(model.getConstraintScope(), model, attrName, expr);
         },
         
         /*  Applies a set block's entries for a result: a string entry sets on success and an
@@ -398,6 +441,24 @@
                             console.warn(key, 'is not a Faction ID:', result);
                         } else {
                             memberModel.setFaction(result);
+                        }
+                        break;
+                    }
+                    case 'attr': {
+                        const {attrName, agentId, eventId, scopeName} = parsedKey,
+                            rootModel = pkg.model,
+                            target = agentId !== undefined ? rootModel.getAgentModel(agentId) : 
+                                eventId !== undefined ? rootModel.getEventModel(eventId) :
+                                scopeName === SCOPE_AGENT ? agentModel : eventModel;
+                        if (!target) {
+                            console.warn('No agent or Event to set', key, 'of');
+                        } else if (isPerResult) {
+                            // Set as a literal, so it stays what it was worked out to be.
+                            const result = rollValue(expr, rollCfg);
+                            if (result !== undefined) setAttrByAction(target, attrName, JSON.stringify(result));
+                        } else {
+                            // A constraint expression, kept up to date, as for a Value.
+                            setAttrByAction(target, attrName, expr);
                         }
                         break;
                     }
@@ -1518,6 +1579,7 @@
                 if (this.flooded) retval.flooded = true;
                 if (this._beenVisited) retval.beenVisited = true;
                 if (this.hub) retval.hub = true;
+                if (this.attrsSetByAction) retval.attrsSetByAction = {...this.attrsSetByAction};
                 
                 const actionsObj = retval.actions = {},
                     actions = this.actions;
@@ -1533,6 +1595,7 @@
                 if ('flooded' in obj) this.setFlooded(obj.flooded);
                 if ('beenVisited' in obj) this.setBeenVisited(obj.beenVisited);
                 if ('hub' in obj) this.setHub(obj.hub);
+                for (const attrName in obj.attrsSetByAction) pkg.setAttrByAction(this, attrName, obj.attrsSetByAction[attrName]);
                 
                 const valuesObj = obj.values;
                 if (valuesObj) {

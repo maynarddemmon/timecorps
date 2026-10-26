@@ -187,7 +187,7 @@ test('set can set stats and skills, worked out once and within their limits', as
     // Set as far as the stat allows.
     expect(passed.chronal).toBe(passed.chronalMax);
     expect(problems.warnings).toEqual([
-        expect.stringMatching(/^Event origin action badSet set agent\.luck must be named for a stat/),
+        'Event origin action badSet set agent.luck names no stat, or attribute that can be set, of an agent (ignoring it): 1',
         expect.stringMatching(/^Event origin action badSet set event\.skills\.agl must be named for a stat/)
     ]);
     expect(problems.pageErrors).toEqual([]);
@@ -220,5 +220,65 @@ test('adj can add to numeric Values and scratch, from actions and exits, without
     expect(out.logged).toEqual({count:2, 'scratch.origin_tally':3, 'agent.skills.dex':1, label:0, 'scratch.origin_word':0});
     expect(problems.warnings).toContain('Event origin Value label is not a number, so adj can\'t change it: none');
     expect(problems.warnings).toContain('scratch.origin_word is not a number, so adj can\'t change it: hello');
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('set can change any attribute with a setter of an agent or Event, once or as a live expression, and it survives a reload', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        Object.assign(json.events.origin.actions, {
+            recruit:{
+                label:'Recruit', skillCheck:{check:'0', difficulty:500}, costs:{'agent.action':null},
+                set:{
+                    // Worked out once, on a pass.
+                    'agents.BR.hidden':{onSuccess:'false'},
+                    'agents.BR.playerControlled':{onSuccess:'true'},
+                    // A live expression, kept up to date.
+                    'event.chronoLocked':'scratch.plan_noteCount > 0'
+                }
+            },
+            bad:{
+                label:'Bad', skillCheck:{difficulty:'no-roll'},
+                set:{'agents.BR.nope':'true', 'events.boats.id':"'x'", 'agent.hidden':{onSuccess:'false'}},
+                adj:{'agents.BR.hidden':'1'}
+            }
+        });
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        readState = () => page.evaluate(() => {
+            const m = tc.model,
+                bravo = m.getAgentModel('BR');
+            return {hidden:bravo.isHidden(), controlled:bravo.isPlayerControlled(), locked:m.getEventModel('origin').isChronoLocked()};
+        }),
+        act = (actionId, roll) => page.evaluate(([actionId, roll]) => {
+            tc.rng.queueRolls(roll);
+            tc.model.getAgentModel('AL').doAction(tc.model.getEventModel('origin').getActionModels()[actionId]);
+        }, [actionId, roll]);
+    expect(problems.warnings).toEqual([
+        'Event origin action bad adj agents.BR.hidden can only be set, not adjusted (ignoring it): 1',
+        'Event origin action bad set agents.BR.nope names no stat, or attribute that can be set, of an agent (ignoring it): true',
+        'Event origin action bad set events.boats.id names no stat, or attribute that can be set, of an Event (ignoring it): \'x\''
+    ]);
+    expect(await readState()).toEqual({hidden:true, controlled:false, locked:false});
+    
+    // A failure sets nothing, since a string, too, sets only on a pass.
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 1));
+    await act('recruit', 100);
+    expect(await readState()).toEqual({hidden:true, controlled:false, locked:false});
+    
+    // A pass reveals Bravo, puts them under the player's control, and locks the origin while
+    // the scratch it reads says so.
+    await act('recruit', 900);
+    expect(await readState()).toEqual({hidden:false, controlled:true, locked:true});
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 0));
+    expect(await readState()).toEqual({hidden:false, controlled:true, locked:false});
+    
+    // All of it survives a reload, the expression still live.
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    expect(await readState()).toEqual({hidden:false, controlled:true, locked:false});
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 2));
+    expect(await readState()).toEqual({hidden:false, controlled:true, locked:true});
     expect(problems.pageErrors).toEqual([]);
 });

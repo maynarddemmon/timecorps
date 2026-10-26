@@ -628,6 +628,7 @@
                 timeLivedAtEvent:this.timeLivedAtEvent,
                 log:this.log.map(exportLogEntry)
             };
+            if (this.attrsSetByAction) retval.attrsSetByAction = {...this.attrsSetByAction};
             for (const statId of AGENT_STAT_IDS) retval[statId] = this[statId].exportToObj();
             return retval;
         },
@@ -679,6 +680,9 @@
                 }
                 this.log = log;
             }
+            
+            // Last, so they win over anything else restored, e.g. hidden.
+            for (const attrName in obj.attrsSetByAction) pkg.setAttrByAction(this, attrName, obj.attrsSetByAction[attrName]);
         },
         
         /*  Runs after constraint binding resumes. Revealing an Agent stamps its arrival when 

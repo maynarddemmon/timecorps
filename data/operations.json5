@@ -223,7 +223,12 @@
 				"meet":{
 					"name":"Meet the Watcher",
 					"description":["Find out who was in the dark suit. (To be continued.)"],
-					"success":"events.lgv_announcement.values.watcher.value && events.lgv_commission.attestation.value >= 30"
+					"success":"!agents.AF.hidden"
+				},
+				"location":{
+					"name":"Attend The Closed Session",
+					"description":["Be present at the closed session."],
+					"success":"agents.ME.event === events.lgv_commission.id"
 				}
 			},
 			"onSuccess":{
