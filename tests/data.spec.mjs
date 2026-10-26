@@ -208,11 +208,12 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
-    test('there is an unaligned faction, every faction has a label, and every agent is in a known faction', () => {
+    test('there is an unaligned faction, every faction has a label and any hq is an Event, and every agent is in a known faction', () => {
         const problems = [];
         if (!factions.unaligned) problems.push('no unaligned faction, which agents default to');
         for (const [factionId, faction] of Object.entries(factions)) {
             if (typeof faction.label !== 'string' || faction.label.trim() === '') problems.push('faction ' + factionId + ' has no label');
+            if (faction.hq !== undefined && !events[faction.hq]) problems.push('faction ' + factionId + ' hq is not an Event: ' + faction.hq);
         }
         for (const [agentId, agent] of Object.entries(agents)) {
             if (agent.faction !== undefined && !factions[agent.faction]) problems.push('agent ' + agentId + ' is in unknown faction ' + agent.faction);

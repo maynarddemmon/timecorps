@@ -110,8 +110,9 @@ test('time travel the buttons don\'t offer is refused, with a warning saying why
         bravo.chronal.setValue(bravo.chronal.max);
         alpha.chronal.setValue(alpha.chronal.max);
         
-        // Unaligned Bravo can't be recalled.
+        // Unaligned Bravo has no HQ to be recalled to, and can't go to the Time Corps'.
         bravo.doRecallToHQ();
+        bravo.doDeployToEvent(m.getHQEventModel());
         const bravoAt = bravo.event;
         
         // Alpha's -100 chronogation can't loop back to the minute-long origin.
@@ -126,7 +127,8 @@ test('time travel the buttons don\'t offer is refused, with a warning saying why
     });
     expect(out).toEqual({bravoAt:'origin', alphaLoopedBack:false, alphaAt:'origin'});
     expect(problems.warnings).toEqual([
-        'Cannot time travel BR to time_corps_hq: Only the Time Corps can go to HQ',
+        'Cannot recall BR: their faction, unaligned, has no HQ',
+        'Cannot time travel BR to time_corps_hq: Only Time Corps agents can go here',
         'Cannot time travel AL to origin: Not enough chronogation to loop back here',
         'Cannot time travel AL to time_corps_hq: Not enough chronal'
     ]);
@@ -190,5 +192,61 @@ test('no one time travels into or out of a chrono locked Event, which an express
     expect(await page.evaluate(() => tc.model.getEventModel('boats').isChronoLocked())).toBe(true);
     await page.evaluate(() => tc.model.setScratch('plan_noteCount', 3));
     expect(await page.evaluate(() => tc.model.getEventModel('boats').isChronoLocked())).toBe(false);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('each faction has its own HQ, which only its agents can go to, and which they\'re recalled to', async ({page}) => {
+    await page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        json.factions.syndicate = {label:'Syndicate', hq:'boats', description:'Pays well.'};
+        json.factions.pirates = {label:'Pirates', hq:'nowhere', description:'Lost.'};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    expect(problems.warnings).toEqual(['Faction pirates hq names no Event: nowhere']);
+    const out = await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            bravo = m.getAgentModel('BR'),
+            boats = m.getEventModel('boats'),
+            hq = m.getHQEventModel();
+        bravo.setPlayerControlled(true);
+        bravo.setFaction('syndicate');
+        bravo.setEvent('origin');
+        for (const agentModel of [alpha, bravo]) agentModel.chronal.setValue(agentModel.chronal.max);
+        const retval = {hqs:[boats.isHQ(), hq.isHQ(), m.getEventModel('origin').isHQ()]};
+        
+        // Each can't go to the other's HQ.
+        alpha.doDeployToEvent(boats);
+        bravo.doDeployToEvent(hq);
+        retval.refusedAt = [alpha.event, bravo.event];
+        
+        // Bravo's recall costs the trip back to the Syndicate's HQ, and is logged as a recall.
+        const chronalBefore = bravo.chronal.value;
+        retval.recallCost = tc.getChronalToRecall(bravo, boats);
+        bravo.doRecallToHQ();
+        retval.bravoAt = bravo.event;
+        retval.bravoPaid = chronalBefore - bravo.chronal.value;
+        retval.bravoLogType = bravo.getLog().at(-1).type;
+        retval.bravoAtHQ = [bravo.isAtHQ(), alpha.isAtHQ()];
+        
+        alpha.doRecallToHQ();
+        retval.alphaAt = alpha.event;
+        return retval;
+    });
+    expect(out.bravoPaid).toBe(out.recallCost);
+    expect(out.recallCost).toBeGreaterThan(0);
+    expect(out).toMatchObject({
+        hqs:[true, true, false],
+        refusedAt:['origin', 'origin'],
+        bravoAt:'boats',
+        bravoLogType:'recall',
+        bravoAtHQ:[true, false],
+        alphaAt:'time_corps_hq'
+    });
+    expect(problems.warnings.slice(1)).toEqual([
+        'Cannot time travel AL to boats: Only Syndicate agents can go here',
+        'Cannot time travel BR to time_corps_hq: Only Time Corps agents can go here'
+    ]);
     expect(problems.pageErrors).toEqual([]);
 });

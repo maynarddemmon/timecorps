@@ -171,10 +171,6 @@
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
                 {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
             
-            // Special Handling for HQ and The Void
-            if (isInitial) orderedEvents.unshift(model.getHQEventModel(), model.getTheVoidEventModel());
-            
-            
             // Location Columns //
             let xExtent = 0;
             const colHeadersHeight = colHeaders.height,

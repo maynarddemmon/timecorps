@@ -7,10 +7,12 @@
 	"factions":{
 		"timecorps":{
 			"label":"Time Corps",
+			"hq":"time_corps_hq",
 			"description":"The Nexus-based service that watches the causal thread and repairs it. Its agents travel under Corps protocols, draw chronal from the HQ pool and answer to Command."
 		},
 		"syndicate":{
 			"label":"The Syndicate",
+			"hq":"syndicate_hq",
 			"description":"Time travellers who answer to no Command and keep no protocols. They change history for whoever pays them, or for reasons of their own, and the Corps has never found out who leads them."
 		},
 		"unaligned":{
@@ -124,6 +126,7 @@
 	},
 	
 	"scratch":{
+		"syndicate_hq_hidden":"true",
 		"time_corps_hq_hidden":"true",
 		"the_void_hidden":"true"
 	},
@@ -135,9 +138,100 @@
 			"start":"+100000-01-01T00:00:00", "duration":{"s":0}, "location":"_etherium",
 			"actions":{"_investigate":null}
 		},
+		"syndicate_hq":{
+			"name":"❉ Syndicate Warehouse", "hub":true,
+			"hidden":"scratch.syndicate_hq_hidden",
+			"start":"2151-04-19T00:00:00", "duration":{"d":30}, "location":"_nexus",
+			"actionLimit":30,
+			"actions":{
+				"_investigate":null,
+				
+				// Agents can heal critical health damage here.
+				"_heal":{
+					"label":"Infirmary Stay",
+					"available":"agent.health.value < agent.health.max",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"agent.action":"7",
+						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
+					},
+					"adj":{
+						"agent.health":{
+							"onSuccess":"d(8,6)"
+						}
+					}
+				},
+				
+				"_restockChronal":{
+					"label":"Restock Chronal +1",
+					"skillCheck":{"difficulty":"no-roll"},
+					"available":"timeline.chronal.value < timeline.chronal.max",
+					"costs":{
+						"agent.action":null,
+						"timeline.credits":"1"
+					},
+					"adj":{
+						"timeline.chronal":{
+							"onSuccess":"1"
+						}
+					}
+				},
+				
+				// Agents can reload their chronal from the shared HQ pool.
+				"_reloadChronal":{
+					"label":"Reload Chronal +3",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"timeline.chronal.value <= 0",
+					"available":"agent.chronal.value < agent.chronal.max",
+					// Takes no action, and the small amount lets the pool be shared out a little at a
+					// time. The cost and the adj are the same amount: up to 3, as much as the pool
+					// has and the agent has room for.
+					"costs":{
+						"agent.action":null,
+						"timeline.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+					},
+					"adj":{
+						"agent.chronal":{
+							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+						}
+					}
+				},
+				
+				// Agents can reduce their effective age.
+				"_rejuvenate":{
+					"label":"Rejuvenate",
+					"available":"agent.effectiveAge > timeline.cfg.AGE_MIN_EFFECTIVE",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"agent.action":"7",
+						"timeline.credits":"50"
+					},
+					"adj":{
+						"agent.effectiveAge":{
+							"onSuccess":"-5"
+						}
+					}
+				},
+				
+				// Agents can be treated to remove paradox, one point at a time.
+				"_stabilize":{
+					"label":"Causality Stabilization Treatment",
+					"available":"agent.paradox.value > 0",
+					"skillCheck":{"difficulty":"no-roll"},
+					"costs":{
+						"agent.action":"7",
+						"timeline.credits":"30"
+					},
+					"adj":{
+						"agent.paradox":{
+							"onSuccess":"-1"
+						}
+					}
+				}
+			}
+		},
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters", "hub":true,
-			"chronoLocked":"agents.ME.faction !== 'timecorps'",
 			"hidden":"scratch.time_corps_hq_hidden",
 			"start":"2174-10-14T00:00:00", "duration":{"d":30}, "location":"_nexus",
 			"actionLimit":30,

@@ -47,6 +47,29 @@
 					"label":"Not Yet"
 				}
 			}
+		},
+		"syndicate_offer":{
+			"type":"confirm",
+			"title":"Syndicate’s Offer",
+			"description":[
+				"“Embrace your destiny?”"
+			],
+			"buttons":{
+				"confirm":{
+					"label":"Join the Syndicate",
+					"onClick":{
+						"set":{
+							"agents.ME.faction":"'syndicate'",
+							"scratch.syndicate_hq_hidden":"false",
+							"scratch.the_void_hidden":"false"
+						},
+						"adj":{"agents.ME.chronal":"10 + d(4,2)"}
+					}
+				},
+				"cancel":{
+					"label":"Not Yet"
+				}
+			}
 		}
 	},
 	
@@ -200,8 +223,19 @@
 				"meet":{
 					"name":"Meet the Watcher",
 					"description":["Find out who was in the dark suit. (To be continued.)"],
-					"success":"false"
+					"success":"events.lgv_announcement.values.watcher.value && events.lgv_commission.attestation.value >= 30"
 				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"FIXME: needs a debrief."
+				],
+				"adj":{
+					"timeline.score":"1500",
+					"agents.ME.skills.chronogation":"50"
+				},
+				"prompt":"syndicate_offer",
+				"nextOperation":"titanic_noCollision"
 			}
 		},
 		

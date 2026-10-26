@@ -147,10 +147,13 @@
                     return;
                 }
                 
-                const isHQ = eventModel.isHQ();
-                recallBtn.setVisible(!isHQ);
-                
-                if (!isHQ) agentModel.updateBtnForTimeTravel(recallBtn, rootModel.getHQEventModel());
+                // A recall to the HQ of the Agent's Faction, if it has one and isn't this Event.
+                const hqEventModel = agentModel.getHQEventModel();
+                if (hqEventModel && hqEventModel !== eventModel) {
+                    agentModel.updateBtnForTimeTravel(recallBtn, hqEventModel);
+                } else {
+                    recallBtn.setVisible(false);
+                }
                 
                 // Update Actions
                 new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
@@ -267,7 +270,7 @@
             
             self.hqBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
-            }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getHQEventModel());}}]);
+            }, [{doActivated: () => {pkg.app.selectEventBox(self.selectedAgentModel.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
             }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getTheVoidEventModel());}}]);
@@ -326,13 +329,7 @@
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
             self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
-                doActivated: () => {
-                    if (self.eventModel.isHQ()) {
-                        self.selectedAgentModel.doRecallToHQ();
-                    } else {
-                        self.selectedAgentModel.doDeployToEvent(self.eventModel);
-                    }
-                }
+                doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
             }]);
             
             // Causators
@@ -396,11 +393,8 @@
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                const isHQ = eventModel.isHQ();
-                self.chronalBar.setVisible(isHQ);
-                
-                self.hqBtn.setDisabled(isHQ);
-                self.hqBtn.setVisible(!rootModel.getHQEventModel().isHidden());
+                // The HQ chronal pool, and the button, are the Time Corps'.
+                self.chronalBar.setVisible(eventModel.isHQ());
                 
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
                 self.theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
@@ -461,7 +455,7 @@
                 eventModel = self.eventModel;
             if (eventModel != null) {
                 // An exit from where the Agent is to this Event, offered alongside jumping here.
-                const {selectedAgentModel, followExitBtn, deployAgentBtn} = self,
+                const {selectedAgentModel, followExitBtn, deployAgentBtn, hqBtn} = self,
                     canDirectAgent = selectedAgentModel != null && selectedAgentModel.isPlayerControlled() && !selectedAgentModel.isDead(),
                     exitModel = self.followExitModel = canDirectAgent ? selectedAgentModel.getExitTo(eventModel) : null;
                 followExitBtn.setVisible(exitModel != null);
@@ -477,6 +471,9 @@
                     deployAgentBtn.setVisible(false);
                 }
                 self.agentsRowBtnSeparator.setVisible(followExitBtn.visible && deployAgentBtn.visible);
+                
+                hqBtn.setDisabled(eventModel.isHQ());
+                hqBtn.setVisible(selectedAgentModel.getHQEventModel()?.isNotHidden());
             }
         }, 25),
         

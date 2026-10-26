@@ -5,7 +5,7 @@
 	"scenarios":["test_scenario"],
 	
 	"factions":{
-		"timecorps":{"label":"Time Corps", "description":"Keeps the causal thread intact."},
+		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "description":"Keeps the causal thread intact."},
 		"unaligned":{"label":"Unaligned", "description":"Answers to no one."}
 	},
 	

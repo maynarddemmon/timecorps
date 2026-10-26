@@ -19,7 +19,7 @@
             NotifyingNumericStatModel, AgentModel, LocationModel, FactionModel, EventModel, OperationModel, PromptModel,
             isPlainObject,
             cfg:{
-                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ,
+                EVENT_ID_THE_VOID,
                 TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
                 SCORE_TO_CREDITS_EARN_AMOUNT,
@@ -162,7 +162,6 @@
         
         // Events:Accessors & Methods //////////////////////////////////////////
         getEventModel: id => model[SCOPE_EVENTS].getById(id),
-        getHQEventModel: () => model.getEventModel(EVENT_ID_TIME_CORPS_HQ),
         getTheVoidEventModel: () => model.getEventModel(EVENT_ID_THE_VOID),
         getEventModels: () => model[SCOPE_EVENTS].getAll(),
         getEventModelsAsList: filterFunc => model[SCOPE_EVENTS].getAsList(filterFunc),
@@ -199,6 +198,25 @@
         
         // Factions:Accessors & Methods ////////////////////////////////////////
         getFactionModel: id => model[SCOPE_FACTIONS].getById(id),
+        
+        /*  The Faction whose HQ the Event is, or null if it's no Faction's. */
+        getFactionModelForHQ: eventModel => {
+            const factions = model[SCOPE_FACTIONS].getAll();
+            for (const id in factions) {
+                const faction = factions[id];
+                if (faction.hq === eventModel?.id) return faction;
+            }
+            return null;
+        },
+        
+        /*  Warns about each Faction whose hq names no Event. */
+        validateFactionHQs: () => {
+            const factions = model[SCOPE_FACTIONS].getAll();
+            for (const id in factions) {
+                const hq = factions[id].hq;
+                if (hq != null && !model.getEventModel(hq)) console.warn('Faction', id, 'hq names no Event:', hq);
+            }
+        },
         getFactionModelsAsList: filterFunc => model[SCOPE_FACTIONS].getAsList(filterFunc),
         
         getPromptModel: id => model[SCOPE_PROMPTS].getById(id),

@@ -13,7 +13,7 @@
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_EFFECTIVE_AGE,
             cfg:{
-                EVENT_ID_TIME_CORPS_HQ, EVENT_ID_THE_VOID,
+                EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
@@ -1266,7 +1266,8 @@
                 return this.hasImage() ? this.callSuper() : [null, null];
             },
             
-            isHQ: function() {return this.id === EVENT_ID_TIME_CORPS_HQ;},
+            /*  Whether the Event is some Faction's HQ. */
+            isHQ: function() {return pkg.model.getFactionModelForHQ(this) != null;},
             isTheVoid: function() {return this.id === EVENT_ID_THE_VOID;},
             
             // Hubs are free from paradox. Events like the HQ and The Void are hubs.

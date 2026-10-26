@@ -352,7 +352,8 @@
                 return mathMax(isDeploy ? cfg.MIN_DEPLOY_CHRONAL : cfg.MIN_JUMP_CHRONAL, cost);
             },
             
-            getChronalToRecall: agentModel => {
+            /*  The chronal to recall the Agent to hqEventModel, their Faction's HQ. */
+            getChronalToRecall: (agentModel, hqEventModel) => {
                 const agentEvent = agentModel.getEventModel();
                 
                 // The Agent isn't anywhere which is odd.
@@ -361,7 +362,7 @@
                     return Number.MAX_SAFE_INTEGER;
                 }
                 
-                const cost = mathCeil(getChronalByTimeDiffEfficiently(TC.model.getHQEventModel().getStart(), agentEvent.getEnd(), agentModel) / 2);
+                const cost = mathCeil(getChronalByTimeDiffEfficiently(hqEventModel.getStart(), agentEvent.getEnd(), agentModel) / 2);
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             

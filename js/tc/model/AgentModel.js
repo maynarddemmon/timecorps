@@ -11,7 +11,7 @@
         {
             NotifyingNumericStatModel, getConstrainedValueCfg, setConstrainedValue,
             cfg:{
-                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED, FACTION_ID_TIMECORPS,
+                EVENT_ID_THE_VOID, EVENT_ID_TIME_CORPS_HQ, FACTION_ID_UNALIGNED,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
@@ -64,13 +64,14 @@
         getTimeTravelInfo = (agentModel, eventModel) => {
             const isHQ = eventModel.isHQ(),
                 isAtEvent = agentModel.isAtEvent(eventModel),
-                chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel) : pkg.getChronalToDeploy(agentModel, eventModel),
+                hqFactionModel = pkg.model.getFactionModelForHQ(eventModel),
+                chronalNeeded = isHQ ? pkg.getChronalToRecall(agentModel, eventModel) : pkg.getChronalToDeploy(agentModel, eventModel),
                 retval = {isHQ, chronalNeeded, paradoxCost:agentModel.calculateParadoxForEntry(eventModel), visible:false},
                 chronoLockedEventModel = getChronoLockedEventBlockingTravel(agentModel, eventModel);
             
             // Not permitted: the dead go nowhere, no one time travels into or out of a chrono
             // locked Event or loops back at a hub, looping back to an Event takes more 
-            // chronogation the shorter it is, and only the Time Corps can go to HQ.
+            // chronogation the shorter it is, and only a Faction's members can go to its HQ.
             if (agentModel.isDead()) {
                 retval.problem = 'Deceased';
             } else if (chronoLockedEventModel) {
@@ -79,8 +80,8 @@
                 retval.problem = 'Looping back not possible at chronal hubs';
             } else if (isAtEvent && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
                 retval.problem = 'Not enough chronogation to loop back here';
-            } else if (isHQ && !agentModel.isInFaction(FACTION_ID_TIMECORPS)) {
-                retval.problem = 'Only the Time Corps can go to HQ';
+            } else if (hqFactionModel && !agentModel.isInFaction(hqFactionModel)) {
+                retval.problem = 'Only ' + hqFactionModel.getLabel() + ' agents can go here';
             } else {
                 retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
@@ -469,7 +470,14 @@
                     return false;
             }
         },
-        isAtHQ: function() {return this.event === EVENT_ID_TIME_CORPS_HQ;},
+        /*  The HQ of the Agent's Faction, or null if it has none. */
+        getHQEventModel: function() {return this.getFactionModel()?.getHQEventModel() ?? null;},
+        
+        /*  Whether the Agent is at their Faction's HQ. */
+        isAtHQ: function() {
+            const hqEventModel = this.getHQEventModel();
+            return hqEventModel != null && this.getEventModel() === hqEventModel;
+        },
         isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
         
         doHiddenChanged: function(hidden) {
@@ -774,8 +782,14 @@
                 console.warn('doDeployToEvent: no eventModel');
             }
         },
+        /*  Recalls the Agent to their Faction's HQ, if it has one. */
         doRecallToHQ: function() {
-            this.doDeployToEvent(pkg.model.getHQEventModel());
+            const hqEventModel = this.getHQEventModel();
+            if (hqEventModel) {
+                this.doDeployToEvent(hqEventModel);
+            } else {
+                console.warn('Cannot recall', this.id + ':', 'their faction,', this.getFaction() + ', has no HQ');
+            }
         },
         doFollowExit: function(exitModel, btnView) {
             const self = this;
