@@ -911,17 +911,17 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
                 origin = tc.model.getEventModel('origin'),
                 withAction = (adjustmentCfg, skillCheck) => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.attestation':adjustmentCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.paradox':adjustmentCfg}}});
                     const actionModel = origin.getActionModels().measured;
                     return {
                         phrase:alpha.getAdjustmentsPhrase(actionModel).replace(/\u00A0/g, ' '),
-                        flagged:alpha.hasStatChangeFor(actionModel, 'attestation')
+                        flagged:alpha.hasParadoxChangeRiskFor(actionModel)
                     };
                 },
                 HARD = {difficulty:500, check:'0'},
                 TENTH = {onSuccess:'margin / 10', onFailure:'margin / 10'},
                 exitModel = origin.getExitModels().find(exit => exit.to === 'aftermath');
-            exitModel.setAdjustments({'event.attestation':{onSuccess:'margin + 3'}});
+            exitModel.setAdjustments({'event.paradox':{onSuccess:'margin + 3'}});
             
             return {
                 // At an ease of -500, passes run from 0 to 499 and failures from -500 to -1.
@@ -937,10 +937,10 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
             };
         });
     expect(out.averages).toEqual([249.5, -250.5, 499, -1]);
-    expect(out.hard).toEqual({phrase:'Event Attestation: ~+25 if passed, ~-25 if failed', flagged:true});
-    expect(out.own).toEqual({phrase:'Event Attestation: ~+50 if passed · ensured', flagged:true});
-    expect(out.noRoll).toEqual({phrase:'Event Attestation: ~+0 if passed', flagged:false});
-    expect(out.exit).toBe('Event Attestation: ~+3 if passed');
+    expect(out.hard).toEqual({phrase:'Event Parad⥁x: ~+25 if passed, ~-25 if failed', flagged:true});
+    expect(out.own).toEqual({phrase:'Event Parad⥁x: ~+50 if passed · ensured', flagged:true});
+    expect(out.noRoll).toEqual({phrase:'Event Parad⥁x: ~+0 if passed', flagged:false});
+    expect(out.exit).toBe('Event Parad⥁x: ~+3 if passed');
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

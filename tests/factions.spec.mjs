@@ -253,3 +253,38 @@ test('each faction has its own HQ, which only its agents can go to, and which th
     ]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('an agent\'s role is their own, from data or an expression, or else their faction\'s default', async ({page}) => {
+    await Promise.all([
+        page.route('**/tests/data/init.json5', route => {
+            const json = readTestData('init.json5');
+            json.factions.timecorps.defaultAgentRole = 'Agent';
+            json.factions.unaligned.defaultAgentRole = 'Civilian';
+            return route.fulfill({json});
+        }),
+        page.route('**/tests/data/agents.json5', route => {
+            const json = readTestData('agents.json5');
+            json.agents.BR.role = 'Courier';
+            json.agents.AL.roleExpr = "scratch.plan_noteCount > 0 ? 'Informant' : ''";
+            return route.fulfill({json});
+        })
+    ]);
+    const problems = await startGame(page),
+        readRoles = () => page.evaluate(() => ['AL', 'BR', 'CH', 'DE'].map(id => tc.model.getAgentModel(id).getRole()));
+    expect(await readRoles()).toEqual(['Agent', 'Courier', 'Civilian', 'Civilian']);
+    
+    // The expression wins while it's a non-empty string, and a faction change changes the default.
+    await page.evaluate(() => {
+        tc.model.setScratch('plan_noteCount', 1);
+        tc.model.getAgentModel('DE').setFaction('timecorps');
+    });
+    expect(await readRoles()).toEqual(['Informant', 'Courier', 'Civilian', 'Agent']);
+    
+    // The agents grid shows it, as it changes.
+    await showTab(page, 'Agents');
+    await expect(page.locator('.myt-Agents').getByText('Informant', {exact:true})).toBeVisible();
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 0));
+    await expect(page.locator('.myt-Agents').getByText('Agent', {exact:true})).toBeVisible();
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

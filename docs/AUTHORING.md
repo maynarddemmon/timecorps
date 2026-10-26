@@ -145,7 +145,7 @@ The timeline also has a score and credits, read as plain numbers:
 	"scenarios":["titanic_scenario", "lusitania_scenario"],
 	
 	"factions":{
-		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "description":"…"},
+		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "defaultAgentRole":"Agent", "description":"…"},
 		"unaligned":{"label":"Unaligned", "description":"…"}
 	},
 	
@@ -165,7 +165,7 @@ The timeline also has a score and credits, read as plain numbers:
 }
 ```
 
-- **`factions`**: the sides an agent can be on, by ID, with a `label` and a `description` (phrases, as for an event, shown as the Faction Brief's field notes), and optionally an `hq`, the ID of the event that's its HQ: only its agents can time travel there, they're recalled there, and they buy skills there. Every agent is in exactly one; `unaligned` must exist, since it's the default. The Agents grid and the dossier show an agent's faction, and clicking it opens the Faction Brief.
+- **`factions`**: the sides an agent can be on, by ID, with a `label` and a `description` (phrases, as for an event, shown as the Faction Brief's field notes), optionally a `defaultAgentRole`, the [role](#agents) of its agents who have none of their own, and optionally an `hq`, the ID of the event that's its HQ: only its agents can time travel there, they're recalled there, and they buy skills there. Every agent is in exactly one; `unaligned` must exist, since it's the default. The Agents grid and the dossier show an agent's faction, and clicking it opens the Faction Brief.
 - **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip). The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
 - **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
@@ -500,6 +500,8 @@ HQ and The Void leave out `_investigate` this way.
 		"VQ":{
 			"name":"Vasquez",
 			"nameExpr":"scratch.vasquez_alias",  // Optional. Replaces the name. See below.
+			"role":"Pilot",                     // Optional. Default: the faction's defaultAgentRole.
+			"roleExpr":"…",                     // Optional. Replaces the role, as nameExpr does the name.
 			"born":"2139-05-14",                // Required. For the record.
 			"age":34,                           // Optional, in years. Default: 30. See Ages below.
 			"effectiveAge":31,                  // Optional. Default: their age.
@@ -519,6 +521,7 @@ HQ and The Void leave out `_investigate` this way.
 ```
 
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
+- **`role`** shows in the Agents grid and the dossier. `roleExpr` overrides it while it works out to a non-empty string, and without either, the agent's faction's `defaultAgentRole` is used, so it follows a change of faction.
 - **`nameExpr`.** A [constraint expression](#constraint-expressions) for the agent's name. While it works out to a non-empty string, trimmed, that's the name. Otherwise `name` is. The Origin Story's `avatar_name` prompt sets `scratch.avatar_name`, which You's `nameExpr` reads.
 - **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
 - <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:

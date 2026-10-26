@@ -15,6 +15,9 @@
         setLabel: function(label) {this.set('label', label, true);},
         getLabel: function() {return this.label ?? this.id;},
         
+        setDefaultAgentRole: function(v) {this.set('defaultAgentRole', v, true);},
+        getDefaultAgentRole: function() {return this.defaultAgentRole ?? ''},
+        
         setHq: function(hq) {this.set('hq', hq, true);},
         
         /*  The Faction's HQ, or null if it has none. */

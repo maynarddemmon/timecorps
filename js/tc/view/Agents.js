@@ -50,7 +50,7 @@
                         this.getRef(colId).setModel(this.model);
                         return;
                     case 'role':
-                        this.getRef(colId).setText(this.model.getRoleLabel());
+                        this.getRef(colId).setText(this.model.getRole());
                         return;
                     case 'faction':
                         this.getRef(colId).setText(this.model.getFactionModel()?.getLabel() ?? '');
@@ -159,8 +159,8 @@
                     switch (sortColumnId) {
                         case 'role':
                             return (a, b) => {
-                                const vA = a.getRoleLabel(),
-                                    vB = b.getRoleLabel();
+                                const vA = a.getRole(),
+                                    vB = b.getRole();
                                 if (vA === vB) return tieBreakerSortFunc(a, b);
                                 return vA.localeCompare(vB) * sortAsc;
                             };

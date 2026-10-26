@@ -165,6 +165,54 @@
                 // Adjust score for paradox generated.
                 pkg.model.adjScore(paradox * PARADOX_SCORE_MULTIPLIER);
             }
+        },
+        
+        // Stat Attrs
+        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
+            to the max. */
+        setStat = (agentModel, attrName, v, defaultsToMin) => {
+            if (agentModel.inited) {
+                console.warn('AgentModel set ' + attrName + ' after init', agentModel);
+            } else {
+                const stat = agentModel[attrName];
+                if (typeof v === 'number') {
+                    stat.setValue(v);
+                } else if (v) {
+                    if (v.max != null) stat.setMax(v.max);
+                    stat.setValue(v.value ?? (defaultsToMin ? stat.getMin() : stat.getMax()));
+                }
+            }
+        },
+        
+        /*  True if an action or exit could, on average, change a stat with this ID, whoever
+            has it: the agent, the Event or the timeline. That's by an adjustment, or for an action
+            by a cost. A broken amount (NaN) doesn't count. */
+        hasStatChangeFor = (agentModel, ownerModel, statId) => {
+            return ownerModel.getAdjustments().some(adjustmentModel => adjustmentModel.statId === statId && 
+                [true, false].some(success => {
+                    const amount = adjustmentModel.getAvrgAmount(agentModel, success);
+                    return Number.isFinite(amount) && amount !== 0;
+                })
+            ) || (ownerModel.getCosts?.() ?? []).some(costModel => costModel.statId === statId && costModel.getAmount(agentModel) > 0);
+        },
+        
+        // Data and Expr Attrs
+        setDataAttr = (agentModel, attrName, v) => {
+            agentModel[attrName + 'Data'] = v;
+            updateDataExprAttr(agentModel, attrName);
+        },
+        setExprAttr = (agentModel, attrName, v, isActual) => {
+            if (isActual) {
+                agentModel[attrName + 'FromExpr'] = v;
+                updateDataExprAttr(agentModel, attrName);
+            } else {
+                setConstrainedValue(agentModel.getConstraintScope(), agentModel, attrName + 'Expr', String(v));
+            }
+        },
+        updateDataExprAttr = (agentModel, attrName) => {
+            const vExpr = agentModel[attrName + 'FromExpr'],
+                v = typeof vExpr === 'string' && vExpr.trim() !== '' ? vExpr.trim() : agentModel[attrName + 'Data'];
+            if (v !== agentModel[attrName]) agentModel.setAndNotifyCollection(attrName, v, true);
         };
     
     /*  Hidden Agents are not yet part of the game (e.g. awaiting a mission reward). Accepts 
@@ -172,7 +220,6 @@
         so a reward's reveal overrides an expression from the data. Expressions resolve 
         against the Agent, so use "agent...", "agents.<id>...", "events.<id>..." or "timeline..." 
         but not "event...". */
-    // FIXME: support event... as the Event the agent is currently in?
     pkg.AgentModel = new JS.Class('AgentModel', M.BaseModel, {
         include: [pkg.DescribableHideable, pkg.MediaSupport],
         
@@ -260,7 +307,7 @@
         
         getAsObj: function(cfg) {
             const retval = this.callSuper(cfg);
-            for (const attrName of ['name','event','actionExecCount','hidden','playerControlled','faction']) {
+            for (const attrName of ['name','role','event','actionExecCount','hidden','playerControlled','faction']) {
                 retval[attrName] = this[attrName];
             }
             for (const attrName of AGENT_STAT_IDS) {
@@ -273,84 +320,43 @@
         
         
         // Accessors ///////////////////////////////////////////////////////////
-        /*  The name from the data. "nameExpr" overrides it while that works out to a 
-            non-empty string. */
-        setName: function(name) {
-            this.dataName = name;
-            this._updateName();
-        },
+        
+        // Name Attr
+        setName: function(v) {setDataAttr(this, 'name', v);},
         getName: function() {return this.name;},
+        setNameExpr: function(v, isActual) {setExprAttr(this, 'name', v, isActual);},
         
-        /*  A constraint expression for the name, e.g. "scratch.avatar_name", which a prompt
-            fills in. While it works out to anything but a non-empty string, the data's "name" 
-            is used. */
-        setNameExpr: function(nameExpr, isActual) {
-            if (isActual) {
-                this.nameFromExpr = nameExpr;
-                this._updateName();
-            } else {
-                setConstrainedValue(this.getConstraintScope(), this, 'nameExpr', String(nameExpr));
+        // Role Attr
+        setRole: function(v) {setDataAttr(this, 'role', v);},
+        getRole: function() {return this.role || this.getFactionModel()?.getDefaultAgentRole();},
+        setRoleExpr: function(v, isActual) {setExprAttr(this, 'role', v, isActual);},
+        
+        // Stat Attrs
+        setParadox: function(v) {setStat(this, STAT_ID_PARADOX, v, true);},
+        setChronal: function(v) {setStat(this, STAT_ID_CHRONAL, v, false);},
+        setHealth:  function(v) {setStat(this, STAT_ID_HEALTH, v, false);},
+        
+        hasParadoxChangeRiskFor: function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_PARADOX);},
+        hasChronalChangeRiskFor: function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_CHRONAL);},
+        hasHealthChangeRiskFor:  function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_HEALTH);},
+        
+        /*  Player controlled Agents are directed by the player. Visible Agents that are not player 
+            controlled are NPCs. */
+        setPlayerControlled: function(value) {
+            value = !!value;
+            if (this.playerControlled !== value) {
+                this.set('playerControlled', value, true);
+                if (this.inited) this.notifyCollectionOfUpdate();
             }
         },
-        
-        /** @private */
-        _updateName: function() {
-            const nameFromExpr = this.nameFromExpr,
-                name = typeof nameFromExpr === 'string' && nameFromExpr.trim() !== '' ? nameFromExpr.trim() : this.dataName;
-            if (name !== this.name) this.setAndNotifyCollection('name', name, true);
-        },
-        
-        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
-            to the max. */
-        setParadox: function(v) {
-            if (this.inited) {
-                console.warn('AgentModel.setParadox after init', this);
-            } else {
-                const statParadox = this[STAT_ID_PARADOX];
-                if (typeof v === 'number') {
-                    statParadox.setValue(v);
-                } else if (v) {
-                    if (v.max != null) statParadox.setMax(v.max);
-                    statParadox.setValue(v.value ?? statParadox.getMin());
-                }
-            }
-        },
-        
-        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
-            to the max. */
-        setChronal: function(v) {
-            if (this.inited) {
-                console.warn('AgentModel.setChronal after init', this);
-            } else {
-                const statChronal = this[STAT_ID_CHRONAL];
-                if (typeof v === 'number') {
-                    statChronal.setValue(v);
-                } else if (v) {
-                    if (v.max != null) statChronal.setMax(v.max);
-                    statChronal.setValue(v.value ?? statChronal.getMax());
-                }
-            }
-        },
-        
-        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
-            to the max. */
-        setHealth: function(v) {
-            if (this.inited) {
-                console.warn('AgentModel.setHealth after init', this);
-            } else {
-                const statHealth = this[STAT_ID_HEALTH];
-                if (typeof v === 'number') {
-                    statHealth.setValue(v);
-                } else if (v) {
-                    if (v.max != null) statHealth.setMax(v.max);
-                    statHealth.setValue(v.value ?? statHealth.getMax());
-                }
-            }
-        },
+        isPlayerControlled: function() {return this.playerControlled;},
         
         setBorn: function(born) {this.set('born', born, true);},
         
-        /*  The lived age and effective age, in years. */
+        stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
+        getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
+        
+        // Age: The lived age and effective age of the Agent, in years. //
         getAge: function() {return this.age;},
         getEffectiveAge: function() {return this.effectiveAge;},
         setEffectiveAge: function(years) {
@@ -399,6 +405,7 @@
             }
         },
         
+        // Action Counts
         setActionExecCount: function(v, noEventUpdate) {
             if (this.actionExecCount !== v) {
                 this.setAndNotifyCollection('actionExecCount', v, true);
@@ -416,6 +423,7 @@
             return 'Actions: ' + pkg.wrapInStyledSpan(this.getActionsRemaining(), colorAction, fontFamilyMono);
         },
         
+        // Event //
         setEvent_Hard: function(event, logEntry) {
             this.setEvent(event, logEntry, true);
         },
@@ -444,21 +452,6 @@
                 pkg.app.notifyAgentLocOrVisChange(this, false);
                 
                 this.tryToOpenEventBrief();
-            }
-        },
-        
-        /*  The first time a known agent is at a known Event, whether by entering it or by
-            either of them being revealed, the Event is marked visited and, if the player 
-            wants, its brief opens. */
-        tryToOpenEventBrief: function() {
-            if (this.isNotHidden()) {
-                const eventModel = this.getEventModel();
-                if (eventModel.isNotHidden() && !eventModel.hasBeenVisited()) {
-                    eventModel.setBeenVisited(true);
-                    if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
-                        pkg.app.openEventBrief(eventModel);
-                    }
-                }
             }
         },
         
@@ -494,17 +487,7 @@
             }
         },
         
-        /*  Player controlled Agents are directed by the player. Visible Agents that are not player 
-            controlled are NPCs. */
-        setPlayerControlled: function(value) {
-            value = !!value;
-            if (this.playerControlled !== value) {
-                this.set('playerControlled', value, true);
-                if (this.inited) this.notifyCollectionOfUpdate();
-            }
-        },
-        isPlayerControlled: function() {return this.playerControlled;},
-        
+        // Faction //
         /*  The ID of the one Faction the Agent is in. An unknown ID is warned about, and the 
             Agent is unaligned. */
         setFaction: function(factionId) {
@@ -524,15 +507,8 @@
             return id === this.getFaction();
         },
         
-        stampArrival: function() {this.arrivalOrder = ++arrivalCounter;},
-        getArrivalOrder: function() {return this.arrivalOrder ?? 0;},
-        
         /** @overrides MediaSupport */
         getMediaFolder: () => 'agent',
-        
-        getRoleLabel: function() {
-            return this.isPlayerControlled() ? 'Agent' : 'Civilian';
-        },
         
         // Skills //
         setSkills: function(skills) {
@@ -1008,17 +984,6 @@
             }).join(ICON_SEPARATOR);
         },
         
-        /*  True if an action or exit could, on average, change a stat with this ID, whoever
-            has it: the agent, the Event or the timeline. That's by an adjustment, or for an action
-            by a cost. A broken amount (NaN) doesn't count. */
-        hasStatChangeFor: function(ownerModel, statId) {
-            return ownerModel.getAdjustments().some(adjustmentModel => adjustmentModel.statId === statId && 
-                [true, false].some(success => {
-                    const amount = adjustmentModel.getAvrgAmount(this, success);
-                    return Number.isFinite(amount) && amount !== 0;
-                })
-            ) || (ownerModel.getCosts?.() ?? []).some(costModel => costModel.statId === statId && costModel.getAmount(this) > 0);
-        },
         /*  True if taking an action could raise anyone's paradox: an adjustment that adds to an 
             agent's, Event's or the timeline's paradox, on average, if the check passes or if it
             fails, or a cost paid in paradox. */
@@ -1034,10 +999,20 @@
             return !!actionModel.event?.isFlooded() && this.canGenerateParadoxFor(actionModel);
         },
         
-        hasHealthChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_HEALTH);},
-        hasChronalChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_CHRONAL);},
-        hasParadoxChangeRiskFor: function(ownerModel) {return this.hasStatChangeFor(ownerModel, STAT_ID_PARADOX);},
-        
+        /*  The first time a known agent is at a known Event, whether by entering it or by
+            either of them being revealed, the Event is marked visited and, if the player 
+            wants, its brief opens. */
+        tryToOpenEventBrief: function() {
+            if (this.isNotHidden()) {
+                const eventModel = this.getEventModel();
+                if (eventModel.isNotHidden() && !eventModel.hasBeenVisited()) {
+                    eventModel.setBeenVisited(true);
+                    if (pkg.settings.get(pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY)) {
+                        pkg.app.openEventBrief(eventModel);
+                    }
+                }
+            }
+        },
         
         // Death //
         isDead: function() {return this[STAT_ID_HEALTH].isAtMinValue();},

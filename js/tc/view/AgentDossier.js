@@ -109,7 +109,7 @@
                 
                 self._idView.setValue(id);
                 self._nameView.setValue(name);
-                self._roleView.setValue(agentModel.getRoleLabel());
+                self._roleView.setValue(agentModel.getRole());
                 self._factionView.setValue(agentModel.getFactionModel()?.getLabel() ?? '');
                 self._whereView.setValue(eventModel.getLocationModel()?.name);
                 self._whenView.setValue(format(eventModel.getStart()));
