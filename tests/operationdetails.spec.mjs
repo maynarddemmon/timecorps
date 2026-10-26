@@ -124,3 +124,29 @@ test('the timeline marks the events the objectives are entangled with', async ({
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
 });
+
+test('an objective can require an agent to be at an Event, which it lists without the agent', async ({page}) => {
+    const problems = await startGame(page),
+        readObjective = () => page.evaluate(() => {
+            const objectiveModel = tc.model.getCurrentOperation().getObjectiveModelsAsList()[0];
+            return {
+                success:objectiveModel.isSuccess(),
+                precursors:objectiveModel.getPrecursors().map(({eventModel, valueModel, statId}) => [eventModel.id, valueModel?.id ?? null, statId])
+            };
+        });
+    
+    // An agent's event is an ID, not an Event, so only the Event read by ID is listed.
+    await setObjectiveSuccess(page, 'agents.AL.event === events.aftermath.id');
+    expect(await readObjective()).toEqual({success:false, precursors:[['aftermath', null, null]]});
+    await expect(precursorBtn(page, 'Aftermath ❯')).toBeVisible();
+    
+    // Going there meets it.
+    await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.doFollowExit(tc.model.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'));
+    });
+    await expect.poll(async () => (await readObjective()).success).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});

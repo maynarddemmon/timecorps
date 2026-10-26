@@ -110,7 +110,7 @@
                 for (const observable of observables) {
                     if (observable.isA(EventModel)) {
                         add(observable, null, null);
-                    } else if (observable.event?.isA(EventModel)) {
+                    } else if (observable.event?.isA?.(EventModel)) {
                         add(observable.event, observable, null);
                     } else if (observable.notifyTargets?.isA?.(EventModel)) {
                         add(observable.notifyTargets, null, observable.id);
