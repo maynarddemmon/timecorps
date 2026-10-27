@@ -173,10 +173,10 @@
                                     if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
                                 } else {
                                     readyToHandleEvents = true;
-                                    model.setCurrentOperation(model.getInitialOperation());
+                                    model.getInitialOperation()?.start();
                                 }
                                 ready = true;
-                                model.setupRevealedOperations();
+                                model.offerRevealedOperations();
                                 model.updateTimelineParadoxMax();
                                 updateLastSaved();
                                 
@@ -581,8 +581,9 @@
             operationModel?.notifyCollectionOfUpdate();
         },
         
-        /*  Called when an Operation has completed successfully */
-        notifyOperationCompleted: operationModel => {
+        /*  Called when an Operation has completed successfully, with the Operation that 
+            comes next, if any, whose brief the debrief can open. */
+        notifyOperationCompleted: (operationModel, nextOperationModel) => {
             if (!readyToHandleEvents) return;
             
             let saveNote = '';
@@ -600,10 +601,10 @@
             
             // Wait for the timeline to finish showing the changes that completed the mission.
             timelineView.doWhenValueChangeAnimsDone(() => {
-                if (operationModel.getNextOperation()) {
+                if (nextOperationModel) {
                     openConfirmMsgDialog(
                         title, debrief,
-                        () => {operationModel.proceed();},
+                        () => {pkg.app.openMissionBrief(nextOperationModel);},
                         null,
                         'Next Mission ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
                     );
@@ -703,8 +704,9 @@
         },
         
         /*  Takes its turn with the other ack and confirm dialogs, e.g. a new mission's brief
-            waits for the previous mission's Mission Complete. Returns the MissionBrief, or 
-            undefined if it's waiting its turn. */
+            waits for the previous mission's Mission Complete. An available mission's brief 
+            offers to start it. Returns the MissionBrief, or undefined if it's waiting its 
+            turn. */
         openMissionBrief: operationModel => openWhenClear(() => {
             missionBrief ??= new pkg.MissionBrief(appView);
             missionBrief.show(operationModel);

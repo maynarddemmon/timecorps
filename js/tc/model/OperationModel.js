@@ -42,6 +42,7 @@
         
         // Where the player stands with an Operation. See OperationModel.getState.
         OPERATION_STATE_HIDDEN = pkg.OPERATION_STATE_HIDDEN = 'hidden',
+        OPERATION_STATE_AVAILABLE = pkg.OPERATION_STATE_AVAILABLE = 'available',
         OPERATION_STATE_ACTIVE = pkg.OPERATION_STATE_ACTIVE = 'active',
         OPERATION_STATE_CURRENT = pkg.OPERATION_STATE_CURRENT = 'current',
         OPERATION_STATE_COMPLETED = pkg.OPERATION_STATE_COMPLETED = 'completed',
@@ -165,6 +166,7 @@
             
             self.objectives = {};
             self.hidden = true;
+            self.revealed = false;
             
             // Set here so expressions can observe them, e.g. "operations.first.successGranted".
             self.setupApplied = self.successGranted = false;
@@ -200,14 +202,19 @@
         // Accessors ///////////////////////////////////////////////////////
         isCurrent: function() {return pkg.model.getCurrentOperation() === this;},
         
-        /*  Revealed and not yet completed, so progress can be made on it. */
+        /*  Started and not yet completed, so progress can be made on it. */
         isActive: function() {return !!this.setupApplied && !this.successGranted;},
         
-        /*  "hidden" until revealed, "completed" once its success is granted, "current" while
-            it's the Operation the player is focused on, and "active" otherwise. */
+        /*  Revealed but not yet started, so the player can choose to start it. */
+        isAvailable: function() {return this.isNotHidden() && !this.setupApplied;},
+        
+        /*  "hidden" until revealed, "available" until started, "completed" once its success 
+            is granted, "current" while it's the Operation the player is focused on, and 
+            "active" otherwise. */
         getState: function() {
             if (this.isHidden()) return OPERATION_STATE_HIDDEN;
             if (this.successGranted) return OPERATION_STATE_COMPLETED;
+            if (!this.setupApplied) return OPERATION_STATE_AVAILABLE;
             return this.isCurrent() ? OPERATION_STATE_CURRENT : OPERATION_STATE_ACTIVE;
         },
         
@@ -255,14 +262,6 @@
             Events. */
         isEntangledWith: function(eventModel) {
             return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.isEntangledWith(eventModel));
-        },
-        
-        canProceed: function() {
-            return this.getNextOperation() != null && this.getProgress().completed;
-        },
-        
-        proceed: function() {
-            if (this.canProceed()) pkg.model.setCurrentOperation(this.getNextOperation());
         },
         
         
@@ -335,16 +334,16 @@
         
         // Persistence /////////////////////////////////////////////////
         exportToObj: function() {
-            return {setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
+            return {revealed:!!this.revealed, setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
         },
         
-        /*  Restoring these before the current Operation is set keeps doOnSetup and the success
-            rewards from being applied a second time. */
+        /*  Restoring these before the current Operation is set keeps the setup and success
+            rewards from being applied a second time, and a revealed Operation's brief from 
+            being offered again. A started Operation was revealed, as saves from before
+            "revealed" was kept don't say. */
         importFromObj: function(obj) {
-            if ('setupApplied' in obj) {
-                this.setupApplied = obj.setupApplied;
-                if (obj.setupApplied) this.setHidden(false);
-            }
+            if (obj.revealed || obj.setupApplied) this.reveal();
+            if ('setupApplied' in obj) this.setupApplied = obj.setupApplied;
             if ('successGranted' in obj) this.set('successGranted', obj.successGranted, true);
         },
         
@@ -363,22 +362,48 @@
             }
         },
         
-        /*  A "hidden" expression revealing the Operation sets it up, once the campaign has
-            started. Until then, Model.setupRevealedOperations does. */
-        doHiddenChanged: function(hidden) {
-            if (!hidden && pkg.isAppReady()) this.doOnSetup();
+        /*  Reveals the Operation for good, whatever its "hidden" expression works out to 
+            from here on. Until it's started, it's available. */
+        reveal: function() {
+            if (!this.revealed) {
+                this.revealed = true;
+                this.setHidden(false);
+                this.notifyCollectionOfUpdate();
+            }
         },
         
-        doOnSetup: function() {
+        /*  A "hidden" expression revealing the Operation offers it to the player with its
+            brief, once the campaign has started. Until then, Model.offerRevealedOperations 
+            does. */
+        doHiddenChanged: function(hidden) {
+            if (!hidden && pkg.isAppReady()) this.offer();
+        },
+        
+        /*  Reveals the Operation, if it wasn't yet, and opens its brief, from which the 
+            player can accept it. */
+        offer: function() {
+            if (!this.revealed) {
+                this.reveal();
+                pkg.app.openMissionBrief(this);
+            }
+        },
+        
+        /*  Sets the Operation up, if it wasn't yet, and makes it current. The Mission Brief
+            opens unless the player started the Operation from it. */
+        start: function(fromBrief) {
+            this.doOnSetup(fromBrief);
+            pkg.model.setCurrentOperation(this);
+        },
+        
+        /** @private */
+        doOnSetup: function(fromBrief) {
             if (!this.setupApplied) {
                 const rootModel = pkg.model;
+                this.reveal();
                 this.setupApplied = true;
                 
-                // Revealed for good, whatever its expression works out to from here on.
-                this.setHidden(false);
-                
                 pkg.applySuccessChanges(this.setupChanges);
-                pkg.app.openMissionBrief(this);
+                if (!fromBrief) pkg.app.openMissionBrief(this);
                 rootModel.revealAgents(this.revealAgentsOnSetup);
                 rootModel.awardAgents(this.awardAgentsOnSetup);
                 
@@ -403,7 +428,12 @@
                 self.notifyCollectionOfUpdate();
                 
                 pkg.openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
-                    pkg.app.notifyOperationCompleted(self);
+                    // The next Operation is available from now on, whether or not the player 
+                    // goes on to it from the debrief. A check expression is worked out once, 
+                    // here, so the prompt's answer can decide it.
+                    const nextOperationModel = self.getNextOperation();
+                    nextOperationModel?.reveal();
+                    pkg.app.notifyOperationCompleted(self, nextOperationModel);
                 });
             }
         },

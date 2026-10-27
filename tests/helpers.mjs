@@ -126,6 +126,14 @@ export const dismissMissionBrief = async page => {
     await expect(missionBriefTitle(page)).toHaveCount(0);
 };
 
+/*  Accepts an available mission from its Mission Brief, which starts it. Fails if the brief
+    isn't open. */
+export const acceptMission = async page => {
+    await expect(missionBriefTitle(page)).toBeVisible();
+    await page.getByRole('button', {name:'Accept Mission', exact:true}).filter({visible:true}).click();
+    await expect(missionBriefTitle(page)).toHaveCount(0);
+};
+
 /*  Shows a tab: Timeline, Events, Missions or Agents, which share the left of the screen. The 
     Timeline shows at the start. */
 const TAB_VIEW_CLASSES = {Timeline:'.myt-TimelineCompact', Events:'.myt-Events', Missions:'.myt-Missions', Agents:'.myt-Agents'};

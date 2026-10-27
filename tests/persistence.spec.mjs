@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
-import {startGame, getCurrentOperationId, dismissMissionBrief, reloadGame, clickAndReload, dialogTitle, dismissAgentDossier} from './helpers.mjs';
+import {startGame, getCurrentOperationId, acceptMission, reloadGame, clickAndReload, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 /*  Save/load round trips. localStorage survives a page reload within a test, so a reload
     exercises the autoload path at startup. */
@@ -29,7 +29,7 @@ const exportModel = page => page.evaluate(() => JSON.parse(JSON.stringify(tc.mod
     expectFreshCampaign = async page => {
         const diff = await page.evaluate(() => tc.persistence.exportDiff());
         expect(diff.currentOperation).toBe('first');
-        expect(diff.operations).toEqual({first:{setupApplied:true}});
+        expect(diff.operations).toEqual({first:{revealed:true, setupApplied:true}});
         expect(Object.keys(diff.agents)).toEqual(['AL']);
         expect(diff.events?.plan).toBeUndefined();
     };
@@ -99,9 +99,9 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     await setCausatorCfg(page, 'plan', 'prepared', 'true');
     await setCausatorCfg(page, 'lever', 'pulled', 'true');
     await expect(missionComplete).toBeVisible();
-    await visibleButton(page, 'Next Mission ➜').last().click();
+    await visibleButton(page, 'Next Mission ➜').click();
+    await acceptMission(page);
     await expect.poll(() => getCurrentOperationId(page)).toBe('second');
-    await dismissMissionBrief(page);
 
     await saveGame(page);
     const before = await exportModel(page);
@@ -279,12 +279,10 @@ test('a selection on a later mission is restored', async ({page}) => {
     await setCausatorCfg(page, 'plan', 'prepared', 'true');
     await setCausatorCfg(page, 'lever', 'pulled', 'true');
     
-    // Wait for the dialog, otherwise last() can match the Mission panel's own Next Mission
-    // link, which the dialog's dimmer then covers.
     await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
-    await visibleButton(page, 'Next Mission ➜').last().click();
+    await visibleButton(page, 'Next Mission ➜').click();
+    await acceptMission(page);
     await expect.poll(() => getCurrentOperationId(page)).toBe('second');
-    await dismissMissionBrief(page);
     
     await page.evaluate(() => {
         tc.app.selectEventBox('origin');

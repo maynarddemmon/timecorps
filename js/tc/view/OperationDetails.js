@@ -114,9 +114,9 @@
             
             // Build UI
             const header = self.getHeaderView();
-            self.proceedBtn = new UnderlineBtn(header, {
-                text:'Next Mission ' + ICON_NEXT, visible:false
-            }, [{doActivated: function() {self.operationModel.proceed();}}]);
+            self.startBtn = new UnderlineBtn(header, {
+                text:'Start Mission ' + ICON_NEXT, visible:false
+            }, [{doActivated: function() {self.operationModel.start();}}]);
             
             self.noSelectionTxt = new PaddedPlainText(self, {
                 padding, whiteSpace:'normal', text:'Select a mission in the Missions tab to see more about it here.'
@@ -165,7 +165,9 @@
             this.operationModel = operationModel;
             this.updateForOperationModel();
             
-            if (operationModel) {
+            // An available mission's selections wait until it's started, since its setup can
+            // reveal what they select.
+            if (operationModel && !operationModel.isAvailable()) {
                 const app = pkg.app,
                     initialEventId = operationModel.getInitialEventSelection(),
                     initialAgentId = operationModel.getInitialAgentSelection();
@@ -199,7 +201,7 @@
                     progressView = self.progressView;
                 progressView.setValue(success + '/' + total);
                 progressView.setValueTextColor(completed ? colorSuccess : colorError);
-                self.proceedBtn.setVisible(operationModel.canProceed());
+                self.startBtn.setVisible(operationModel.isAvailable());
                 
                 // Agent Information //
                 const objectivesRow = self.objectivesRow;

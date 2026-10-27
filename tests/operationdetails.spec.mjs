@@ -117,7 +117,7 @@ test('the timeline marks the events the objectives are entangled with', async ({
     await expect.poll(() => getEntangledEventIds(page)).toEqual(['aftermath', 'plan']);
     
     // The marks follow the current mission.
-    await page.evaluate(() => tc.model.setCurrentOperation(tc.model.getOperationModel('second')));
+    await page.evaluate(() => tc.model.getOperationModel('second').start());
     await dismissMissionBrief(page);
     await expect.poll(() => getEntangledEventIds(page)).toEqual(['aftermath', 'origin']);
     

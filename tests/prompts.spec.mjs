@@ -110,7 +110,7 @@ test('a mission\'s setup prompt follows its brief, and Mission Complete waits fo
     // The completion's save comes after the answer, so it has it.
     await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('tc.save')).data.agents.BR.faction)).toBe('timecorps');
-    await page.getByRole('button', {name:/^Next Mission/}).filter({visible:true}).last().click();
+    await page.getByRole('button', {name:/^Next Mission/}).filter({visible:true}).click();
     await expect(dialogTitle(page, 'Mission Brief')).toHaveText('Mission Brief : Second Mission');
     
     expect(problems.warnings).toEqual([]);

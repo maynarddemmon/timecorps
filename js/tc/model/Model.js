@@ -280,7 +280,6 @@
         setCurrentOperation: operationModel => {
             const previousOperationModel = model.currentOperationModel;
             model.currentOperationModel = operationModel;
-            operationModel?.doOnSetup();
             pkg.app.notifyCurrentOperationChanged(previousOperationModel, operationModel);
             
             // Objectives may already be satisfied on arrival (e.g. the player completed
@@ -290,11 +289,11 @@
         },
         getCurrentOperation: () => model.currentOperationModel,
         
-        /*  Sets up the Operations whose "hidden" expressions revealed them before the 
-            campaign started. Once it has, a reveal sets the Operation up as it happens. */
-        setupRevealedOperations: () => {
+        /*  Offers the Operations whose "hidden" expressions revealed them before the 
+            campaign started. Once it has, a reveal offers the Operation as it happens. */
+        offerRevealedOperations: () => {
             for (const operationModel of model.getOperationModelsAsList()) {
-                if (operationModel.isNotHidden()) operationModel.doOnSetup();
+                if (operationModel.isNotHidden()) operationModel.offer();
             }
         },
         
