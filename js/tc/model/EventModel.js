@@ -1354,8 +1354,11 @@
             isChronoLocked: function() {return this.chronoLocked;},
             isNotChronoLocked: function() {return !this.isChronoLocked();},
             
-            setName: function(name) {this.set('name', name, true);},
+            setName: function(v) {this.set('name', v, true);},
             getName: function() {return this.name;},
+            
+            setTitle: function(v) {this.set('title', v, true);},
+            getTitle: function() {return this.title ?? this.getLocationModel()?.getName();},
             
             // Time
             setTimeOrdering: function(v) {this._tiOr = v;},

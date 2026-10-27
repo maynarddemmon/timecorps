@@ -66,7 +66,7 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         /** @overrides BriefSupport */
-        getBriefTitle: briefModel => pkg.makeBriefTitle('Event Brief', briefModel.getName()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle(briefModel.getTitle(), briefModel.getName()),
         
         /** @overrides BriefSupport */
         getBriefReportUrl: briefModel => briefModel.hasBrief() ? pkg.cfg.DATA_BASE_DIR + 'event/' + briefModel.id + '.txt' : null,

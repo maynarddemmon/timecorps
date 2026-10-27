@@ -28,8 +28,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         events = Object.assign({}, ...scenarios.map(s => s.events ?? {})),
         defaultEventActions = Object.assign({}, ...scenarios.map(s => s.defaultEventActions ?? {})),
         agents = agentsJson.agents,
-        operations = operationsJson.operations,
-        // Scratch entries and prompts can be in any data file.
+        // Operations, scratch entries and prompts can be in any data file, and so can the
+        // initialOperation, of which the last one loaded counts.
+        operations = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.operations ?? {})),
+        initialOperation = [...scenarios, agentsJson, operationsJson].map(s => s.initialOperation).filter(id => id !== undefined).at(-1),
         scratch = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.scratch ?? {})),
         factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
         prompts = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.prompts ?? {})),
@@ -134,7 +136,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 }
             }
         }
-        if (!operations[operationsJson.initialOperation]) problems.push('unknown initialOperation');
+        if (!operations[initialOperation]) problems.push('unknown initialOperation');
         expect(problems).toEqual([]);
     });
 

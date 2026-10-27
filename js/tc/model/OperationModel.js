@@ -72,7 +72,7 @@
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
             include: [ConstrainableToParentOperation, Describable],
             
-            setName: function(name) {this.set('name', name, true);},
+            setName: function(v) {this.set('name', v, true);},
             getName: function() {return this.name;},
             
             setSuccess: function(success, isActual) {
@@ -211,8 +211,11 @@
             return this.isCurrent() ? OPERATION_STATE_CURRENT : OPERATION_STATE_ACTIVE;
         },
         
-        setName: function(name) {this.set('name', name, true);},
+        setName: function(v) {this.set('name', v, true);},
         getName: function() {return this.name;},
+        
+        setTitle: function(v) {this.set('title', v, true);},
+        getTitle: function() {return this.title ?? 'Mission Brief';},
         
         // Objectives
         setObjectives: function(objectives) {

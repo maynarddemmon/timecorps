@@ -241,6 +241,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ```
 
 - **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief: the facts, the visible description as field notes, and, if the event has them, a square photo (`"image":true`: `img/event/<id>.jpg`, 512×512, shown at 256; add `"video":true` for a `.webm` too) and a report (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
+- <a id="brief-titles"></a>**Brief titles.** A brief's title is `"<title> : <name>"`. The `title` defaults to the event's location for an Event Brief, the agent's role for a dossier, "Area Brief" for a location and "Mission Brief" for a mission, and any of them can give its own `"title"`, e.g. `"title":"Breaking News"`.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 
 ## Values (causators)
@@ -527,7 +528,7 @@ HQ and The Void leave out `_investigate` this way.
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **`role`** shows in the Agents grid and the dossier. `roleExpr` overrides it while it works out to a non-empty string, and without either, the agent's faction's `defaultAgentRole` is used, so it follows a change of faction.
 - **`nameExpr`.** A [constraint expression](#constraint-expressions) for the agent's name. While it works out to a non-empty string, trimmed, that's the name. Otherwise `name` is. The Origin Story's `avatar_name` prompt sets `scratch.avatar_name`, which You's `nameExpr` reads.
-- **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier.
+- **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier, titled with their role unless they have a `title` (see [Brief titles](#brief-titles)).
 - <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:
   - **An action** lives through the event's duration divided by its `actionLimit`, for each action it costs, so spending every action lives through all of it. A free action (`"agent.action":null`) takes no time. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival. HQ counts too: it's a month of 30 actions, a day each, so a week-long treatment costs 7.
   - **An exit** lives through the rest of the event left, e.g. its unused actions, then the time from its end to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel and skip the time between.

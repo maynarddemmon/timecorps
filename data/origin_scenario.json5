@@ -5,39 +5,95 @@
 	// aren't shown).
 	"locationsBaseOrder":25,
 	
+	"prompts":{
+		"avatar_name":{
+			"type":"text",
+			"title":"Yesterday’s Mail",
+			"description":[
+				"You turn on the coffee maker and go through the mail from yesterday. A few bills and some credit card offers, all made out to you:"
+			],
+			"input":{
+				"scratch":"avatar_name",
+				"maxLength":25,
+				"allowedChars":"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝ -'’.",
+				"placeholder":"Your name"
+			},
+			"buttons":{
+				"confirm":{"label":"That’s Me"}
+			}
+		}
+	},
+	
+	"operations":{
+		"origin_story":{
+			"title":"Origin Story",
+			"name":"A Day Like Any Other",
+			"description":[],
+			"onSetup":{
+				"awardAgents":"ME",
+				"revealAgents":"ME",
+				"initialAgentSelection":"ME",
+				"initialEventSelection":"origin_alarm",
+				"set":{
+					"events.origin_alarm.historicity":"5"
+				},
+				"prompt":"avatar_name"
+			},
+			"objectives":{
+				"answer":{
+					"name":"Answer the Call",
+					"description":[
+						"Find out what has happened to you."
+					],
+					"success":"events.safehouse_room.values.heard.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"Yesterday you were an ordinary person with an ordinary life. Tonight you are alone in a stranger’s hideout, sixty years from home, with a dead agent’s mission strapped to your wrist.",
+					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2087, something is about to change the world, and someone wants it to."
+				],
+				"nextOperation":"spring_witness",
+				"adj":{
+					"timeline.score":"1000"
+				}
+			}
+		}
+	},
+	
 	"locations":{
 		"origin.home":{
-			"name":"Your Apartment",
+			"title":"", "name":"Your Apartment",
 			"color":"#0003",
 			"order":1
 		},
 		"origin.city_streets":{
-			"name":"City Streets",
+			"title":"", "name":"City Streets",
 			"color":"#0003",
 			"order":2
 		},
 		"origin.hospital":{
-			"name":"St. Brendan’s Hospital",
+			"title":"", "name":"St. Brendan’s Hospital",
 			"color":"#0006",
 			"order":3
 		},
 		"origin.newsroom":{
-			"name":"The Ledger Newsroom",
+			"title":"", "name":"The Ledger Newsroom",
 			"color":"#0006",
 			"order":4
 		},
 		"origin.garage":{
-			"name":"Delgado’s Garage",
+			"title":"", "name":"Delgado’s Garage",
 			"color":"#0006",
 			"order":5
 		},
 		"origin.theater":{
-			"name":"The Orpheum Theater",
+			"title":"", "name":"The Orpheum Theater",
 			"color":"#0006",
 			"order":6
 		},
 		"origin.street":{
-			"name":"Halsey Street",
+			"title":"", "name":"Halsey Street",
 			"color":"#0009",
 			"order":7
 		},
@@ -275,7 +331,7 @@
 		},
 		
 		"origin_hospital":{
-			"name":"A Shift at St. Brendan’s", "chronoLocked":"true",
+			"name":"A Grueling Shift", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.hospital",
@@ -342,7 +398,7 @@
 		},
 		
 		"origin_newsroom":{
-			"name":"Deadline at the Ledger", "chronoLocked":"true",
+			"name":"Deadline", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.newsroom",
@@ -409,7 +465,7 @@
 		},
 		
 		"origin_garage":{
-			"name":"Under the Hood at Delgado’s", "chronoLocked":"true",
+			"name":"Under the Hood", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.garage",
@@ -476,7 +532,7 @@
 		},
 		
 		"origin_theater":{
-			"name":"The Matinee at the Orpheum", "chronoLocked":"true",
+			"name":"The Matinee", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00",
 			"duration":{"h":8},
 			"location":"origin.theater",

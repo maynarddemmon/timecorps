@@ -241,7 +241,7 @@
             An expression that doesn't compile, throws or isn't a number fails, with a warning. */
         CHECK = pkg.checks = {
             /*  Returns why an expression can't be compiled, or null if it can.
-                Used for testig only. */
+                Used for testing only. */
             getCompileError: expr => {
                 try {
                     build(expr);

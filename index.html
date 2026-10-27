@@ -32,6 +32,7 @@
 		--fgBtnSuperBright:#c60;
 		--colorAction:#6f0;
 		--colorParadox:#c0f; /* Matches theme.colorParadox. */
+		--locHdrShadow:#fff9;
 	}
 	
 	html,body{height:100%;margin:0px;padding:0px;border:0px none;}
@@ -150,14 +151,14 @@
 	
 	.tc-Btn.locHdr {background-color:#fff3; border:1px solid transparent; 
 		text-shadow:
-			-2px -2px 2px #fffc,
-			2px -2px 2px #fffc,
-			-2px  2px 2px #fffc,
-			2px  2px 2px #fffc,
-			0px -2px 2px #fffc,
-			0px  2px 2px #fffc,
-			-2px  0px 2px #fffc,
-			2px  0px 2px #fffc;
+			-2px -2px 2px var(--locHdrShadow),
+			2px -2px 2px var(--locHdrShadow),
+			-2px  2px 2px var(--locHdrShadow),
+			2px  2px 2px var(--locHdrShadow),
+			0px -2px 2px var(--locHdrShadow),
+			0px  2px 2px var(--locHdrShadow),
+			-2px  0px 2px var(--locHdrShadow),
+			2px  0px 2px var(--locHdrShadow);
 	}
 	.tc-Btn.locHdr:hover {background-color:#fff6;}
 	.tc-Btn.locHdr:active {background-color:#fff7;}

@@ -24,7 +24,7 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         /** @overrides BriefSupport */
-        getBriefTitle: briefModel => pkg.makeBriefTitle('Area Brief', briefModel.getName()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle(briefModel.getTitle(), briefModel.getName()),
         
         /** @overrides BriefSupport */
         getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'location/' + briefModel.id + '.txt'

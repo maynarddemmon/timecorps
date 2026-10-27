@@ -169,9 +169,9 @@ test('arrows follow the selected agent from Event to Event', async ({page}) => {
     ]);
     // Selecting an Event thickens the arrows into and out of it, and deselecting it thins them.
     await page.evaluate(() => tc.app.selectEventBox('aftermath'));
-    await expect.poll(readThicknesses).toEqual([4, 4]);
+    await expect.poll(readThicknesses).toEqual([3, 3]);
     await page.evaluate(() => tc.app.getTimelineView().deselectAll());
-    await expect.poll(readThicknesses).toEqual([2, 2]);
+    await expect.poll(readThicknesses).toEqual([1, 1]);
     
     // The Events visited are outlined, and only those.
     expect(await page.evaluate(() => Object.values(tc.app.getTimelineView().boxesByEventId)

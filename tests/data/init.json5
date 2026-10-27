@@ -5,8 +5,8 @@
 	"scenarios":["test_scenario"],
 	
 	"factions":{
-		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "description":"Keeps the causal thread intact."},
-		"unaligned":{"label":"Unaligned", "description":"Answers to no one."}
+		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "defaultAgentRole":"Agent", "description":"Keeps the causal thread intact."},
+		"unaligned":{"label":"Unaligned", "defaultAgentRole":"Civilian", "description":"Answers to no one."}
 	},
 	
 	"skillChecks":{

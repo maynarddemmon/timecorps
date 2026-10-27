@@ -1,7 +1,7 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dismissAgentDossier, dialogTitle, ROOT, TEST_DATA_DIR} from './helpers.mjs';
+import {startGame, setCausator, getCurrentOperationId, dismissMissionBrief, dismissAgentDossier, dialogTitle, ROOT, TEST_DATA_DIR, briefTitle} from './helpers.mjs';
 
 /*  Plays the whole campaign by setting the Causators each mission needs, and checks that every
     mission opens with its brief, completes, shows its debrief and advances. */
@@ -59,7 +59,7 @@ test('plays through all three missions', async ({page}) => {
     await expect(briefHeading('third')).toBeVisible();
     await dismissMissionBrief(page);
     await page.waitForTimeout(300);
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
     expect(await page.evaluate(() => tc.model.getAgentModel('EC').isPlayerControlled())).toBe(true);
 
     // Mission 3: the last mission has no Next Mission button.

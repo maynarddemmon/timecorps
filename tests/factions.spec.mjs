@@ -1,7 +1,7 @@
 // Factions: every Agent is in one, "unaligned" unless the data says otherwise. The Agents grid
 // and the Agent Dossier show it, and clicking it opens the Faction Brief.
 import {test, expect} from '@playwright/test';
-import {startGame, readTestData, dialogTitle, reloadGame, dismissAgentDossier, showTab} from './helpers.mjs';
+import {startGame, readTestData, dialogTitle, reloadGame, dismissAgentDossier, showTab, briefTitle} from './helpers.mjs';
 
 const fieldNotes = page => page.evaluate(() => {
     const brief = document.querySelector('.myt-FactionBrief').model;
@@ -37,7 +37,7 @@ test('the agents grid shows the faction, and clicking it opens the faction brief
 test('the agent dossier shows the faction, and clicking it opens the faction brief over the dossier', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => {tc.app.openAgentDossier(tc.model.getAgentModel('AL'));});
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveText('Agent Dossier : Alpha');
+    await expect(briefTitle(page, 'dossier')).toHaveText('Agent : Alpha');
     
     await page.locator('.myt-AgentDossier').getByText('Time Corps', {exact:true}).click();
     await expect(dialogTitle(page, 'Faction Brief')).toHaveText('Faction Brief : Time Corps');
@@ -45,7 +45,7 @@ test('the agent dossier shows the faction, and clicking it opens the faction bri
     // Closing the brief goes back to the dossier.
     await page.keyboard.press('Escape');
     await expect(dialogTitle(page, 'Faction Brief')).toHaveCount(0);
-    await expect(dialogTitle(page, 'Agent Dossier')).toBeVisible();
+    await expect(briefTitle(page, 'dossier')).toBeVisible();
     
     expect(problems.pageErrors).toEqual([]);
 });

@@ -1,9 +1,9 @@
 import {test, expect} from '@playwright/test';
-import {startGame, dialogTitle, reloadGame} from './helpers.mjs';
+import {startGame, dialogTitle, reloadGame, briefTitle} from './helpers.mjs';
 
 const visibleText = (page, text) => page.getByText(text, {exact:false}).filter({visible:true});
 
-const briefTitle = page => dialogTitle(page, 'Event Brief'),
+const eventBriefTitle = page => briefTitle(page, 'event'),
     
     // The parts of the open Event Brief that depend on the Event.
     briefState = page => page.evaluate(() => {
@@ -28,14 +28,14 @@ test('the event details title opens the event brief, with the description as fie
     await expect(title).toBeVisible();
     await title.click();
     
-    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await expect.poll(() => briefState(page)).toEqual({
         event:'origin', photoVisible:true, fieldNotes:'Everything starts here.', report:'Where it all begins.\n',
         where:'Deck', attestation:0
     });
     
     await page.keyboard.press('Escape');
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.errors).toEqual([]);
@@ -48,7 +48,7 @@ test('double-clicking an event box opens its brief, without a photo or report it
     const box = page.locator('.myt-EventBox').filter({hasText:/^Aftermath$/}).filter({visible:true});
     await box.dblclick();
     
-    await expect(briefTitle(page)).toHaveText('Event Brief : Aftermath');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Aftermath');
     await expect.poll(() => briefState(page)).toMatchObject({event:'aftermath', photoVisible:false, report:null});
     
     expect(problems.pageErrors).toEqual([]);
@@ -72,9 +72,9 @@ test('the brief opens the first time any agent enters an event, unless the setti
     expect(await page.evaluate(() => tc.settings.get(tc.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY))).toBe(true);
     
     // The first mission reveals Alpha at Origin, which counts as a first visit.
-    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await page.keyboard.press('Escape');
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     const deploy = (agentId, eventId) => page.evaluate(([agentId, eventId]) => {
         const eventModel = tc.model.getEventModel(eventId);
@@ -83,16 +83,16 @@ test('the brief opens the first time any agent enters an event, unless the setti
     }, [agentId, eventId]);
     
     await deploy('AL', 'aftermath');
-    await expect(briefTitle(page)).toHaveText('Event Brief : Aftermath');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Aftermath');
     await page.keyboard.press('Escape');
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     // Not again: not for HQ, nor when the same agent or another one enters it later.
     await page.evaluate(() => tc.model.getAgentModel('AL').doRecallToHQ());
     await deploy('AL', 'aftermath');
     await page.evaluate(() => tc.model.getAgentModel('BR').setEvent('aftermath'));
     await page.waitForTimeout(250);
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     // Turned off in Settings, a new Event doesn't open its brief either.
     await page.getByRole('button', {name:'⚙'}).filter({visible:true}).click();
@@ -101,28 +101,28 @@ test('the brief opens the first time any agent enters an event, unless the setti
     expect(await page.evaluate(() => tc.settings.get(tc.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY))).toBe(false);
     await deploy('AL', 'finale');
     await page.waitForTimeout(250);
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });
 
 test('an agent at an event when it is revealed counts as a first visit, and a reload opens nothing again', async ({page}) => {
     const problems = await startGame(page, {eventBriefs:true});
-    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await page.keyboard.press('Escape');
     
     // Plan is unknown when Alpha arrives, so its brief waits until it's revealed.
     await page.evaluate(() => tc.model.getAgentModel('AL').doDeployToEvent(tc.model.getEventModel('plan')));
     await page.waitForTimeout(250);
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     await page.evaluate(() => tc.model.getEventModel('plan').attestation.setValue(10));
-    await expect(briefTitle(page)).toHaveText('Event Brief : Plan');
+    await expect(eventBriefTitle(page)).toHaveText('Office : Plan');
     await page.keyboard.press('Escape');
     
     await page.evaluate(() => tc.persistence.save());
     await reloadGame(page);
     await page.waitForTimeout(500);
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -135,7 +135,7 @@ test('the brief\'s Where opens the area brief over it', async ({page}) => {
     await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
     
     await page.evaluate(() => {tc.app.openEventBrief(tc.model.getEventModel('origin'));});
-    await expect(briefTitle(page)).toBeVisible();
+    await expect(eventBriefTitle(page)).toBeVisible();
     const where = (await briefState(page)).where;
     await page.locator('.myt-EventBrief').getByText(where, {exact:true}).click();
     await expect(dialogTitle(page, 'Area Brief')).toHaveText('Area Brief : ' + where);
@@ -149,7 +149,7 @@ test('the brief\'s Where opens the area brief over it', async ({page}) => {
     // Closing it goes back to the event brief.
     await page.keyboard.press('Escape');
     await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
-    await expect(briefTitle(page)).toBeVisible();
+    await expect(eventBriefTitle(page)).toBeVisible();
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -163,22 +163,22 @@ test('the dossier\'s Event opens the brief over it, and a brief queued for that 
         tc.app.openEventBrief(m.getEventModel('origin'));
         tc.app.openEventBrief(m.getEventModel('aftermath'));
     });
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveText('Agent Dossier : Alpha');
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toHaveText('Agent : Alpha');
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     // Alpha is at Origin, and its brief opens at once.
     await page.locator('.myt-AgentDossier').getByText('Origin', {exact:true}).click();
-    await expect(briefTitle(page)).toHaveText('Event Brief : Origin');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await page.keyboard.press('Escape');
-    await expect(briefTitle(page)).toHaveCount(0);
-    await expect(dialogTitle(page, 'Agent Dossier')).toBeVisible();
+    await expect(eventBriefTitle(page)).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toBeVisible();
     
     // Closing the dossier skips the queued Origin brief, just seen, and opens Aftermath's.
     await page.keyboard.press('Escape');
-    await expect(briefTitle(page)).toHaveText('Event Brief : Aftermath');
+    await expect(eventBriefTitle(page)).toHaveText('Deck : Aftermath');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(250);
-    await expect(briefTitle(page)).toHaveCount(0);
+    await expect(eventBriefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });

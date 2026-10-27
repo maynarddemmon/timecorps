@@ -88,7 +88,7 @@
         getVitalsView: function() {return this._vitalsView;},
         
         /** @overrides BriefSupport */
-        getBriefTitle: briefModel => pkg.makeBriefTitle('Agent Dossier', briefModel.getName()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle(briefModel.getTitle(), briefModel.getName()),
         
         /** @overrides BriefSupport */
         getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'dossiers/' + briefModel.id + '.txt',

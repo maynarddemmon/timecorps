@@ -10,6 +10,11 @@
         // Accessors ///////////////////////////////////////////////////////////
         setName: function(name) {this.set('name', name, true);},
         getName: function() {return this.name;},
+        
+        // Title
+        setTitle: function(v) {this.set('title', v, true);},
+        getTitle: function() {return this.title ?? 'Area Brief';},
+        
         setColor: function(color) {this.set('color', color, true);},
         setTextColor: function(color) {this.set('textColor', color, true);},
         setOrder: function(order) {this.set('order', order, true);},

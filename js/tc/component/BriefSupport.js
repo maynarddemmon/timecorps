@@ -173,5 +173,5 @@
     });
     
     /*  A title naming the model, e.g. "Area Brief : Bridge". */
-    pkg.makeBriefTitle = (prefix, name) => prefix + ' : ' + pkg.wrapInStyledSpan(name, colorUltraLight);
+    pkg.makeBriefTitle = (prefix, name) => (prefix ? prefix + ' : ' : '') + pkg.wrapInStyledSpan(name, colorUltraLight);
 })(tc);

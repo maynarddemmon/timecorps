@@ -47,7 +47,7 @@
         
         BOX_SELECTED_OUTLINE = [1, 'solid', colorUltraLight],
         VISITED_COLOR = '#6cf',
-        BOX_VISITED_LINE_THICKNESS = 2,
+        BOX_VISITED_LINE_THICKNESS = 1,
         BOX_VISITED_OUTLINE = [BOX_VISITED_LINE_THICKNESS, 'solid', VISITED_COLOR],
         
         // Marks the Event boxes the current Operation's Objectives depend on. See index.html.
@@ -88,7 +88,7 @@
         },
         // Thicker to or from the selected Event, as its causator splines are, so the way in and
         // out can be followed through a busy history.
-        SELECTED_VISIT_STYLE = {...VISIT_STYLE, thickness:4},
+        SELECTED_VISIT_STYLE = {...VISIT_STYLE, thickness:3},
         
         // Where a visit's arrows meet its box, as a percent of the box's height from the top:
         // the first visit at 55%, and each later one 5% lower, down to 95%.

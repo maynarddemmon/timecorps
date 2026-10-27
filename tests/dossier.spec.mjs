@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, SCENARIO_FILES, dialogTitle, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText, showTab} from './helpers.mjs';
+import {startGame, readJson, SCENARIO_FILES, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText, showTab, briefTitle} from './helpers.mjs';
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
@@ -164,14 +164,14 @@ test('revealing an agent shows their dossier, after a mission brief opened first
         tc.app.openMissionBrief(tc.model.getCurrentOperation());
         tc.model.revealAgents(['BR']);
     });
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
     await dismissMissionBrief(page);
     await dismissAgentDossier(page, 'Bravo');
     
     // Agents who are already visible aren't announced again.
     await page.evaluate(() => tc.model.revealAgents(['AL', 'BR']));
     await page.waitForTimeout(300);
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -199,7 +199,7 @@ test('an agent already visible in a restored save has no dossier shown', async (
     await reloadGame(page);
     expect(await page.evaluate(() => tc.model.getAgentModel('CH').isHidden())).toBe(false);
     await page.waitForTimeout(1500);
-    await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
 });

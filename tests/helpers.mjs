@@ -110,6 +110,15 @@ export const dialogTitle = (page, title) => page.getByText(
 
 const missionBriefTitle = page => dialogTitle(page, 'Mission Brief');
 
+/*  The title of the open brief dialog of a kind: "dossier", "event", "area", "mission" or 
+    "faction". Each title is "<prefix> : <name>", e.g. "Agent : Alpha" or "Deck : Origin", 
+    where the prefix depends on the brief, so this finds it inside the dialog. */
+const BRIEF_CLASSES = {
+    dossier:'.myt-AgentDossier', event:'.myt-EventBrief', area:'.myt-AreaBrief', 
+    mission:'.myt-MissionBrief', faction:'.myt-FactionBrief'
+};
+export const briefTitle = (page, kind) => page.locator(BRIEF_CLASSES[kind]).filter({visible:true}).getByText(/ : /).first();
+
 /*  Acknowledges the Mission Brief that opens when a mission is set up. Fails if it isn't open. */
 export const dismissMissionBrief = async page => {
     await expect(missionBriefTitle(page)).toBeVisible();
@@ -127,14 +136,15 @@ export const showTab = async (page, name) => {
 };
 
 /*  Acknowledges the dossier shown when an Agent is revealed. Fails if it isn't 
-    open, or is for some other Agent. */
+    open, or is for some other Agent. The title is "<role> : <name>". */
 export const dismissAgentDossier = async (page, agentName) => {
-    const title = dialogTitle(page, 'Agent Dossier');
+    const title = briefTitle(page, 'dossier'),
+        nameTitle = agentName ? new RegExp(' : ' + agentName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$') : null;
     await expect(title).toBeVisible();
-    if (agentName) await expect(title).toHaveText('Agent Dossier : ' + agentName);
+    if (nameTitle) await expect(title).toHaveText(nameTitle);
     await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
     // The next queued dossier may reuse the dialog at once, so wait for this one's title to go.
-    await expect(agentName ? page.getByText('Agent Dossier : ' + agentName, {exact:true}).filter({visible:true}) : title).toHaveCount(0);
+    await expect(nameTitle ? page.locator(BRIEF_CLASSES.dossier).filter({visible:true}).getByText(nameTitle) : title).toHaveCount(0);
 };
 
 /*  A fresh campaign opens with the first mission's brief, then the dossier of the Agent it 
@@ -154,7 +164,7 @@ const settleAfterReload = async (page, briefExpected) => {
         await dismissCampaignStart(page);
     } else {
         await expect(missionBriefTitle(page)).toHaveCount(0);
-        await expect(dialogTitle(page, 'Agent Dossier')).toHaveCount(0);
+        await expect(briefTitle(page, 'dossier')).toHaveCount(0);
     }
 };
 

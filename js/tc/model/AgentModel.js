@@ -326,6 +326,10 @@
         getName: function() {return this.name;},
         setNameExpr: function(v, isActual) {setExprAttr(this, 'name', v, isActual);},
         
+        // Title
+        setTitle: function(v) {this.set('title', v, true);},
+        getTitle: function() {return this.title ?? this.getRole();},
+        
         // Role Attr
         setRole: function(v) {setDataAttr(this, 'role', v);},
         getRole: function() {return this.role || this.getFactionModel()?.getDefaultAgentRole();},
