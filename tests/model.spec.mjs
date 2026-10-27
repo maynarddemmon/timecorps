@@ -46,7 +46,7 @@ test('agent, agents and operations scopes bind and update', async ({page}) => {
     expect(problems.warnings).toEqual([]);
 });
 
-test('the factions scope binds and updates in constraints, and is readable in check expressions', async ({page}) => {
+test('the factions scope binds and updates in constraints, and factions and operations are readable in check expressions', async ({page}) => {
     const problems = await startGame(page);
     const out = await page.evaluate(() => {
         const m = tc.model,
@@ -55,7 +55,8 @@ test('the factions scope binds and updates in constraints, and is readable in ch
             timecorps = m.getFactionModel('timecorps'),
             struck = m.getEventModel('origin').getValueModels().struck,
             eventModel = new tc.EventModel({id:'factions_test', actions:{
-                report:{label:'Report', set:{}, available:"factions[agent.faction].hq === 'time_corps_hq'"}
+                report:{label:'Report', set:{}, available:"factions[agent.faction].hq === 'time_corps_hq'"},
+                debrief:{label:'Debrief', set:{}, available:'operations.first.successGranted'}
             }}),
             out = {};
         
@@ -68,10 +69,16 @@ test('the factions scope binds and updates in constraints, and is readable in ch
         // A check expression can look up the agent's own faction.
         const actionModel = eventModel.getActionModels().report;
         out.available = [alpha, bravo].map(agentModel => actionModel.isAvailableFor(agentModel));
+        
+        // And read an Operation, e.g. whether it's been completed.
+        const debrief = eventModel.getActionModels().debrief;
+        out.debrief = [debrief.isAvailableFor(alpha)];
+        m.getOperationModel('first').set('successGranted', true, true);
+        out.debrief.push(debrief.isAvailableFor(alpha));
         eventModel.destroy();
         return out;
     });
-    expect(out).toEqual({before:true, after:false, available:[true, false]});
+    expect(out).toEqual({before:true, after:false, available:[true, false], debrief:[false, true]});
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

@@ -5,7 +5,7 @@
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
-            SCOPE_AGENTS, SCOPE_FACTIONS,
+            SCOPE_AGENTS, SCOPE_FACTIONS, SCOPE_OPERATIONS,
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
@@ -17,8 +17,13 @@
         PARAM_DIE = 'd',
         PARAM_MARGIN = 'margin',
         FUNC_PARAMS = [
-            SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, PARAM_DIFFICULTY, 
-            PARAM_DIE, PARAM_MARGIN, SCOPE_SCRATCH, SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_FACTIONS
+            SCOPE_AGENT, SCOPE_AGENTS, 
+            SCOPE_EVENT, SCOPE_EVENTS, 
+            SCOPE_TIMELINE,
+            SCOPE_SCRATCH,
+            SCOPE_FACTIONS,
+            SCOPE_OPERATIONS,
+            PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN
         ],
         
         // An arbitrary limit on the number of dice in one d(sides, count).
@@ -29,9 +34,19 @@
             e.g. from an Event's duration, still rolls: both are rounded, sides to at least 1 and 
             count to 1 to MAX_DICE. Returns [sides, count]. */
         cleanDice = (sides, count) => {
-            if (!Number.isFinite(sides)) throw new RangeError('d(' + sides + ') needs a number of sides');
-            if (!Number.isFinite(count)) throw new RangeError('d(' + sides + ', ' + count + ') needs a number of dice');
-            return [mathMax(1, mathRound(sides)), mathMin(MAX_DICE, mathMax(1, mathRound(count)))];
+            if (Number.isFinite(sides)) {
+                if (Number.isFinite(count)) {
+                    return [
+                        mathMax(1, mathRound(sides)), // At least 1 side
+                        mathMin(MAX_DICE, mathMax(1, mathRound(count))) // Between 1 and MAX_DICE
+                    ];
+                } else {
+                    throw new RangeError('d(' + sides + ', ' + count + ') needs a number of dice');
+                }
+            } else {
+                throw new RangeError('d(' + sides + ') needs a number of sides');
+            }
+            
         },
         
         // Rolls the dice and totals them, each 1 to sides. A queued roll is a die's value minus 1.
@@ -106,19 +121,27 @@
             undefined, with a warning, if it doesn't compile or throws. */
         evaluateRaw = (expr, {agent, event, difficulty=0, margin=0}, die) => {
             const func = compile(expr);
-            if (func === NOT_COMPILED) return undefined; // Already warned about.
-            
-            try {
-                const rootModel = pkg.model;
-                return func(
-                    getAgentView(agent), event, rootModel, difficulty, die, margin, rootModel[SCOPE_SCRATCH],
-                    rootModel.getEventModels(), new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER),
-                    rootModel.getFactionModels()
-                );
-            } catch (err) {
-                console.warn('Check expression threw (' + err.message + '):', expr);
-                return undefined;
+            if (func !== NOT_COMPILED) {
+                try {
+                    const rootModel = pkg.model;
+                    return func(
+                        getAgentView(agent),                                   // agent
+                        new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER), // agents
+                        event,                                                 // event
+                        rootModel.getEventModels(),                            // events
+                        rootModel,                                             // timeline
+                        rootModel[SCOPE_SCRATCH],                              // scratch
+                        rootModel.getFactionModels(),                          // factions
+                        rootModel.getOperationModels(),                        // operations
+                        difficulty,                                            // difficulty
+                        die,                                                   // d
+                        margin                                                 // margin
+                    );
+                } catch (err) {
+                    console.warn('Check expression threw (' + err.message + '):', expr);
+                }
             }
+            return undefined;
         },
         
         /*  Evaluates an expression with die as its d function, as a number: a boolean is 1
@@ -127,13 +150,15 @@
             property. */
         evaluateExpr = (expr, cfg, die) => {
             const value = evaluateRaw(expr, cfg, die);
-            if (value === undefined) return NaN; // Already warned about.
-            const number = Number(value);
-            if (!Number.isFinite(number)) {
-                console.warn('Check expression is not a finite number (' + value + '):', expr);
-                return NaN;
+            if (value !== undefined) {
+                const number = Number(value);
+                if (Number.isFinite(number)) {
+                    return number;
+                } else {
+                    console.warn('Check expression is not a finite number (' + value + '):', expr);
+                }
             }
-            return number;
+            return NaN;
         },
         
         /*  Evaluates an expression to an ease, clamped to [minEase, maxEase], with die as the 
@@ -215,7 +240,8 @@
             
             An expression that doesn't compile, throws or isn't a number fails, with a warning. */
         CHECK = pkg.checks = {
-            /*  Returns why an expression can't be compiled, or null if it can. */
+            /*  Returns why an expression can't be compiled, or null if it can.
+                Used for testig only. */
             getCompileError: expr => {
                 try {
                     build(expr);
@@ -225,8 +251,8 @@
                 }
             },
             
-            compile,
-            getEase,
+            compile, // Exposed for testing only.
+            getEase, // Exposed for testing only.
             
             /*  The average margin, roll + ease, of a check that passes or fails at this ease,
                 for working out an amount without rolling. Rolls run from 0 to DIE_SIZE - 1, so

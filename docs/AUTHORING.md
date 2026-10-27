@@ -93,6 +93,7 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 | `events.<id>` | Any event, e.g. `events.collision.attestation.value` |
 | `agents.<id>` | Any agent, e.g. `agents.ME.event`. Skills they don't have are 0, as for `agent` |
 | `factions.<id>` | Any faction, e.g. `factions[agent.faction].hq` |
+| `operations.<id>` | Any operation, e.g. `operations.spring_vote.successGranted` |
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
 | `margin` | Amounts only: how well the deciding check went. See [Adjustments](#adjustments-adj) |
