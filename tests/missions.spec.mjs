@@ -137,15 +137,20 @@ test('a hidden expression offers a mission, which is only set up, and completes,
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('deselecting the current mission leaves none current, which a reload keeps', async ({page}) => {
+test('clicking the current mission opens its brief, and deselecting it leaves none current, which a reload keeps', async ({page}) => {
     const problems = await startGame(page);
     const noMissionText = page.getByText('Select a mission in the Missions tab to see more about it here.', {exact:true});
     const currentId = () => page.evaluate(() => tc.model.getCurrentOperation()?.id ?? null);
     await showTab(page, 'Missions');
     await expect(noMissionText).toBeHidden();
 
-    // Escape deselects the row the player clicked.
+    // Clicking the selected row opens its brief, and once that's closed, Escape deselects 
+    // the row.
     await grid(page).getByText('First Mission', {exact:true}).click();
+    await expect(dialogTitle(page, 'Mission Brief')).toHaveText('Mission Brief : First Mission');
+    await page.keyboard.press('Escape');
+    await expect(dialogTitle(page, 'Mission Brief')).toHaveCount(0);
+    expect(await currentId()).toBe('first');
     await page.keyboard.press('Escape');
     await expect.poll(currentId).toBeNull();
     await expect(noMissionText).toBeVisible();

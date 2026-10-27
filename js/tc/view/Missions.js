@@ -32,6 +32,15 @@
         MissionRow = new JSClass('MissionRow', pkg.SelectableGridRow, {
             getColIds: () => ['name', 'state', 'progress'],
             
+            /*  Activating the selected mission opens its Mission Brief. */
+            doActivated: function() {
+                if (this.selected) {
+                    pkg.app.openMissionBrief(this.model);
+                } else {
+                    this.callSuper();
+                }
+            },
+            
             notifyCellUpdated: function(colId) {
                 const operationModel = this.model,
                     cell = this.getRef(colId);
