@@ -94,18 +94,33 @@
 		},
 		"origin.street":{
 			"title":"", "name":"Halsey Street",
-			"color":"#0009",
+			"color":"#6006",
 			"order":7
+		},
+		"origin_street_alley":{
+			"title":"", "name":"Dark Alley",
+			"color":"#6009",
+			"order":7
+		},
+		"origin_street_hotel":{
+			"title":"", "name":"Hotel",
+			"color":"#6009",
+			"order":8
+		},
+		"origin_street_anchor":{
+			"title":"", "name":"The Anchor Bar",
+			"color":"#6009",
+			"order":9
 		},
 		"safehouse.corridor":{
 			"name":"Corridor",
 			"color":"#000c",
-			"order":8
+			"order":10
 		},
 		"safehouse.office":{
 			"name":"Office",
 			"color":"#000c",
-			"order":9
+			"order":11
 		}
 	},
 	
@@ -267,7 +282,7 @@
 				}
 			],
 			"description":[
-				"Back in your apartment, you grab your bike, you’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it."
+				"Back in your apartment, you grab your bike. You’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it."
 			]
 		},
 		
@@ -617,58 +632,62 @@
 		
 		"origin_walk_home":{
 			"name":"The Long Way Home", "chronoLocked":"true", "image":"../location/origin.street.jpg",
-			"start":"2026-11-13T17:20:00",
-			"duration":{"m":30},
+			"start":"2026-11-13T17:20:00", "duration":{"m":15},
 			"location":"origin.street",
-			"actionLimit":1,
-			"actions":{
-				"_investigate":null,
-				"_rest":null,
-				"alley":{
-					"label":"Cut Through the Alley",
-					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'alley'"},
-					"adj":{"agent.skills.stealth":{"onSuccess":"10"}, "agent.skills.agl":{"onSuccess":"5"}},
-					"hidden":"event.values.choice.value !== ''"
-				},
-				"tourist":{
-					"label":"Help a Lost Tourist",
-					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'tourist'"},
-					"adj":{"agent.skills.cha":{"onSuccess":"10"}, "agent.skills.investigation":{"onSuccess":"5"}},
-					"hidden":"event.values.choice.value !== ''"
-				},
-				"bar":{
-					"label":"Talk Your Way into a Free Drink",
-					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'bar'"},
-					"adj":{"agent.skills.deception":{"onSuccess":"10"}, "agent.skills.persuasion":{"onSuccess":"5"}},
-					"hidden":"event.values.choice.value !== ''"
-				}
-			},
+			"actionLimit":0,
+			"actions":{"_investigate":null,"_rest":null},
 			"exits":[
 				{
-					"mode":"wait", "toHidden":true, "to":"origin_stranger",
-					"hidden":"event.values.choice.value === ''",
-					"set":{"events.origin_stranger.attestation":"1"}
+					"mode":"walk", "toHidden":true, "to":"origin_walkHome_alley",
+					"set":{"events.origin_walkHome_alley.attestation":"1"},
+					"adj":{"agent.skills.stealth":{"onBoth":"10"}, "agent.skills.agl":{"onBoth":"5"}},
+				},{
+					"mode":"walk", "toHidden":true, "to":"origin_walkHome_helpTourist",
+					"set":{"events.origin_walkHome_helpTourist.attestation":"1"},
+					"adj":{"agent.skills.cha":{"onBoth":"10"}, "agent.skills.investigation":{"onBoth":"5"}},
+				},{
+					"mode":"walk", "toHidden":true, "to":"origin_walkHome_freeDrink",
+					"set":{"events.origin_walkHome_freeDrink.attestation":"1"},
+					"adj":{"agent.skills.deception":{"onBoth":"10"}, "agent.skills.persuasion":{"onBoth":"5"}},
 				}
 			],
-			"values":{
-				"choice":{
-					"name":"On the Way",
-					"value":"''",
-					"description":[
-						{"text":"It’s dark already, and it’s started to rain properly.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"You cut through the alley behind the laundromat, the way you always tell yourself you shouldn’t.", "hidden":"event.values.choice.value !== 'alley'"},
-						{"text":"A couple with a soaked paper map are lost three streets from their hotel. You walk them there and find out their whole life story.", "hidden":"event.values.choice.value !== 'tourist'"},
-						{"text":"You stop at the Anchor, and the new bartender believes every word about it being your birthday.", "hidden":"event.values.choice.value !== 'bar'"}
-					]
-				}
-			},
-			"description":[
-				"Halsey Street, the long way home, under a drizzle that can’t make up its mind. The shops are closing and the streetlights are coming on.",
-				"<br><br>It’s been a day like any other day. You will remember it for the rest of your life."
-			]
+			"description":"Halsey Street, the long way home, under a drizzle that can’t make up its mind. The shops are closing and the streetlights are coming on.<br><br>It’s dark already, and it’s started to rain properly."
+		},
+		"origin_walkHome_alley":{
+			"name":"The Alley", "chronoLocked":"true", "image":"../location/origin_street_alley.jpg",
+			"start":"2026-11-13T17:35:00", "duration":{"m":15},
+			"location":"origin_street_alley",
+			"actionLimit":0,
+			"actions":{"_investigate":null,"_rest":null},
+			"exits":[{
+				"mode":"wait", "toHidden":true, "to":"origin_stranger",
+				"set":{"events.origin_stranger.attestation":"1"}
+			}],
+			"description":"You cut through the alley behind the laundromat, the way you always tell yourself you shouldn’t."
+		},
+		"origin_walkHome_helpTourist":{
+			"name":"Help a Lost Tourist", "chronoLocked":"true", "image":"../location/origin_street_hotel.jpg",
+			"start":"2026-11-13T17:35:00", "duration":{"m":15},
+			"location":"origin_street_hotel",
+			"actionLimit":0,
+			"actions":{"_investigate":null,"_rest":null},
+			"exits":[{
+				"mode":"wait", "toHidden":true, "to":"origin_stranger",
+				"set":{"events.origin_stranger.attestation":"1"}
+			}],
+			"description":"A couple with a soaked paper map are lost three streets from their hotel. You walk them there and find out their whole life story."
+		},
+		"origin_walkHome_freeDrink":{
+			"name":"Talk Your Way into a Free Drink", "chronoLocked":"true", "image":"../location/origin_street_anchor.jpg",
+			"start":"2026-11-13T17:35:00", "duration":{"m":15},
+			"location":"origin_street_anchor",
+			"actionLimit":0,
+			"actions":{"_investigate":null,"_rest":null},
+			"exits":[{
+				"mode":"wait", "toHidden":true, "to":"origin_stranger",
+				"set":{"events.origin_stranger.attestation":"1"}
+			}],
+			"description":"You stop at the Anchor, and the new bartender believes every word about it being your birthday."
 		},
 		
 		// Act 2: the encounter.

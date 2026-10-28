@@ -51,9 +51,9 @@
 				{"text":"Mechanic at Delgado’s. Sells repairs better than they make them.", "hidden":"events.origin_garage.values.choice.value !== 'haggle'"},
 				{"text":"Understudy at the Orpheum. Played the lead and no one noticed.", "hidden":"events.origin_theater.values.choice.value !== 'cover'"},
 				{"text":"Stagehand at the Orpheum. Unafraid of heights.", "hidden":"events.origin_theater.values.choice.value !== 'rig'"},
-				{"text":"Takes shortcuts through alleys.", "hidden":"events.origin_walk_home.values.choice.value !== 'alley'"},
-				{"text":"Helps strangers, even in the rain.", "hidden":"events.origin_walk_home.values.choice.value !== 'tourist'"},
-				{"text":"Never pays for a drink.", "hidden":"events.origin_walk_home.values.choice.value !== 'bar'"}
+				{"text":"Takes shortcuts through alleys.", "hidden":"events.origin_walkHome_alley.attestation.value < 1"},
+				{"text":"Helps strangers, even in the rain.", "hidden":"events.origin_walkHome_helpTourist.attestation.value < 1"},
+				{"text":"Never pays for a drink.", "hidden":"events.origin_walkHome_freeDrink.attestation.value < 1"}
 			]
 		},
 		"VQ":{

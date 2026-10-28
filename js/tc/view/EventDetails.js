@@ -156,18 +156,21 @@
                 }
                 
                 // Update Actions
-                new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
                 const actionModels = eventModel.getActionModels();
-                for (const actionId in actionModels) {
-                    const actionModel = actionModels[actionId];
-                    if (actionModel.isNotHidden()) {
-                        new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                        new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel), [{
-                            doActivated: function() {
-                                agentModel.selectRow();
-                                agentModel.doAction(actionModel, this);
-                            }
-                        }]);
+                if (Object.keys(actionModels).length > 0) {
+                    new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
+                    
+                    for (const actionId in actionModels) {
+                        const actionModel = actionModels[actionId];
+                        if (actionModel.isNotHidden()) {
+                            new TextForFlow(actionView, {text:ICON_SEPARATOR});
+                            new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel), [{
+                                doActivated: function() {
+                                    agentModel.selectRow();
+                                    agentModel.doAction(actionModel, this);
+                                }
+                            }]);
+                        }
                     }
                 }
                 
