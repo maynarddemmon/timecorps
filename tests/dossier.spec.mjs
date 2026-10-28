@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test';
-import {startGame, readJson, SCENARIO_FILES, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText, showTab, briefTitle} from './helpers.mjs';
+import path from 'node:path';
+import {startGame, readJson, SCENARIO_FILES, ROOT, TEST_DATA_DIR, dismissMissionBrief, dismissAgentDossier, reloadGame, readTestData, readTestText, showTab, briefTitle} from './helpers.mjs';
 
 const idsWithVideo = models => Object.entries(models).filter(([, model]) => model.video).map(([id]) => id),
     
@@ -231,3 +232,32 @@ test('agent health shows in the dossier and the agents grid, and follows changes
     expect(problems.pageErrors).toEqual([]);
 });
 
+
+test('an event box shows its event\'s photo, and a change to the event doesn\'t reload its video', async ({page}) => {
+    // Origin has no video of its own, so it borrows Alpha's.
+    await page.route('**/img/event/origin.webm', route => route.fulfill({path:path.join(ROOT, TEST_DATA_DIR, 'img/agent/AL.webm')}));
+    const problems = await startGame(page),
+        BOX_MEDIA = 'tc.app.getTimelineView().getEventBox("origin")._media',
+        setAttestation = value => page.evaluate(value => tc.model.getEventModel('origin').attestation.setValue(value), value);
+    
+    await expect.poll(() => mediaState(page, BOX_MEDIA)).toEqual({visible:true, showingVideo:false, imageVisible:true, playing:false});
+    
+    await page.evaluate(() => tc.model.getEventModel('origin').setVideo(true));
+    await setAttestation(5);
+    await expect.poll(() => mediaState(page, BOX_MEDIA)).toEqual({visible:true, showingVideo:true, imageVisible:false, playing:true});
+    
+    // Each change redraws the box, without starting the video over.
+    await page.evaluate(BOX_MEDIA => {
+        const videoElem = new Function('return ' + BOX_MEDIA)().getVideoView().getIDE();
+        window.videoLoadCount = 0;
+        videoElem.addEventListener('loadstart', () => window.videoLoadCount++);
+    }, BOX_MEDIA);
+    await setAttestation(10);
+    await setAttestation(20);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.videoLoadCount)).toBe(0);
+    expect((await mediaState(page, BOX_MEDIA)).playing).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});

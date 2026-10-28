@@ -73,11 +73,17 @@
         
         // Methods /////////////////////////////////////////////////////////////
         /*  Shows the video if a videoUrl is given, falling back to the image, otherwise just
-            the image. */
+            the image. Being given the media it already has does nothing, so a view that's 
+            updated often, e.g. an EventBox, doesn't restart its video. Being given none 
+            always reports it, with doMediaFailed. */
         setMedia: function(imageUrl, videoUrl) {
             const self = this;
-            self._imageUrl = imageUrl || null;
-            self._videoUrl = videoUrl || null;
+            imageUrl ||= null;
+            videoUrl ||= null;
+            if ((imageUrl || videoUrl) && imageUrl === self._imageUrl && videoUrl === self._videoUrl) return;
+            
+            self._imageUrl = imageUrl;
+            self._videoUrl = videoUrl;
             if (self._videoUrl) {
                 self._showVideo();
             } else {
