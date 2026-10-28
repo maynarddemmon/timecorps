@@ -27,6 +27,9 @@ JS.Packages(file => {
         'tc.CompactField','tc.CompactFieldRow','tc.TallView'
     ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
+    file(COMPONENT_ROOT + 'EventFacts.js').provides('tc.EventFacts').requires(
+        'tc.WideView','tc.UnderlineBtn','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+    );
     file(COMPONENT_ROOT + 'BriefSupport.js').provides('tc.BriefSupport').requires('tc.WideView','tc.MediaView');
     file(COMPONENT_ROOT + 'FloatingText.js').provides('tc.FloatingText').requires('tc');
     file(COMPONENT_ROOT + 'Dialogs.js').provides(
@@ -84,7 +87,7 @@ JS.Packages(file => {
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.EventNavBtn',
-        'tc.SimpleAgentMarker','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+        'tc.SimpleAgentMarker','tc.EventFacts'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventNavBtn'
@@ -96,8 +99,7 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'FactionBrief.js').provides('tc.FactionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'EventBrief.js').provides('tc.EventBrief').requires(
-        'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow',
-        'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
+        'tc.ModalDialog','tc.BriefSupport','tc.EventFacts'
     );
     file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');

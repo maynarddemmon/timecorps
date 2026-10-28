@@ -9,14 +9,15 @@ const eventBriefTitle = page => briefTitle(page, 'event'),
     briefState = page => page.evaluate(() => {
         const brief = document.querySelector('.myt-EventBrief').model,
             fieldNotes = brief._fieldNotesView,
-            report = brief._profileView;
+            report = brief._profileView,
+            facts = brief._eventFacts;
         return {
             event:brief.getBriefModel()?.id,
             photoVisible:brief.getPhoto().visible,
             fieldNotes:fieldNotes.visible ? fieldNotes.getValueView().text : null,
             report:report.visible ? report.getValueView().text : null,
-            where:brief._whereView._vv.text,
-            attestation:brief._attestationView.value
+            where:facts._whereBtn.text,
+            attestation:facts._attestationBar.value
         };
     });
 
@@ -127,7 +128,7 @@ test('an agent at an event when it is revealed counts as a first visit, and a re
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('the brief\'s Where opens the area brief over it', async ({page}) => {
+test('the brief\'s location opens the area brief over it', async ({page}) => {
     const problems = await startGame(page);
     // The area brief already exists, so it has to come forward rather than being made on top.
     await page.evaluate(() => {tc.app.openAreaBrief(tc.model.getEventModel('origin').getLocationModel());});
@@ -181,4 +182,20 @@ test('the dossier\'s Event opens the brief over it, and a brief queued for that 
     await expect(eventBriefTitle(page)).toHaveCount(0);
     
     expect(problems.pageErrors).toEqual([]);
+});
+
+test('event details\' location opens the area brief', async ({page}) => {
+    const problems = await startGame(page),
+        details = page.locator('.myt-EventDetails'),
+        locationBtn = name => details.getByRole('button', {name, exact:true}).filter({visible:true});
+    
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect(details.getByText(/→.*\(/).filter({visible:true})).toBeVisible();
+    await locationBtn('Deck').click();
+    await expect(dialogTitle(page, 'Area Brief')).toHaveText('Area Brief : Deck');
+    await page.keyboard.press('Escape');
+    await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
 });

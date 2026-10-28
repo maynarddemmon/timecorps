@@ -23,6 +23,9 @@
             reservePhotoSpace - When true the report stays below the photo's space even if 
                 there's no photo, for dialogs that put other views beside the photo.
         
+        A brief can also put a summary of the model between the photo and the field notes 
+        with setBriefSummaryView.
+        
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
             getBriefReportUrl(model) - Required. The URL of the report text, or null if there's
@@ -35,19 +38,17 @@
                 halfPadding = padding / 2,
                 photoWidth = attrs.photoWidth,
                 photoHeight = attrs.photoHeight ?? 200,
-                reservePhotoSpace = attrs.reservePhotoSpace ?? false,
-                profileY = halfPadding + photoHeight + layoutSpacing,
-                placeProfile = belowPhoto => {
-                    const y = belowPhoto || reservePhotoSpace ? profileY : halfPadding;
-                    profile.setY(y);
-                    profile.setPercentOfParentHeightOffset(-(y + halfPadding));
-                };
+                reservePhotoSpace = attrs.reservePhotoSpace ?? false;
             delete attrs.photoWidth;
             delete attrs.photoHeight;
             delete attrs.reservePhotoSpace;
             attrs.sizingStrategy ??= 'fit';
             
             self.callSuper(parent, attrs);
+            
+            self._photoHeight = photoHeight;
+            self._reservePhotoSpace = reservePhotoSpace;
+            self._isPhotoShown = false;
             
             // Build UI //
             
@@ -57,11 +58,11 @@
                 photoMixins = [{
                     doMediaReady: function() {
                         this.setVisible(true);
-                        placeProfile(true);
+                        self._setPhotoShown(true);
                     },
                     doMediaFailed: function() {
                         this.setVisible(false);
-                        placeProfile(false);
+                        self._setPhotoShown(false);
                     }
                 }];
             if (photoWidth > 0) {
@@ -98,7 +99,7 @@
             
             new M.SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
             
-            placeProfile(false);
+            self._placeContent();
             
             // The content is the photo's space, if it's used, and the field notes and report,
             // whose container grows as the report loads.
@@ -115,6 +116,14 @@
         getBriefReportLabel: () => 'Report',
         
         getBriefModel: function() {return this.briefModel;},
+        
+        /*  Puts the view below the photo, or the photo's space, with the field notes and 
+            report below it, following its height. Give it the same x and width as the 
+            report, i.e. x:padding/2 and percentOfParentWidthOffset:-padding. */
+        setBriefSummaryView: function(view) {
+            this._briefSummaryView = view;
+            this.syncTo(view, '_placeContent', 'height');
+        },
         
         setBriefModel: function(model) {
             const self = this,
@@ -141,6 +150,28 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /** @private */
+        _setPhotoShown: function(isShown) {
+            this._isPhotoShown = isShown;
+            this._placeContent();
+        },
+        
+        /*  The summary, if there is one, goes below the photo's space if the photo is shown 
+            or the space is reserved, and the field notes and report below that.
+            @private */
+        _placeContent: function(_event) {
+            const halfPadding = padding / 2,
+                summaryView = this._briefSummaryView,
+                profile = this.getProfile();
+            let y = this._isPhotoShown || this._reservePhotoSpace ? halfPadding + this._photoHeight + layoutSpacing : halfPadding;
+            if (summaryView) {
+                summaryView.setY(y);
+                y += summaryView.height + layoutSpacing;
+            }
+            profile.setY(y);
+            profile.setPercentOfParentHeightOffset(-(y + halfPadding));
+        },
+        
         /** @private */
         _fitToContent: function(_event) {
             const profile = this.getProfile(),

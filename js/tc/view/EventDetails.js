@@ -14,15 +14,15 @@
         {
             UnderlineBtn, UnderlineActionBtn, EventNavBtn, EventNavHover, AgentBtn, 
             SquareBtn, WideView, StatusAgentMarkerMedium,
-            ContainerRow, Row, TextForFlow,
+            ContainerRow, TextForFlow,
             theme:{
                 spacing, padding, btnHeight,
                 colorUltraLight, colorLight, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
             ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ,
-            ICON_THE_VOID, ICON_NIL,
-            STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_ATTESTATION, STAT_ID_HISTORICITY
+            ICON_THE_VOID,
+            STAT_ID_CHRONAL
         } = pkg,
         
         // Agent Row
@@ -305,15 +305,7 @@
             });
             
             // Time & Place, Status Bars
-            self.whereWhen = new PaddedPlainText(detailsContainer, {
-                percentOfParentWidth:100,
-                fontSize:fontSizeMedium, whiteSpace:'normal', paddingLeft:spacing, paddingRight:spacing
-            }, [SizeToParent]);
-            new View(detailsContainer, {height:2}); // Spacer.
-            let row = new Row(detailsContainer, {height:18, inset:spacing});
-            self.historicityBar = new pkg.HistoricityBar(row, {y:12, layoutHint:1});
-            self.attestationBar = new pkg.AttestationBar(row, {y:12, layoutHint:1});
-            self.paradoxBar = new pkg.ParadoxBar(row, {y:12, layoutHint:1});
+            self.eventFacts = new pkg.EventFacts(detailsContainer);
             
             self.chronalBar = new pkg.ChronalBar(detailsContainer, {
                 x:spacing, percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
@@ -323,7 +315,7 @@
             new View(detailsContainer, {height:2}); // Spacer.
             
             // Agents
-            row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
+            let row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
@@ -400,14 +392,7 @@
                 
                 Layout.incrementGlobalLock();
                 
-                self.historicityBar.updateForStat(eventModel[STAT_ID_HISTORICITY]);
-                self.attestationBar.updateForStat(eventModel[STAT_ID_ATTESTATION]);
-                self.paradoxBar.updateForStat(eventModel[STAT_ID_PARADOX]);
-                
-                self.whereWhen.setText(
-                    (eventModel.getLocationModel()?.name ?? ICON_NIL) +
-                    ICON_SEPARATOR + eventModel.formatAsTemporalExtent()
-                );
+                self.eventFacts.update(eventModel);
                 
                 const descriptionTxt = self.descriptionTxt,
                     description = eventModel.getDescription();

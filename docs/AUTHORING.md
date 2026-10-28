@@ -240,7 +240,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ]
 ```
 
-- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief: the facts, the visible description as field notes, and, if the event has them, a square photo (`"image":true`: `img/event/<id>.jpg`, 512×512, shown at 256; add `"video":true` for a `.webm` too) and a report (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
+- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
 - <a id="brief-titles"></a>**Brief titles.** A brief's title is `"<title> : <name>"`. The `title` defaults to the event's location for an Event Brief, the agent's role for a dossier, "Area Brief" for a location and "Mission Brief" for a mission, and any of them can give its own `"title"`, e.g. `"title":"Breaking News"`.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 
@@ -638,7 +638,7 @@ A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's
 | `img/agent/<agent>.jpg` (and `.webm`) | Portrait, with an optional video version |
 | `img/location/<location>.jpg` (and `.webm`) | Location photo, with an optional video version |
 | `img/mission/<operation>.jpg` | A mission's picture, if it has `"image":true` |
-| `img/event/<event>.jpg` | An event's square picture (512×512), if it has `"image":true` |
+| `img/event/<event>.jpg` | An event's picture (512×208, like an area's), if it has `"image":true` |
 
 A `.jpg` is required even when there's a video, since it's the fallback. Text files can contain HTML.
 

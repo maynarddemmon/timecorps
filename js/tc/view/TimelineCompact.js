@@ -513,6 +513,8 @@
             _attestationBar.updateForStat(model[STAT_ID_ATTESTATION]);
             _paradoxBar.updateForStat(model[STAT_ID_PARADOX]);
             
+            eventBox._media.setMedia(...model.getMediaUrls());
+            
             eventBox.setTooltip(_label.text);
             eventBox.setVisible(notHidden);
             eventBox.updateEntangled();
@@ -603,6 +605,7 @@
                 delete attrs.timeline;
                 
                 attrs.zIndex = Z_IDX_EVENT;
+                attrs.overflow = 'hidden';
                 
                 self.callSuper(parent, attrs);
                 
@@ -610,13 +613,20 @@
                 self.revalidateForEvent = debounce(self._revalidateForEvent, STANDARD_DEBOUNCE_MILLIS);
                 
                 (self._label = new PaddedPlainText(self, {
-                    y:spacing, width:width, paddingLeft:4, paddingRight:4
+                    y:1, width:width, paddingLeft:4, paddingRight:4
                 })).enableEllipsis();
                 
                 const barWidth = width - 2*spacing;
-                self._historicityBar = new pkg.HistoricityBar(self, {x:spacing, y:17, width:barWidth}, [MiniStatBar]);
-                self._attestationBar = new pkg.AttestationBar(self, {x:spacing, y:21, width:barWidth}, [MiniStatBar]);
-                self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:25, width:barWidth}, [MiniStatBar]);
+                self._historicityBar = new pkg.HistoricityBar(self, {x:spacing, y:16, width:barWidth}, [MiniStatBar]);
+                self._attestationBar = new pkg.AttestationBar(self, {x:spacing, y:20, width:barWidth}, [MiniStatBar]);
+                self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:24, width:barWidth}, [MiniStatBar]);
+                
+                self._media = new pkg.MediaView(self, {
+                    y:31, width, height:width*0.40625, roundedCorners:0, visible:false
+                }, [{
+                    doMediaReady: function() {this.setVisible(true);},
+                    doMediaFailed: function() {this.setVisible(false);}
+                }]);
                 
                 updateEventBox(self);
                 

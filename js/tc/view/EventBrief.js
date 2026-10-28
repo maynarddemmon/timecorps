@@ -1,22 +1,14 @@
 (pkg => {
     'use strict';
     
-    const {ResizeLayout, SpacedLayout} = myt,
-        
-        {
-            WideView, CompactField, CompactFieldRow,
-            timeUtil:{format},
-            theme:{layoutSpacing, spacing, padding, cornerRadius, colorDark, colorMegaDark},
-            ICON_NIL,
-            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
-        } = pkg,
-        
-        HALF_PADDING = padding / 2,
-        
-        PHOTO_SIZE = 256;
+    const {
+        cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
+        theme:{spacing, padding, cornerRadius, colorDark, colorMegaDark}
+    } = pkg;
     
-    /*  Briefs the player on an Event: an optional square photo, the Event's facts beside it, 
-        its Describable phrases as field notes, and an optional report. The photo is 
+    /*  Briefs the player on an Event, laid out like the Area Brief: an optional photo across 
+        the top, then the Event's place, time and stats as Event Details shows them, its 
+        Describable phrases as field notes, and an optional report. The photo is 
         event/<id>.jpg under cfg.IMAGE_BASE_DIR when the data says "image":true, and the report
         is event/<id>.txt under cfg.DATA_BASE_DIR when it says "brief":true. It opens from the
         Event Details title and by double-clicking an EventBox. */
@@ -28,39 +20,18 @@
         initNode: function(parent, attrs) {
             const self = this;
             attrs.cancelable ??= true;
-            attrs.photoWidth = attrs.photoHeight = PHOTO_SIZE;
-            // The facts sit beside the photo, so the report never moves up into its space.
-            attrs.reservePhotoSpace = true;
+            attrs.tallWidth ??= 5*(TL_COL_WIDTH + padding) + padding;
+            attrs.photoHeight ??= 5*TL_COL_HEADER_HEIGHT;
             
             self.callSuper(parent, attrs);
             
-            // Build UI
-            const facts = self._factsView = new WideView(self, {
-                    y:HALF_PADDING, height:PHOTO_SIZE,
-                    roundedCorners:cornerRadius, bgColor:colorMegaDark,
-                    overflow:'autoy'
-                }),
-                factsContainer = new WideView(facts);
-            
-            let row = new WideView(factsContainer, {height:18});
-            self._historicityView = new pkg.HistoricityBar(row, {y:12, bgColor:colorDark, layoutHint:1});
-            self._attestationView = new pkg.AttestationBar(row, {y:12, bgColor:colorDark, layoutHint:1});
-            self._paradoxView = new pkg.ParadoxBar(row, {y:12, bgColor:colorDark, layoutHint:1});
-            new ResizeLayout(row, {inset:spacing, spacing, outset:spacing});
-            
-            row = new CompactFieldRow(factsContainer);
-            self._idView = new CompactField(row, {label:'ID', layoutHint:1});
-            const whereView = self._whereView = new CompactField(row, {label:'Where', tooltip:'Open the area brief', cursor:'pointer', layoutHint:2});
-            self.attachToDom(whereView, '_doWhereClick', 'click');
-            row.getFirstLayout().update();
-            
-            row = new CompactFieldRow(factsContainer);
-            self._startView = new CompactField(row, {label:'Start', layoutHint:1});
-            self._endView = new CompactField(row, {label:'End', layoutHint:1});
-            self._durationView = new CompactField(row, {label:'Duration', layoutHint:1});
-            row.getFirstLayout().update();
-            
-            new SpacedLayout(factsContainer, {axis:'y', inset:spacing, outset:spacing, collapseParent:true});
+            const summaryView = new pkg.WideView(self, {
+                x:padding / 2, percentOfParentWidthOffset:-padding,
+                roundedCorners:cornerRadius, bgColor:colorMegaDark
+            });
+            self._eventFacts = new pkg.EventFacts(summaryView, {barBgColor:colorDark});
+            new myt.SpacedLayout(summaryView, {axis:'y', inset:spacing, outset:spacing, collapseParent:true});
+            self.setBriefSummaryView(summaryView);
         },
         
         
@@ -73,42 +44,16 @@
         
         /** @overrides BriefSupport */
         setBriefModel: function(eventModel) {
-            if (eventModel) {
-                // Without a photo the facts take its place.
-                const factsX = HALF_PADDING + (eventModel.hasImage() ? PHOTO_SIZE + layoutSpacing : 0),
-                    facts = this._factsView;
-                facts.setX(factsX);
-                facts.setPercentOfParentWidthOffset(-(factsX + HALF_PADDING));
-                
-                this._idView.setValue(eventModel.id);
-                this._whereView.setValue(eventModel.getLocationModel()?.name ?? ICON_NIL);
-                this._startView.setValue(format(eventModel.getStart()));
-                this._endView.setValue(format(eventModel.getEnd()));
-                this._durationView.setValue(eventModel.getDuration(true));
-                this.updateStats(eventModel);
-            }
-            
+            if (eventModel) this._eventFacts.update(eventModel);
             this.callSuper(eventModel);
         },
         
         
         // Methods /////////////////////////////////////////////////////////////
-        /** @private */
-        _doWhereClick: function(_event) {
-            const locationModel = this.getBriefModel()?.getLocationModel();
-            if (locationModel) pkg.app.openAreaBrief(locationModel);
-        },
-        
-        updateStats: function(eventModel) {
-            this._historicityView.updateForStat(eventModel[STAT_ID_HISTORICITY]);
-            this._attestationView.updateForStat(eventModel[STAT_ID_ATTESTATION]);
-            this._paradoxView.updateForStat(eventModel[STAT_ID_PARADOX]);
-        },
-        
         /** @overrides BriefSupport */
         notifyBriefModelChanged: function(eventModel) {
             this.callSuper(eventModel);
-            if (this.visible && this.getBriefModel() === eventModel) this.updateStats(eventModel);
+            if (this.visible && this.getBriefModel() === eventModel) this._eventFacts.update(eventModel);
         }
     });
 })(tc);

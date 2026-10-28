@@ -112,6 +112,7 @@
                 image.setImageUrl(imageUrl);
             } else {
                 image.setVisible(false);
+                image.setImageUrl();
                 self.doMediaFailed();
             }
         },
