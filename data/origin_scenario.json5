@@ -216,24 +216,8 @@
 					"set":{"events.origin_busride.attestation":"1"}
 				},
 				{
-					"mode":"bike", "toHidden":true, "to":"origin_hospital",
-					"hidden":"event.values.bus_arrives.value === 0",
-					"set":{"events.origin_hospital.attestation":"1"}
-				},
-				{
-					"mode":"bike", "toHidden":true, "to":"origin_newsroom",
-					"hidden":"event.values.bus_arrives.value === 0",
-					"set":{"events.origin_newsroom.attestation":"1"}
-				},
-				{
-					"mode":"bike", "toHidden":true, "to":"origin_garage",
-					"hidden":"event.values.bus_arrives.value === 0",
-					"set":{"events.origin_garage.attestation":"1"}
-				},
-				{
-					"mode":"bike", "toHidden":true, "to":"origin_theater",
-					"hidden":"event.values.bus_arrives.value === 0",
-					"set":{"events.origin_theater.attestation":"1"}
+					"mode":"walk", "toHidden":true, "to":"origin_back_home",
+					"set":{"events.origin_back_home.attestation":"1"}
 				}
 			],
 			"values":{
@@ -249,6 +233,41 @@
 			},
 			"description":[
 				"The sheltered bench where folks wait for the bus. The ads are covered in grafitti and haven’t changed in months."
+			]
+		},
+		
+		"origin_back_home":{
+			"name":"Your Apartment", "title":"", "chronoLocked":"true", "image":"../location/origin.home.jpg",
+			"start":"2026-11-13T08:15:00",
+			"duration":{"m":15},
+			"location":"origin.home",
+			"actionLimit":0,
+			"actions":{"_investigate":null, "_rest":null},
+			"exits":[
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_hospital",
+					"set":{"events.origin_hospital.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"3"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_newsroom",
+					"set":{"events.origin_newsroom.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"3"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_garage",
+					"set":{"events.origin_garage.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"3"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_theater",
+					"set":{"events.origin_theater.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"3"}
+				}
+			],
+			"description":[
+				"Back in your apartment, you grab your bike, you’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it."
 			]
 		},
 		

@@ -401,8 +401,8 @@
             scrollToken.setY(TL_COL_HEADER_HEIGHT + yExtent - scrollToken.height);
             colHeaders.setWidth(xExtent);
             rowHeaders.setHeight(yExtent);
-            flowLayer.setWidth(xExtent);
-            flowLayer.setHeight(yExtent);
+            flowLayer.setWidth(mathMax(xExtent, flowLayer.parent.width));
+            flowLayer.setHeight(mathMax(yExtent, flowLayer.parent.height));
             
             // Sometimes the animation pushed the selected box off-screen.
             if (selectedBoxAnimatingToBounds) {
@@ -981,9 +981,13 @@
             const self = this;
             self.callSuper(v);
             if (self.ready) {
-                const {rowHeaders, rowHeadersContainer, colHeadersContainer, flowContainer, scrollCaptureView, hLine} = self,
+                const {
+                        rowHeaders, rowHeadersContainer, colHeaders, colHeadersContainer, 
+                        flowLayer, flowContainer, scrollCaptureView, hLine
+                    } = self,
                     width = self.width;
                 flowContainer.setWidth(width - flowContainer.x);
+                flowLayer.setWidth(mathMax(colHeaders.width, flowContainer.width));
                 scrollCaptureView.setWidth(width);
                 hLine.setWidth(width);
                 colHeadersContainer.setWidth(width - colHeadersContainer.x);
@@ -997,9 +1001,13 @@
             const self = this;
             self.callSuper(v);
             if (self.ready) {
-                const {rowHeadersContainer, colHeaders, colHeadersContainer, flowContainer, scrollCaptureView, vLine} = self,
+                const {
+                        rowHeaders, rowHeadersContainer, colHeaders, colHeadersContainer, 
+                        flowLayer, flowContainer, scrollCaptureView, vLine
+                    } = self,
                     height = self.height;
                 flowContainer.setHeight(height - flowContainer.y);
+                flowLayer.setHeight(mathMax(rowHeaders.height, flowContainer.height));
                 scrollCaptureView.setHeight(height);
                 vLine.setHeight(height);
                 rowHeadersContainer.setHeight(height - rowHeadersContainer.y);
