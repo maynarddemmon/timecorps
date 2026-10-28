@@ -194,7 +194,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             for (const exit of event.exits ?? []) check(eventId + ' exit to ' + exit.to, exit.prompt);
         }
         for (const [operationId, operation] of Object.entries(operations)) {
-            for (const when of ['onSetup', 'onSuccess']) check(operationId + ' ' + when, operation[when]?.prompt);
+            for (const when of ['onSetup', 'onSuccess']) {
+                check(operationId + ' ' + when, operation[when]?.prompt);
+                check(operationId + ' ' + when + ' promptEarly', operation[when]?.promptEarly);
+            }
         }
         expect(problems).toEqual([]);
     });

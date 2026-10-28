@@ -59,11 +59,10 @@ JS.Packages(file => {
         'tc.timeUtil','tc.Describable','tc.NotifyingNumericStatModel','tc.MediaSupport'
     );
     file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires(
-        'tc.Describable','tc.MediaSupport'
+        'tc.Describable','tc.MediaSupport','tc.PromptModel'
     );
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
-        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel',
-        'tc.PromptModel'
+        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');

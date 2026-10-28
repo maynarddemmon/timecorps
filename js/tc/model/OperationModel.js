@@ -8,6 +8,7 @@
         {
             ConstrainableAttrSupport, Describable, Hideable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS},
+            isLikeAnID, openPrompt,
             SCOPE_OPERATION
         } = pkg,
         
@@ -282,7 +283,8 @@
         setOnSetup: function(onSetupCfg) {
             if (onSetupCfg) {
                 this.setupChanges = readChanges(this, 'onSetup', onSetupCfg);
-                this.setupPromptId = pkg.readPromptId('Operation ' + this.id + ' onSetup', onSetupCfg.prompt);
+                this.setupPromptEarlyId = isLikeAnID('Operation ' + this.id + ' onSetup promptEarly', onSetupCfg.promptEarly);
+                this.setupPromptId      = isLikeAnID('Operation ' + this.id + ' onSetup prompt', onSetupCfg.prompt);
                 this.setRevealAgentsOnSetup(onSetupCfg.revealAgents);
                 this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
                 this.setInitialEventSelection(onSetupCfg.initialEventSelection);
@@ -325,7 +327,8 @@
                 this.setDebrief(onSuccessCfg.debrief);
                 this.setNextOperation(onSuccessCfg.nextOperation);
                 this.successChanges = readChanges(this, 'onSuccess', onSuccessCfg);
-                this.successPromptId = pkg.readPromptId('Operation ' + this.id + ' onSuccess', onSuccessCfg.prompt);
+                this.successPromptEarlyId = isLikeAnID('Operation ' + this.id + ' onSuccess promptEarly', onSuccessCfg.promptEarly);
+                this.successPromptId      = isLikeAnID('Operation ' + this.id + ' onSuccess prompt', onSuccessCfg.prompt);
                 this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
                 this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
             }
@@ -397,23 +400,28 @@
         
         /** @private */
         doOnSetup: function(fromBrief) {
-            if (!this.setupApplied) {
+            const self = this;
+            if (!self.setupApplied) {
                 const rootModel = pkg.model;
-                this.reveal();
-                this.setupApplied = true;
+                self.reveal();
+                self.setupApplied = true;
                 
-                pkg.applySuccessChanges(this.setupChanges);
-                if (!fromBrief) pkg.app.openMissionBrief(this);
-                rootModel.revealAgents(this.revealAgentsOnSetup);
-                rootModel.awardAgents(this.awardAgentsOnSetup);
+                pkg.applySuccessChanges(self.setupChanges);
+                if (!fromBrief) pkg.app.openMissionBrief(self);
                 
-                // After the Mission Brief and the dossiers of the Agents it reveals.
-                pkg.openPrompt('Operation ' + this.id + ' onSetup', this.setupPromptId);
+                // After the Mission Brief but before Agents are revealed or awarded.
+                openPrompt('Operation ' + self.id + ' onSetup', self.setupPromptEarlyId);
                 
-                this.notifyCollectionOfUpdate();
+                rootModel.revealAgents(self.revealAgentsOnSetup);
+                rootModel.awardAgents(self.awardAgentsOnSetup);
+                
+                // After the Agents are revealed or awarded.
+                openPrompt('Operation ' + self.id + ' onSetup', self.setupPromptId);
+                
+                self.notifyCollectionOfUpdate();
                 
                 // Its Objectives may already be met.
-                this.determineSuccessfulCompletion();
+                self.determineSuccessfulCompletion();
             }
         },
         
@@ -422,12 +430,16 @@
             if (!self.successGranted) {
                 const rootModel = pkg.model;
                 pkg.applySuccessChanges(self.successChanges);
+                
+                // Before Agents are revealed or awarded, so before their dossiers.
+                openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptEarlyId);
+                
                 rootModel.revealAgents(self.revealAgentsOnSuccess);
                 rootModel.awardAgents(self.awardAgentsOnSuccess);
                 self.set('successGranted', true, true);
                 self.notifyCollectionOfUpdate();
                 
-                pkg.openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
+                openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
                     // The next Operation is available from now on, whether or not the player 
                     // goes on to it from the debrief. A check expression is worked out once, 
                     // here, so the prompt's answer can decide it.

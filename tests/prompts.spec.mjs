@@ -2,7 +2,7 @@
 // Actions, exits and missions open them by ID with "prompt", and a button's onClick changes
 // things as a mission's set and adj do.
 import {test, expect} from '@playwright/test';
-import {startGame, readTestData, dialogTitle, dismissCampaignStart, setCausator} from './helpers.mjs';
+import {startGame, readTestData, dialogTitle, dismissCampaignStart, dismissMissionBrief, dismissAgentDossier, briefTitle, setCausator} from './helpers.mjs';
 
 const offerTitle = page => dialogTitle(page, 'An Offer'),
     clickBtn = (page, name) => page.getByRole('button', {name, exact:true}).filter({visible:true}).click(),
@@ -156,11 +156,50 @@ test('set can put an agent in a Faction, and problems with prompts are warned ab
         'Prompt bad button confirm has keys other than label and onClick (ignoring them): extra',
         'Prompt bad button confirm label must be a string (ignoring it): 3',
         'Prompt bad button confirm onClick adj timeline.score has onFailure, which a prompt never uses',
-        'Operation first onSuccess prompt must be the ID of a prompt (ignoring it): 5'
+        'Operation first onSuccess prompt must be like an ID (ignoring it): 5'
     ]);
     expect(problems.warnings.slice(loadWarnings.length)).toEqual([
         'agents.BR.faction is not a Faction ID: nowhere',
         'Event origin action ask opens no prompt missing'
     ]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a mission\'s promptEarly opens before its agents are revealed, and its prompt after', async ({page}) => {
+    await page.route('**/tests/data/operations.json5', route => {
+        const json = readTestData('operations.json5'),
+            ack = title => ({type:'ack', title, description:[title + '.']});
+        Object.assign(json.prompts, {setupEarly:ack('Setup Early'), setupLate:ack('Setup Late'), successEarly:ack('Success Early'), successLate:ack('Success Late')});
+        Object.assign(json.operations.first.onSetup, {promptEarly:'setupEarly', prompt:'setupLate'});
+        Object.assign(json.operations.first.onSuccess, {promptEarly:'successEarly', prompt:'successLate'});
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page, {dismissBrief:false}),
+        isAlphaRevealed = () => page.evaluate(() => tc.model.getAgentModel('AL').isNotHidden()),
+        answer = async title => {
+            await expect(dialogTitle(page, title)).toBeVisible();
+            await clickBtn(page, 'Acknowledge');
+            await expect(dialogTitle(page, title)).toHaveCount(0);
+        };
+    
+    // The setup's promptEarly opens after the Mission Brief and before Alpha is revealed, so
+    // before Alpha's dossier, and its prompt after.
+    await dismissMissionBrief(page);
+    await expect(dialogTitle(page, 'Setup Early')).toBeVisible();
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
+    await answer('Setup Early');
+    await dismissAgentDossier(page, 'Alpha');
+    await answer('Setup Late');
+    expect(await isAlphaRevealed()).toBe(true);
+    
+    // On success, promptEarly opens first, then prompt, then Mission Complete.
+    await setCausator(page, 'plan', 'prepared', true);
+    await setCausator(page, 'lever', 'pulled', true);
+    await answer('Success Early');
+    await expect(dialogTitle(page, 'Mission Complete')).toHaveCount(0);
+    await answer('Success Late');
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
+    
+    expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

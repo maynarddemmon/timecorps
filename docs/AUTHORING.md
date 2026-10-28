@@ -587,13 +587,14 @@ HQ and The Void leave out `_investigate` this way.
 - **Completion.** A started mission is complete when every objective's `success` is true, whether or not it's the current one. An available mission's objectives show their progress, but it can't complete until it's started. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
 - **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals. onSuccess's opens as the mission completes, and Mission Complete, with its save, waits for the answer.
+- **`promptEarly`.** The ID of a prompt that opens before the agents are revealed and awarded, so before their dossiers: onSetup's right after the Mission Brief, onSuccess's before onSuccess's `prompt`. Use it for something a dossier should already reflect, e.g. asking for the player's name. A mission can have both.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none. It's a mission's ID, or a [check expression](#check-expressions) that works out to one when the mission is completed, so how it was won can decide what comes next, e.g. `"agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'"`. It's worked out once, after the success `prompt` is answered, and the mission it names is revealed then, whether or not the player goes on to it from the debrief.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
 
 ## Prompts
 
-A prompt is a message the player answers with a button, e.g. an offer to join the Time Corps. Actions, exits and missions open one by its ID with `"prompt"`. Prompts can go in any data file, under `"prompts"`.
+A prompt is a message the player answers with a button, e.g. an offer to join the Time Corps. Actions, exits and missions open one by its ID with `"prompt"` (missions also with `"promptEarly"`). Prompts can go in any data file, under `"prompts"`.
 
 ```json5
 "prompts":{

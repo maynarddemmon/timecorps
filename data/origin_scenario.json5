@@ -37,7 +37,7 @@
 				"set":{
 					"events.origin_alarm.historicity":"5"
 				},
-				"prompt":"avatar_name"
+				"promptEarly":"avatar_name"
 			},
 			"objectives":{
 				"answer":{

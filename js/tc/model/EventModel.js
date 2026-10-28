@@ -974,7 +974,7 @@
         /*  The prompt an action or exit opens when it's taken and its check passes, by ID, 
             e.g. "recruit". Expects ActionCheckSupport. */
         PromptSupport = new JSModule('PromptSupport', {
-            setPrompt: function(promptId) {this.promptId = pkg.readPromptId(this.getSkillCheckOwner(), promptId);},
+            setPrompt: function(promptId) {this.promptId = pkg.isLikeAnID(this.getSkillCheckOwner() + ' prompt', promptId);},
             
             /*  Opens its prompt, if it has one and it isn't hidden. */
             openPrompt: function(finallyCallback) {pkg.openPrompt(this.getSkillCheckOwner(), this.promptId, finallyCallback);}

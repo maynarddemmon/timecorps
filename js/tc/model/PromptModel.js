@@ -166,9 +166,9 @@
     /*  Reads the "prompt" of an action, exit or Operation: a prompt's ID, or undefined, with a
         warning starting with where, if it isn't one. Prompts can be in data loaded later, so
         whether the ID names a prompt is only known when it's opened. */
-    pkg.readPromptId = (where, promptId) => {
-        if (promptId === undefined || (typeof promptId === 'string' && promptId.trim() !== '')) return promptId;
-        console.warn(where, 'prompt must be the ID of a prompt (ignoring it):', promptId);
+    pkg.isLikeAnID = (where, id) => {
+        if (id === undefined || (typeof id === 'string' && id.trim() !== '')) return id;
+        console.warn(where, 'must be like an ID (ignoring it):', id);
     };
     
     /*  Shows the prompt with the ID, unless it's hidden, and calls finallyCallback once it's 
