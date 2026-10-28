@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, dialogTitle, reloadGame, briefTitle} from './helpers.mjs';
+import {startGame, dialogTitle, reloadGame, briefTitle, readTestData} from './helpers.mjs';
 
 const visibleText = (page, text) => page.getByText(text, {exact:false}).filter({visible:true});
 
@@ -14,6 +14,7 @@ const eventBriefTitle = page => briefTitle(page, 'event'),
         return {
             event:brief.getBriefModel()?.id,
             photoVisible:brief.getPhoto().visible,
+            photoUrl:brief.getPhoto().getImageView().imageUrl ?? null,
             fieldNotes:fieldNotes.visible ? fieldNotes.getValueView().text : null,
             report:report.visible ? report.getValueView().text : null,
             where:facts._whereBtn.text,
@@ -31,7 +32,7 @@ test('the event details title opens the event brief, with the description as fie
     
     await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await expect.poll(() => briefState(page)).toEqual({
-        event:'origin', photoVisible:true, fieldNotes:'Everything starts here.', report:'Where it all begins.\n',
+        event:'origin', photoVisible:true, photoUrl:expect.stringMatching(/\/event\/origin\.jpg$/), fieldNotes:'Everything starts here.', report:'Where it all begins.\n',
         where:'Deck', attestation:0
     });
     
@@ -195,6 +196,21 @@ test('event details\' location opens the area brief', async ({page}) => {
     await expect(dialogTitle(page, 'Area Brief')).toHaveText('Area Brief : Deck');
     await page.keyboard.press('Escape');
     await expect(dialogTitle(page, 'Area Brief')).toHaveCount(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+    expect(problems.warnings).toEqual([]);
+});
+
+test('an event\'s image can be a path from the event folder, e.g. to a location\'s photo', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.plan.image = '../location/office.jpg';
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    
+    await page.evaluate(() => {tc.app.openEventBrief(tc.model.getEventModel('plan'), true);});
+    await expect.poll(() => briefState(page)).toMatchObject({event:'plan', photoVisible:true, photoUrl:expect.stringMatching(/\/event\/\.\.\/location\/office\.jpg$/)});
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);

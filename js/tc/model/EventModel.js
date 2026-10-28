@@ -29,6 +29,7 @@
                 case 'enter':    return 'Enter';
                 case 'board':    return 'Board';
                 case 'walk':     return 'Walk to';
+                case 'take':     return 'Take';
                 case 'swim':     return 'Swim to';
                 case 'bike':     return 'Bike to';
                 case 'lifeboat': return 'Lifeboat to';
@@ -1317,10 +1318,25 @@
             /*  An Event's image and Event Brief report are optional, so it only has them when
                 the data says "image":true or "brief":true. Without one there's nothing to load,
                 and no failed request for a missing file. */
-            setImage: function(v) {this.image = v === true;},
+            setImage: function(v) {
+                if (typeof v === 'string') {
+                    this._imageUrl = v;
+                    v = true;
+                }
+                this.image = v === true;
+            },
             hasImage: function() {return this.image === true;},
             setBrief: function(v) {this.brief = v === true;},
             hasBrief: function() {return this.brief === true;},
+            
+            /** @overrides MediaSupport */
+            getImageUrl: function() {
+                if (this._imageUrl) {
+                    return pkg.cfg.IMAGE_BASE_DIR + this.getMediaFolder() + '/' + this._imageUrl;
+                } else {
+                    return this.callSuper();
+                }
+            },
             
             /** @overrides MediaSupport */
             getMediaUrls: function() {

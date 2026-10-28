@@ -632,7 +632,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         const missing = [];
         for (const [eventId, event] of Object.entries(events)) {
             const files = [];
-            if (event.image) files.push(MEDIA_DIR + '/event/' + eventId + '.jpg');
+            // An image can be a path from the event folder instead, e.g. "../location/x.jpg".
+            if (event.image) files.push(path.posix.join(MEDIA_DIR, 'event', typeof event.image === 'string' ? event.image : eventId + '.jpg'));
             if (event.video) files.push(MEDIA_DIR + '/event/' + eventId + '.webm');
             if (event.brief) files.push(DATA_DIR + '/event/' + eventId + '.txt');
             for (const file of files) {

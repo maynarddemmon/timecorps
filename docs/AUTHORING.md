@@ -216,7 +216,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
-	"image":true,                    // Optional. There's img/event/<id>.jpg for its Event Brief.
+	"image":true,                    // Optional. There's img/event/<id>.jpg for its box and Event Brief, or a path from img/event/.
 	"brief":true,                    // Optional. There's data/event/<id>.txt for its Event Brief.
 	"description":[…],
 	"values":{…},
@@ -240,7 +240,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ]
 ```
 
-- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
+- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; or a path from `img/event/` to reuse another picture, e.g. `"image":"../location/origin.street.jpg"`; the event's box in the timeline shows it too; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
 - <a id="brief-titles"></a>**Brief titles.** A brief's title is `"<title> : <name>"`. The `title` defaults to the event's location for an Event Brief, the agent's role for a dossier, "Area Brief" for a location and "Mission Brief" for a mission, and any of them can give its own `"title"`, e.g. `"title":"Breaking News"`.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 
@@ -343,7 +343,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 ]
 ```
 
-- **`mode`**: `wait`, `walk`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled` or `lifeboat`, which give "Wait til", "Walk to", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to" and "Lifeboat to". Anything else gives "To".
+- **`mode`**: `wait`, `walk`, `take`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled`, `lifeboat` or `survive`, which give "Wait til", "Walk to", "Take", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to", "Lifeboat to" and "Survive to". `take` suits an event named for a route, e.g. "Take The Long Way Home". Anything else gives "To".
 - **`to`**: the event it leads to. An exit to a hidden event isn't offered, unless it's `toHidden`.
 - **`toHidden`**: `true` to offer the exit even while the event it leads to is hidden. The button names the event, but it stays off the timeline until it's revealed, so the player can choose one of several hidden places and only the one they choose appears. Reveal it with the exit's `set`, e.g. by raising its attestation, which reveals an event without a `hidden` of its own, or by changing what its own `hidden` reads:
   
@@ -638,7 +638,7 @@ A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's
 | `img/agent/<agent>.jpg` (and `.webm`) | Portrait, with an optional video version |
 | `img/location/<location>.jpg` (and `.webm`) | Location photo, with an optional video version |
 | `img/mission/<operation>.jpg` | A mission's picture, if it has `"image":true` |
-| `img/event/<event>.jpg` | An event's picture (512×208, like an area's), if it has `"image":true` |
+| `img/event/<event>.jpg` | An event's picture (512×208, like an area's), if it has `"image":true`. A path instead of `true` names another file. |
 
 A `.jpg` is required even when there's a video, since it's the fallback. Text files can contain HTML.
 
