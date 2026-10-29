@@ -11,6 +11,19 @@
             fontSizeMicro
         } = pkg.theme,
         
+        updateValueViewForRounding = progressBar => {
+            const {valueView, trackInset, axis} = progressBar,
+                size = progressBar.convertValueToPixels(progressBar.value) - trackInset,
+                isXAxis = axis === 'x',
+                crossDimension = isXAxis ? 'height' : 'width',
+                crossFullSize = progressBar[crossDimension],
+                crossSize = Math.min(size, crossFullSize - 2*trackInset);
+            valueView.setBgColor(progressBar.valueColor);
+            valueView.set(isXAxis ? 'width' : 'height', size);
+            valueView.set(crossDimension, crossSize);
+            valueView.set(isXAxis ? 'y' : 'x', (crossFullSize - crossSize)/2);
+        },
+        
         StatProgressBar = new JSClass('StatProgressBar', M.ProgressBar, {
             initNode: function(parent, attrs) {
                 attrs.bgColor ??= colorMegaDark;
@@ -52,6 +65,11 @@
                 self.setMaxValue(statModel.getMax());
                 self.setValue(statModel.getValue());
                 self.setTooltip(tooltip);
+            },
+            
+            /** @overrides M.ProgressBar */
+            updateValueView: function() {
+                updateValueViewForRounding(this);
             }
         });
     
