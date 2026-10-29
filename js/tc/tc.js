@@ -257,7 +257,7 @@
                 
                 // Compact rows showing idle time between tiers when no Event is in progress.
                 TL_GAP_ROW_HEIGHT:20,
-                TL_GAP_MIN_MILLIS:5 * 60 * 1000, // Idle stretches shorter than this don't get a row.
+                TL_GAP_MIN_MILLIS:1 * 60 * 1000, // Idle stretches shorter than this don't get a row.
                 
                 // Scoring
                 SCORE_PER_ATTESTATION:3,

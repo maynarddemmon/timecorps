@@ -21,6 +21,38 @@
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
+        RELATIVE_START_OFFSET_KEYS = ['w', 'd', 'h', 'm', 's', 'ms'],
+        
+        /*  Works out an Event's start given as {"startOf":<id>} or {"endOf":<id>} plus an 
+            optional offset in the units a duration takes, e.g. {"endOf":"collision", "m":5}.
+            The Event it names must already be loaded. A problem is warned about and the start
+            is 0, as for a date string that can't be read. */
+        readRelativeStart = (eventId, spec) => {
+            const where = 'Event ' + eventId + ' start',
+                {startOf, endOf, ...offset} = spec,
+                key = startOf !== undefined ? 'startOf' : 'endOf',
+                refId = spec[key];
+            if ((startOf === undefined) === (endOf === undefined)) {
+                console.warn(where, 'must have one of "startOf" or "endOf" (using 0):', spec);
+                return 0;
+            }
+            
+            const refEventModel = typeof refId === 'string' && refId !== eventId ? pkg.model.getEventModel(refId) : null;
+            if (!refEventModel) {
+                console.warn(where, key, 'must name an Event loaded before this one (using 0):', refId);
+                return 0;
+            }
+            
+            for (const offsetKey in offset) {
+                if (!RELATIVE_START_OFFSET_KEYS.includes(offsetKey) || !Number.isFinite(offset[offsetKey])) {
+                    console.warn(where, 'offset', offsetKey, 'must be one of', RELATIVE_START_OFFSET_KEYS.join(', '), 'with a number (ignoring it):', offset[offsetKey]);
+                    delete offset[offsetKey];
+                }
+            }
+            
+            return (key === 'startOf' ? refEventModel.getStart() : refEventModel.getEnd()) + durationToMillis(offset);
+        },
+        
         getTravelModePhrase = mode => {
             switch (mode) {
                 case 'wait':     return 'Wait til';
@@ -1249,6 +1281,11 @@
             // Life Cycle //////////////////////////////////////////////////////
             init: function(attrs) {
                 const self = this;
+                
+                // First, since the data adds it last, and a start that's an offset from 
+                // another Event names this one in its warnings.
+                self.id = attrs.id;
+                
                 self.chronoLocked = self.hub = self.hidden = self.flooded = self._beenVisited = false;
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
@@ -1381,8 +1418,15 @@
             setTimeOrdering: function(v) {this._tiOr = v;},
             getTimeOrdering: function() {return this._tiOr;},
             
+            /*  A number of millis, a date string, e.g. "1912-04-14T23:40:00", or an offset 
+                from an Event loaded before this one, e.g. {"endOf":"collision", "m":5} or 
+                {"startOf":"collision", "h":-1}, which is worked out at once to a date. */
             setStart: function(start) {
-                if (typeof start !== 'number') start = stringToMillis(start);
+                if (start !== null && typeof start === 'object') {
+                    start = readRelativeStart(this.id, start);
+                } else if (typeof start !== 'number') {
+                    start = stringToMillis(start);
+                }
                 if (this.start !== start) {
                     this.set('start', start, true);
                     updateEndAttr(this);

@@ -207,7 +207,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ```json5
 "collision":{
 	"name":"The Collision",
-	"start":"1912-04-14T23:40:00",   // UTC. A date alone is fine too: "1912-04-14".
+	"start":"1912-04-14T23:40:00",   // UTC. A date alone is fine too: "1912-04-14". Or an offset from another event, see below.
 	"duration":{"m":1},              // Any of "w", "d", "h", "m", "s", "ms".
 	"location":"titanic.bridge",
 	"actionLimit":2,                 // Optional. Actions an agent can take per visit.
@@ -226,6 +226,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 }
 ```
 
+- **`start` as an offset.** Instead of a date, `start` can be the start or end of another event plus an offset in the units `duration` takes, e.g. `{"endOf":"origin_alarm", "m":3}` or `{"startOf":"collision", "h":-1}`. It's worked out to a date as the event loads, so the event it names must be loaded before this one: earlier in the same file, or in a file `init` lists before it. Changing that event's start later, e.g. with `set`, doesn't move this one. A problem is warned about and the start falls back to 0, which halts startup like a bad date.
 - **Time and place.** Two events at the same location can't overlap. An event must also start no earlier than the end of every event its values depend on. Both are checked at startup, which halts with a warning if either fails.
 - **`actionLimit`.** Defaults to `DEFAULT_ACTION_LIMIT`, which `index.html` sets to 3.
 - **`hub`.** A hub, such as HQ or The Void, is free of paradox: visiting it again costs none, and it doesn't raise the timeline's paradox limit. An agent can't loop back at a hub, and the selected agent's history arrows leave hubs out. Default: false.

@@ -50,8 +50,9 @@ export const TEST_DATA_DIR = 'tests/data',
     empty response so the tests never depend on the network. */
 /*  Event briefs that open on an agent's first entry are off unless eventBriefs is true, so 
     they don't get in the way of tests about other things. The player's other settings, and 
-    this one once a test changes it, are left alone. */
-export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBriefs=false} = {}) => {
+    this one once a test changes it, are left alone. With waitForReady false it returns once 
+    the page is loading, for data the game can't start with. */
+export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBriefs=false, waitForReady=true} = {}) => {
     const problems = {pageErrors:[], warnings:[], errors:[]};
     page.on('pageerror', err => problems.pageErrors.push(err.message));
     page.on('console', msg => {
@@ -88,6 +89,7 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBr
     }
     
     await page.goto('/index.html');
+    if (!waitForReady) return problems;
     await waitForGame(page);
     
     // A fresh campaign opens with the first mission's brief and its Agent's dossier.

@@ -141,8 +141,7 @@
 	"events":{
 		"origin_alarm":{
 			"name":"The Alarm", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T07:00:00",
-			"duration":{"h":1},
+			"start":"2026-11-13T07:00:00", "duration":{"h":1},
 			"location":"origin.home",
 			"hidden":"false",
 			"actionLimit":2,
@@ -189,13 +188,11 @@
 					"available":"!scratch.backstory_news"
 				}
 			},
-			"exits":[
-				{
-					"mode":"walk", "toHidden":true, "to":"origin_bus_stop",
-					"hidden":"event.values.choice.flipCount < event.actionLimit",
-					"set":{"events.origin_bus_stop.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"walk", "toHidden":true, "to":"origin_bus_stop",
+				"hidden":"event.values.choice.flipCount < event.actionLimit",
+				"set":{"events.origin_bus_stop.attestation":"1"}
+			}],
 			"values":{
 				"choice":{
 					"name":"Morning Activities",
@@ -216,8 +213,7 @@
 		
 		"origin_bus_stop":{
 			"name":"The Bus Stop", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T08:03:00",
-			"duration":{"m":5},
+			"start":{"endOf":"origin_alarm", "m":3}, "duration":{"m":5},
 			"location":"origin.city_streets",
 			"actionLimit":1,
 			"actions":{
@@ -234,8 +230,7 @@
 					"mode":"board", "toHidden":true, "to":"origin_busride",
 					"hidden":"event.values.bus_arrives.value !== 1",
 					"set":{"events.origin_busride.attestation":"1"}
-				},
-				{
+				},{
 					"mode":"walk", "toHidden":true, "to":"origin_back_home",
 					"set":{"events.origin_back_home.attestation":"1"}
 				}
@@ -258,8 +253,7 @@
 		
 		"origin_back_home":{
 			"name":"Your Apartment", "title":"", "chronoLocked":"true", "image":"../location/origin.home.jpg",
-			"start":"2026-11-13T08:15:00",
-			"duration":{"m":15},
+			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":15},
 			"location":"origin.home",
 			"actionLimit":1,
 			"actions":{
@@ -380,8 +374,7 @@
 		
 		"origin_busride":{
 			"name":"The Bus", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T08:15:00",
-			"duration":{"m":30},
+			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":40},
 			"location":"origin.city_streets",
 			"actionLimit":1,
 			"actions":{
@@ -422,16 +415,13 @@
 				{
 					"mode":"walk", "toHidden":true, "to":"origin_hospital",
 					"set":{"events.origin_hospital.attestation":"1"}
-				},
-				{
+				},{
 					"mode":"walk", "toHidden":true, "to":"origin_newsroom",
 					"set":{"events.origin_newsroom.attestation":"1"}
-				},
-				{
+				},{
 					"mode":"walk", "toHidden":true, "to":"origin_garage",
 					"set":{"events.origin_garage.attestation":"1"}
-				},
-				{
+				},{
 					"mode":"walk", "toHidden":true, "to":"origin_theater",
 					"set":{"events.origin_theater.attestation":"1"}
 				}
@@ -474,13 +464,11 @@
 					"available":"!scratch.backstory_work_chosen"
 				}
 			},
-			"exits":[
-				{
-					"mode":"continue", "toHidden":true, "to":"origin_hospital_2",
-					"hidden":"event.actions.work.attemptCount === 0",
-					"set":{"events.origin_hospital_2.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"continue", "toHidden":true, "to":"origin_hospital_2",
+				"hidden":"event.actions.work.attemptCount === 0",
+				"set":{"events.origin_hospital_2.attestation":"1"}
+			}],
 			"description":[
 				"You’re a nurse on the geriatric ward at St. Brendan’s: quick hands, a strong back and no patience at all for being lied to.",
 				"<br><br>Eight hours of bedpans, medication rounds and small emergencies."
@@ -489,7 +477,7 @@
 		
 		"origin_hospital_2":{
 			"name":"Silver Alert", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"start":{"endOf":"origin_hospital"}, "duration":{"h":4},
 			"location":"origin.hospital",
 			"actionLimit":1,
 			"actions":{
@@ -516,13 +504,11 @@
 					"available":"event.values.choice.value === ''"
 				}
 			},
-			"exits":[
-				{
-					"mode":"take", "toHidden":true, "to":"origin_walk_home",
-					"hidden":"event.values.choice.value === ''",
-					"set":{"events.origin_walk_home.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"take", "toHidden":true, "to":"origin_walk_home",
+				"hidden":"event.values.choice.value === ''",
+				"set":{"events.origin_walk_home.attestation":"1"}
+			}],
 			"values":{
 				"choice":{
 					"name":"The Incident",
@@ -561,13 +547,11 @@
 					"available":"!scratch.backstory_work_chosen"
 				}
 			},
-			"exits":[
-				{
-					"mode":"continue", "toHidden":true, "to":"origin_newsroom_2",
-					"hidden":"event.actions.work.attemptCount === 0",
-					"set":{"events.origin_newsroom_2.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"continue", "toHidden":true, "to":"origin_newsroom_2",
+				"hidden":"event.actions.work.attemptCount === 0",
+				"set":{"events.origin_newsroom_2.attestation":"1"}
+			}],
 			"description":[
 				"You’re a reporter at the Ledger, one of the last papers in the city still printing on paper: nosy, persistent, and not above a little invention to get someone talking.",
 				"<br><br>The deadline is at five. It is always at five."
@@ -575,9 +559,8 @@
 		},
 		
 		"origin_newsroom_2":{
-			"name":"Chasing The Story", "chronoLocked":"true", "image":"origin_newsroom.jpg",
-			"start":"2026-11-13T13:00:00",
-			"duration":{"h":4},
+			"name":"Chasing The Story", "chronoLocked":"true", "image":true,
+			"start":{"endOf":"origin_newsroom"}, "duration":{"h":4},
 			"location":"origin.newsroom",
 			"actionLimit":1,
 			"actions":{
@@ -604,13 +587,11 @@
 					"available":"event.values.choice.value === ''"
 				}
 			},
-			"exits":[
-				{
-					"mode":"take", "toHidden":true, "to":"origin_walk_home",
-					"hidden":"event.values.choice.value === ''",
-					"set":{"events.origin_walk_home.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"take", "toHidden":true, "to":"origin_walk_home",
+				"hidden":"event.values.choice.value === ''",
+				"set":{"events.origin_walk_home.attestation":"1"}
+			}],
 			"values":{
 				"choice":{
 					"name":"The Story",
@@ -649,13 +630,11 @@
 					"available":"!scratch.backstory_work_chosen"
 				}
 			},
-			"exits":[
-				{
-					"mode":"continue", "toHidden":true, "to":"origin_garage_2",
-					"hidden":"event.actions.work.attemptCount === 0",
-					"set":{"events.origin_garage_2.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"continue", "toHidden":true, "to":"origin_garage_2",
+				"hidden":"event.actions.work.attemptCount === 0",
+				"set":{"events.origin_garage_2.attestation":"1"}
+			}],
 			"description":[
 				"You’re a mechanic at Delgado’s Garage: strong hands, good ears and not much to say to the customers.",
 				"<br><br>The radio is on, the coffee is burnt, and there’s a car on every lift."
@@ -664,7 +643,7 @@
 		
 		"origin_garage_2":{
 			"name":"The Mustang", "chronoLocked":"true", "image":"origin_garage.jpg",
-			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"start":{"endOf":"origin_garage"}, "duration":{"h":4},
 			"location":"origin.garage",
 			"actionLimit":1,
 			"actions":{
@@ -691,13 +670,11 @@
 					"available":"event.values.choice.value === ''"
 				}
 			},
-			"exits":[
-				{
-					"mode":"take", "toHidden":true, "to":"origin_walk_home",
-					"hidden":"event.values.choice.value === ''",
-					"set":{"events.origin_walk_home.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"take", "toHidden":true, "to":"origin_walk_home",
+				"hidden":"event.values.choice.value === ''",
+				"set":{"events.origin_walk_home.attestation":"1"}
+			}],
 			"values":{
 				"choice":{
 					"name":"The Job",
@@ -736,13 +713,11 @@
 					"available":"!scratch.backstory_work_chosen"
 				}
 			},
-			"exits":[
-				{
-					"mode":"continue", "toHidden":true, "to":"origin_theater_2",
-					"hidden":"event.actions.work.attemptCount === 0",
-					"set":{"events.origin_theater_2.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"continue", "toHidden":true, "to":"origin_theater_2",
+				"hidden":"event.actions.work.attemptCount === 0",
+				"set":{"events.origin_theater_2.attestation":"1"}
+			}],
 			"description":[
 				"You work at the Orpheum, an understudy who also does whatever needs doing backstage: a different face for every part, and not much interest in the details of anything else.",
 				"<br><br>Two shows today, and the first is at two."
@@ -751,7 +726,7 @@
 		
 		"origin_theater_2":{
 			"name":"The Matinee", "chronoLocked":"true", "image":"origin_theater.jpg",
-			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"start":{"endOf":"origin_theater"}, "duration":{"h":4},
 			"location":"origin.theater",
 			"actionLimit":1,
 			"actions":{
@@ -778,13 +753,11 @@
 					"available":"event.values.choice.value === ''"
 				}
 			},
-			"exits":[
-				{
-					"mode":"take", "toHidden":true, "to":"origin_walk_home",
-					"hidden":"event.values.choice.value === ''",
-					"set":{"events.origin_walk_home.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"take", "toHidden":true, "to":"origin_walk_home",
+				"hidden":"event.values.choice.value === ''",
+				"set":{"events.origin_walk_home.attestation":"1"}
+			}],
 			"values":{
 				"choice":{
 					"name":"The Show",
@@ -866,8 +839,7 @@
 		// Act 2: the encounter.
 		"origin_stranger":{
 			"name":"The Stranger", "chronoLocked":"true",
-			"start":"2026-11-13T17:52:00",
-			"duration":{"m":3},
+			"start":"2026-11-13T17:52:00", "duration":{"m":3},
 			"location":"origin.street",
 			"actionLimit":1,
 			"actions":{
@@ -892,13 +864,11 @@
 					}
 				}
 			},
-			"exits":[
-				{
-					"mode":"wait", "toHidden":true, "to":"origin_masked",
-					"hidden":"event.values.reaction.value === ''",
-					"set":{"events.origin_masked.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"wait", "toHidden":true, "to":"origin_masked",
+				"hidden":"event.values.reaction.value === ''",
+				"set":{"events.origin_masked.attestation":"1"}
+			}],
 			"values":{
 				"reaction":{
 					"name":"Your Reaction",
@@ -919,8 +889,7 @@
 		
 		"origin_masked":{
 			"name":"The Masked Figure", "chronoLocked":"true",
-			"start":"2026-11-13T17:55:00",
-			"duration":{"m":1},
+			"start":"2026-11-13T17:55:00", "duration":{"m":1},
 			"location":"origin.street",
 			"actionLimit":1,
 			"actions":{
@@ -943,14 +912,12 @@
 					"hidden":"event.values.response.value !== ''"
 				}
 			},
-			"exits":[
-				{
-					"mode":"pulled", "toHidden":true, "to":"safehouse_arrival",
-					"hidden":"event.values.response.value === ''",
-					"set":{"events.safehouse_arrival.attestation":"1"},
-					"costs":{"agent.chronal":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"pulled", "toHidden":true, "to":"safehouse_arrival",
+				"hidden":"event.values.response.value === ''",
+				"set":{"events.safehouse_arrival.attestation":"1"},
+				"costs":{"agent.chronal":"1"}
+			}],
 			"values":{
 				"response":{
 					"name":"Your Response",
@@ -972,8 +939,7 @@
 		// Act 3: a safe house, late in the 2080s. Hidden until the device is on your wrist.
 		"safehouse_arrival":{
 			"name":"Elsewhere", "chronoLocked":"true",
-			"start":"2087-03-09T23:41:00",
-			"duration":{"m":10},
+			"start":"2087-03-09T23:41:00", "duration":{"m":10},
 			"location":"safehouse.corridor",
 			"actionLimit":1,
 			"actions":{
@@ -986,13 +952,11 @@
 					"hidden":"event.values.concealed.value"
 				}
 			},
-			"exits":[
-				{
-					"mode":"wait", "toHidden":true, "to":"safehouse_fight",
-					"hidden":"event.actions.hide.attemptCount === 0",
-					"set":{"events.safehouse_fight.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"wait", "toHidden":true, "to":"safehouse_fight",
+				"hidden":"event.actions.hide.attemptCount === 0",
+				"set":{"events.safehouse_fight.attestation":"1"}
+			}],
 			"values":{
 				"concealed":{
 					"name":"Concealed",
@@ -1011,21 +975,18 @@
 		
 		"safehouse_fight":{
 			"name":"The Fight", "chronoLocked":"true",
-			"start":"2087-03-09T23:51:00",
-			"duration":{"m":2},
+			"start":"2087-03-09T23:51:00", "duration":{"m":2},
 			"location":"safehouse.office",
 			"actionLimit":1,
 			"actions":{
 				"_rest":null,
 				"_investigate":{"skillCheck":{"difficulty":"no-roll"}},
 			},
-			"exits":[
-				{
-					"mode":"enter", "toHidden":true, "to":"safehouse_room",
-					"hidden":"event.actions._investigate.attemptCount === 0",
-					"set":{"events.safehouse_room.attestation":"1"}
-				}
-			],
+			"exits":[{
+				"mode":"enter", "toHidden":true, "to":"safehouse_room",
+				"hidden":"event.actions._investigate.attemptCount === 0",
+				"set":{"events.safehouse_room.attestation":"1"}
+			}],
 			"description":[
 				"The argument turns into a fight, fast and ugly. The masked figure has a blade, thin and dark, and the old one is slower than they used to be.",
 				"<br><br>The blade goes in. The old one gasps, slaps at their wrist,",
@@ -1040,8 +1001,7 @@
 		
 		"safehouse_room":{
 			"name":"The Empty Room",
-			"start":"2087-03-09T23:54:00",
-			"duration":{"h":1},
+			"start":"2087-03-09T23:54:00", "duration":{"h":1},
 			"location":"safehouse.office",
 			"actionLimit":3,
 			"actions":{

@@ -631,6 +631,30 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
+    test('every start that\'s an offset names an event loaded before it, with an offset in duration units', () => {
+        const problems = [],
+            loaded = new Set();
+        for (const scenario of scenarios) {
+            for (const [eventId, event] of Object.entries(scenario.events ?? {})) {
+                const start = event.start;
+                if (start !== null && typeof start === 'object') {
+                    const {startOf, endOf, ...offset} = start,
+                        refId = startOf ?? endOf;
+                    if ((startOf === undefined) === (endOf === undefined)) {
+                        problems.push(eventId + ' start must have one of startOf or endOf');
+                    } else if (!loaded.has(refId) || refId === eventId) {
+                        problems.push(eventId + ' start names ' + refId + ', which isn\'t loaded before it');
+                    }
+                    for (const [key, value] of Object.entries(offset)) {
+                        if (!['w', 'd', 'h', 'm', 's', 'ms'].includes(key) || !Number.isFinite(value)) problems.push(eventId + ' start offset ' + key + ' is not a duration unit with a number');
+                    }
+                }
+                loaded.add(eventId);
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
     test('every event has the event brief image and report it says it has', () => {
         const missing = [];
         for (const [eventId, event] of Object.entries(events)) {
