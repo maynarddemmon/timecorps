@@ -216,7 +216,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
-	"image":true,                    // Optional. There's img/event/<id>.jpg for its box and Event Brief, or a path from img/event/.
+	"image":"../location/x.jpg",     // Optional. Shown instead of img/event/<id>.jpg. See Images.
 	"brief":true,                    // Optional. There's data/event/<id>.txt for its Event Brief.
 	"description":[…],
 	"values":{…},
@@ -241,7 +241,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ]
 ```
 
-- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; or a path from `img/event/` to reuse another picture, e.g. `"image":"../location/origin_street.jpg"`; the event's box in the timeline shows it too; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
+- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: its picture across the top (`img/event/<id>.jpg`, 512×208 like an area's, unless its `image` or `imageExpr` names another, see [Images](#images); the event's box in the timeline shows it too; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
 - <a id="brief-titles"></a>**Brief titles.** A brief's title is `"<title> : <name>"`. The `title` defaults to the event's location for an Event Brief, the agent's role for a dossier, "Area Brief" for a location and "Mission Brief" for a mission, and any of them can give its own `"title"`, e.g. `"title":"Breaking News"`.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 
@@ -529,7 +529,7 @@ HQ and The Void leave out `_investigate` this way.
 - **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **`role`** shows in the Agents grid and the dossier. `roleExpr` overrides it while it works out to a non-empty string, and without either, the agent's faction's `defaultAgentRole` is used, so it follows a change of faction.
 - **`nameExpr`.** A [constraint expression](#constraint-expressions) for the agent's name. While it works out to a non-empty string, trimmed, that's the name. Otherwise `name` is. The Origin Story's `avatar_name` prompt sets `scratch.avatar_name`, which You's `nameExpr` reads.
-- **Files.** Every agent needs `img/agent/<id>.jpg` and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier, titled with their role unless they have a `title` (see [Brief titles](#brief-titles)).
+- **Files.** Every agent needs `img/agent/<id>.jpg` (or another `image`, see [Images](#images)) and `data/dossiers/<id>.txt`. Revealing an agent shows their dossier, titled with their role unless they have a `title` (see [Brief titles](#brief-titles)).
 - <a id="ages"></a>**Ages**, in years, read as `agent.age` and `agent.effectiveAge`. The lived age starts as the data's `age` (30 if it's left out). It grows by the time the agent lives through:
   - **An action** lives through the event's duration divided by its `actionLimit`, for each action it costs, so spending every action lives through all of it. A free action (`"agent.action":null`) takes no time. In an event whose `actionLimit` is 0, the whole duration is lived through on arrival. HQ counts too: it's a month of 30 actions, a day each, so a week-long treatment costs 7.
   - **An exit** lives through the rest of the event left, e.g. its unused actions, then the time from its end to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel and skip the time between.
@@ -640,9 +640,18 @@ A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's
 | `img/agent/<agent>.jpg` (and `.webm`) | Portrait, with an optional video version |
 | `img/location/<location>.jpg` (and `.webm`) | Location photo, with an optional video version |
 | `img/mission/<operation>.jpg` | A mission's picture, if it has `"image":true` |
-| `img/event/<event>.jpg` | An event's picture (512×208, like an area's), if it has `"image":true`. A path instead of `true` names another file. |
+| `img/event/<event>.jpg` | An event's picture (512×208, like an area's) |
 
 A `.jpg` is required even when there's a video, since it's the fallback. Text files can contain HTML.
+
+### <a id="images"></a>Images
+
+Every event, location and agent shows `img/<folder>/<id>.jpg`, where the folder is `event`, `location` or `agent`. A mission shows `img/mission/<id>.jpg` only with `"image":true`, since a mission's picture is optional. Two keys change which picture is shown:
+
+- **`image`**: a path to another `.jpg`, from the model's own folder, e.g. `"image":"../location/origin_street.jpg"` to reuse a location's photo for an event.
+- **`imageExpr`**: a [constraint expression](#constraint-expressions) for such a path, so the picture can follow the game. While it works out to a non-empty string, that's shown. Otherwise `image`, or the default, is. Every view showing the picture updates as it changes, including an open brief, e.g. `"imageExpr":"event.values.struck.value ? 'collision_struck.jpg' : ''"`.
+
+A video (`"video":true`) is always `<id>.webm` and plays instead of the picture where videos are shown, whatever `imageExpr` says. data.spec checks that every event's picture exists (by default, or its `image`), except at The Nexus and Nowhere. It can't check an `imageExpr`'s.
 
 ## Checking your work
 

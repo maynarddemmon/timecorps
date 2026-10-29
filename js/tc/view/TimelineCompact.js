@@ -1139,6 +1139,12 @@
             if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly);
         },
         
+        /*  Redraws the Location's column header, e.g. for a new image. */
+        notifyLocationModelChanged: function(locationModel) {
+            const locationColumn = this.colsByLocId[locationModel.id];
+            if (locationColumn) updateLocationColumn(locationColumn);
+        },
+        
         scrollToLocation: function(locId, smoothly=true, selectTab=true) {
             if (selectTab) pkg.app.selectTimelineTab();
             const locationColumn = this.colsByLocId[locId];

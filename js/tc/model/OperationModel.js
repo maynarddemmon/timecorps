@@ -149,16 +149,21 @@
         /** @overrides MediaSupport */
         getMediaFolder: () => 'mission',
         
-        /*  Unlike Agents and Locations, an Operation's image is optional, so it only has one
-            when the data says "image":true. Without one there's nothing to load, and no 
-            failed request for a missing file. */
-        setImage: function(v) {this.image = v === true;},
-        hasImage: function() {return this.image === true;},
+        /*  Unlike other models, an Operation's image is optional, so it only shows mission/<id>.jpg
+            when the data says "image":true. Without one there's nothing to load, and no failed 
+            request for a missing file. It can also be a path, as for any model, and an 
+            imageExpr can name one either way. */
+        setImage: function(v) {
+            if (typeof v === 'boolean') {
+                this.hasOwnImage = v;
+                this.imageData = null;
+            } else {
+                this.callSuper(v);
+            }
+        },
         
         /** @overrides MediaSupport */
-        getMediaUrls: function() {
-            return this.hasImage() ? this.callSuper() : [null, null];
-        },
+        getDefaultImageFile: function() {return this.hasOwnImage ? this.id + '.jpg' : null;},
         
         
         // Life Cycle //////////////////////////////////////////////////////

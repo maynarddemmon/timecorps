@@ -46,7 +46,7 @@ JS.Packages(file => {
         'tc.DescribableHideable'
     ).requires('tc.setConstrainedValue');
     
-    file(MODEL_ROOT + 'MediaSupport.js').provides('tc.MediaSupport').requires('tc');
+    file(MODEL_ROOT + 'MediaSupport.js').provides('tc.MediaSupport').requires('tc.setConstrainedValue');
     file(MODEL_ROOT + 'LocationModel.js').provides('tc.LocationModel').requires(
         'tc.Describable','tc.MediaSupport'
     );

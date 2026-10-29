@@ -188,8 +188,13 @@
             fieldNotesView.setValue(fieldNotes);
         },
         
+        /*  The field notes, and the photo, which an imageExpr can change. Given the media it 
+            already has, the photo doesn't reload. */
         notifyBriefModelChanged: function(model) {
-            if (this.visible && this.briefModel === model) this.updateFieldNotes();
+            if (this.visible && this.briefModel === model) {
+                this.updateFieldNotes();
+                this.getPhoto().setMedia(...model.getMediaUrls());
+            }
         },
         
         show: function(model) {

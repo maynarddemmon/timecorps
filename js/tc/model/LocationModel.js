@@ -7,6 +7,14 @@
         include: [pkg.ConstrainableAttrSupport, pkg.Describable, pkg.MediaSupport],
         
         
+        // Life Cycle //////////////////////////////////////////////////////////
+        init: function(attrs) {
+            // First, since the data adds it last, and warnings about the other attrs name it.
+            this.id = attrs.id;
+            this.callSuper(attrs);
+        },
+        
+        
         // Accessors ///////////////////////////////////////////////////////////
         setName: function(name) {this.set('name', name, true);},
         getName: function() {return this.name;},

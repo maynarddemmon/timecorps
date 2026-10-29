@@ -140,7 +140,7 @@
 	
 	"events":{
 		"origin_alarm":{
-			"name":"The Alarm", "chronoLocked":"true", "image":true,
+			"name":"The Alarm", "chronoLocked":"true",
 			"start":"2026-11-13T07:00:00", "duration":{"h":1},
 			"location":"origin_home",
 			"hidden":"false",
@@ -212,7 +212,7 @@
 		},
 		
 		"origin_bus_stop":{
-			"name":"The Bus Stop", "chronoLocked":"true", "image":true,
+			"name":"The Bus Stop", "chronoLocked":"true",
 			"start":{"endOf":"origin_alarm", "m":3}, "duration":{"m":5},
 			"location":"origin_city_streets",
 			"actionLimit":1,
@@ -314,7 +314,7 @@
 		},
 		
 		"origin_bikeRepair":{
-			"name":"Bike Repair", "chronoLocked":"true", "image":true,
+			"name":"Bike Repair", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00", "duration":{"h":2},
 			"location":"origin_bikeshop",
 			"actionLimit":0,
@@ -373,7 +373,7 @@
 		},
 		
 		"origin_busride":{
-			"name":"The Bus", "chronoLocked":"true", "image":true,
+			"name":"The Bus", "chronoLocked":"true",
 			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":40},
 			"location":"origin_city_streets",
 			"actionLimit":1,
@@ -445,7 +445,7 @@
 		},
 		
 		"origin_hospital":{
-			"name":"A Grueling Shift", "chronoLocked":"true", "image":true,
+			"name":"A Grueling Shift", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin_hospital",
 			"actionLimit":1,
@@ -476,7 +476,7 @@
 		},
 		
 		"origin_hospital_2":{
-			"name":"Silver Alert", "chronoLocked":"true", "image":true,
+			"name":"Silver Alert", "chronoLocked":"true",
 			"start":{"endOf":"origin_hospital"}, "duration":{"h":4},
 			"location":"origin_hospital",
 			"actionLimit":1,
@@ -528,7 +528,7 @@
 		},
 		
 		"origin_newsroom":{
-			"name":"Deadline", "chronoLocked":"true", "image":true,
+			"name":"Deadline", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin_newsroom",
 			"actionLimit":1,
@@ -559,7 +559,7 @@
 		},
 		
 		"origin_newsroom_2":{
-			"name":"Chasing The Story", "chronoLocked":"true", "image":true,
+			"name":"Chasing The Story", "chronoLocked":"true",
 			"start":{"endOf":"origin_newsroom"}, "duration":{"h":4},
 			"location":"origin_newsroom",
 			"actionLimit":1,
@@ -611,7 +611,7 @@
 		},
 		
 		"origin_garage":{
-			"name":"Under the Hood", "chronoLocked":"true", "image":true,
+			"name":"Under the Hood", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin_garage",
 			"actionLimit":1,
@@ -694,7 +694,7 @@
 		},
 		
 		"origin_theater":{
-			"name":"The Matinee", "chronoLocked":"true", "image":true,
+			"name":"The Matinee", "chronoLocked":"true",
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin_theater",
 			"actionLimit":1,
@@ -838,6 +838,7 @@
 		
 		// Act 2: the encounter.
 		"origin_stranger":{
+			"image":"../location/origin_street.jpg",
 			"name":"The Stranger", "chronoLocked":"true",
 			"start":"2026-11-13T17:52:00", "duration":{"m":3},
 			"location":"origin_street",
@@ -888,6 +889,7 @@
 		},
 		
 		"origin_masked":{
+			"image":"../location/origin_street.jpg",
 			"name":"The Masked Figure", "chronoLocked":"true",
 			"start":"2026-11-13T17:55:00", "duration":{"m":1},
 			"location":"origin_street",
@@ -974,6 +976,7 @@
 		},
 		
 		"safehouse_fight":{
+			"image":"../location/safehouse_office.jpg",
 			"name":"The Fight", "chronoLocked":"true",
 			"start":"2087-03-09T23:51:00", "duration":{"m":2},
 			"location":"safehouse_office",
@@ -1000,6 +1003,7 @@
 		},
 		
 		"safehouse_room":{
+			"image":"../location/safehouse_office.jpg",
 			"name":"The Empty Room",
 			"start":"2087-03-09T23:54:00", "duration":{"h":1},
 			"location":"safehouse_office",

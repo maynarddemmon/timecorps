@@ -935,11 +935,13 @@
             getCosts: function() {return this.costs;}
         }),
         
-        /*  Reduces a set of observables or observers to the EventModels they belong to. */
+        /*  Reduces a set of observables or observers to the EventModels they belong to. An 
+            Agent's "event" is an Event's ID, not the Event, so an Agent observing an Event, e.g.
+            for an imageExpr, isn't one. */
         toEventModels = (things, excludeEventModel) => {
             const retval = new Set();
             for (const thing of things) {
-                const eventModel = thing.isA(EventModel) ? thing : thing.event?.isA(EventModel) ? thing.event : null;
+                const eventModel = thing.isA?.(EventModel) ? thing : thing.event?.isA?.(EventModel) ? thing.event : null;
                 if (eventModel && eventModel !== excludeEventModel) retval.add(eventModel);
             }
             return retval;
@@ -1353,33 +1355,12 @@
             
             
             // Accessors ///////////////////////////////////////////////////////
-            /*  An Event's image and Event Brief report are optional, so it only has them when
-                the data says "image":true or "brief":true. Without one there's nothing to load,
-                and no failed request for a missing file. */
-            setImage: function(v) {
-                if (typeof v === 'string') {
-                    this._imageUrl = v;
-                    v = true;
-                }
-                this.image = v === true;
-            },
-            hasImage: function() {return this.image === true;},
+            /*  An Event's Event Brief report is optional, so it only has one when the data 
+                says "brief":true. Without one there's nothing to load, and no failed request 
+                for a missing file. Every Event shows an image, event/<id>.jpg unless its image
+                or imageExpr names another (see MediaSupport). */
             setBrief: function(v) {this.brief = v === true;},
             hasBrief: function() {return this.brief === true;},
-            
-            /** @overrides MediaSupport */
-            getImageUrl: function() {
-                if (this._imageUrl) {
-                    return pkg.cfg.IMAGE_BASE_DIR + this.getMediaFolder() + '/' + this._imageUrl;
-                } else {
-                    return this.callSuper();
-                }
-            },
-            
-            /** @overrides MediaSupport */
-            getMediaUrls: function() {
-                return this.hasImage() ? this.callSuper() : [null, null];
-            },
             
             /*  Whether the Event is some Faction's HQ. */
             isHQ: function() {return pkg.model.getFactionModelForHQ(this) != null;},

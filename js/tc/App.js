@@ -514,6 +514,7 @@
                     missionBrief?.notifyBriefModelChanged(instanceModel);
                     break;
                 case SCOPE_LOCATIONS:
+                    timelineView.notifyLocationModelChanged(instanceModel);
                     areaBrief?.notifyBriefModelChanged(instanceModel);
                     break;
                 case SCOPE_FACTIONS:

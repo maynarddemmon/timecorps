@@ -43,7 +43,7 @@ test('the event details title opens the event brief, with the description as fie
     expect(problems.errors).toEqual([]);
 });
 
-test('double-clicking an event box opens its brief, without a photo or report it does not have', async ({page}) => {
+test('double-clicking an event box opens its brief, with its picture and without a report it does not have', async ({page}) => {
     const problems = await startGame(page);
     
     await page.evaluate(() => tc.model.getEventModel('aftermath').attestation.setValue(10));
@@ -51,7 +51,7 @@ test('double-clicking an event box opens its brief, without a photo or report it
     await box.dblclick();
     
     await expect(eventBriefTitle(page)).toHaveText('Deck : Aftermath');
-    await expect.poll(() => briefState(page)).toMatchObject({event:'aftermath', photoVisible:false, report:null});
+    await expect.poll(() => briefState(page)).toMatchObject({event:'aftermath', photoVisible:true, photoUrl:expect.stringMatching(/\/location\/deck\.jpg$/), report:null});
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.errors).toEqual([]);

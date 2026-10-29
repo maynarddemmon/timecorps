@@ -20,6 +20,7 @@
 	"events":{
 		// Hidden until known, with a precondition for the chain and actions to set it.
 		"plan":{
+			"image":"../location/office.jpg",
 			"name":"Plan",
 			"start":"1900-01-01T09:00:00",
 			"duration":{"h":2},
@@ -75,6 +76,7 @@
 		},
 		
 		"supply":{
+			"image":"../location/office.jpg",
 			"name":"Supply",
 			"start":"1900-01-01T12:00:00",
 			"duration":{"h":1},
@@ -95,6 +97,7 @@
 		// No hidden expression, so the default reveal rule applies: precursors plan and supply,
 		// and descendant signal.
 		"relay":{
+			"image":"../location/tower.jpg",
 			"name":"Relay",
 			"start":"1900-01-01T14:00:00",
 			"duration":{"h":2},
@@ -114,6 +117,7 @@
 		
 		// Overrides part of the default investigate check.
 		"signal":{
+			"image":"../location/tower.jpg",
 			"name":"Signal",
 			"start":"1900-01-01T16:30:00",
 			"duration":{"m":1},
@@ -136,6 +140,7 @@
 		
 		// Actions with adjustments from the data.
 		"lever":{
+			"image":"../location/deck.jpg",
 			"name":"Lever",
 			"start":"1900-01-01T16:20:00",
 			"duration":{"m":10},
@@ -179,7 +184,7 @@
 			"duration":{"m":1},
 			"location":"deck",
 			// Has an Event Brief photo and report, which other Events don't.
-			"image":true, "brief":true,
+			"brief":true,
 			"actions":{
 				"_investigate":{"skillCheck":{"difficulty":150}}
 			},
@@ -202,6 +207,7 @@
 		
 		// Has a hidden expression of its own, and reveals Charlie.
 		"boats":{
+			"image":"../location/yard.jpg",
 			"name":"Boats",
 			"start":"1899-12-30T09:00:00",
 			"duration":{"h":3},
@@ -222,6 +228,7 @@
 		
 		// A no-roll investigation, whose amount can't use the margin, and exits with adjustments.
 		"aftermath":{
+			"image":"../location/deck.jpg",
 			"name":"Aftermath",
 			"start":"1900-01-01T19:00:00",
 			"duration":{"h":1},
@@ -266,6 +273,7 @@
 		
 		// Twelve hours, so Rest is offered, with an exit that has no adjustments.
 		"warnings":{
+			"image":"../location/radio.jpg",
 			"name":"Warnings",
 			"start":"1899-12-31T20:00:00",
 			"duration":{"h":12},
@@ -277,6 +285,7 @@
 		},
 		
 		"backlog":{
+			"image":"../location/radio.jpg",
 			"name":"Message Backlog",
 			"start":"1900-01-01T09:00:00",
 			"duration":{"h":1, "m":50},
@@ -303,6 +312,7 @@
 		},
 		
 		"finale":{
+			"image":"../location/port.jpg",
 			"name":"Finale",
 			"start":"1900-01-02T08:00:00",
 			"duration":{"h":39},

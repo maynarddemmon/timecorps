@@ -62,6 +62,7 @@
 	
 	"events":{
 		"the_void":{
+			"image":"origin.jpg",
 			"name":"⦰ The Void",
 			"hub":true,
 			"start":"0000-01-01T00:00:00",
@@ -71,6 +72,7 @@
 			"actions":{"_investigate":null}
 		},
 		"time_corps_hq":{
+			"image":"origin.jpg",
 			"name":"❉ Time Corps Headquarters",
 			"hub":true,
 			"start":"2174-10-14T00:00:00",
