@@ -171,3 +171,28 @@ test('clicking the current mission opens its brief, and deselecting it leaves no
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('a completed mission\'s row is drawn dark, like an agent the player doesn\'t control', async ({page}) => {
+    const problems = await startGame(page);
+    await showTab(page, 'Missions');
+    
+    // Each row's background and text color, by mission.
+    const readRowColors = () => page.evaluate(() => {
+            const listView = tc.app.getMissionsView().gridWrapper.getGrid().getListView();
+            return Object.fromEntries(listView.getSubviews().filter(row => row.model && row.visible).map(row => [row.model.id, [row.bgColor, row.textColor ?? null]]));
+        }),
+        {colorUltraDark, colorMedLight} = await page.evaluate(() => tc.theme);
+    
+    await completeFirst(page);
+    await page.getByRole('button', {name:/Close$/}).filter({visible:true}).click();
+    
+    // Selecting second leaves first unselected: dark, and second, available, isn't.
+    await grid(page).getByText('Second Mission', {exact:true}).click();
+    await page.mouse.move(0, 0);
+    const rowColors = await readRowColors();
+    expect(rowColors.first).toEqual([colorUltraDark, colorMedLight]);
+    expect(rowColors.second).not.toEqual([colorUltraDark, colorMedLight]);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

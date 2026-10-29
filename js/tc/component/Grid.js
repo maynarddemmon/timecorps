@@ -4,14 +4,14 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, NOOP} = M,
+        {View, NOOP, FALSE_FUNC} = M,
         
         {
             Btn,
             theme:{
                 rowHeight,
                 colorBtn, colorUltraLight, colorExtraLight, colorLight, colorMedLight, colorMedium,
-                colorDark, colorUltraDark, colorMegaDark
+                colorDark, colorDarkMedium, colorUltraDark, colorMegaDark
             },
             cfg:{STANDARD_DEBOUNCE_MILLIS}
         } = pkg,
@@ -129,15 +129,26 @@
             if (!this.disabled) this.doDoubleClick();
         },
         
-        supportsDoubleClick: M.FALSE_FUNC, // () => {return <boolean>}
+        supportsDoubleClick: FALSE_FUNC, // () => {return <boolean>}
         
         doDoubleClick: NOOP,
         
+        /*  Whether the row is drawn dark, for a model that's out of play, e.g. an agent the
+            player doesn't control or a completed mission. Only called with a model. */
+        isDark: FALSE_FUNC, // () => {return <boolean>}
+        
         updateUI: function() {
-            this.callSuper();
-            const textColor = this.selected ? colorUltraLight : null;
-            this.setTextColor(textColor);
-            for (const sv of this.getSubviews()) {
+            const self = this,
+                isDark = self.model != null && self.isDark();
+            self.activeColor = isDark ? colorDarkMedium : colorMedLight;
+            self.hoverColor = isDark ? colorDark : colorExtraLight;
+            self.readyColor = isDark ? colorUltraDark : colorLight;
+            
+            self.callSuper();
+            
+            const textColor = self.selected ? colorUltraLight : null;
+            self.setTextColor(textColor ?? (isDark ? colorMedLight : null));
+            for (const sv of self.getSubviews()) {
                 if (sv.isA(GridCellBtn)) {
                     sv.setTextColor(textColor);
                     // Work around undesirable behavior in View.setTextColor
@@ -152,6 +163,9 @@
             
             self.detachFromDom(self, '__DblClk', 'dblclick');
             if (self.supportsDoubleClick()) self.attachToDom(self, '__DblClk', 'dblclick');
+            
+            // Whether it's dark can change with the model.
+            self.updateUI();
         }
     });
     

@@ -32,6 +32,9 @@
         MissionRow = new JSClass('MissionRow', pkg.SelectableGridRow, {
             getColIds: () => ['name', 'state', 'progress'],
             
+            /** @overrides SelectableGridRow */
+            isDark: function() {return this.model.getState() === OPERATION_STATE_COMPLETED;},
+            
             /*  Activating the selected mission opens its Mission Brief. */
             doActivated: function() {
                 if (this.selected) {

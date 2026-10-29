@@ -10,11 +10,7 @@
         {
             GridColHdr, GridCellBtn, SimpleAgentGridMarker,
             timeUtil:{format},
-            theme:{
-                padding, btnHeight,
-                colorLight, colorExtraLight, colorUltraLight, colorMedLight,
-                colorDark, colorDarkMedium, colorUltraDark
-            },
+            theme:{padding, btnHeight},
             SCOPE_AGENTS,
             ICON_NAV_FORWARD, I18N_CHRONAL, I18N_PARADOX, I18N_HEALTH,
             STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_HEALTH
@@ -46,10 +42,6 @@
                 } else {
                     this.callSuper();
                 }
-            },
-            notifyModelUpdated: function() {
-                this.callSuper();
-                this.updateUI();
             },
             notifyCellUpdated: function(colId) {
                 let eventExistsTxtFunc;
@@ -124,22 +116,8 @@
                 }
             },
             
-            /** @overrides */
-            updateUI: function() {
-                const self = this,
-                    model = self.model;
-                if (model) {
-                    const isPlayerControlled = model.isPlayerControlled();
-                    
-                    self.activeColor = isPlayerControlled ? colorMedLight : colorDarkMedium;
-                    self.hoverColor = isPlayerControlled ? colorExtraLight : colorDark;
-                    self.readyColor = isPlayerControlled ? colorLight : colorUltraDark;
-                    
-                    self.callSuper();
-                    
-                    if (!self.selected && !isPlayerControlled) self.setTextColor(colorMedLight);
-                }
-            },
+            /** @overrides SelectableGridRow */
+            isDark: function() {return !this.model.isPlayerControlled();}
         });
     
     pkg.Agents = new JSClass('Agents', pkg.TallView, {
