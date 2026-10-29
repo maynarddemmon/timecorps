@@ -152,9 +152,8 @@
 	
 	"events":{
 		"lifeboat_capacity":{
-			"name":"Davit Capacity Settled",
-			"start":"1912-03-01T10:00:00",
-			"duration":{"h":3},
+			"name":"Davit Capacity Settled", "image":"../location/southampton_harland_wolff.jpg",
+			"start":"1912-03-01T10:00:00", "duration":{"h":3},
 			"location":"southampton_harland_wolff",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 25",
@@ -206,9 +205,8 @@
 			]
 		},
 		"roster_reshuffle":{
-			"name":"Roster Reshuffle",
-			"start":"1912-04-09T11:00:00",
-			"duration":{"h":2},
+			"name":"Roster Reshuffle", "image":"../location/southampton_quay_berth_44.jpg",
+			"start":"1912-04-09T11:00:00", "duration":{"h":2},
 			"location":"southampton_quay_berth_44",
 			"actions":{
 				"prevent":{
@@ -281,9 +279,8 @@
 			]
 		},
 		"titanic_departs":{
-			"name":"Boarding & Departure",
-			"start":"1912-04-10T09:30:00",
-			"duration":{"h":2,"m":30},
+			"name":"Boarding & Departure", "image":"../location/titanic.jpg",
+			"start":"1912-04-10T09:30:00", "duration":{"h":2,"m":30},
 			"location":"titanic",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.roster_reshuffle.attestation.value < 5 && events.lifeboat_capacity.attestation.value < 5",
 			"exits":[
@@ -304,9 +301,8 @@
 			]
 		},
 		"ice_warnings":{
-			"name":"Ice Warnings Received",
-			"start":"1912-04-14T09:00:00",
-			"duration":{"h":12},
+			"name":"Ice Warnings Received", "image":"../location/titanic_wireless.jpg",
+			"start":"1912-04-14T09:00:00", "duration":{"h":12},
 			"location":"titanic_wireless",
 			"actions":{
 				"relay":{
@@ -356,9 +352,8 @@
 			]
 		},
 		"purser_spare":{
-			"name":"The Purser’s Spare",
-			"start":"1912-04-14T20:00:00",
-			"duration":{"h":1},
+			"name":"The Purser’s Spare", "image":"../location/titanic_pursers.jpg",
+			"start":"1912-04-14T20:00:00", "duration":{"h":1},
 			"location":"titanic_pursers",
 			"actions":{
 				"recover":{
@@ -412,9 +407,8 @@
 			]
 		},
 		"wireless_priority":{
-			"name":"Marconi Traffic Backlog",
-			"start":"1912-04-14T21:40:00",
-			"duration":{"h":1,"m":50},
+			"name":"Marconi Traffic Backlog", "image":"../location/titanic_wireless.jpg",
+			"start":"1912-04-14T21:40:00", "duration":{"h":1,"m":50},
 			"location":"titanic_wireless",
 			"paradox":5,
 			"actions":{
@@ -469,9 +463,8 @@
 			]
 		},
 		"missing_binoculars":{
-			"name":"Missing Binoculars",
-			"start":"1912-04-14T21:00:00",
-			"duration":{"h":2,"m":39},
+			"name":"Missing Binoculars", "image":"../location/titanic_nest.jpg",
+			"start":"1912-04-14T21:00:00", "duration":{"h":2,"m":39},
 			"location":"titanic_nest",
 			"actions":{
 				"plant":{
@@ -537,9 +530,8 @@
 			]
 		},
 		"engine_order":{
-			"name":"Full Astern",
-			"start":"1912-04-14T23:30:00",
-			"duration":{"m":10},
+			"name":"Full Astern", "image":"../location/titanic_engine.jpg",
+			"start":"1912-04-14T23:30:00", "duration":{"m":10},
 			"location":"titanic_engine",
 			"actions":{
 				"countermand":{
@@ -577,9 +569,8 @@
 			]
 		},
 		"lookout_sights_berg":{
-			"name":"Berg Sighted",
-			"start":"1912-04-14T23:39:00",
-			"duration":{"m":1},
+			"name":"Berg Sighted", "image":"../location/titanic_nest.jpg",
+			"start":"1912-04-14T23:39:00", "duration":{"m":1},
 			"location":"titanic_nest",
 			"actions":{"_investigate":{"skillCheck":{"check":"2*agent.skills.investigation"}}},
 			"exits":[
@@ -602,9 +593,8 @@
 			]
 		},
 		"collision":{
-			"name":"The Collision",
-			"start":"1912-04-14T23:40:00",
-			"duration":{"m":1},
+			"name":"The Collision", "image":"../location/titanic_bridge.jpg",
+			"start":"1912-04-14T23:40:00", "duration":{"m":1},
 			"location":"titanic_bridge",
 			"actions":{"_investigate":{"skillCheck":{"difficulty":150}}},
 			"exits":[
@@ -634,9 +624,8 @@
 			]
 		},
 		"californian_nearby":{
-			"name":"The Californian Stands By",
-			"start":"1912-04-15T00:10:00",
-			"duration":{"h":1},
+			"name":"The Californian Stands By", "image":"../location/atlantic_californian.jpg",
+			"start":"1912-04-15T00:10:00", "duration":{"h":1},
 			"location":"atlantic_californian",
 			"values":{
 				"rescueResponds":{
@@ -656,9 +645,8 @@
 			]
 		},
 		"casualties":{
-			"name":"Loss of Life",
-			"start":"1912-04-15T02:20:00",
-			"duration":{"h":1},
+			"name":"Loss of Life", "image":"../location/titanic_boatdeck.jpg",
+			"start":"1912-04-15T02:20:00", "duration":{"h":1},
 			"location":"titanic_boatdeck",
 			"actions":{
 				"_investigate":{
@@ -675,14 +663,12 @@
 					"mode":"wait",
 					"to":"arrival_new_york",
 					"hidden":"events.collision.values.struck.value"
-				},
-				{
+				},{
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || !event.values.massLossOfLife.value",
 					"adj":{"agent.health":{"difficulty":500, "check":"agent.skills.str", "onFailure":"-150", "onSuccess":"-d(4,2)"}}
-				},
-				{
+				},{
 					"mode":"lifeboat",
 					"to":"arrival_new_york",
 					"hidden":"!events.collision.values.struck.value || event.values.massLossOfLife.value",
@@ -717,9 +703,8 @@
 			]
 		},
 		"arrival_new_york":{
-			"name":"Arrival in NY",
-			"start":"1912-04-17T07:00:00",
-			"duration":{"d":1,"h":15},
+			"name":"Arrival in NY", "image":"../location/new_york_pier_54.jpg",
+			"start":"1912-04-17T07:00:00", "duration":{"d":1,"h":15},
 			"location":"new_york_pier_54",
 			"values":{
 				"arrivingShip":{

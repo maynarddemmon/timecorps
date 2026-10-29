@@ -52,9 +52,8 @@
 		// the investor at 25 and the Commission's vote at 35. The fixed observations alone
 		// reach 35, so the mission can't be lost to bad rolls.
 		"lgv_announcement":{
-			"name":"The Announcement",
-			"start":"2087-11-12T02:00:00",
-			"duration":{"h":2},
+			"name":"The Announcement", "image":"../location/lgv_expo.jpg",
+			"start":"2087-11-12T02:00:00", "duration":{"h":2},
 			"location":"lgv_expo",
 			"hidden":"!events.safehouse_room.values.heard.value",
 			"actionLimit":1,
@@ -147,9 +146,8 @@
 		// The precursors. Each is revealed by attesting the announcement, and holds the literal
 		// Value the announcement's own Values follow. Nothing changes them in this mission.
 		"lgv_backer":{
-			"name":"The Private Investor",
-			"start":"2087-02-17T07:00:00",
-			"duration":{"h":2},
+			"name":"The Private Investor", "image":"../location/lgv_lanfang.jpg",
+			"start":"2087-02-17T07:00:00", "duration":{"h":2},
 			"location":"lgv_lanfang",
 			"hidden":"events.lgv_announcement.attestation.value < 25",
 			"values":{
@@ -173,15 +171,13 @@
 						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
 						"agent.skills.deception":{"onBoth":"d(4,2)"}
 					}
-				},
-				{
+				},{
 					"mode":"survive", "to":"lgv_commission", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
 						"agent.skills.persuasion":{"onBoth":"d(4,3)"}
 					}
-				},
-				{
+				},{
 					"mode":"survive", "to":"lgv_announcement", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(8,2)"},
@@ -191,9 +187,8 @@
 			]
 		},
 		"lgv_trial":{
-			"name":"The Trial Results",
-			"start":"2087-06-03T06:00:00",
-			"duration":{"h":3},
+			"name":"The Trial Results", "image":"../location/lgv_institute.jpg",
+			"start":"2087-06-03T06:00:00", "duration":{"h":3},
 			"location":"lgv_institute",
 			"hidden":"events.lgv_announcement.attestation.value < 15",
 			"values":{
@@ -217,8 +212,7 @@
 						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
 						"agent.skills.deception":{"onBoth":"d(4,2)"}
 					}
-				},
-				{
+				},{
 					"mode":"survive", "to":"lgv_announcement", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
@@ -232,9 +226,8 @@
 		// which the fixed observations alone reach. Six votes of eleven decide it, so swaying
 		// any two keeps the treatment secret.
 		"lgv_commission":{
-			"name":"The Closed Session",
-			"start":"2087-09-22T01:00:00",
-			"duration":{"h":4},
+			"name":"The Closed Session", "image":"../location/lgv_commission.jpg",
+			"start":"2087-09-22T01:00:00", "duration":{"h":4},
 			"location":"lgv_commission",
 			"hidden":"events.lgv_announcement.attestation.value < 35",
 			"actionLimit":4,
@@ -295,24 +288,21 @@
 				{"text":"<br><br>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
 				{"text":"<br><br>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
 			],
-			"exits":[
-				{
-					"mode":"survive", "to":"lgv_announcement", 
-					"adj":{
-						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
-						"agent.skills.cha":{"onBoth":"d(4,2)"}
-					}
+			"exits":[{
+				"mode":"survive", "to":"lgv_announcement", 
+				"adj":{
+					"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
+					"agent.skills.cha":{"onBoth":"d(4,2)"}
 				}
-			]
+			}]
 		},
 		
 		// The three commissioners the watcher reached. Each is revealed by researching the vote,
 		// and watching there reveals a way to sway them, and more of the watcher. Waiting leads
 		// on to the later ones, and to the vote, so time travel is only needed to go back.
 		"lgv_hospice":{
-			"name":"The Hospice",
-			"start":"2087-09-03T10:00:00",
-			"duration":{"h":2},
+			"name":"The Hospice", "image":"../location/lgv_hospice.jpg",
+			"start":"2087-09-03T10:00:00", "duration":{"h":2},
 			"location":"lgv_hospice",
 			"hidden":"events.lgv_commission.attestation.value < 10",
 			"actionLimit":6,
@@ -355,9 +345,8 @@
 			]
 		},
 		"lgv_banquet":{
-			"name":"The Banquet",
-			"start":"2087-09-10T11:00:00",
-			"duration":{"h":3},
+			"name":"The Banquet", "image":"../location/lgv_diaoyutai.jpg",
+			"start":"2087-09-10T11:00:00", "duration":{"h":3},
 			"location":"lgv_diaoyutai",
 			"hidden":"events.lgv_commission.attestation.value < 20",
 			"actionLimit":6,
@@ -399,9 +388,8 @@
 			]
 		},
 		"lgv_model":{
-			"name":"The Projection",
-			"start":"2087-09-16T14:00:00",
-			"duration":{"h":2},
+			"name":"The Projection", "image":"../location/lgv_tsinghua.jpg",
+			"start":"2087-09-16T14:00:00", "duration":{"h":2},
 			"location":"lgv_tsinghua",
 			"hidden":"events.lgv_commission.attestation.value < 30",
 			"actionLimit":6,

@@ -938,7 +938,7 @@
 		
 		// Act 3: a safe house, late in the 2080s. Hidden until the device is on your wrist.
 		"safehouse_arrival":{
-			"name":"Elsewhere", "chronoLocked":"true",
+			"name":"Elsewhere", "chronoLocked":"true", "image":"../location/safehouse_corridor.jpg",
 			"start":"2087-03-09T23:41:00", "duration":{"m":10},
 			"location":"safehouse_corridor",
 			"actionLimit":1,
