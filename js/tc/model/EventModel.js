@@ -24,6 +24,7 @@
         getTravelModePhrase = mode => {
             switch (mode) {
                 case 'wait':     return 'Wait til';
+                case 'continue': return 'Continue to';
                 case 'jump':     return 'Jump to';
                 case 'pulled':   return 'Pulled to';
                 case 'enter':    return 'Enter';

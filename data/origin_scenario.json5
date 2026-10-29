@@ -69,58 +69,63 @@
 		},
 		"origin.city_streets":{
 			"title":"", "name":"City Streets",
-			"color":"#0003",
+			"color":"#0004",
 			"order":2
+		},
+		"origin_bikeshop":{
+			"title":"", "name":"Bike Shop",
+			"color":"#0005",
+			"order":3
 		},
 		"origin.hospital":{
 			"title":"", "name":"St. Brendan’s Hospital",
 			"color":"#0006",
-			"order":3
+			"order":4
 		},
 		"origin.newsroom":{
 			"title":"", "name":"The Ledger Newsroom",
 			"color":"#0006",
-			"order":4
+			"order":5
 		},
 		"origin.garage":{
 			"title":"", "name":"Delgado’s Garage",
 			"color":"#0006",
-			"order":5
+			"order":6
 		},
 		"origin.theater":{
 			"title":"", "name":"The Orpheum Theater",
 			"color":"#0006",
-			"order":6
+			"order":7
 		},
 		"origin.street":{
 			"title":"", "name":"Halsey Street",
 			"color":"#6006",
-			"order":7
+			"order":8
 		},
 		"origin_street_alley":{
 			"title":"", "name":"Dark Alley",
 			"color":"#6009",
-			"order":7
+			"order":9
 		},
 		"origin_street_hotel":{
 			"title":"", "name":"Hotel",
 			"color":"#6009",
-			"order":8
+			"order":10
 		},
 		"origin_street_anchor":{
 			"title":"", "name":"The Anchor Bar",
 			"color":"#6009",
-			"order":9
+			"order":11
 		},
 		"safehouse.corridor":{
 			"name":"Corridor",
 			"color":"#000c",
-			"order":10
+			"order":12
 		},
 		"safehouse.office":{
 			"name":"Office",
 			"color":"#000c",
-			"order":11
+			"order":13
 		}
 	},
 	
@@ -256,33 +261,120 @@
 			"start":"2026-11-13T08:15:00",
 			"duration":{"m":15},
 			"location":"origin.home",
-			"actionLimit":0,
-			"actions":{"_investigate":null, "_rest":null},
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"repair":{
+					"label":"Repair Your Bike",
+					"skillCheck":{"actionType":"dex", "difficulty":350},
+					"set":{"bike_broken":{"onSuccess":"false"}},
+					"adj":{"agent.skills.dex":{"onSuccess":"d(4,5)"}}
+				}
+			},
+			"values":{
+				"bike_broken":{
+					"name":"Bike Broken",
+					"value":"true",
+					"description":[
+						{"text":"The chain on your bicycle is broken. You’ve got the tools to fix it but it’ll take a moment.", "hidden":"!event.values.bike_broken.value"},
+						{"text":"Your bike works fine now, the chain has been repaired.", "hidden":"event.values.bike_broken.value"}
+					]
+				}
+			},
 			"exits":[
 				{
+					"mode":"walk", "toHidden":true, "to":"origin_bikeRepair",
+					"hidden":"!(event.values.bike_broken.value && event.actions.repair.attemptCount === 1)",
+					"set":{"events.origin_bikeRepair.attestation":"1"}
+				},{
 					"mode":"bike", "toHidden":true, "to":"origin_hospital",
+					"hidden":"event.values.bike_broken.value",
 					"set":{"events.origin_hospital.attestation":"1"},
 					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
 					"costs":{"agent.health":"3"}
 				},{
 					"mode":"bike", "toHidden":true, "to":"origin_newsroom",
+					"hidden":"event.values.bike_broken.value",
 					"set":{"events.origin_newsroom.attestation":"1"},
 					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
 					"costs":{"agent.health":"3"}
 				},{
 					"mode":"bike", "toHidden":true, "to":"origin_garage",
+					"hidden":"event.values.bike_broken.value",
 					"set":{"events.origin_garage.attestation":"1"},
 					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
 					"costs":{"agent.health":"3"}
 				},{
 					"mode":"bike", "toHidden":true, "to":"origin_theater",
+					"hidden":"event.values.bike_broken.value",
 					"set":{"events.origin_theater.attestation":"1"},
 					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
 					"costs":{"agent.health":"3"}
 				}
 			],
 			"description":[
-				"Back in your apartment, you grab your bike. You’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it."
+				"Back in your apartment, you grab your bike. You’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it.",
+				{"text":"<br><br>You’ve repaired the chain. Better head out so you’re not late to work.", "hidden":"event.values.bike_broken.value"}
+			]
+		},
+		
+		"origin_bikeRepair":{
+			"name":"Bike Repair", "chronoLocked":"true", "image":true,
+			"start":"2026-11-13T09:00:00", "duration":{"h":2},
+			"location":"origin_bikeshop",
+			"actionLimit":0,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"repair":{
+					"label":"Get Your Bike Fixed",
+					"hidden":"event.actions.repair.attemptCount === 1",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{"bike_broken":{"onSuccess":"false"}},
+					"costs":{"agent.action":null}
+				}
+			},
+			"values":{
+				"bike_broken":{
+					"name":"Bike Broken",
+					"value":"true",
+					"description":[
+						{"text":"The bike mechanic can easily fix your chain once they’re free.", "hidden":"!event.values.bike_broken.value"},
+						{"text":"Your bike works great now, the chain has been repaired.", "hidden":"event.values.bike_broken.value"}
+					]
+				}
+			},
+			"exits":[
+				{
+					"mode":"bike", "toHidden":true, "to":"origin_hospital_2",
+					"hidden":"event.values.bike_broken.value",
+					"set":{"events.origin_hospital_2.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"2"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_newsroom_2",
+					"hidden":"event.values.bike_broken.value",
+					"set":{"events.origin_newsroom_2.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"2"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_garage_2",
+					"hidden":"event.values.bike_broken.value",
+					"set":{"events.origin_garage_2.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"2"}
+				},{
+					"mode":"bike", "toHidden":true, "to":"origin_theater_2",
+					"hidden":"event.values.bike_broken.value",
+					"set":{"events.origin_theater_2.attestation":"1"},
+					"adj":{"agent.skills.str":{"onBoth":"d(3)"}},
+					"costs":{"agent.health":"2"}
+				}
+			],
+			"description":[
+				"You walk your bike to the local bike shop. The mechanic can fix it but there’s a bit of a wait.",
+				{"text":"<br><br>Your bike works great now. Better get going since you’re already late for work.", "hidden":"event.values.bike_broken.value"}
 			]
 		},
 		
@@ -364,10 +456,9 @@
 		
 		"origin_hospital":{
 			"name":"A Grueling Shift", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T09:00:00",
-			"duration":{"h":8},
+			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin.hospital",
-			"actionLimit":2,
+			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -381,27 +472,47 @@
 						"agent.skills.deception":{"onSuccess":"-10"}
 					},
 					"available":"!scratch.backstory_work_chosen"
-				},
+				}
+			},
+			"exits":[
+				{
+					"mode":"continue", "toHidden":true, "to":"origin_hospital_2",
+					"hidden":"event.actions.work.attemptCount === 0",
+					"set":{"events.origin_hospital_2.attestation":"1"}
+				}
+			],
+			"description":[
+				"You’re a nurse on the geriatric ward at St. Brendan’s: quick hands, a strong back and no patience at all for being lied to.",
+				"<br><br>Eight hours of bedpans, medication rounds and small emergencies."
+			]
+		},
+		
+		"origin_hospital_2":{
+			"name":"Silver Alert", "chronoLocked":"true", "image":true,
+			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"location":"origin.hospital",
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
 				"track":{
 					"label":"Track Down the Wanderer",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'track'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'track'"},
 					"adj":{
 						"agent.skills.investigation":{"onSuccess":"10"},
 						"agent.skills.agl":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				},
 				"calm":{
 					"label":"Calm the Ward",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'calm'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'calm'"},
 					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				}
 			},
@@ -424,17 +535,17 @@
 				}
 			},
 			"description":[
-				"You’re a nurse on the geriatric ward at St. Brendan’s: quick hands, a strong back and no patience at all for being lied to.",
-				"<br><br>Eight hours of bedpans, medication rounds and small emergencies."
+				"The second half of your shift is extra stressful with Mr. Abernathy going missing.",
+				{"text":"<br><br>You found Mr. Abernathy on the roof, another disaster averted.", "hidden":"event.values.choice.value !== 'track'"},
+				{"text":"<br><br>Your calm demeanor prevents the ward from descending into chaos.", "hidden":"event.values.choice.value !== 'calm'"}
 			]
 		},
 		
 		"origin_newsroom":{
 			"name":"Deadline", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T09:00:00",
-			"duration":{"h":8},
+			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin.newsroom",
-			"actionLimit":2,
+			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -448,27 +559,48 @@
 						"agent.skills.str":{"onSuccess":"-10"}
 					},
 					"available":"!scratch.backstory_work_chosen"
-				},
+				}
+			},
+			"exits":[
+				{
+					"mode":"continue", "toHidden":true, "to":"origin_newsroom_2",
+					"hidden":"event.actions.work.attemptCount === 0",
+					"set":{"events.origin_newsroom_2.attestation":"1"}
+				}
+			],
+			"description":[
+				"You’re a reporter at the Ledger, one of the last papers in the city still printing on paper: nosy, persistent, and not above a little invention to get someone talking.",
+				"<br><br>The deadline is at five. It is always at five."
+			]
+		},
+		
+		"origin_newsroom_2":{
+			"name":"Chasing The Story", "chronoLocked":"true", "image":"origin_newsroom.jpg",
+			"start":"2026-11-13T13:00:00",
+			"duration":{"h":4},
+			"location":"origin.newsroom",
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
 				"chase":{
 					"label":"Chase the Source",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'chase'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'chase'"},
 					"adj":{
 						"agent.skills.stealth":{"onSuccess":"10"},
 						"agent.skills.deception":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				},
 				"pitch":{
 					"label":"Pitch the Story",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'pitch'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'pitch'"},
 					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				}
 			},
@@ -491,17 +623,17 @@
 				}
 			},
 			"description":[
-				"You’re a reporter at the Ledger, one of the last papers in the city still printing on paper: nosy, persistent, and not above a little invention to get someone talking.",
-				"<br><br>The deadline is at five. It is always at five."
+				"You spend the second half of your day pursuing a story.",
+				{"text":"<br><br>You followed the councilman’s aide to the parking garage and got the story.", "hidden":"event.values.choice.value !== 'chase'"},
+				{"text":"You convince your editor that your story is worth being on the front page.", "hidden":"event.values.choice.value !== 'pitch'"}
 			]
 		},
 		
 		"origin_garage":{
 			"name":"Under the Hood", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T09:00:00",
-			"duration":{"h":8},
+			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin.garage",
-			"actionLimit":2,
+			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -515,27 +647,47 @@
 						"agent.skills.cha":{"onSuccess":"-10"}
 					},
 					"available":"!scratch.backstory_work_chosen"
-				},
+				}
+			},
+			"exits":[
+				{
+					"mode":"continue", "toHidden":true, "to":"origin_garage_2",
+					"hidden":"event.actions.work.attemptCount === 0",
+					"set":{"events.origin_garage_2.attestation":"1"}
+				}
+			],
+			"description":[
+				"You’re a mechanic at Delgado’s Garage: strong hands, good ears and not much to say to the customers.",
+				"<br><br>The radio is on, the coffee is burnt, and there’s a car on every lift."
+			]
+		},
+		
+		"origin_garage_2":{
+			"name":"The Mustang", "chronoLocked":"true", "image":"origin_garage.jpg",
+			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"location":"origin.garage",
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
 				"fix":{
 					"label":"Fix the Impossible Engine",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'fix'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'fix'"},
 					"adj":{
 						"agent.skills.dex":{"onSuccess":"10"},
 						"agent.skills.investigation":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				},
 				"haggle":{
 					"label":"Haggle with the Customer",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'haggle'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'haggle'"},
 					"adj":{
 						"agent.skills.persuasion":{"onSuccess":"10"},
 						"agent.skills.deception":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				}
 			},
@@ -558,17 +710,17 @@
 				}
 			},
 			"description":[
-				"You’re a mechanic at Delgado’s Garage: strong hands, good ears and not much to say to the customers.",
-				"<br><br>The radio is on, the coffee is burnt, and there’s a car on every lift."
+				"The second half of your workday is more challenging than usual.",
+				{"text":"<br><br>You fix the Mustang, finding the cracked bolt no one else would have noticed.", "hidden":"event.values.choice.value !== 'fix'"},
+				{"text":"<br><br>You convince the Mustang’s owner to rebuild the engine.", "hidden":"event.values.choice.value !== 'haggle'"}
 			]
 		},
 		
 		"origin_theater":{
 			"name":"The Matinee", "chronoLocked":"true", "image":true,
-			"start":"2026-11-13T09:00:00",
-			"duration":{"h":8},
+			"start":"2026-11-13T09:00:00", "duration":{"h":4},
 			"location":"origin.theater",
-			"actionLimit":2,
+			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
 				"_rest":null,
@@ -582,27 +734,47 @@
 						"agent.skills.investigation":{"onSuccess":"-10"}
 					},
 					"available":"!scratch.backstory_work_chosen"
-				},
+				}
+			},
+			"exits":[
+				{
+					"mode":"continue", "toHidden":true, "to":"origin_theater_2",
+					"hidden":"event.actions.work.attemptCount === 0",
+					"set":{"events.origin_theater_2.attestation":"1"}
+				}
+			],
+			"description":[
+				"You work at the Orpheum, an understudy who also does whatever needs doing backstage: a different face for every part, and not much interest in the details of anything else.",
+				"<br><br>Two shows today, and the first is at two."
+			]
+		},
+		
+		"origin_theater_2":{
+			"name":"The Matinee", "chronoLocked":"true", "image":"origin_theater.jpg",
+			"start":"2026-11-13T13:00:00", "duration":{"h":4},
+			"location":"origin.theater",
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
 				"cover":{
 					"label":"Cover for the Lead",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'cover'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'cover'"},
 					"adj":{
 						"agent.skills.disguise":{"onSuccess":"10"},
 						"agent.skills.cha":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				},
 				"rig":{
 					"label":"Rig the Flying Harness",
 					"skillCheck":{"difficulty":"no-roll"},
-					"set":{"choice":"'rig'"},
+					"set":{"scratch.backstory_work_chosen":"true", "choice":"'rig'"},
 					"adj":{
 						"agent.skills.agl":{"onSuccess":"10"},
 						"agent.skills.dex":{"onSuccess":"5"}
 					},
-					"hidden":"!scratch.backstory_work_chosen",
 					"available":"event.values.choice.value === ''"
 				}
 			},
@@ -625,8 +797,9 @@
 				}
 			},
 			"description":[
-				"You work at the Orpheum, an understudy who also does whatever needs doing backstage: a different face for every part, and not much interest in the details of anything else.",
-				"<br><br>Two shows today, and the first is at two."
+				"The latter half of your day presents a unique opportunity.",
+				{"text":"<br><br>You perform the lead role flawlessly.", "hidden":"event.values.choice.value !== 'cover'"},
+				{"text":"<br><br>You heroically free the jammed rig saving the pivotal scene of the show.", "hidden":"event.values.choice.value !== 'rig'"}
 			]
 		},
 		
