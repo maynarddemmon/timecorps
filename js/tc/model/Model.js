@@ -463,7 +463,9 @@
             if (isPlainObject(scratchCfg)) {
                 for (const name in scratchCfg) {
                     const value = scratchCfg[name];
-                    if (!isScratchValue(value)) {
+                    if (!pkg.checkId('Scratch entry', name)) {
+                        // Warned about.
+                    } else if (!isScratchValue(value)) {
                         console.warn('Scratch entry', name, 'must start as a number, a boolean or a string (ignoring it):', value);
                     } else if (!scratchNames.has(name) && name in model[SCOPE_SCRATCH]) {
                         console.warn('Scratch entry name', name, 'is already in use (ignoring it)');
@@ -489,6 +491,7 @@
                 if (data) {
                     const modelCol = model[dataKey];
                     for (const id in data) {
+                        if (!pkg.checkId(dataKey, id)) continue;
                         if (modelCol.getById(id)) console.warn('Duplicate', dataKey, 'id:', id, '(merging onto existing)');
                         
                         const datum = data[id];

@@ -36,7 +36,7 @@ The files load in this order: `init.json5`, the scenarios it lists, `agents.json
 
 **Format.** The files are [JSON5](https://json5.org): JSON plus `//` and `/* */` comments and trailing commas. Keep keys quoted and strings in double quotes, so the files stay plain JSON apart from the comments (the data tests check this). Use comments to record *why* a number is what it is.
 
-**IDs.** Events, locations, agents, operations, values, actions and objectives are all keyed by ID. IDs are what expressions and other data refer to, so make them short, stable and code-like: `lifeboat_capacity`, `fullDavits`, `VQ`. Names are what the player sees.
+**IDs.** Events, locations, agents, operations, factions, prompts, scratch entries, values, actions, objectives and skills are all keyed by ID. IDs are what expressions and other data refer to, so make them short, stable and code-like: `lifeboat_capacity`, `fullDavits`, `VQ`. An ID must be letters, digits and `_`, not starting with a digit, since an expression names it with dots, e.g. `events.lifeboat_capacity.values.fullDavits`. Anything with another ID is skipped, with a warning, and data.spec checks them. Names are what the player sees.
 
 ## Expressions
 
@@ -184,7 +184,7 @@ Skills and skill checks can also be added by scenario files. A later file's entr
 	"locationsBaseOrder":0,
 	
 	"locations":{
-		"titanic.bridge":{
+		"titanic_bridge":{
 			"name":"Bridge",
 			"color":"#ccf9",
 			"textColor":"#000",   // Optional.
@@ -209,7 +209,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"name":"The Collision",
 	"start":"1912-04-14T23:40:00",   // UTC. A date alone is fine too: "1912-04-14". Or an offset from another event, see below.
 	"duration":{"m":1},              // Any of "w", "d", "h", "m", "s", "ms".
-	"location":"titanic.bridge",
+	"location":"titanic_bridge",
 	"actionLimit":2,                 // Optional. Actions an agent can take per visit.
 	"hub":false,                     // Optional. See below.
 	"chronoLocked":false,            // Optional. Or an expression. See below.
@@ -241,7 +241,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ]
 ```
 
-- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; or a path from `img/event/` to reuse another picture, e.g. `"image":"../location/origin.street.jpg"`; the event's box in the timeline shows it too; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
+- **Event Brief.** Clicking the Event Details title, or double-clicking an event's box, opens its Event Brief, laid out like the Area Brief: a photo across the top, if the event has one (`"image":true`: `img/event/<id>.jpg`, 512×208 like an area's, since a square one is shown letterboxed; or a path from `img/event/` to reuse another picture, e.g. `"image":"../location/origin_street.jpg"`; the event's box in the timeline shows it too; add `"video":true` for a `.webm` too), then the location, time and stats as Event Details shows them, the visible description as field notes, and a report, if it has one (`"brief":true`: `data/event/<id>.txt`). Both are optional, and data.spec checks the files exist when flagged.
 - <a id="brief-titles"></a>**Brief titles.** A brief's title is `"<title> : <name>"`. The `title` defaults to the event's location for an Event Brief, the agent's role for a dossier, "Area Brief" for a location and "Mission Brief" for a mission, and any of them can give its own `"title"`, e.g. `"title":"Breaking News"`.
 - **`hideAffectedBy`.** Hides the timeline link from a precursor while an expression is true, e.g. so a connection isn't given away before it's discovered: `{"embassy_warning":"event.attestation.value < 25"}`.
 

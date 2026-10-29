@@ -165,6 +165,9 @@
         init: function(attrs) {
             const self = this;
             
+            // First, since the data adds it last, and warnings about the other attrs name it.
+            self.id = attrs.id;
+            
             self.objectives = {};
             self.hidden = true;
             self.revealed = false;
@@ -228,6 +231,7 @@
         // Objectives
         setObjectives: function(objectives) {
             for (const id in objectives) {
+                if (!pkg.checkId('Operation ' + this.id + ' objective', id)) continue;
                 const datum = objectives[id];
                 datum.id = id;
                 datum.operation = this;

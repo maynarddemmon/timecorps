@@ -1526,7 +1526,9 @@
             },
             addAction: function(id, actionDatum, clone=true) {
                 const actions = this.actions;
-                if (actions[id] == null) {
+                if (!pkg.checkId('Event ' + this.id + ' action', id)) {
+                    // Warned about.
+                } else if (actions[id] == null) {
                     if (clone) actionDatum = structuredClone(actionDatum);
                     actionDatum.id = id;
                     actionDatum.event = this;
@@ -1540,6 +1542,7 @@
             // Values
             setValues: function(values) {
                 for (const id in values) {
+                    if (!pkg.checkId('Event ' + this.id + ' value', id)) continue;
                     const datum = values[id];
                     datum.id = id;
                     datum.event = this;

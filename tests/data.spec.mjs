@@ -631,6 +631,24 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
+    test('every ID is letters, digits and _, not starting with a digit, so expressions can name it', () => {
+        const ID = /^[A-Za-z_][A-Za-z0-9_]*$/,
+            problems = [],
+            checkIds = (where, obj) => {
+                for (const id of Object.keys(obj ?? {})) if (!ID.test(id)) problems.push(where + ' ' + id);
+            };
+        for (const json of [...scenarios, agentsJson, operationsJson]) {
+            for (const key of ['locations', 'events', 'agents', 'operations', 'factions', 'prompts', 'scratch']) checkIds(key, json[key]);
+            for (const [eventId, event] of Object.entries(json.events ?? {})) {
+                checkIds('events.' + eventId + '.values', event.values);
+                checkIds('events.' + eventId + '.actions', event.actions);
+            }
+            for (const [operationId, operation] of Object.entries(json.operations ?? {})) checkIds('operations.' + operationId + '.objectives', operation.objectives);
+            for (const [agentId, agent] of Object.entries(json.agents ?? {})) checkIds('agents.' + agentId + '.skills', agent.skills);
+        }
+        expect(problems).toEqual([]);
+    });
+    
     test('every start that\'s an offset names an event loaded before it, with an offset in duration units', () => {
         const problems = [],
             loaded = new Set();

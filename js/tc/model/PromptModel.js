@@ -167,7 +167,7 @@
         warning starting with where, if it isn't one. Prompts can be in data loaded later, so
         whether the ID names a prompt is only known when it's opened. */
     pkg.isLikeAnID = (where, id) => {
-        if (id === undefined || (typeof id === 'string' && id.trim() !== '')) return id;
+        if (id === undefined || pkg.isValidId(id)) return id;
         console.warn(where, 'must be like an ID (ignoring it):', id);
     };
     

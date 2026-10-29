@@ -500,6 +500,19 @@
             
             isPlainObject: value => value !== null && typeof value === 'object' && !Array.isArray(value),
             
+            // IDs //
+            /*  Whether the ID is letters, digits and _, not starting with a digit, so an 
+                expression can name it, e.g. events.<id>. */
+            isValidId: id => typeof id === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(id),
+            
+            /*  Whether the ID is valid, warning, starting with where, if it isn't. What has it 
+                is skipped. */
+            checkId: (where, id) => {
+                if (TC.isValidId(id)) return true;
+                console.warn(where, 'id must be letters, digits and _, not starting with a digit (skipping it):', id);
+                return false;
+            },
+            
             // Formatting //
             wrapInStyledSpan,
             stripMarkup: str => str ? DOM_PARSER.parseFromString(str, 'text/html').body.textContent || '' : ''

@@ -231,6 +231,9 @@
         init: function(attrs) {
             const self = this;
             
+            // First, since the data adds it last, and warnings about the other attrs name it.
+            self.id = attrs.id;
+            
             self.log = [];
             self[SCOPE_SKILLS] = {};
             
@@ -519,7 +522,9 @@
             const clean = {};
             for (const skillId in skills) {
                 const v = skills[skillId];
-                if (typeof v === 'number') {
+                if (!pkg.checkId('Agent ' + this.id + ' skill', skillId)) {
+                    // Warned about.
+                } else if (typeof v === 'number') {
                     clean[skillId] = v;
                 } else {
                     console.warn('Agent', this.id, 'skill', skillId, 'not numeric. IGNORING:', v);

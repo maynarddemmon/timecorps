@@ -1,7 +1,7 @@
 {
 	"locationsBaseOrder":200,
 	"locations":{
-		"new_york.pier_54":{
+		"new_york_pier_54":{
 			"name":"Pier 54",
 			"color":"#3303",
 			"order":1,
@@ -21,7 +21,7 @@
 				}
 			]
 		},
-		"london.westminster":{
+		"london_westminster":{
 			"name":"Westminster",
 			"color":"#3306",
 			"order":2,
@@ -35,7 +35,7 @@
 				}
 			]
 		},
-		"london.admiralty":{
+		"london_admiralty":{
 			"name":"The Admiralty",
 			"color":"#3306",
 			"order":3,
@@ -69,7 +69,7 @@
 				}
 			]
 		},
-		"lusitania.boilers":{
+		"lusitania_boilers":{
 			"name":"Boiler room No. 4",
 			"color":"#0339",
 			"order":4.1,
@@ -83,7 +83,7 @@
 				}
 			]
 		},
-		"lusitania.holds":{
+		"lusitania_holds":{
 			"name":"Forward hold",
 			"color":"#0339",
 			"order":4.2,
@@ -97,7 +97,7 @@
 				}
 			]
 		},
-		"lusitania.bridge":{
+		"lusitania_bridge":{
 			"name":"Bridge",
 			"color":"#0339",
 			"order":4.3,
@@ -111,7 +111,7 @@
 				}
 			]
 		},
-		"lusitania.wireless":{
+		"lusitania_wireless":{
 			"name":"Wireless room",
 			"color":"#0339",
 			"order":4.4,
@@ -125,7 +125,7 @@
 				}
 			]
 		},
-		"lusitania.boatdeck":{
+		"lusitania_boatdeck":{
 			"name":"Boat deck",
 			"color":"#0339",
 			"order":4.5,
@@ -139,7 +139,7 @@
 				}
 			]
 		},
-		"atlantic.u20":{
+		"atlantic_u20":{
 			"name":"U-20",
 			"color":"#0339",
 			"order":5,
@@ -153,7 +153,7 @@
 				}
 			]
 		},
-		"atlantic.kinsale":{
+		"atlantic_kinsale":{
 			"name":"Old Head of Kinsale",
 			"color":"#0339",
 			"order":6,
@@ -188,7 +188,7 @@
 			"name":"Boats For All Signed",
 			"start":"1914-01-20T10:00:00",
 			"duration":{"h":6},
-			"location":"london.westminster",
+			"location":"london_westminster",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lifeboats_fail.attestation.value < 25",
 			"actions":{
@@ -230,7 +230,7 @@
 			"name":"The Supplementary Manifest",
 			"start":"1915-04-30T14:00:00",
 			"duration":{"h":5},
-			"location":"new_york.pier_54",
+			"location":"new_york_pier_54",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.second_explosion.attestation.value < 15",
 			"actions":{
 				"offload":{
@@ -262,7 +262,7 @@
 			"name":"The Embassy Notice",
 			"start":"1915-05-01T08:00:00",
 			"duration":{"h":4},
-			"location":"new_york.pier_54",
+			"location":"new_york_pier_54",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.new_york_departure.attestation.value < 10",
 			"actions":{
 				"publish":{
@@ -295,7 +295,7 @@
 			"name":"She Clears Pier 54",
 			"start":"1915-05-01T12:20:00",
 			"duration":{"h":2},
-			"location":"new_york.pier_54",
+			"location":"new_york_pier_54",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.munitions_manifest.attestation.value < 5 && events.solas_davits.attestation.value < 5",
 			"actions":{
 				"hold":{
@@ -342,7 +342,7 @@
 			"name":"The Cold Boiler Room",
 			"start":"1915-05-05T09:00:00",
 			"duration":{"h":8},
-			"location":"lusitania.boilers",
+			"location":"lusitania_boilers",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.four_point_bearing.attestation.value < 25",
 			"actions":{
 				"relight":{
@@ -383,7 +383,7 @@
 			"name":"Submarines Active Off The Coast",
 			"start":"1915-05-06T19:50:00",
 			"duration":{"h":16},
-			"location":"london.admiralty",
+			"location":"london_admiralty",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.four_point_bearing.attestation.value < 15",
 			"actions":{
@@ -438,7 +438,7 @@
 			"name":"U-20 Lines Up The Shot",
 			"start":"1915-05-07T13:50:00",
 			"duration":{"m":20},
-			"location":"atlantic.u20",
+			"location":"atlantic_u20",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 25",
 			"exits":[
 				{"mode":"walk", "to":"torpedo_strike"}
@@ -469,7 +469,7 @@
 			"name":"The Four-Point Bearing",
 			"start":"1915-05-07T13:40:00",
 			"duration":{"m":10},
-			"location":"lusitania.bridge",
+			"location":"lusitania_bridge",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.torpedo_strike.attestation.value < 15",
 			"actions":{
@@ -525,7 +525,7 @@
 			"name":"One Torpedo, Starboard Bow",
 			"start":"1915-05-07T14:10:00",
 			"duration":{"m":1},
-			"location":"atlantic.kinsale",
+			"location":"atlantic_kinsale",
 			"exits":[
 				{"mode":"walk", "to":"second_explosion"},
 				{"mode":"walk", "to":"lusitania_sinks", "hidden":"event.attestation.value < 20"}
@@ -553,7 +553,7 @@
 			"name":"The Second Explosion",
 			"start":"1915-05-07T14:11:00",
 			"duration":{"m":1},
-			"location":"lusitania.holds",
+			"location":"lusitania_holds",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lifeboats_fail.attestation.value < 15",
 			"exits":[
 				{"mode":"walk", "to":"lifeboats_fail"},
@@ -584,7 +584,7 @@
 			"name":"The Set Loses Its Power",
 			"start":"1915-05-07T14:12:00",
 			"duration":{"m":10},
-			"location":"lusitania.wireless",
+			"location":"lusitania_wireless",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.rescue_delayed.attestation.value < 25",
 			"actions":{
 				"rigPower":{
@@ -625,7 +625,7 @@
 			"name":"Forty-Eight Boats, Six Launched",
 			"start":"1915-05-07T14:12:00",
 			"duration":{"m":16},
-			"location":"lusitania.boatdeck",
+			"location":"lusitania_boatdeck",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lusitania_sinks.attestation.value < 15",
 			"actions":{
 				"trim":{
@@ -671,7 +671,7 @@
 			"name":"Eighteen Minutes",
 			"start":"1915-05-07T14:28:00",
 			"duration":{"m":1},
-			"location":"atlantic.kinsale",
+			"location":"atlantic_kinsale",
 			"exits":[
 				{"mode":"walk", "to":"rescue_delayed"},
 				{"mode":"walk", "to":"mersey_inquiry", "hidden":"event.attestation.value < 40"}
@@ -785,7 +785,7 @@
 			"name":"Lord Mersey Sits Again",
 			"start":"1915-06-15T10:00:00",
 			"duration":{"d":3},
-			"location":"london.westminster",
+			"location":"london_westminster",
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.lusitania_sinks.attestation.value < 40",
 			"actions":{
 				"evidence":{

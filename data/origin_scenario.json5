@@ -62,12 +62,12 @@
 	},
 	
 	"locations":{
-		"origin.home":{
+		"origin_home":{
 			"title":"", "name":"Your Apartment",
 			"color":"#0003",
 			"order":1
 		},
-		"origin.city_streets":{
+		"origin_city_streets":{
 			"title":"", "name":"City Streets",
 			"color":"#0004",
 			"order":2
@@ -77,27 +77,27 @@
 			"color":"#0005",
 			"order":3
 		},
-		"origin.hospital":{
+		"origin_hospital":{
 			"title":"", "name":"St. Brendan’s Hospital",
 			"color":"#0006",
 			"order":4
 		},
-		"origin.newsroom":{
+		"origin_newsroom":{
 			"title":"", "name":"The Ledger Newsroom",
 			"color":"#0006",
 			"order":5
 		},
-		"origin.garage":{
+		"origin_garage":{
 			"title":"", "name":"Delgado’s Garage",
 			"color":"#0006",
 			"order":6
 		},
-		"origin.theater":{
+		"origin_theater":{
 			"title":"", "name":"The Orpheum Theater",
 			"color":"#0006",
 			"order":7
 		},
-		"origin.street":{
+		"origin_street":{
 			"title":"", "name":"Halsey Street",
 			"color":"#6006",
 			"order":8
@@ -117,12 +117,12 @@
 			"color":"#6009",
 			"order":11
 		},
-		"safehouse.corridor":{
+		"safehouse_corridor":{
 			"name":"Corridor",
 			"color":"#000c",
 			"order":12
 		},
-		"safehouse.office":{
+		"safehouse_office":{
 			"name":"Office",
 			"color":"#000c",
 			"order":13
@@ -142,7 +142,7 @@
 		"origin_alarm":{
 			"name":"The Alarm", "chronoLocked":"true", "image":true,
 			"start":"2026-11-13T07:00:00", "duration":{"h":1},
-			"location":"origin.home",
+			"location":"origin_home",
 			"hidden":"false",
 			"actionLimit":2,
 			"actions":{
@@ -214,7 +214,7 @@
 		"origin_bus_stop":{
 			"name":"The Bus Stop", "chronoLocked":"true", "image":true,
 			"start":{"endOf":"origin_alarm", "m":3}, "duration":{"m":5},
-			"location":"origin.city_streets",
+			"location":"origin_city_streets",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -252,9 +252,9 @@
 		},
 		
 		"origin_back_home":{
-			"name":"Your Apartment", "title":"", "chronoLocked":"true", "image":"../location/origin.home.jpg",
+			"name":"Your Apartment", "title":"", "chronoLocked":"true", "image":"../location/origin_home.jpg",
 			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":15},
-			"location":"origin.home",
+			"location":"origin_home",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -375,7 +375,7 @@
 		"origin_busride":{
 			"name":"The Bus", "chronoLocked":"true", "image":true,
 			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":40},
-			"location":"origin.city_streets",
+			"location":"origin_city_streets",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -447,7 +447,7 @@
 		"origin_hospital":{
 			"name":"A Grueling Shift", "chronoLocked":"true", "image":true,
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
-			"location":"origin.hospital",
+			"location":"origin_hospital",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -478,7 +478,7 @@
 		"origin_hospital_2":{
 			"name":"Silver Alert", "chronoLocked":"true", "image":true,
 			"start":{"endOf":"origin_hospital"}, "duration":{"h":4},
-			"location":"origin.hospital",
+			"location":"origin_hospital",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -530,7 +530,7 @@
 		"origin_newsroom":{
 			"name":"Deadline", "chronoLocked":"true", "image":true,
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
-			"location":"origin.newsroom",
+			"location":"origin_newsroom",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -561,7 +561,7 @@
 		"origin_newsroom_2":{
 			"name":"Chasing The Story", "chronoLocked":"true", "image":true,
 			"start":{"endOf":"origin_newsroom"}, "duration":{"h":4},
-			"location":"origin.newsroom",
+			"location":"origin_newsroom",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -613,7 +613,7 @@
 		"origin_garage":{
 			"name":"Under the Hood", "chronoLocked":"true", "image":true,
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
-			"location":"origin.garage",
+			"location":"origin_garage",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -644,7 +644,7 @@
 		"origin_garage_2":{
 			"name":"The Mustang", "chronoLocked":"true", "image":"origin_garage.jpg",
 			"start":{"endOf":"origin_garage"}, "duration":{"h":4},
-			"location":"origin.garage",
+			"location":"origin_garage",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -696,7 +696,7 @@
 		"origin_theater":{
 			"name":"The Matinee", "chronoLocked":"true", "image":true,
 			"start":"2026-11-13T09:00:00", "duration":{"h":4},
-			"location":"origin.theater",
+			"location":"origin_theater",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -727,7 +727,7 @@
 		"origin_theater_2":{
 			"name":"The Matinee", "chronoLocked":"true", "image":"origin_theater.jpg",
 			"start":{"endOf":"origin_theater"}, "duration":{"h":4},
-			"location":"origin.theater",
+			"location":"origin_theater",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -777,9 +777,9 @@
 		},
 		
 		"origin_walk_home":{
-			"name":"The Long Way Home", "chronoLocked":"true", "image":"../location/origin.street.jpg",
+			"name":"The Long Way Home", "chronoLocked":"true", "image":"../location/origin_street.jpg",
 			"start":"2026-11-13T17:20:00", "duration":{"m":15},
-			"location":"origin.street",
+			"location":"origin_street",
 			"actionLimit":0,
 			"actions":{"_investigate":null,"_rest":null},
 			"exits":[
@@ -840,7 +840,7 @@
 		"origin_stranger":{
 			"name":"The Stranger", "chronoLocked":"true",
 			"start":"2026-11-13T17:52:00", "duration":{"m":3},
-			"location":"origin.street",
+			"location":"origin_street",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -890,7 +890,7 @@
 		"origin_masked":{
 			"name":"The Masked Figure", "chronoLocked":"true",
 			"start":"2026-11-13T17:55:00", "duration":{"m":1},
-			"location":"origin.street",
+			"location":"origin_street",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -940,7 +940,7 @@
 		"safehouse_arrival":{
 			"name":"Elsewhere", "chronoLocked":"true",
 			"start":"2087-03-09T23:41:00", "duration":{"m":10},
-			"location":"safehouse.corridor",
+			"location":"safehouse_corridor",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,
@@ -976,7 +976,7 @@
 		"safehouse_fight":{
 			"name":"The Fight", "chronoLocked":"true",
 			"start":"2087-03-09T23:51:00", "duration":{"m":2},
-			"location":"safehouse.office",
+			"location":"safehouse_office",
 			"actionLimit":1,
 			"actions":{
 				"_rest":null,
@@ -1002,7 +1002,7 @@
 		"safehouse_room":{
 			"name":"The Empty Room",
 			"start":"2087-03-09T23:54:00", "duration":{"h":1},
-			"location":"safehouse.office",
+			"location":"safehouse_office",
 			"actionLimit":3,
 			"actions":{
 				"_rest":null,

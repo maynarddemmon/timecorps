@@ -10,7 +10,7 @@
 	},
 	
 	"locations":{
-		"southampton.harland_wolff":{
+		"southampton_harland_wolff":{
 			"name":"Harland & Wolff",
 			"color":"#0363",
 			"order":1,
@@ -24,7 +24,7 @@
 				}
 			]
 		},
-		"southampton.quay.berth_44":{
+		"southampton_quay_berth_44":{
 			"name":"Berth 44",
 			"color":"#0363",
 			"order":1.1,
@@ -43,7 +43,7 @@
 			"color":"#0366",
 			"order":1.2
 		},
-		"titanic.pursers":{
+		"titanic_pursers":{
 			"name":"Purser’s office",
 			"color":"#0366",
 			"order":2.1,
@@ -57,7 +57,7 @@
 				}
 			]
 		},
-		"titanic.nest":{
+		"titanic_nest":{
 			"name":"Crow’s nest",
 			"color":"#0366",
 			"order":2.2,
@@ -71,7 +71,7 @@
 				}
 			]
 		},
-		"titanic.engine":{
+		"titanic_engine":{
 			"name":"Engine room",
 			"color":"#0366",
 			"order":2.3,
@@ -85,7 +85,7 @@
 				}
 			]
 		},
-		"titanic.bridge":{
+		"titanic_bridge":{
 			"name":"Bridge",
 			"color":"#0366",
 			"order":2.4,
@@ -99,7 +99,7 @@
 				}
 			]
 		},
-		"titanic.wireless":{
+		"titanic_wireless":{
 			"name":"Wireless room",
 			"color":"#0366",
 			"order":2.5,
@@ -119,7 +119,7 @@
 				}
 			]
 		},
-		"titanic.boatdeck":{
+		"titanic_boatdeck":{
 			"name":"Boat deck",
 			"video":true,
 			"color":"#0366",
@@ -134,7 +134,7 @@
 				}
 			]
 		},
-		"atlantic.californian":{
+		"atlantic_californian":{
 			"name":"SS Californian",
 			"color":"#0369",
 			"order":3,
@@ -155,7 +155,7 @@
 			"name":"Davit Capacity Settled",
 			"start":"1912-03-01T10:00:00",
 			"duration":{"h":3},
-			"location":"southampton.harland_wolff",
+			"location":"southampton_harland_wolff",
 			"actionLimit":2,
 			"hidden":"event.attestation.value === 0 && event.historicity.value === 0 && events.casualties.attestation.value < 25",
 			"actions":{
@@ -209,7 +209,7 @@
 			"name":"Roster Reshuffle",
 			"start":"1912-04-09T11:00:00",
 			"duration":{"h":2},
-			"location":"southampton.quay.berth_44",
+			"location":"southampton_quay_berth_44",
 			"actions":{
 				"prevent":{
 					"label":"Prevent Reshuffle",
@@ -307,7 +307,7 @@
 			"name":"Ice Warnings Received",
 			"start":"1912-04-14T09:00:00",
 			"duration":{"h":12},
-			"location":"titanic.wireless",
+			"location":"titanic_wireless",
 			"actions":{
 				"relay":{
 					"label":"Relay to Bridge",
@@ -359,7 +359,7 @@
 			"name":"The Purser’s Spare",
 			"start":"1912-04-14T20:00:00",
 			"duration":{"h":1},
-			"location":"titanic.pursers",
+			"location":"titanic_pursers",
 			"actions":{
 				"recover":{
 					"label":"Spare Recovered",
@@ -415,7 +415,7 @@
 			"name":"Marconi Traffic Backlog",
 			"start":"1912-04-14T21:40:00",
 			"duration":{"h":1,"m":50},
-			"location":"titanic.wireless",
+			"location":"titanic_wireless",
 			"paradox":5,
 			"actions":{
 				"clear":{
@@ -472,7 +472,7 @@
 			"name":"Missing Binoculars",
 			"start":"1912-04-14T21:00:00",
 			"duration":{"h":2,"m":39},
-			"location":"titanic.nest",
+			"location":"titanic_nest",
 			"actions":{
 				"plant":{
 					"label":"Plant Key",
@@ -540,7 +540,7 @@
 			"name":"Full Astern",
 			"start":"1912-04-14T23:30:00",
 			"duration":{"m":10},
-			"location":"titanic.engine",
+			"location":"titanic_engine",
 			"actions":{
 				"countermand":{
 					"label":"Countermand Astern",
@@ -580,7 +580,7 @@
 			"name":"Berg Sighted",
 			"start":"1912-04-14T23:39:00",
 			"duration":{"m":1},
-			"location":"titanic.nest",
+			"location":"titanic_nest",
 			"actions":{"_investigate":{"skillCheck":{"check":"2*agent.skills.investigation"}}},
 			"exits":[
 				{"mode":"walk", "to":"casualties"}
@@ -605,7 +605,7 @@
 			"name":"The Collision",
 			"start":"1912-04-14T23:40:00",
 			"duration":{"m":1},
-			"location":"titanic.bridge",
+			"location":"titanic_bridge",
 			"actions":{"_investigate":{"skillCheck":{"difficulty":150}}},
 			"exits":[
 				{"mode":"walk", "to":"casualties"},
@@ -637,7 +637,7 @@
 			"name":"The Californian Stands By",
 			"start":"1912-04-15T00:10:00",
 			"duration":{"h":1},
-			"location":"atlantic.californian",
+			"location":"atlantic_californian",
 			"values":{
 				"rescueResponds":{
 					"name":"Californian Responds",
@@ -659,7 +659,7 @@
 			"name":"Loss of Life",
 			"start":"1912-04-15T02:20:00",
 			"duration":{"h":1},
-			"location":"titanic.boatdeck",
+			"location":"titanic_boatdeck",
 			"actions":{
 				"_investigate":{
 					"skillCheck":{"difficulty":"no-roll"},
@@ -720,7 +720,7 @@
 			"name":"Arrival in NY",
 			"start":"1912-04-17T07:00:00",
 			"duration":{"d":1,"h":15},
-			"location":"new_york.pier_54",
+			"location":"new_york_pier_54",
 			"values":{
 				"arrivingShip":{
 					"name":"Ship Arriving",

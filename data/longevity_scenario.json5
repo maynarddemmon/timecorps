@@ -9,37 +9,37 @@
 	"locationsBaseOrder":50,
 
 	"locations":{
-		"lgv.expo":{
+		"lgv_expo":{
 			"name":"Shanghai Expo Centre",
 			"color":"#0093",
 			"order":1
 		},
-		"lgv.institute":{
+		"lgv_institute":{
 			"name":"Zhangjiang Longevity Institute",
 			"color":"#0076",
 			"order":2
 		},
-		"lgv.lanfang":{
+		"lgv_lanfang":{
 			"name":"Lanfang Tower",
 			"color":"#0076",
 			"order":3
 		},
-		"lgv.commission":{
+		"lgv_commission":{
 			"name":"National Health Commission",
 			"color":"#0076",
 			"order":4
 		},
-		"lgv.hospice":{
+		"lgv_hospice":{
 			"name":"Tiantan Hospice",
 			"color":"#0059",
 			"order":5
 		},
-		"lgv.diaoyutai":{
+		"lgv_diaoyutai":{
 			"name":"Diaoyutai State Guesthouse",
 			"color":"#0059",
 			"order":6
 		},
-		"lgv.tsinghua":{
+		"lgv_tsinghua":{
 			"name":"Tsinghua University",
 			"color":"#0059",
 			"order":7
@@ -55,7 +55,7 @@
 			"name":"The Announcement",
 			"start":"2087-11-12T02:00:00",
 			"duration":{"h":2},
-			"location":"lgv.expo",
+			"location":"lgv_expo",
 			"hidden":"!events.safehouse_room.values.heard.value",
 			"actionLimit":1,
 			"actions":{
@@ -150,7 +150,7 @@
 			"name":"The Private Investor",
 			"start":"2087-02-17T07:00:00",
 			"duration":{"h":2},
-			"location":"lgv.lanfang",
+			"location":"lgv_lanfang",
 			"hidden":"events.lgv_announcement.attestation.value < 25",
 			"values":{
 				"exclusiveLicense":{
@@ -194,7 +194,7 @@
 			"name":"The Trial Results",
 			"start":"2087-06-03T06:00:00",
 			"duration":{"h":3},
-			"location":"lgv.institute",
+			"location":"lgv_institute",
 			"hidden":"events.lgv_announcement.attestation.value < 15",
 			"values":{
 				"reversal":{
@@ -235,7 +235,7 @@
 			"name":"The Closed Session",
 			"start":"2087-09-22T01:00:00",
 			"duration":{"h":4},
-			"location":"lgv.commission",
+			"location":"lgv_commission",
 			"hidden":"events.lgv_announcement.attestation.value < 35",
 			"actionLimit":4,
 			"actions":{
@@ -313,7 +313,7 @@
 			"name":"The Hospice",
 			"start":"2087-09-03T10:00:00",
 			"duration":{"h":2},
-			"location":"lgv.hospice",
+			"location":"lgv_hospice",
 			"hidden":"events.lgv_commission.attestation.value < 10",
 			"actionLimit":6,
 			"actions":{
@@ -358,7 +358,7 @@
 			"name":"The Banquet",
 			"start":"2087-09-10T11:00:00",
 			"duration":{"h":3},
-			"location":"lgv.diaoyutai",
+			"location":"lgv_diaoyutai",
 			"hidden":"events.lgv_commission.attestation.value < 20",
 			"actionLimit":6,
 			"actions":{
@@ -402,7 +402,7 @@
 			"name":"The Projection",
 			"start":"2087-09-16T14:00:00",
 			"duration":{"h":2},
-			"location":"lgv.tsinghua",
+			"location":"lgv_tsinghua",
 			"hidden":"events.lgv_commission.attestation.value < 30",
 			"actionLimit":6,
 			"actions":{
