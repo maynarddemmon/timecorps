@@ -343,7 +343,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 ]
 ```
 
-- **`mode`**: `wait`, `walk`, `take`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled`, `lifeboat` or `survive`, which give "Wait til", "Walk to", "Take", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to", "Lifeboat to" and "Survive to". `take` suits an event named for a route, e.g. "Take The Long Way Home". Anything else gives "To".
+- **`mode`**: `wait`, `continue`, `walk`, `take`, `swim`, `bike`, `enter`, `board`, `jump`, `pulled`, `lifeboat` or `survive`, which give "Wait til", "Continue to", "Walk to", "Take", "Swim to", "Bike to", "Enter", "Board", "Jump to", "Pulled to", "Lifeboat to" and "Survive to". `take` suits an event named for a route, e.g. "Take The Long Way Home". Anything else gives "To".
 - **`to`**: the event it leads to. An exit to a hidden event isn't offered, unless it's `toHidden`.
 - **`toHidden`**: `true` to offer the exit even while the event it leads to is hidden. The button names the event, but it stays off the timeline until it's revealed, so the player can choose one of several hidden places and only the one they choose appears. Reveal it with the exit's `set`, e.g. by raising its attestation, which reveals an event without a `hidden` of its own, or by changing what its own `hidden` reads:
   
