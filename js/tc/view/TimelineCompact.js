@@ -430,34 +430,41 @@
             thicker. */
         updateVisitedStatusForSelectedAgent = debounce(timeline => {
             const {selectedAgentModel, boxesByEventId, flowLayer} = timeline,
+                isPlayerControlled = !!selectedAgentModel?.isPlayerControlled(),
                 history = selectedAgentModel?.getVisitHistory() ?? [],
                 eventsVisited = new Set(settings.get(SETTING_SHOW_VISITED_BORDERS) ? history.map(visit => visit.event) : []);
+            
+            // Show visited for player controlled Agents only
             for (const eventId in boxesByEventId) {
                 const eventBox = boxesByEventId[eventId];
-                eventBox.setVisited(eventsVisited.has(eventBox.model));
+                eventBox.setVisited(isPlayerControlled && eventsVisited.has(eventBox.model));
             }
             
-            // Drawn afresh each time, since a revisit moves where later arrows meet a box.
+            // Clear them away before drawing again.
             for (const splineId of timeline._visitSplineIds ?? []) flowLayer.disconnect(splineId);
-            const visitSplineIds = timeline._visitSplineIds = [],
-                visitCounts = new Map();
-            let prev = null;
-            for (const {event:eventModel, isTimeTravel} of settings.get(SETTING_SHOW_AGENT_HISTORY) ? history : []) {
-                const visitIdx = visitCounts.get(eventModel) ?? 0,
-                    box = boxesByEventId[eventModel.id],
-                    cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
-                visitCounts.set(eventModel, visitIdx + 1);
-                if (prev && cur && cur.box.model.isNotHub() && prev.box.model.isNotHub()) {
-                    const splineId = SPLINE_ID_PREFIX_VISIT + visitSplineIds.length;
-                    flowLayer.connect({
-                        splineId,
-                        start:{view:prev.box, side:'right', position:prev.position},
-                        end:  {view:cur.box,  side:'left',  position:cur.position},
-                        style:prev.box.selected || cur.box.selected ? (isTimeTravel ? SELECTED_VISIT_STYLE_TIME_TRAVEL : SELECTED_VISIT_STYLE) : (isTimeTravel ? VISIT_STYLE_TIME_TRAVEL : VISIT_STYLE)
-                    });
-                    visitSplineIds.push(splineId);
+            
+            // Drawn afresh each time, since a revisit moves where later arrows meet a box.
+            if (isPlayerControlled) {
+                const visitSplineIds = timeline._visitSplineIds = [],
+                    visitCounts = new Map();
+                let prev = null;
+                for (const {event:eventModel, isTimeTravel} of settings.get(SETTING_SHOW_AGENT_HISTORY) ? history : []) {
+                    const visitIdx = visitCounts.get(eventModel) ?? 0,
+                        box = boxesByEventId[eventModel.id],
+                        cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
+                    visitCounts.set(eventModel, visitIdx + 1);
+                    if (prev && cur && cur.box.model.isNotHub() && prev.box.model.isNotHub()) {
+                        const splineId = SPLINE_ID_PREFIX_VISIT + visitSplineIds.length;
+                        flowLayer.connect({
+                            splineId,
+                            start:{view:prev.box, side:'right', position:prev.position},
+                            end:  {view:cur.box,  side:'left',  position:cur.position},
+                            style:prev.box.selected || cur.box.selected ? (isTimeTravel ? SELECTED_VISIT_STYLE_TIME_TRAVEL : SELECTED_VISIT_STYLE) : (isTimeTravel ? VISIT_STYLE_TIME_TRAVEL : VISIT_STYLE)
+                        });
+                        visitSplineIds.push(splineId);
+                    }
+                    prev = cur;
                 }
-                prev = cur;
             }
         }, 2*STANDARD_DEBOUNCE_MILLIS),
         
