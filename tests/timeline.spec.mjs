@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame, setCausator, reloadGame, dialogTitle, showTab} from './helpers.mjs';
+import {startGame, setCausator, reloadGame, dialogTitle, showTab, readTestData} from './helpers.mjs';
 
 /*  A causal chain of Events, which are hidden at the start of the campaign. */
 const CHAIN = ['plan', 'relay', 'signal'],
@@ -192,5 +192,36 @@ test('the Mission Complete dialog still opens while the agents tab is showing', 
     await setCausator(page, 'plan', 'prepared', true);
     await setCausator(page, 'lever', 'pulled', true);
     await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent\'s visit history says which visits were by time travel', async ({page}) => {
+    // Aftermath's exit to the finale becomes a jump, a time travel exit.
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.aftermath.exits.find(exit => exit.mode === 'wait').mode = 'jump';
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await setCausator(page, 'origin', 'struck', true);
+    
+    expect(await page.evaluate(() => {
+        const m = tc.model,
+            alpha = m.getAgentModel('AL'),
+            exitTo = (eventId, toId) => m.getEventModel(eventId).getExitModels().find(exit => exit.to === toId);
+        alpha.doFollowExit(exitTo('origin', 'aftermath'));
+        alpha.doFollowExit(exitTo('aftermath', 'finale'));
+        alpha.doRecallToHQ();
+        alpha.doDeployToEvent(m.getEventModel('origin'));
+        return alpha.getVisitHistory().map(({event, isTimeTravel}) => [event.id, isTimeTravel]);
+    })).toEqual([
+        ['origin', false],      // Where Alpha starts.
+        ['aftermath', false],   // A walk.
+        ['finale', true],       // A jump.
+        ['time_corps_hq', true],
+        ['origin', true]
+    ]);
+    
+    expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

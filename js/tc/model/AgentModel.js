@@ -130,16 +130,20 @@
             return retval;
         },
         
-        /*  The Event a log entry put the agent in, or undefined for one that didn't, e.g. an
-            action. */
-        getEnteredEventModel = entry => {
+        /*  The visit a log entry was, as {event, isTimeTravel}, or undefined for one that put
+            the agent in no Event, e.g. an action. Deploying and recalling are time travel, as
+            is an exit that is, e.g. "jump". Where an agent starts isn't. */
+        getVisit = entry => {
             switch (entry.type) {
-                case LOG_TYPE_EXIT: return entry.exit.getToEventModel();
+                case LOG_TYPE_EXIT: return {event:entry.exit.getToEventModel(), isTimeTravel:entry.exit.isTimeTravel()};
                 case LOG_TYPE_DEPLOY:
-                case LOG_TYPE_RECALL:
-                case LOG_TYPE_ORIGIN: return entry.event;
+                case LOG_TYPE_RECALL: return {event:entry.event, isTimeTravel:true};
+                case LOG_TYPE_ORIGIN: return {event:entry.event, isTimeTravel:false};
             }
         },
+        
+        /*  The Event a log entry put the agent in, or undefined for one that didn't. */
+        getEnteredEventModel = entry => getVisit(entry)?.event,
         
         /*  What the next purchase of an Agent's skill gets and costs: {points, credits}. One 
             credit for one point. Kept on its own so the pricing can be tuned. */
@@ -1039,10 +1043,11 @@
             return this.getLog().filter(entry => getEnteredEventModel(entry) === eventModel).length;
         },
         
-        /*  The Events the Agent has entered, in the order they entered them, with an Event 
-            entered again listed again. */
+        /*  The Agent's visits to Events, in the order they made them, as {event, isTimeTravel},
+            where isTimeTravel is whether they arrived by time travel. An Event entered again is
+            listed again. */
         getVisitHistory: function() {
-            return this.getLog().map(getEnteredEventModel).filter(eventModel => eventModel != null);
+            return this.getLog().map(getVisit).filter(visit => visit?.event != null);
         }
     });
 })(tc);

@@ -88,7 +88,11 @@
         },
         // Thicker to or from the selected Event, as its causator splines are, so the way in and
         // out can be followed through a busy history.
-        SELECTED_VISIT_STYLE = {...VISIT_STYLE, thickness:3},
+        SELECTED_VISIT_THICKNESS = 3,
+        SELECTED_VISIT_STYLE = {...VISIT_STYLE, thickness:SELECTED_VISIT_THICKNESS},
+        // Visit styles for time travel are dashed.
+        VISIT_STYLE_TIME_TRAVEL = {...VISIT_STYLE, dash:[BOX_VISITED_LINE_THICKNESS,BOX_VISITED_LINE_THICKNESS]},
+        SELECTED_VISIT_STYLE_TIME_TRAVEL = {...SELECTED_VISIT_STYLE, dash:[SELECTED_VISIT_THICKNESS,SELECTED_VISIT_THICKNESS]},
         
         // Where a visit's arrows meet its box, as a percent of the box's height from the top:
         // the first visit at 55%, and each later one 5% lower, down to 95%.
@@ -427,7 +431,7 @@
         updateVisitedStatusForSelectedAgent = debounce(timeline => {
             const {selectedAgentModel, boxesByEventId, flowLayer} = timeline,
                 history = selectedAgentModel?.getVisitHistory() ?? [],
-                eventsVisited = settings.get(SETTING_SHOW_VISITED_BORDERS) ? new Set(history) : new Set();
+                eventsVisited = new Set(settings.get(SETTING_SHOW_VISITED_BORDERS) ? history.map(visit => visit.event) : []);
             for (const eventId in boxesByEventId) {
                 const eventBox = boxesByEventId[eventId];
                 eventBox.setVisited(eventsVisited.has(eventBox.model));
@@ -438,7 +442,7 @@
             const visitSplineIds = timeline._visitSplineIds = [],
                 visitCounts = new Map();
             let prev = null;
-            for (const eventModel of settings.get(SETTING_SHOW_AGENT_HISTORY) ? history : []) {
+            for (const {event:eventModel, isTimeTravel} of settings.get(SETTING_SHOW_AGENT_HISTORY) ? history : []) {
                 const visitIdx = visitCounts.get(eventModel) ?? 0,
                     box = boxesByEventId[eventModel.id],
                     cur = box?.visible ? {box, position:getVisitPosition(visitIdx)} : null;
@@ -449,7 +453,7 @@
                         splineId,
                         start:{view:prev.box, side:'right', position:prev.position},
                         end:  {view:cur.box,  side:'left',  position:cur.position},
-                        style:prev.box.selected || cur.box.selected ? SELECTED_VISIT_STYLE : VISIT_STYLE
+                        style:prev.box.selected || cur.box.selected ? (isTimeTravel ? SELECTED_VISIT_STYLE_TIME_TRAVEL : SELECTED_VISIT_STYLE) : (isTimeTravel ? VISIT_STYLE_TIME_TRAVEL : VISIT_STYLE)
                     });
                     visitSplineIds.push(splineId);
                 }
