@@ -142,12 +142,20 @@
 			"name":"⦰ The Void", "hub":true, "chronoLocked":"true",
 			"hidden":"scratch.the_void_hidden",
 			"start":"+100000-01-01T00:00:00", "duration":{"s":0}, "location":"_etherium",
+			"description":[
+				"Where the Etherium puts what it can no longer place. Nothing here has direction: no gradient, no pressure, no difference for light to cross or sound to move through. Space goes on without features and time without a before or after.",
+				"<br><br>The Void does not destroy. It does not consume. It waits. An agent taken by the chronovores is filed as lost, and only provisionally, because nothing that falls here has ended. It has only stopped being different from everything else."
+			],
 			"actions":{"_investigate":null}
 		},
 		"syndicate_hq":{
 			"name":"❉ Syndicate Warehouse", "hub":true,
 			"hidden":"scratch.syndicate_hq_hidden",
 			"start":"2151-04-19T00:00:00", "duration":{"d":30}, "location":"_nexus",
+			"description":[
+				"A freight warehouse on the edge of the Nexus years, 2151, twenty-three years before the Corps’ own. Pallet racks screen a jump array built from stolen and salvaged parts, and the chronal tanks are filled from somewhere off every grid.",
+				"<br><br>There is no duty officer and no Command, only whoever is on shift and whoever is paying. Syndicate operatives rest, train and reload here, and are recalled here when a job goes wrong."
+			],
 			"actionLimit":30,
 			"actions":{
 				"_investigate":null,
@@ -240,6 +248,10 @@
 			"name":"❉ Time Corps Headquarters", "hub":true,
 			"hidden":"scratch.time_corps_hq_hidden",
 			"start":"2174-10-14T00:00:00", "duration":{"d":30}, "location":"_nexus",
+			"description":[
+				"Time Corps Headquarters, at the Nexus, in the Corps’ own year: 2174. Launch halls, the recall array, the archives where every mission’s findings are filed, and the HQ Chronal Pool that every Corps agent draws on.",
+				"<br><br>A duty officer is on watch around the clock, logging each departure twice: once in the Corps’ year, and once in the year the agent is going to. Agents are recalled here to heal, train and reload their chronal before the next jump."
+			],
 			"actionLimit":30,
 			"actions":{
 				"_investigate":null,
