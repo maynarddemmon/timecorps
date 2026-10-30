@@ -477,6 +477,7 @@
 		
 		"origin_hospital_2":{
 			"name":"Silver Alert", "chronoLocked":"true",
+			"imageExpr":"'origin_hospital_2' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_hospital"}, "duration":{"h":4},
 			"location":"origin_hospital",
 			"actionLimit":1,
@@ -560,6 +561,7 @@
 		
 		"origin_newsroom_2":{
 			"name":"Chasing The Story", "chronoLocked":"true",
+			"imageExpr":"'origin_newsroom_2' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_newsroom"}, "duration":{"h":4},
 			"location":"origin_newsroom",
 			"actionLimit":1,
@@ -643,6 +645,7 @@
 		
 		"origin_garage_2":{
 			"name":"The Mustang", "chronoLocked":"true", "image":"origin_garage.jpg",
+			"imageExpr":"'origin_garage_2' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_garage"}, "duration":{"h":4},
 			"location":"origin_garage",
 			"actionLimit":1,
@@ -726,6 +729,7 @@
 		
 		"origin_theater_2":{
 			"name":"The Matinee", "chronoLocked":"true", "image":"origin_theater.jpg",
+			"imageExpr":"'origin_theater_2' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_theater"}, "duration":{"h":4},
 			"location":"origin_theater",
 			"actionLimit":1,
