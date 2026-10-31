@@ -19,6 +19,21 @@
 			"buttons":{
 				"confirm":{"label":"That’s Me"}
 			}
+		},
+		
+		"avatar_photo":{
+			"type":"text",
+			"title":"Your Photo",
+			"description":"You take a quick glance in the mirror to make sure everything is in order before you head out. You don’t think anyone will notice, or care, about that grease stain on your pants. Who do you see staring back at you in the mirror?",
+			"input":{
+				"scratch":"avatar_photo",
+				"maxLength":100,
+				"allowedChars":"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-/",
+				"placeholder":"Path to a picture"
+			},
+			"buttons":{
+				"confirm":{"label":"Looks Great!"}
+			}
 		}
 	},
 	
@@ -35,7 +50,7 @@
 				"set":{
 					"events.origin_alarm.historicity":"5"
 				},
-				"promptEarly":"avatar_name"
+				"promptEarly":["avatar_name", "avatar_photo"]
 			},
 			"objectives":{
 				"answer":{
@@ -127,6 +142,7 @@
 	
 	"scratch":{
 		"avatar_name":"", // Your name, from the avatar_name prompt.
+		"avatar_photo":"ME.jpg", // Your picture's path from img/agent/, from the avatar_photo prompt.
 		"backstory_run":false,
 		"backstory_guitar":false,
 		"backstory_news":false,
