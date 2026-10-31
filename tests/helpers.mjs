@@ -48,11 +48,12 @@ export const TEST_DATA_DIR = 'tests/data',
     
     Requests to other origins (e.g. the Font Awesome CDN used by myt) are answered with an 
     empty response so the tests never depend on the network. */
-/*  Event briefs that open on an agent's first entry are off unless eventBriefs is true, so 
-    they don't get in the way of tests about other things. The player's other settings, and 
-    this one once a test changes it, are left alone. With waitForReady false it returns once 
-    the page is loading, for data the game can't start with. */
-export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBriefs=false, waitForReady=true} = {}) => {
+/*  Event briefs that open on an agent's first entry are off unless eventBriefs is true, and 
+    the timeline's drifting curves are off unless timelineUnrest is true, so they don't get in 
+    the way of tests about other things. The player's other settings, and these once a test 
+    changes them, are left alone. With waitForReady false it returns once the page is 
+    loading, for data the game can't start with. */
+export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBriefs=false, timelineUnrest=false, waitForReady=true} = {}) => {
     const problems = {pageErrors:[], warnings:[], errors:[]};
     page.on('pageerror', err => problems.pageErrors.push(err.message));
     page.on('console', msg => {
@@ -64,18 +65,25 @@ export const startGame = async (page, {skipHelp=true, dismissBrief=true, eventBr
     await page.route(url => url.origin !== BASE_URL, route => route.fulfill({status:200, body:''}));
     await page.addInitScript(overrides => {globalThis.TC_CFG_OVERRIDES = overrides;}, CFG_OVERRIDES);
     
-    if (!eventBriefs) {
-        await page.addInitScript(() => {
+    const settingsOff = [];
+    if (!eventBriefs) settingsOff.push('openEventBriefOnFirstEntry');
+    if (!timelineUnrest) settingsOff.push('animateTimelineUnrest');
+    if (settingsOff.length > 0) {
+        await page.addInitScript(settingsOff => {
             try {
                 const settings = JSON.parse(localStorage.getItem('tc.settings')) ?? {};
-                if (!('openEventBriefOnFirstEntry' in settings)) {
-                    settings.openEventBriefOnFirstEntry = false;
-                    localStorage.setItem('tc.settings', JSON.stringify(settings));
+                let changed = false;
+                for (const id of settingsOff) {
+                    if (!(id in settings)) {
+                        settings[id] = false;
+                        changed = true;
+                    }
                 }
+                if (changed) localStorage.setItem('tc.settings', JSON.stringify(settings));
             } catch {
-                // Ignore. The briefs will just open.
+                // Ignore. They'll just be on.
             }
-        });
+        }, settingsOff);
     }
     
     if (skipHelp) {

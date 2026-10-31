@@ -7,6 +7,7 @@
         SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = 'openEventBriefOnFirstEntry',
         SETTING_SHOW_VISITED_BORDERS = pkg.SETTING_SHOW_VISITED_BORDERS = 'showVisitedBorders',
         SETTING_SHOW_AGENT_HISTORY = pkg.SETTING_SHOW_AGENT_HISTORY = 'showAgentHistory',
+        SETTING_ANIMATE_TIMELINE_UNREST = pkg.SETTING_ANIMATE_TIMELINE_UNREST = 'animateTimelineUnrest',
         
         /*  Every player setting. The SettingsDialog builds its UI from this list, so adding a
             setting here is enough to make it appear there. */
@@ -34,6 +35,12 @@
             defaultValue:true,
             label:'Show agent history',
             description:'Draw arrows on the timeline from Event to Event, in the order the selected agent visited them.'
+        }, {
+            id:SETTING_ANIMATE_TIMELINE_UNREST,
+            type:'boolean',
+            defaultValue:true,
+            label:'Animate timeline instability',
+            description:'Let the timeline’s connections drift, more as paradox builds. They stay still when your system asks for reduced motion.'
         }],
         
         DEFINITIONS_BY_ID = new Map(DEFINITIONS.map(def => [def.id, def])),

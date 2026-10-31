@@ -12,10 +12,12 @@
         
         {
             SquareBtn, Btn, MiniStatBar, settings, SETTING_SHOW_VISITED_BORDERS, SETTING_SHOW_AGENT_HISTORY,
+            SETTING_ANIMATE_TIMELINE_UNREST,
             hashToRange,
             timeUtil:{formatApproxDuration,formatForTimeline},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
+                TL_SPLINE_DRIFT_BASE_DEGREES, TL_SPLINE_DRIFT_MAX_DEGREES,
                 MAX_HISTORY_LENGTH, 
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
@@ -904,6 +906,96 @@
             }
         });
     
+    // Spline Drift //
+    /*  While the timeline shows, the ends of its curves drift a little, as if it were unsteady,
+        and more as paradox builds: in the timeline as a whole, and in either Event a curve 
+        joins, with a flooded Event at its most unsteady. Each end's angle wanders around the 
+        side it leaves, so the curves bend while their ends stay where they meet their boxes. */
+    const SIDE_DEGREES = {right:0, bottom:90, left:180, top:270}, // As myt measures them.
+        DRIFT_FRAME_MILLIS = 33, // About 30 frames a second is smooth enough for a slow drift.
+        TWO_PI = 2*Math.PI,
+        reducedMotionQuery = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)'),
+        
+        /*  How full a stat is, from 0 to 1. */
+        getFullness = statModel => {
+            const max = statModel?.getMax() ?? 0;
+            return max > 0 ? mathMax(0, mathMin(1, statModel.getValue() / max)) : 0;
+        },
+        
+        /*  How unsteady an Event is, from 0 to 1: as full of paradox as it is, or 1 once it's
+            flooded. */
+        getEventUnrest = eventModel => eventModel ? (eventModel.flooded ? 1 : getFullness(eventModel[STAT_ID_PARADOX])) : 0,
+        
+        /*  Two waves at different rates, so the drift doesn't swing like a pendulum. Within 
+            ±1. */
+        getWobble = phase => 0.7*Math.sin(phase) + 0.3*Math.sin(2.3*phase + 1),
+        
+        isDriftWanted = timeline => timeline.visible && timeline.model != null && 
+            settings.get(SETTING_ANIMATE_TIMELINE_UNREST) && !reducedMotionQuery?.matches,
+        
+        /*  Moves each end of every curve on by the time elapsed. Each curve keeps its own phases,
+            so they drift apart, and quickens as it gets more unsteady. */
+        driftSplines = (timeline, elapsedSecs) => {
+            const timelineUnrest = getFullness(timeline.model[STAT_ID_PARADOX]);
+            for (const connection of timeline.flowLayer.getConnections()) {
+                const startDegrees = SIDE_DEGREES[connection.startSide],
+                    endDegrees = SIDE_DEGREES[connection.endSide];
+                if (startDegrees == null || endDegrees == null) continue;
+                
+                const drift = connection._drift ??= {
+                        startPhase:Math.random()*TWO_PI, endPhase:Math.random()*TWO_PI,
+                        startSpeed:0.2 + Math.random()*0.2, endSpeed:0.2 + Math.random()*0.2
+                    },
+                    unrest = mathMax(
+                        timelineUnrest, 
+                        getEventUnrest(connection.startView?.model), 
+                        getEventUnrest(connection.endView?.model)
+                    ),
+                    amplitude = TL_SPLINE_DRIFT_BASE_DEGREES + (TL_SPLINE_DRIFT_MAX_DEGREES - TL_SPLINE_DRIFT_BASE_DEGREES)*unrest,
+                    quicken = 1 + 2*unrest;
+                drift.startPhase += TWO_PI*drift.startSpeed*quicken*elapsedSecs;
+                drift.endPhase += TWO_PI*drift.endSpeed*quicken*elapsedSecs;
+                
+                // Both angles are set before the one redraw, rather than with their setters, 
+                // each of which would redraw.
+                connection.startAngle = startDegrees + amplitude*getWobble(drift.startPhase);
+                connection.endAngle = endDegrees + amplitude*getWobble(drift.endPhase);
+                connection.redraw();
+            }
+            timeline._isDrifting = true;
+        },
+        
+        /*  Puts the ends of every curve back straight out of their sides. */
+        settleSplines = timeline => {
+            for (const connection of timeline.flowLayer.getConnections()) {
+                connection.setStartAngle(SIDE_DEGREES[connection.startSide] ?? null);
+                connection.setEndAngle(SIDE_DEGREES[connection.endSide] ?? null);
+            }
+            timeline._isDrifting = false;
+        },
+        
+        /*  Runs for the life of the timeline. It checks each frame whether the drift is wanted,
+            so a change of tab or setting takes effect at once, and browsers pause it while 
+            the page is hidden. */
+        startDriftLoop = timeline => {
+            let lastTime = null;
+            const tick = now => {
+                if (timeline.isBeingDestroyed) return;
+                if (isDriftWanted(timeline)) {
+                    if (lastTime == null || now - lastTime >= DRIFT_FRAME_MILLIS) {
+                        // A long gap, e.g. after the tab was hidden, moves it on no more than a frame or so.
+                        driftSplines(timeline, lastTime == null ? 0 : mathMin(now - lastTime, 100) / 1000);
+                        lastTime = now;
+                    }
+                } else {
+                    if (timeline._isDrifting) settleSplines(timeline);
+                    lastTime = null;
+                }
+                requestAnimationFrame(tick);
+            };
+            requestAnimationFrame(tick);
+        };
+    
     pkg.TimelineCompact = new JSClass('TimelineCompact', pkg.TallView, {
         include: [M.SelectionManager],
         
@@ -1162,6 +1254,7 @@
             this.model = model;
             this.timelineReady = true;
             updateTimeLineLayoutDebounced(this);
+            startDriftLoop(this);
         },
         
         /*  Turned on once startup, including restoring a save, is done, so only changes the 

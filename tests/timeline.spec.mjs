@@ -225,3 +225,74 @@ test('an agent\'s visit history says which visits were by time travel', async ({
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+/*  The timeline's curves drift: each end's angle wanders around its side, by more as paradox
+    builds, while the ends stay where they meet their boxes. */
+const sampleOriginCurves = (page, millis=800) => page.evaluate(millis => new Promise(resolve => {
+        const timeline = tc.app.getTimelineView(),
+            sideDegrees = {right:0, bottom:90, left:180, top:270},
+            originBox = timeline.getEventBox('origin'),
+            connections = timeline.flowLayer.getConnections().filter(c => c.startView === originBox || c.endView === originBox),
+            points = connections.map(c => [c.startX, c.startY, c.endX, c.endY].join()),
+            // How far an angle is from its side's, in degrees, either way round.
+            deviation = (angle, side) => Math.abs(((angle - sideDegrees[side]) % 360 + 540) % 360 - 180),
+            samples = [];
+        const sample = () => {
+            for (const c of connections) samples.push(deviation(c.startAngle, c.startSide), deviation(c.endAngle, c.endSide));
+        };
+        const timer = setInterval(sample, 50);
+        setTimeout(() => {
+            clearInterval(timer);
+            resolve({
+                count:connections.length,
+                maxDeviation:Math.max(0, ...samples.filter(Number.isFinite)),
+                pointsKept:connections.every((c, i) => [c.startX, c.startY, c.endX, c.endY].join() === points[i])
+            });
+        }, millis);
+    }), millis),
+    readCfg = page => page.evaluate(() => ({base:tc.cfg.TL_SPLINE_DRIFT_BASE_DEGREES, max:tc.cfg.TL_SPLINE_DRIFT_MAX_DEGREES}));
+
+test('the timeline\'s curves drift, by more around a flooded event, with their ends kept in place', async ({page}) => {
+    const problems = await startGame(page, {timelineUnrest:true}),
+        {base, max} = await readCfg(page),
+        timelineUnrest = await page.evaluate(() => {
+            const stat = tc.model.paradox;
+            return Math.min(1, stat.getValue() / stat.getMax());
+        });
+    
+    const calm = await sampleOriginCurves(page);
+    expect(calm.count).toBeGreaterThan(0);
+    expect(calm.maxDeviation).toBeGreaterThan(0);
+    expect(calm.maxDeviation).toBeLessThanOrEqual(base + (max - base)*timelineUnrest + 0.001);
+    expect(calm.pointsKept).toBe(true);
+    
+    // Flooding origin makes its curves drift by up to the max.
+    await page.evaluate(() => {
+        const paradox = tc.model.getEventModel('origin').paradox;
+        paradox.setValue(paradox.getMax());
+    });
+    expect(await page.evaluate(() => tc.model.getEventModel('origin').flooded)).toBe(true);
+    const flooded = await sampleOriginCurves(page);
+    expect(flooded.maxDeviation).toBeGreaterThan(calm.maxDeviation);
+    expect(flooded.maxDeviation).toBeLessThanOrEqual(max + 0.001);
+    expect(flooded.pointsKept).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('the curves stay still with the setting off, or when the system asks for reduced motion', async ({page}) => {
+    const problems = await startGame(page, {timelineUnrest:true});
+    expect((await sampleOriginCurves(page, 300)).maxDeviation).toBeGreaterThan(0);
+    
+    // Turning it off puts every curve back straight out of its box.
+    await page.evaluate(id => tc.settings.set(id, false), await page.evaluate(() => tc.SETTING_ANIMATE_TIMELINE_UNREST));
+    await page.waitForTimeout(100);
+    expect((await sampleOriginCurves(page, 300)).maxDeviation).toBe(0);
+    
+    await page.evaluate(id => tc.settings.set(id, true), await page.evaluate(() => tc.SETTING_ANIMATE_TIMELINE_UNREST));
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await page.waitForTimeout(100);
+    expect((await sampleOriginCurves(page, 300)).maxDeviation).toBe(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
