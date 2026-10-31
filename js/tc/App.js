@@ -235,7 +235,7 @@
             
             new ResizeLayout(appView, {axis:'y', spacing:layoutSpacing});
             
-            dividerV.setValue(133);
+            dividerV.setValue(116);
             dividerH.setValue(800);
             
             loadAllData();
@@ -376,7 +376,7 @@
             appView.attachTo(missionsView,'_onMissionRowSelectionChanged', 'selectionChanged');
             
             dividerV = new M.VerticalDivider(middleView, {
-                height:5, minValue:133, limitToParent:200,
+                height:5, minValue:116, limitToParent:200,
                 activeColor:'transparent', hoverColor:'transparent', readyColor:'transparent'
             }, [{
                 setValue: function(v) {

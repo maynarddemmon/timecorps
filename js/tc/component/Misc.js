@@ -292,42 +292,6 @@
         getValueView: function() {return this._value;}
     });
     
-    pkg.DetailRowFlow = new JSClass('DetailRowFlow', WideView, {
-        initNode: function(parent, attrs) {
-            const self = this,
-                label = attrs.label,
-                labelWidth = attrs.labelWidth ?? LABEL_WIDTH;
-            delete attrs.label;
-            delete attrs.labelWidth;
-            attrs.defaultPlacement = '_content';
-            
-            self.callSuper(parent, attrs);
-            
-            const labelView = self._label = new PaddedPlainText(self, {
-                width:labelWidth, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:'right',
-                paddingTop:ROW_PADDING_TOP, text:label
-            });
-            
-            const contentX = labelWidth + padding,
-                contentView = self._content = new View(self, {
-                    x:contentX, percentOfParentWidth:100, percentOfParentWidthOffset:-contentX
-                }, [SizeToParent, {
-                    setHeight: function(v) {
-                        if (this.height !== v) {
-                            this.callSuper(v);
-                            const newHeight = Math.max(labelView.height, this.height);
-                            if (self.height !== newHeight) self.setHeight(newHeight);
-                        }
-                    }
-                }]);
-            new M.WrappingLayout(contentView, {spacing, lineSpacing:-5, collapseParent:true});
-        },
-        setLabel: function(v) {this._label.setText(v);},
-        clearContent: function() {
-            this._content.destroyAllSubviews();
-        }
-    });
-    
     pkg.NoValueText = new JSClass('NoValueText', TextForFlow, {
         initNode: function(parent, attrs) {
             attrs.text ??= ICON_NIL;

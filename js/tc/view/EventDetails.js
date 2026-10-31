@@ -12,7 +12,7 @@
         } = myt,
         
         {
-            UnderlineBtn, UnderlineActionBtn, EventNavBtn, EventNavHover, AgentBtn, 
+            UnderlineBtn, UnderlineActionBtn, EventNavHover, AgentBtn, EventLinkFlow,
             SquareBtn, WideView, StatusAgentMarkerMedium,
             ContainerRow, TextForFlow,
             theme:{
@@ -193,29 +193,6 @@
             }
         }),
         
-        CausatorLinkFlow = new JSClass('CausatorLinkFlow', WideView, {
-            initNode: function(parent, attrs) {
-                attrs.x ??= padding;
-                attrs.percentOfParentWidthOffset ??= -2*padding;
-                this.callSuper(parent, attrs);
-                new WrappingLayout(this, {spacing, lineSpacing:-5, collapseParent:true});
-            },
-            
-            /*  Shows the label and a nav button for each Event. Hides itself if there are none. */
-            update: function(label, eventModels) {
-                const self = this;
-                self.destroyAllSubviews();
-                if (eventModels.length > 0) {
-                    new TextForFlow(self, {text:label});
-                    eventModels.forEach((eventModel, idx) => {
-                        if (idx > 0) new TextForFlow(self, {text:ICON_SEPARATOR});
-                        new EventNavBtn(self, {navEventModel:eventModel});
-                    });
-                }
-                self.setVisible(eventModels.length > 0);
-            }
-        }),
-        
         CausatorRow = new JSClass('CausatorRow', WideView, {
             initNode: function(parent, attrs) {
                 const self = this;
@@ -226,17 +203,12 @@
                 
                 self.callSuper(parent, attrs);
                 
-                self.nameTxt = new PaddedText(self, {padding, fontSize:fontSizeMedium, whiteSpace:'normal'});
-                self.descriptionTxt = new PaddedText(self, {padding, whiteSpace:'normal'});
-                
-                // The links get their own container since the row's negative spacing, which
-                // tightens up the text, would make the two flows overlap.
-                const linksView = self.linksView = new WideView(self);
-                self.precursorsFlow = new CausatorLinkFlow(linksView);
-                self.descendantsFlow = new CausatorLinkFlow(linksView);
-                new SpacedLayout(linksView, {axis:'y', inset:padding, spacing:-6, collapseParent:true});
-                
-                new SpacedLayout(self, {axis:'y', spacing:-2*padding, outset:spacing, collapseParent:true});
+                const txtAttrs = {paddingLeft:padding, paddingRight:padding, whiteSpace:'normal'};
+                self.nameTxt = new PaddedText(self, {...txtAttrs, fontSize:fontSizeMedium});
+                self.descriptionTxt = new PaddedText(self, {...txtAttrs});
+                self.precursorsFlow = new EventLinkFlow(self);
+                self.descendantsFlow = new EventLinkFlow(self);
+                new SpacedLayout(self, {axis:'y', inset:padding, outset:padding, collapseParent:true});
                 
                 self.update();
             },
@@ -256,7 +228,6 @@
                     'Descendants:\u00A0',
                     [...valueModel.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
                 );
-                self.linksView.setVisible(self.precursorsFlow.visible || self.descendantsFlow.visible);
             }
         });
     

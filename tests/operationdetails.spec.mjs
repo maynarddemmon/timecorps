@@ -2,7 +2,7 @@ import {test, expect} from '@playwright/test';
 import {startGame, dismissMissionBrief} from './helpers.mjs';
 
 const precursorBtn = (page, name) => page.locator('.myt-OperationDetails').getByRole('button', {name, exact:true}),
-    precursorsRow = page => page.locator('.myt-OperationDetails').getByText('Entanglements', {exact:true}),
+    precursorsRow = page => page.locator('.myt-OperationDetails').getByText(/^Entanglements:/),
     
     // Replaces the first mission's objective, so a test can read whatever it likes.
     setObjectiveSuccess = (page, expr) => page.evaluate(expr => {

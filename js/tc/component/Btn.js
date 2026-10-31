@@ -4,10 +4,11 @@
     const JSClass = JS.Class,
         
         M = myt,
+        {PaddedText} = M,
         
-        {btnHeight, colorBtnLight, colorAction} = pkg.theme,
+        {spacing, padding, btnHeight, colorBtnLight, colorAction} = pkg.theme,
         
-        Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
+        Btn = pkg.Btn = new JSClass('Btn', PaddedText, {
             include: [M.Button],
             
             
@@ -61,45 +62,29 @@
                 
                 this.callSuper(parent, attrs);
             }
-        });
+        }),
         
-    /*  Scrolls the timeline to an Event while the mouse is over the button, and back to the
-        selected Event when it leaves. The Event comes from getNavEventModel.
-        
-        Attributes:
-            navEventModel:EventModel - The Event to scroll to. */
-    const EventNavHover = pkg.EventNavHover = new JS.Module('EventNavHover', {
-        setNavEventModel: function(v) {this.navEventModel = v;},
-        getNavEventModel: function() {return this.navEventModel;},
-        
-        setMouseOver: function(v) {
-            if (this.inited && this.mouseOver !== v) {
-                this.callSuper(v);
-                const app = pkg.app;
-                if (this.mouseOver) {
-                    app.scrollTo(this.getNavEventModel());
-                } else {
-                    app.scrollToSelectedEvent(true);
+        /*  Scrolls the timeline to an Event while the mouse is over the button, and back to the
+            selected Event when it leaves. The Event comes from getNavEventModel.
+            
+            Attributes:
+                navEventModel:EventModel - The Event to scroll to. */
+        EventNavHover = pkg.EventNavHover = new JS.Module('EventNavHover', {
+            setNavEventModel: function(v) {this.navEventModel = v;},
+            getNavEventModel: function() {return this.navEventModel;},
+            
+            setMouseOver: function(v) {
+                if (this.inited && this.mouseOver !== v) {
+                    this.callSuper(v);
+                    const app = pkg.app;
+                    if (this.mouseOver) {
+                        app.scrollTo(this.getNavEventModel());
+                    } else {
+                        app.scrollToSelectedEvent(true);
+                    }
                 }
             }
-        }
-    });
-    
-    /*  A button that selects an Event, and scrolls the timeline to it on hover. The text
-        defaults to the Event's name followed by a forward arrow.
-        
-        Attributes:
-            navEventModel:EventModel - The Event to select. */
-    pkg.EventNavBtn = new JSClass('EventNavBtn', UnderlineBtn, {
-        include: [EventNavHover],
-        
-        initNode: function(parent, attrs) {
-            attrs.text ??= attrs.navEventModel.name + ' ' + pkg.ICON_NAV_FORWARD;
-            this.callSuper(parent, attrs);
-        },
-        
-        doActivated: function() {pkg.app.selectEventBox(this.getNavEventModel());}
-    });
+        });
     
     pkg.UnderlineActionBtn = new JSClass('UnderlineActionBtn', UnderlineBtn, {
         initNode: function(parent, attrs) {
@@ -169,6 +154,52 @@
         
         doActivated: function() {
             if (!this.selected) this.tabView.select(this);
+        }
+    });
+    
+    /*  A button that selects an Event, and scrolls the timeline to it on hover. The text
+        defaults to the Event's name followed by a forward arrow.
+        
+        Attributes:
+            navEventModel:EventModel - The Event to select. */
+    const EventNavBtn = new JSClass('EventNavBtn', UnderlineBtn, {
+        include: [EventNavHover],
+        
+        initNode: function(parent, attrs) {
+            attrs.text ??= attrs.navEventModel.name + ' ' + pkg.ICON_NAV_FORWARD;
+            attrs.paddingTop ??= 0;
+            attrs.paddingBottom ??= 0;
+            attrs.height ??= 15;
+            this.callSuper(parent, attrs);
+        },
+        
+        doActivated: function() {pkg.app.selectEventBox(this.getNavEventModel());}
+    });
+    
+    pkg.EventLinkFlow = new JSClass('EventLinkFlow', pkg.WideView, {
+        initNode: function(parent, attrs) {
+            attrs.x ??= padding;
+            attrs.percentOfParentWidthOffset ??= -2*padding;
+            this.callSuper(parent, attrs);
+            new M.WrappingLayout(this, {spacing, lineSpacing:0, collapseParent:true});
+        },
+        
+        /*  Shows the label and a nav button for each Event. Hides itself if there are none. */
+        update: function(label, models, textFunc, extractEventFunc) {
+            const self = this,
+                hasModels = models.length > 0;
+            self.destroyAllSubviews();
+            if (hasModels) {
+                new PaddedText(self, {text:label});
+                models.forEach((model, idx) => {
+                    if (idx > 0) new PaddedText(self, {text:pkg.ICON_SEPARATOR});
+                    new EventNavBtn(self, {
+                        navEventModel:extractEventFunc ? extractEventFunc(model) : model, 
+                        text:textFunc?.(model)
+                    });
+                });
+            }
+            self.setVisible(hasModels);
         }
     });
 })(tc);

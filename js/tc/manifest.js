@@ -14,9 +14,8 @@ JS.Packages(file => {
         'tc.SimpleAgentMarker','tc.SimpleAgentGridMarker'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Btn.js').provides(
-            'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn','tc.EventNavHover',
-            'tc.EventNavBtn'
-    ).requires('tc.SimpleAgentMarker');
+        'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn','tc.EventNavHover','tc.EventLinkFlow'
+    ).requires('tc.SimpleAgentMarker','tc.WideView');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
         'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar',
@@ -85,11 +84,11 @@ JS.Packages(file => {
         'tc.AttestationBar','tc.ParadoxBar','tc.MiniStatBar','tc.BigStatBar'
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn','tc.EventNavBtn',
-        'tc.SimpleAgentMarker','tc.EventFacts'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn',
+        'tc.SimpleAgentMarker','tc.EventFacts','tc.EventLinkFlow'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
-        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventNavBtn'
+        'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventLinkFlow'
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires(
         'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow','tc.TallView',

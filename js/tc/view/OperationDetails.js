@@ -6,8 +6,7 @@
         {PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
         {
-            UnderlineBtn, EventNavBtn, WideView, MiniPanel, GrandWidthMixin, DetailRow, 
-            DetailRowFlow, TextForFlow,
+            UnderlineBtn, WideView, MiniPanel, GrandWidthMixin,
             theme:{
                 spacing, padding,
                 colorUltraLight, colorMegaDark, colorSuccess, colorError,
@@ -34,74 +33,57 @@
                 
                 self.callSuper(parent, attrs);
                 
-                const labelWidth = 105,
-                    iconSize = 24,
-                    iconInset = 12;
-                self.successView = new PaddedText(self, {
-                    x:iconInset, y:iconInset, width:iconSize, height:iconSize,
-                    roundedCorners:iconSize/2, outline:[1, 'solid', '#000'],
-                    fontSize:fontSizeLarge, textColor:colorUltraLight,
-                    ignoreLayout:true
-                }, [{
-                    setSuccess: function(success) {
-                        if (success) {
-                            this.setText(ICON_CHECKED);
-                            this.setBgColor(colorSuccess);
-                            this.setPaddingLeft(5);
-                            this.setPaddingTop(3);
-                            this.setTooltip('Objective met.');
-                        } else {
-                            this.setText(ICON_UNCHECKED);
-                            this.setBgColor(colorError);
-                            this.setPaddingLeft(7);
-                            this.setPaddingTop(2);
-                            this.setTooltip('Objective not met.');
+                const iconSize = 24,
+                    iconInset = 12,
+                    successView = self.successView = new PaddedText(self, {
+                        x:iconInset, y:iconInset, width:iconSize, height:iconSize,
+                        roundedCorners:iconSize/2, outline:[1, 'solid', '#000'],
+                        fontSize:fontSizeLarge, textColor:colorUltraLight,
+                        ignoreLayout:true
+                    }, [{
+                        setSuccess: function(success) {
+                            if (success) {
+                                this.setText(ICON_CHECKED);
+                                this.setBgColor(colorSuccess);
+                                this.setPaddingLeft(5);
+                                this.setPaddingTop(3);
+                                this.setTooltip('Objective met.');
+                            } else {
+                                this.setText(ICON_UNCHECKED);
+                                this.setBgColor(colorError);
+                                this.setPaddingLeft(7);
+                                this.setPaddingTop(2);
+                                this.setTooltip('Objective not met.');
+                            }
                         }
-                    }
-                }]);
-                self.nameView = new DetailRow(self, {label:'Name', labelWidth});
-                self.descriptionView = new DetailRow(self, {label:'Description', labelWidth});
-                self.precursorsView = new DetailRowFlow(self, {label:'Entanglements', labelWidth});
-                
-                new SpacedLayout(self, {axis:'y', inset:spacing, spacing:-5, outset:spacing, collapseParent:true});
+                    }]),
+                    xPos = successView.x + successView.width + padding,
+                    txtAttrs = {x:xPos, paddingRight:padding, whiteSpace:'normal'};
+                self.nameTxt = new PaddedText(self, {...txtAttrs, fontSize:fontSizeMedium});
+                self.descriptionTxt = new PaddedText(self, {...txtAttrs});
+                self.precursorsFlow = new pkg.EventLinkFlow(self, {x:xPos});
+                new SpacedLayout(self, {axis:'y', inset:padding, outset:padding, collapseParent:true});
                 
                 self.update();
             },
             update: function() {
                 const self = this,
                     objectiveModel = self.objectiveModel;
-                self.nameView.setValue(objectiveModel.getName());
-                self.descriptionView.setValue(objectiveModel.getDescription());
+                self.nameTxt.setText(objectiveModel.getName());
+                self.descriptionTxt.setText(objectiveModel.getDescription());
                 self.successView.setSuccess(objectiveModel.isSuccess());
-                self.updatePrecursors();
-            },
-            
-            /*  A nav button for each part of an Event the Objective depends on. Parts the
-                player doesn't know about yet, a hidden Event or Causator, are summed up as
-                "Unknown" so the row doesn't give them away. */
-            updatePrecursors: function() {
-                const precursorsView = this.precursorsView,
-                    precursors = this.objectiveModel.getPrecursors();
-                precursorsView.clearContent();
                 
-                let addedCount = 0,
-                    hasUnknown = false;
-                for (const precursor of precursors) {
-                    if (!precursor.known) {
-                        hasUnknown = true;
-                    } else {
-                        if (addedCount > 0) new TextForFlow(precursorsView, {text:ICON_SEPARATOR});
-                        new EventNavBtn(precursorsView, {
-                            navEventModel:precursor.eventModel, text:getPrecursorText(precursor)
-                        });
-                        addedCount++;
-                    }
+                const precursorsFlow = self.precursorsFlow,
+                    label = 'Entanglements:\u00A0',
+                    precursors = objectiveModel.getPrecursors(),
+                    knownPrecursors = precursors.filter(precursor => precursor.known),
+                    knownLen = knownPrecursors.length;
+                precursorsFlow.update(label, knownPrecursors, getPrecursorText, precursorModel => precursorModel.eventModel);
+                if (precursors.length > knownLen) {
+                    new PaddedText(precursorsFlow, {text:knownLen === 0 ? label : ICON_SEPARATOR});
+                    new PaddedText(precursorsFlow, {text:'Unknown', fontStyle:'italic'});
+                    precursorsFlow.setVisible(true);
                 }
-                if (hasUnknown) {
-                    if (addedCount > 0) new TextForFlow(precursorsView, {text:ICON_SEPARATOR});
-                    new TextForFlow(precursorsView, {text:'Unknown', fontStyle:'italic'});
-                }
-                precursorsView.setVisible(precursors.length > 0);
             }
         });
     
@@ -127,7 +109,7 @@
             });
             
             const objectivesRow = self.objectivesRow = new MiniPanel(detailsContainer, {
-                title:'Objectives', percentOfParentWidth:100
+                title:'Mission Objectives', percentOfParentWidth:100
             }, [GrandWidthMixin, SizeToParent, {
                 clearContent: function() {
                     this.getContentView().destroyAllSubviews();

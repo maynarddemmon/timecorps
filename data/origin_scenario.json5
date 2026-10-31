@@ -42,9 +42,7 @@
 			"objectives":{
 				"answer":{
 					"name":"Answer the Call",
-					"description":[
-						"Find out what has happened to you."
-					],
+					"description":"Find out what has happened to you.",
 					"success":"events.safehouse_room.values.heard.value"
 				}
 			},
