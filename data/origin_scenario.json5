@@ -805,7 +805,8 @@
 			"actions":{"_investigate":null,"_rest":null},
 			"exits":[{
 				"mode":"wait", "toHidden":true, "to":"origin_stranger",
-				"set":{"events.origin_stranger.attestation":"1"}
+				"set":{"events.origin_stranger.attestation":"1"},
+				"adj":{"events.origin_stranger.paradox":"1"}
 			}],
 			"description":"You cut through the alley behind the laundromat, the way you always tell yourself you shouldn’t."
 		},
@@ -817,7 +818,8 @@
 			"actions":{"_investigate":null,"_rest":null},
 			"exits":[{
 				"mode":"wait", "toHidden":true, "to":"origin_stranger",
-				"set":{"events.origin_stranger.attestation":"1"}
+				"set":{"events.origin_stranger.attestation":"1"},
+				"adj":{"events.origin_stranger.paradox":"1"}
 			}],
 			"description":"A couple with a soaked paper map are lost three streets from their hotel. You walk them there and find out their whole life story."
 		},
@@ -829,7 +831,8 @@
 			"actions":{"_investigate":null,"_rest":null},
 			"exits":[{
 				"mode":"wait", "toHidden":true, "to":"origin_stranger",
-				"set":{"events.origin_stranger.attestation":"1"}
+				"set":{"events.origin_stranger.attestation":"1"},
+				"adj":{"events.origin_stranger.paradox":"1"}
 			}],
 			"description":"You stop at the Anchor, and the new bartender believes every word about it being your birthday."
 		},
@@ -866,7 +869,8 @@
 			"exits":[{
 				"mode":"wait", "toHidden":true, "to":"origin_masked",
 				"hidden":"event.values.reaction.value === ''",
-				"set":{"events.origin_masked.attestation":"1"}
+				"set":{"events.origin_masked.attestation":"1"},
+				"adj":{"events.origin_masked.paradox":"2"}
 			}],
 			"values":{
 				"reaction":{
@@ -887,8 +891,8 @@
 		},
 		
 		"origin_masked":{
-			"image":"../location/origin_street.jpg",
 			"name":"The Masked Figure", "chronoLocked":"true",
+			"image":"../location/origin_street.jpg",
 			"start":"2026-11-13T17:55:00", "duration":{"m":1},
 			"location":"origin_street",
 			"actionLimit":1,
@@ -955,7 +959,8 @@
 			"exits":[{
 				"mode":"wait", "toHidden":true, "to":"safehouse_fight",
 				"hidden":"event.actions.hide.attemptCount === 0",
-				"set":{"events.safehouse_fight.attestation":"1"}
+				"set":{"events.safehouse_fight.attestation":"1"},
+				"adj":{"events.safehouse_fight.paradox":"2"}
 			}],
 			"values":{
 				"concealed":{
