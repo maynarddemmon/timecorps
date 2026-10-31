@@ -33,6 +33,7 @@
         
         // The data key for default skill checks by action type.
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
+        DATA_KEY_ACTION_GROUPS = 'actionGroups',
         
         /*  Merges a config over a base: objects key by key, all the way down, and anything else,
             arrays included, replaces what's there. Changes and returns the base, or returns 
@@ -48,6 +49,34 @@
         
         // The names of the scratch entries the data declares.
         scratchNames = new Set(),
+        
+        // The action groups the data declares, by ID, as {id, label, order}.
+        actionGroups = new Map(),
+        
+        /*  Reads one action group's config, warning about its problems. */
+        readActionGroup = (id, cfg) => {
+            const where = 'Action group ' + id;
+            if (!isPlainObject(cfg)) {
+                console.warn(where, 'must be an object with a label and an order (ignoring it):', cfg);
+                return null;
+            }
+            
+            let {label, order, ...unknown} = cfg;
+            const unknownKeys = Object.keys(unknown);
+            if (unknownKeys.length > 0) console.warn(where, 'has keys other than label and order (ignoring them):', unknownKeys.join(', '));
+            if (typeof label !== 'string' || label.trim() === '') {
+                console.warn(where, 'label must be a non-empty string (using its id):', label);
+                label = id;
+            }
+            if (!Number.isFinite(order)) {
+                console.warn(where, 'order must be a number (using 0):', order);
+                order = 0;
+            } else if (order === 0) {
+                // 0 is the ungrouped actions' place, so the group's line comes right after theirs.
+                console.warn(where, 'order is 0, the ungrouped actions\' order, so it comes right after them. Use a negative order to come before them or a positive one to come after.');
+            }
+            return {id, label, order};
+        },
         isScratchValue = value => typeof value === 'boolean' || typeof value === 'string' || Number.isFinite(value),
         
         STARTING_SCORE = 0,
@@ -208,6 +237,21 @@
                 if (faction.hq === eventModel?.id) return faction;
             }
             return null;
+        },
+        
+        /*  The action group with the ID, as {id, label, order}, or undefined. */
+        getActionGroup: id => actionGroups.get(id),
+        
+        /*  Warns about each action whose group names no action group. It's shown with the 
+            ungrouped actions. */
+        validateActionGroups: () => {
+            for (const eventModel of model.getEventModelsAsList()) {
+                const actionModels = eventModel.getActionModels();
+                for (const actionId in actionModels) {
+                    const group = actionModels[actionId].getGroup();
+                    if (group != null && !actionGroups.has(group)) console.warn('Event', eventModel.id, 'action', actionId, 'group names no action group (showing it with the ungrouped actions):', group);
+                }
+            }
         },
         
         /*  Warns about each Faction whose hq names no Event. */
@@ -477,6 +521,22 @@
                 }
             } else if (scratchCfg !== undefined) {
                 console.warn('scratch must be an object of starting values by name (ignoring it):', scratchCfg);
+            }
+            
+            // Action groups, e.g. {"hq_pool":{"label":"HQ Chronal Pool", "order":1}}, which 
+            // gather actions onto a line of their own where an agent's actions are shown.
+            const actionGroupsCfg = json[DATA_KEY_ACTION_GROUPS];
+            if (isPlainObject(actionGroupsCfg)) {
+                for (const id in actionGroupsCfg) {
+                    if (!pkg.checkId('Action group', id)) continue;
+                    const actionGroup = readActionGroup(id, actionGroupsCfg[id]);
+                    if (actionGroup) {
+                        if (actionGroups.has(id)) console.warn('Duplicate action group', id, '(using the later one)');
+                        actionGroups.set(id, actionGroup);
+                    }
+                }
+            } else if (actionGroupsCfg !== undefined) {
+                console.warn('actionGroups must be an object of groups by id (ignoring it):', actionGroupsCfg);
             }
             
             // Default Event Actions

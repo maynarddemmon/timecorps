@@ -116,7 +116,11 @@
                     }
                 }]);
                 
-                self.actionView = new AgentRowFlow(self);
+                // A line for the ungrouped actions and one for each action group. See update.
+                const actionLinesView = self.actionLinesView = new WideView(self, {
+                    x:MARKER_EXTENT, percentOfParentWidthOffset:-MARKER_EXTENT
+                });
+                new SpacedLayout(actionLinesView, {axis:'y', spacing:-5, collapseParent:true});
                 self.exitView = new AgentRowFlow(self);
                 
                 new SpacedLayout(self, {axis:'y', inset:26, spacing:-5, outset:spacing, collapseParent:true});
@@ -129,21 +133,22 @@
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionView, exitView} = self;
+                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionLinesView, exitView} = self,
+                    addActionLine = () => new AgentRowFlow(actionLinesView, {x:0});
                 
                 markerView.setModel(agentModel);
                 vitaeBtn.setText(agentModel.name);
                 
                 if (!agentModel.isPlayerControlled()) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(actionView, {paddingTop:3, text:'Not taking direction from you'});
+                    new TextForFlow(addActionLine(), {paddingTop:3, text:'Not taking direction from you'});
                     return;
                 }
                 
                 // The dead can't act, travel or be resupplied.
                 if (agentModel.isDead()) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(actionView, {paddingTop:3, text:'Deceased'});
+                    new TextForFlow(addActionLine(), {paddingTop:3, text:'Deceased'});
                     return;
                 }
                 
@@ -155,21 +160,40 @@
                     recallBtn.setVisible(false);
                 }
                 
-                // Update Actions
-                const actionModels = eventModel.getActionModels();
-                if (Object.keys(actionModels).length > 0) {
-                    new TextForFlow(actionView, {paddingTop:3, text:agentModel.getActionsPhrase()});
+                // Update Actions: a line led by the actions the agent has left, with the ungrouped
+                // actions, and a line for each action group with visible actions, led by its 
+                // label. The lines go in order, the ungrouped one's being 0, so a group with a 
+                // negative order comes before it and one with a positive order after.
+                const actionModels = Object.values(eventModel.getActionModels());
+                if (actionModels.length > 0) {
+                    const ungroupedLine = {order:0, label:agentModel.getActionsPhrase(), actionModels:[]},
+                        lines = [ungroupedLine],
+                        linesByGroupId = {};
+                    for (const actionModel of actionModels) {
+                        const actionGroup = rootModel.getActionGroup(actionModel.getGroup());
+                        let line = ungroupedLine;
+                        if (actionGroup) {
+                            line = linesByGroupId[actionGroup.id];
+                            if (!line) lines.push(line = linesByGroupId[actionGroup.id] = {order:actionGroup.order, label:actionGroup.label, actionModels:[]});
+                        }
+                        if (actionModel.isNotHidden()) line.actionModels.push(actionModel);
+                    }
                     
-                    for (const actionId in actionModels) {
-                        const actionModel = actionModels[actionId];
-                        if (actionModel.isNotHidden()) {
-                            new TextForFlow(actionView, {text:ICON_SEPARATOR});
-                            new UnderlineActionBtn(actionView, getActionBtnInfo(agentModel, actionModel), [{
-                                doActivated: function() {
-                                    agentModel.selectRow();
-                                    agentModel.doAction(actionModel, this);
-                                }
-                            }]);
+                    // The sort is stable, so a group with an order of 0 comes after the ungrouped line.
+                    lines.sort((a, b) => a.order - b.order);
+                    for (const line of lines) {
+                        if (line === ungroupedLine || line.actionModels.length > 0) {
+                            const lineView = addActionLine();
+                            new TextForFlow(lineView, {paddingTop:3, text:line.label});
+                            for (const actionModel of line.actionModels) {
+                                new TextForFlow(lineView, {text:ICON_SEPARATOR});
+                                new UnderlineActionBtn(lineView, getActionBtnInfo(agentModel, actionModel), [{
+                                    doActivated: function() {
+                                        agentModel.selectRow();
+                                        agentModel.doAction(actionModel, this);
+                                    }
+                                }]);
+                            }
                         }
                     }
                 }

@@ -1001,8 +1001,9 @@
         },
         
         /*  Moves the box of each Event with paradox on by the time elapsed: up to 
-            TL_EVENT_DRIFT_MAX_PIXELS either way once it's flooded, and quicker the more 
-            unsteady it is. A box whose Event has none goes back home. */
+            TL_EVENT_DRIFT_X_MAX_PIXELS and TL_EVENT_DRIFT_Y_MAX_PIXELS either way once it's 
+            flooded, and quicker the more unsteady it is. A box whose Event has none goes back 
+            home. */
         driftEventBoxes = (timeline, elapsedSecs) => {
             const elapsedPhase = TWO_PI*elapsedSecs,
                 boxesByEventId = timeline.boxesByEventId;

@@ -4,6 +4,12 @@
 	
 	"initialOperation":"origin_story",
 	
+	// Groups of actions. An action joins one with its "group", and each group is shown on a line
+	// of its own, after an agent's other actions (a positive order) or before them (a negative one).
+	"actionGroups":{
+		"chronal_pool":{"label":"Chronal Pool", "order":1}
+	},
+	
 	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
 	// "faction".
 	"factions":{
@@ -179,6 +185,7 @@
 				
 				"_restockChronal":{
 					"label":"Restock Chronal +1",
+					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
 					"available":"timeline.chronal.value < timeline.chronal.max",
 					"costs":{
@@ -275,6 +282,7 @@
 				
 				"_restockChronal":{
 					"label":"Restock Chronal +1",
+					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
 					"available":"timeline.chronal.value < timeline.chronal.max",
 					"costs":{

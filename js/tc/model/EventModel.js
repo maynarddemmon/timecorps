@@ -1033,11 +1033,12 @@
                 this.doneCount = 0;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
-                const {skillCheck, available, set, prompt} = attrs;
+                const {skillCheck, available, set, prompt, group} = attrs;
                 delete attrs.skillCheck;
                 delete attrs.available;
                 delete attrs.set;
                 delete attrs.prompt;
+                delete attrs.group;
                 
                 this.callSuper(attrs);
                 
@@ -1045,11 +1046,24 @@
                 this.setAvailable(available);
                 this.setSet(set);
                 this.setPrompt(prompt);
+                this.setGroup(group);
             },
             
             
             // Accessors ///////////////////////////////////////////////////////
             setLabel: function(label) {this.set('label', label, true);},
+            
+            /*  The ID of the action group the action is shown with, e.g. "hq_pool", or null to
+                show it with the ungrouped actions. See Model.getActionGroup. */
+            setGroup: function(group) {
+                if (group == null || pkg.isValidId(group)) {
+                    this.group = group ?? null;
+                } else {
+                    console.warn('Event ' + this.event?.id + ' action ' + this.id + ': group must be the id of an action group (ignoring it):', group);
+                    this.group = null;
+                }
+            },
+            getGroup: function() {return this.group ?? null;},
             
             /*  An optional condition on the agent who'd take the action, e.g.
                 "agent.health.value < agent.health.max". Unlike hidden, which is the same for

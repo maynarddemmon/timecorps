@@ -317,12 +317,14 @@ const sampleOriginBox = (page, home, millis=800) => page.evaluate(([home, millis
             },
             near = (a, b) => Math.abs(a - b) < 0.01,
             firstEnds = connections.map(endAtBox);
-        let maxOffset = 0,
+        let maxOffsetX = 0,
+            maxOffsetY = 0,
             layoutKept = true,
             curvesFollow = true;
         const sample = () => {
             const [x, y] = shownAt();
-            maxOffset = Math.max(maxOffset, Math.abs(x - home.x), Math.abs(y - home.y));
+            maxOffsetX = Math.max(maxOffsetX, Math.abs(x - home.x));
+            maxOffsetY = Math.max(maxOffsetY, Math.abs(y - home.y));
             if (originBox.x !== home.x || originBox.y !== home.y) layoutKept = false;
             connections.forEach((c, i) => {
                 const [x, y] = endAtBox(c);
@@ -332,7 +334,7 @@ const sampleOriginBox = (page, home, millis=800) => page.evaluate(([home, millis
         const timer = setInterval(sample, 50);
         setTimeout(() => {
             clearInterval(timer);
-            resolve({maxOffset, layoutKept, curvesFollow, connectionCount:connections.length});
+            resolve({maxOffsetX, maxOffsetY, maxOffset:Math.max(maxOffsetX, maxOffsetY), layoutKept, curvesFollow, connectionCount:connections.length});
         }, millis);
     }), [home, millis]),
     setOriginParadox = (page, fraction) => page.evaluate(fraction => {
@@ -342,7 +344,7 @@ const sampleOriginBox = (page, home, millis=800) => page.evaluate(([home, millis
 
 test('the box of an event with paradox is shown drifting around where it belongs, further as it fills, and the curves follow', async ({page}) => {
     const problems = await startGame(page, {timelineUnrest:true}),
-        maxPixels = await page.evaluate(() => tc.cfg.TL_EVENT_DRIFT_MAX_PIXELS),
+        {maxX, maxY} = await page.evaluate(() => ({maxX:tc.cfg.TL_EVENT_DRIFT_X_MAX_PIXELS, maxY:tc.cfg.TL_EVENT_DRIFT_Y_MAX_PIXELS})),
         home = await page.evaluate(() => {
             const box = tc.app.getTimelineView().getEventBox('origin');
             return {x:box.x, y:box.y};
@@ -355,7 +357,8 @@ test('the box of an event with paradox is shown drifting around where it belongs
     await setOriginParadox(page, 0.5);
     const half = await sampleOriginBox(page, home);
     expect(half.maxOffset).toBeGreaterThan(0);
-    expect(half.maxOffset).toBeLessThanOrEqual(maxPixels/2 + 0.5);
+    expect(half.maxOffsetX).toBeLessThanOrEqual(maxX/2 + 0.5);
+    expect(half.maxOffsetY).toBeLessThanOrEqual(maxY/2 + 0.5);
     expect(half.connectionCount).toBeGreaterThan(0);
     expect(half.layoutKept).toBe(true);
     expect(half.curvesFollow).toBe(true);
@@ -364,7 +367,8 @@ test('the box of an event with paradox is shown drifting around where it belongs
     await setOriginParadox(page, 1);
     const flooded = await sampleOriginBox(page, home);
     expect(flooded.maxOffset).toBeGreaterThan(half.maxOffset);
-    expect(flooded.maxOffset).toBeLessThanOrEqual(maxPixels + 0.5);
+    expect(flooded.maxOffsetX).toBeLessThanOrEqual(maxX + 0.5);
+    expect(flooded.maxOffsetY).toBeLessThanOrEqual(maxY + 0.5);
     expect(flooded.layoutKept).toBe(true);
     expect(flooded.curvesFollow).toBe(true);
     

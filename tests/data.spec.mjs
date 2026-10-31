@@ -649,6 +649,21 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(missing).toEqual([]);
     });
 
+    test('every action group has a label and an order other than 0, and every action\'s group exists', () => {
+        const problems = [],
+            actionGroups = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(json => json.actionGroups ?? {}));
+        for (const [groupId, group] of Object.entries(actionGroups)) {
+            if (typeof group?.label !== 'string' || group.label.trim() === '') problems.push('action group ' + groupId + ' has no label');
+            if (!Number.isFinite(group?.order) || group.order === 0) problems.push('action group ' + groupId + ' order must be a number other than 0: ' + group?.order);
+        }
+        for (const [eventId, event] of Object.entries(events)) {
+            for (const [actionId, action] of Object.entries(event.actions ?? {})) {
+                if (action?.group !== undefined && !Object.hasOwn(actionGroups, action.group)) problems.push(eventId + '.' + actionId + ' group names no action group: ' + action.group);
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
     test('every ID is letters, digits and _, not starting with a digit, so expressions can name it', () => {
         const ID = /^[A-Za-z_][A-Za-z0-9_]*$/,
             problems = [],

@@ -317,6 +317,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
   - Any other attribute of an agent or event that has a setter, e.g. `hidden`, `playerControlled` or `chronoLocked`, keyed `"agent.<attr>"`, `"agents.<id>.<attr>"`, `"event.<attr>"` or `"events.<id>.<attr>"`. As for a value, a string is a constraint expression kept up to date, and `{"onSuccess":…}` is worked out once, e.g. `"set":{"agents.AF.hidden":{"onSuccess":"false"}}` reveals AF on a pass. It replaces any expression the attribute had, and is saved. A key that names no attribute with a setter is ignored, with a warning at load, and these can't be adjusted.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
+- **`group`**: the ID of an [action group](#action-groups) to show the action with, on a line of its own, e.g. HQ's Restock Chronal, which refills the shared pool rather than doing anything for the agent who takes it. Leave it out to show the action with the rest.
 - **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
 - **`prompt`**: the ID of a [prompt](#prompts) to open when the check passes, after everything else the action does.
@@ -326,6 +327,20 @@ Every action counts how many times it's been taken, pass or fail, as its `doneCo
 Taking an action pays its costs, whether the check passes or fails. The button shows the check's ease ("even", "tough"…), any costs beyond the usual action and any adjustments in its tooltip. It's flagged (`[♥]`, `[⏲]`, `[⥁]`) when it could change health, chronal or paradox, by an adjustment or a cost.
 
 Every event also offers the [default actions](#default-actions), Investigate and Rest, before its own.
+
+### <a id="action-groups"></a>Action groups
+
+Event Details shows each agent's actions at an event on a line led by the actions they have left. An action group gathers some of them onto a line of its own, led by the group's label, so actions that belong together, or that aren't really about the agent, stand apart. Groups can go in any data file, under `"actionGroups"`:
+
+```json5
+"actionGroups":{
+	"hq_pool":{"label":"HQ Chronal Pool", "order":1}
+}
+```
+
+- **`label`** leads the group's line.
+- **`order`** places the line. The ungrouped actions are 0, so a negative order comes before them and a positive one after. Groups go in order among themselves. An order of 0 is warned about, and puts the group right after the ungrouped actions.
+- A group's line only shows when the agent can see at least one of its actions. An action whose `group` names no group is warned about at startup and shown with the ungrouped actions.
 
 ## Exits
 

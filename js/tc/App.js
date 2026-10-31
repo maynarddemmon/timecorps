@@ -155,6 +155,7 @@
                         
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         model.validateFactionHQs();
+                        model.validateActionGroups();
                         if (eventsValid) {
                             timelineView.setup(model);
                             timelineParadoxBar.watchStatModel(model[STAT_ID_PARADOX]);
