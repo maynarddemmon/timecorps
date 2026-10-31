@@ -9,9 +9,7 @@
 		"avatar_name":{
 			"type":"text",
 			"title":"Yesterday’s Mail",
-			"description":[
-				"You turn on the coffee maker and go through the mail from yesterday. A few bills and some credit card offers, all made out to you:"
-			],
+			"description":"You turn on the coffee maker and go through the mail from yesterday. A few bills and some credit card offers, all made out to you:",
 			"input":{
 				"scratch":"avatar_name",
 				"maxLength":25,
@@ -128,8 +126,7 @@
 	},
 	
 	"scratch":{
-		// Your name, from the avatar_name prompt.
-		"avatar_name":"",
+		"avatar_name":"", // Your name, from the avatar_name prompt.
 		"backstory_run":false,
 		"backstory_guitar":false,
 		"backstory_news":false,
@@ -244,9 +241,7 @@
 					]
 				}
 			},
-			"description":[
-				"The sheltered bench where folks wait for the bus. The ads are covered in grafitti and haven’t changed in months."
-			]
+			"description":"The sheltered bench where folks wait for the bus. The ads are covered in grafitti and haven’t changed in months."
 		},
 		
 		"origin_back_home":{
@@ -372,6 +367,7 @@
 		
 		"origin_busride":{
 			"name":"The Bus", "chronoLocked":"true",
+			"imageExpr":"'origin_busride' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":40},
 			"location":"origin_city_streets",
 			"actionLimit":1,
@@ -840,8 +836,8 @@
 		
 		// Act 2: the encounter.
 		"origin_stranger":{
-			"image":"../location/origin_street.jpg",
 			"name":"The Stranger", "chronoLocked":"true",
+			"imageExpr":"'origin_stranger' + event.values.reaction.value + '.jpg'",
 			"start":"2026-11-13T17:52:00", "duration":{"m":3},
 			"location":"origin_street",
 			"actionLimit":1,
