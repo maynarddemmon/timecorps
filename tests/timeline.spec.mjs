@@ -252,7 +252,7 @@ const sampleOriginCurves = (page, millis=800) => page.evaluate(millis => new Pro
     }), millis),
     readCfg = page => page.evaluate(() => ({base:tc.cfg.TL_SPLINE_DRIFT_BASE_DEGREES, max:tc.cfg.TL_SPLINE_DRIFT_MAX_DEGREES}));
 
-test('the timeline\'s curves drift, by more around a flooded event, with their ends kept in place', async ({page}) => {
+test('the timeline\'s curves drift, by more around a flooded event, with their ends kept in place while its box is still', async ({page}) => {
     const problems = await startGame(page, {timelineUnrest:true}),
         {base, max} = await readCfg(page),
         timelineUnrest = await page.evaluate(() => {
@@ -275,7 +275,6 @@ test('the timeline\'s curves drift, by more around a flooded event, with their e
     const flooded = await sampleOriginCurves(page);
     expect(flooded.maxDeviation).toBeGreaterThan(calm.maxDeviation);
     expect(flooded.maxDeviation).toBeLessThanOrEqual(max + 0.001);
-    expect(flooded.pointsKept).toBe(true);
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -293,6 +292,97 @@ test('the curves stay still with the setting off, or when the system asks for re
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.waitForTimeout(100);
     expect((await sampleOriginCurves(page, 300)).maxDeviation).toBe(0);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+/*  How far origin's box is shown from where the layout put it, whether its x and y, which
+    the layout sets, stay put, and whether the curves joined to it still meet it where it's
+    shown, sampled over a while. */
+const sampleOriginBox = (page, home, millis=800) => page.evaluate(([home, millis]) => new Promise(resolve => {
+        const timeline = tc.app.getTimelineView(),
+            originBox = timeline.getEventBox('origin'),
+            connections = timeline.flowLayer.getConnections().filter(c => c.startView === originBox || c.endView === originBox),
+            // Where the box is shown: where the layout put it, translated by its drift, which
+            // is read from the style itself.
+            shownAt = () => {
+                const [dx=0, dy=0] = (originBox.getIDE().style.translate || '0px 0px').split(' ').map(parseFloat);
+                return [originBox.x + dx, originBox.y + dy];
+            },
+            // Where each curve's end at origin is, relative to where the box is shown, which 
+            // stays the same if the curve follows the box.
+            endAtBox = c => {
+                const [x, y] = shownAt();
+                return c.startView === originBox ? [c.startX - x, c.startY - y] : [c.endX - x, c.endY - y];
+            },
+            near = (a, b) => Math.abs(a - b) < 0.01,
+            firstEnds = connections.map(endAtBox);
+        let maxOffset = 0,
+            layoutKept = true,
+            curvesFollow = true;
+        const sample = () => {
+            const [x, y] = shownAt();
+            maxOffset = Math.max(maxOffset, Math.abs(x - home.x), Math.abs(y - home.y));
+            if (originBox.x !== home.x || originBox.y !== home.y) layoutKept = false;
+            connections.forEach((c, i) => {
+                const [x, y] = endAtBox(c);
+                if (!near(x, firstEnds[i][0]) || !near(y, firstEnds[i][1])) curvesFollow = false;
+            });
+        };
+        const timer = setInterval(sample, 50);
+        setTimeout(() => {
+            clearInterval(timer);
+            resolve({maxOffset, layoutKept, curvesFollow, connectionCount:connections.length});
+        }, millis);
+    }), [home, millis]),
+    setOriginParadox = (page, fraction) => page.evaluate(fraction => {
+        const paradox = tc.model.getEventModel('origin').paradox;
+        paradox.setValue(Math.round(paradox.getMax()*fraction));
+    }, fraction);
+
+test('the box of an event with paradox is shown drifting around where it belongs, further as it fills, and the curves follow', async ({page}) => {
+    const problems = await startGame(page, {timelineUnrest:true}),
+        maxPixels = await page.evaluate(() => tc.cfg.TL_EVENT_DRIFT_MAX_PIXELS),
+        home = await page.evaluate(() => {
+            const box = tc.app.getTimelineView().getEventBox('origin');
+            return {x:box.x, y:box.y};
+        });
+    
+    // Without paradox it stays put.
+    expect((await sampleOriginBox(page, home, 400)).maxOffset).toBe(0);
+    
+    // Half full, it drifts by up to half the most.
+    await setOriginParadox(page, 0.5);
+    const half = await sampleOriginBox(page, home);
+    expect(half.maxOffset).toBeGreaterThan(0);
+    expect(half.maxOffset).toBeLessThanOrEqual(maxPixels/2 + 0.5);
+    expect(half.connectionCount).toBeGreaterThan(0);
+    expect(half.layoutKept).toBe(true);
+    expect(half.curvesFollow).toBe(true);
+    
+    // Flooded, by up to the most.
+    await setOriginParadox(page, 1);
+    const flooded = await sampleOriginBox(page, home);
+    expect(flooded.maxOffset).toBeGreaterThan(half.maxOffset);
+    expect(flooded.maxOffset).toBeLessThanOrEqual(maxPixels + 0.5);
+    expect(flooded.layoutKept).toBe(true);
+    expect(flooded.curvesFollow).toBe(true);
+    
+    // Turned off, it goes back home, and so do the ends of its curves.
+    await page.evaluate(() => tc.settings.set(tc.SETTING_ANIMATE_TIMELINE_UNREST, false));
+    await page.waitForTimeout(100);
+    const settled = await sampleOriginBox(page, home, 200);
+    expect(settled.maxOffset).toBe(0);
+    expect(settled.curvesFollow).toBe(true);
+    expect(await page.evaluate(() => {
+        const timeline = tc.app.getTimelineView(),
+            originBox = timeline.getEventBox('origin');
+        return timeline.flowLayer.getConnections().filter(c => c.startView === originBox).every(c => {
+            const [x, y] = [c.startX, c.startY];
+            c.updateEndpoints();
+            return c.startX === x && c.startY === y;
+        });
+    })).toBe(true);
     
     expect(problems.pageErrors).toEqual([]);
 });

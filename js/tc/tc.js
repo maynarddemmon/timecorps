@@ -246,8 +246,13 @@
                 // How far, in degrees, the ends of the timeline's curves drift from straight out
                 // of their boxes: by up to the base when all is calm, rising to the max as 
                 // paradox builds in the timeline or in an Event a curve joins.
-                TL_SPLINE_DRIFT_BASE_DEGREES:3,
-                TL_SPLINE_DRIFT_MAX_DEGREES:30,
+                TL_SPLINE_DRIFT_BASE_DEGREES:2,
+                TL_SPLINE_DRIFT_MAX_DEGREES:16,
+                
+                // How far, in pixels, an Event's box drifts either way from where it belongs, 
+                // in proportion to how full of paradox the Event is, the most once it floods.
+                TL_EVENT_DRIFT_X_MAX_PIXELS:4,
+                TL_EVENT_DRIFT_Y_MAX_PIXELS:16,
                 
                 TL_ROW_HEADER_WIDTH:96,
                 TL_COL_WIDTH:120,

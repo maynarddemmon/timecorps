@@ -18,7 +18,8 @@
             timeUtil:{formatApproxDuration,formatForTimeline},
             cfg:{
                 STANDARD_DEBOUNCE_MILLIS, SPLINE_CURVATURE, 
-                TL_SPLINE_DRIFT_BASE_DEGREES, TL_SPLINE_DRIFT_MAX_DEGREES,
+                TL_SPLINE_DRIFT_BASE_DEGREES, TL_SPLINE_DRIFT_MAX_DEGREES, 
+                TL_EVENT_DRIFT_X_MAX_PIXELS, TL_EVENT_DRIFT_Y_MAX_PIXELS,
                 MAX_HISTORY_LENGTH, 
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
                 TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
@@ -647,6 +648,22 @@
                 self.attachDomObserver(self, '_doDblClick', 'dblclick');
             },
             
+            /*  Shows the box offset by dx and dy pixels from where the layout puts it, e.g. 0 and 
+                0 to put it back. It's done with the CSS translate property, which leaves x and y
+                alone and composes with the transform the value change animation scales. The 
+                curves joined to the box are offset to match by driftSplines. */
+            setDrift: function(dx, dy) {
+                const self = this;
+                if (self._driftX !== dx || self._driftY !== dy) {
+                    self._driftX = dx;
+                    self._driftY = dy;
+                    self.getODS().translate = dx || dy ? dx + 'px ' + dy + 'px' : '';
+                }
+            },
+            getDriftX: function() {return this._driftX ?? 0;},
+            getDriftY: function() {return this._driftY ?? 0;},
+            hasDrift: function() {return !!(this._driftX || this._driftY);},
+            
             setModel: function(model) {
                 const self = this,
                     existingModel = self.model;
@@ -907,11 +924,13 @@
             }
         }),
         
-        // Spline Drift //
+        // Spline and Event Drift //
         /*  While the timeline shows, the ends of its curves drift a little, as if it were unsteady,
             and more as paradox builds: in the timeline as a whole, and in either Event a curve 
             joins, with a flooded Event at its most unsteady. Each end's angle wanders around the 
-            side it leaves, so the curves bend while their ends stay where they meet their boxes. */
+            side it leaves, so the curves bend while their ends stay where they meet their boxes. 
+            The box of an Event with paradox drifts too, around where it belongs, and the ends of
+            the curves joined to it follow. */
         DEGREES_BY_SIDE = {right:0, bottom:90, left:180, top:270}, // As myt measures them.
         
         /*  How unsteady an Event is, from 0 to 1: as full of paradox as it is, or 1 once it's
@@ -921,8 +940,27 @@
         /*  Two waves at different rates, so the drift doesn't swing like a pendulum. Within ±1. */
         getWobble = phase => 0.7*mathSin(phase) + 0.3*mathSin(2.3*phase + 1),
         
+        /*  Moves one end of a curve with the drift of the box it's joined to. The end myt 
+            places, from the box's x and y, is its base. An end still where this last put it 
+            keeps the base it had, while one myt has placed again, e.g. as the layout moved the
+            box, takes its new place as its base. */
+        driftSplineEnd = (connection, end, view) => {
+            const xKey = end + 'X',
+                yKey = end + 'Y',
+                driftPoints = connection._driftPoints ??= {},
+                last = driftPoints[end],
+                baseX = last && last.x === connection[xKey] && last.y === connection[yKey] ? last.baseX : connection[xKey],
+                baseY = last && last.x === connection[xKey] && last.y === connection[yKey] ? last.baseY : connection[yKey],
+                x = baseX + (view?.getDriftX?.() ?? 0),
+                y = baseY + (view?.getDriftY?.() ?? 0);
+            connection[xKey] = x;
+            connection[yKey] = y;
+            driftPoints[end] = {x, y, baseX, baseY};
+        },
+        
         /*  Moves each end of every curve on by the time elapsed. Each curve keeps its own phases,
-            so they drift apart, and quickens as it gets more unsteady. */
+            so they drift apart, and quickens as it gets more unsteady. Its ends follow the 
+            drift of their boxes. */
         driftSplines = (timeline, elapsedSecs) => {
             const timelineUnrest = timeline.model[STAT_ID_PARADOX].getPercentOfMax(),
                 elapsedPhase = TWO_PI*elapsedSecs,
@@ -951,11 +989,44 @@
                     drift.startPhase += timing*drift.startSpeed;
                     drift.endPhase += timing*drift.endSpeed;
                     
-                    // Both angles are set before the one redraw, rather than with their setters, 
-                    // each of which would redraw.
+                    // The ends and angles are all set before the one redraw, rather than with 
+                    // their setters, each of which would redraw.
+                    driftSplineEnd(connection, 'start', connection.startView);
+                    driftSplineEnd(connection, 'end', connection.endView);
                     connection.startAngle = startDegrees + amplitude*getWobble(drift.startPhase);
                     connection.endAngle = endDegrees + amplitude*getWobble(drift.endPhase);
                     connection.redraw();
+                }
+            }
+        },
+        
+        /*  Moves the box of each Event with paradox on by the time elapsed: up to 
+            TL_EVENT_DRIFT_MAX_PIXELS either way once it's flooded, and quicker the more 
+            unsteady it is. A box whose Event has none goes back home. */
+        driftEventBoxes = (timeline, elapsedSecs) => {
+            const elapsedPhase = TWO_PI*elapsedSecs,
+                boxesByEventId = timeline.boxesByEventId;
+            for (const eventId in boxesByEventId) {
+                const eventBox = boxesByEventId[eventId],
+                    unrest = eventBox.visible ? getEventUnrest(eventBox.model) : 0;
+                if (unrest > 0) {
+                    const drift = eventBox._drift ??= {
+                            xPhase:mathRandom()*TWO_PI, 
+                            yPhase:mathRandom()*TWO_PI,
+                            xSpeed:0.3 + mathRandom()*0.3, 
+                            ySpeed:0.3 + mathRandom()*0.3
+                        },
+                        amplitudeX = TL_EVENT_DRIFT_X_MAX_PIXELS*unrest,
+                        amplitudeY = TL_EVENT_DRIFT_Y_MAX_PIXELS*unrest,
+                        timing = elapsedPhase*(1 + 2*unrest);
+                    drift.xPhase += timing*drift.xSpeed;
+                    drift.yPhase += timing*drift.ySpeed;
+                    eventBox.setDrift(
+                        amplitudeX*getWobble(drift.xPhase), 
+                        amplitudeY*getWobble(drift.yPhase)
+                    );
+                } else if (eventBox.hasDrift()) {
+                    eventBox.setDrift(0, 0);
                 }
             }
         },
@@ -978,7 +1049,11 @@
                         if (lastTime == null || now - lastTime >= 33) {
                             // A long gap, e.g. after the tab was hidden, moves it on no more than 
                             // a frame or so.
-                            driftSplines(timeline, lastTime == null ? 0 : mathMin(now - lastTime, 100) / 1000);
+                            const elapsedSecs = lastTime == null ? 0 : mathMin(now - lastTime, 100) / 1000;
+                            
+                            // Boxes first, so the curves can follow them.
+                            driftEventBoxes(timeline, elapsedSecs);
+                            driftSplines(timeline, elapsedSecs);
                             isDrifting = true;
                             lastTime = now;
                         }
@@ -986,9 +1061,15 @@
                         if (isDrifting) {
                             // Settle the Splines by putting every curve back straight out of 
                             // their sides.
+                            // And every box back home, with the ends of the curves.
+                            for (const eventBox of Object.values(timeline.boxesByEventId)) {
+                                if (eventBox.hasDrift()) eventBox.setDrift(0, 0);
+                            }
                             for (const connection of timeline.flowLayer.getConnections()) {
                                 connection.setStartAngle(DEGREES_BY_SIDE[connection.startSide] ?? null);
                                 connection.setEndAngle(DEGREES_BY_SIDE[connection.endSide] ?? null);
+                                connection.updateEndpoints();
+                                connection._driftPoints = null;
                             }
                             isDrifting = false;
                         }
