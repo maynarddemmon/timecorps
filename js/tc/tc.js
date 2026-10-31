@@ -107,6 +107,8 @@
             app:null, // Holds the App instance.
             model:null, // Holds the Model instance.
             
+            REDUCE_MOTION: globalThis.matchMedia('(prefers-reduced-motion: reduce)'),
+            
             theme:{
                 layoutSpacing:1,
                 spacing:2,

@@ -146,7 +146,8 @@
 				"Where the Etherium puts what it can no longer place. Nothing here has direction: no gradient, no pressure, no difference for light to cross or sound to move through. Space goes on without features and time without a before or after.",
 				"<br><br>The Void does not destroy. It does not consume. It waits. An agent taken by the chronovores is filed as lost, and only provisionally, because nothing that falls here has ended. It has only stopped being different from everything else."
 			],
-			"actions":{"_investigate":null}
+			"actionLimit":0,
+			"actions":{"_investigate":null,"_rest":null}
 		},
 		"syndicate_hq":{
 			"name":"❉ Syndicate Warehouse", "hub":true,

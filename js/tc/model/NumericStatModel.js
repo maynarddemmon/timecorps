@@ -108,6 +108,11 @@
             },
             getValue: function() {return this.value;},
             
+            /*  How full a stat is, from 0 to 1. */
+            getPercentOfMax: function() {
+                const max = this.getMax() ?? 0;
+                return max > 0 ? mathMax(0, mathMin(1, this.getValue() / max)) : 0;
+            },
             
             // Methods /////////////////////////////////////////////////////////
             adjValueToNoMoreThan: function(adj, upperLimit, cfg) {

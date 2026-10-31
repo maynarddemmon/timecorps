@@ -410,7 +410,6 @@
 			"name":"Marconi Traffic Backlog", "image":"../location/titanic_wireless.jpg",
 			"start":"1912-04-14T21:40:00", "duration":{"h":1,"m":50},
 			"location":"titanic_wireless",
-			"paradox":5,
 			"actions":{
 				"clear":{
 					"label":"Clear Backlog Earlier",
