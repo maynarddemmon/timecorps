@@ -186,8 +186,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     
     test('every prompt an action, exit or operation opens exists', () => {
         const problems = [],
-            check = (where, promptId) => {
-                if (promptId !== undefined && !Object.hasOwn(prompts, promptId)) problems.push(where + ' opens unknown prompt ' + promptId);
+            // A prompt's ID, or an array of them opened one after another.
+            check = (where, promptIds) => {
+                for (const promptId of promptIds === undefined ? [] : [promptIds].flat()) {
+                    if (!Object.hasOwn(prompts, promptId)) problems.push(where + ' opens unknown prompt ' + promptId);
+                }
             };
         for (const [eventId, event] of [...Object.entries(events), ['defaultEventActions', {actions:defaultEventActions}]]) {
             for (const [actionId, action] of Object.entries(event.actions ?? {})) check(eventId + '.' + actionId, action?.prompt);

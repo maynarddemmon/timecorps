@@ -8,7 +8,7 @@
         {
             ConstrainableAttrSupport, Describable, Hideable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS},
-            isLikeAnID, openPrompt,
+            readPromptIds, openPrompts,
             SCOPE_OPERATION
         } = pkg,
         
@@ -292,8 +292,8 @@
         setOnSetup: function(onSetupCfg) {
             if (onSetupCfg) {
                 this.setupChanges = readChanges(this, 'onSetup', onSetupCfg);
-                this.setupPromptEarlyId = isLikeAnID('Operation ' + this.id + ' onSetup promptEarly', onSetupCfg.promptEarly);
-                this.setupPromptId      = isLikeAnID('Operation ' + this.id + ' onSetup prompt', onSetupCfg.prompt);
+                this.setupPromptEarlyIds = readPromptIds('Operation ' + this.id + ' onSetup promptEarly', onSetupCfg.promptEarly);
+                this.setupPromptIds      = readPromptIds('Operation ' + this.id + ' onSetup prompt', onSetupCfg.prompt);
                 this.setRevealAgentsOnSetup(onSetupCfg.revealAgents);
                 this.setAwardAgentsOnSetup(onSetupCfg.awardAgents);
                 this.setInitialEventSelection(onSetupCfg.initialEventSelection);
@@ -336,8 +336,8 @@
                 this.setDebrief(onSuccessCfg.debrief);
                 this.setNextOperation(onSuccessCfg.nextOperation);
                 this.successChanges = readChanges(this, 'onSuccess', onSuccessCfg);
-                this.successPromptEarlyId = isLikeAnID('Operation ' + this.id + ' onSuccess promptEarly', onSuccessCfg.promptEarly);
-                this.successPromptId      = isLikeAnID('Operation ' + this.id + ' onSuccess prompt', onSuccessCfg.prompt);
+                this.successPromptEarlyIds = readPromptIds('Operation ' + this.id + ' onSuccess promptEarly', onSuccessCfg.promptEarly);
+                this.successPromptIds      = readPromptIds('Operation ' + this.id + ' onSuccess prompt', onSuccessCfg.prompt);
                 this.setRevealAgentsOnSuccess(onSuccessCfg.revealAgents);
                 this.setAwardAgentsOnSuccess(onSuccessCfg.awardAgents);
             }
@@ -419,13 +419,13 @@
                 if (!fromBrief) pkg.app.openMissionBrief(self);
                 
                 // After the Mission Brief but before Agents are revealed or awarded.
-                openPrompt('Operation ' + self.id + ' onSetup', self.setupPromptEarlyId);
+                openPrompts('Operation ' + self.id + ' onSetup', self.setupPromptEarlyIds ?? []);
                 
                 rootModel.revealAgents(self.revealAgentsOnSetup);
                 rootModel.awardAgents(self.awardAgentsOnSetup);
                 
                 // After the Agents are revealed or awarded.
-                openPrompt('Operation ' + self.id + ' onSetup', self.setupPromptId);
+                openPrompts('Operation ' + self.id + ' onSetup', self.setupPromptIds ?? []);
                 
                 self.notifyCollectionOfUpdate();
                 
@@ -441,14 +441,14 @@
                 pkg.applySuccessChanges(self.successChanges);
                 
                 // Before Agents are revealed or awarded, so before their dossiers.
-                openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptEarlyId);
+                openPrompts('Operation ' + self.id + ' onSuccess', self.successPromptEarlyIds ?? []);
                 
                 rootModel.revealAgents(self.revealAgentsOnSuccess);
                 rootModel.awardAgents(self.awardAgentsOnSuccess);
                 self.set('successGranted', true, true);
                 self.notifyCollectionOfUpdate();
                 
-                openPrompt('Operation ' + self.id + ' onSuccess', self.successPromptId, () => {
+                openPrompts('Operation ' + self.id + ' onSuccess', self.successPromptIds ?? [], () => {
                     // The next Operation is available from now on, whether or not the player 
                     // goes on to it from the debrief. A check expression is worked out once, 
                     // here, so the prompt's answer can decide it.

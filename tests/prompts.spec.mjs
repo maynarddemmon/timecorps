@@ -203,3 +203,83 @@ test('a mission\'s promptEarly opens before its agents are revealed, and its pro
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('a list of prompts opens one after another, and whether each is hidden is decided in its turn', async ({page}) => {
+    await page.route('**/tests/data/operations.json5', route => {
+        const json = readTestData('operations.json5'),
+            ack = (title, extra) => ({type:'ack', title, description:[title + '.'], ...extra});
+        json.scratch = {...json.scratch, skip_late:false};
+        Object.assign(json.prompts, {
+            earlyOne:ack('Early One'),
+            earlyTwo:ack('Early Two'),
+            lateOne:{
+                type:'confirm', title:'Late One', description:['Skip the next one?'],
+                buttons:{confirm:{label:'Skip', onClick:{set:{'scratch.skip_late':'true'}}}, cancel:{label:'Keep'}}
+            },
+            lateSkipped:ack('Late Skipped', {hidden:'scratch.skip_late'}),
+            lateTwo:ack('Late Two')
+        });
+        Object.assign(json.operations.first.onSetup, {
+            promptEarly:['earlyOne', 'earlyTwo'],
+            prompt:['lateOne', 'lateSkipped', 'lateTwo']
+        });
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page, {dismissBrief:false}),
+        answer = async (title, btn='Acknowledge') => {
+            await expect(dialogTitle(page, title)).toBeVisible();
+            await clickBtn(page, btn);
+            await expect(dialogTitle(page, title)).toHaveCount(0);
+        };
+    
+    // Both early prompts open before Alpha's dossier.
+    await dismissMissionBrief(page);
+    await answer('Early One');
+    await expect(briefTitle(page, 'dossier')).toHaveCount(0);
+    await answer('Early Two');
+    await dismissAgentDossier(page, 'Alpha');
+    
+    // Late One's answer hides Late Skipped, though it was hidden by nothing when the list was 
+    // opened, so Late Two comes next.
+    await answer('Late One', 'Skip');
+    await answer('Late Two');
+    await page.waitForTimeout(250);
+    await expect(dialogTitle(page, 'Late Skipped')).toHaveCount(0);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an exit with a list of prompts arrives once the last is answered', async ({page}) => {
+    await Promise.all([
+        page.route('**/tests/data/test_scenario.json5', route => {
+            const json = readTestData('test_scenario.json5');
+            json.events.origin.exits.find(exit => exit.to === 'aftermath').prompt = ['firstWord', 'lastWord'];
+            return route.fulfill({json});
+        }),
+        page.route('**/tests/data/operations.json5', route => {
+            const json = readTestData('operations.json5');
+            Object.assign(json.prompts, {
+                firstWord:{type:'ack', title:'First Word', description:['One.']},
+                lastWord:{type:'ack', title:'Last Word', description:['Two.']}
+            });
+            return route.fulfill({json});
+        })
+    ]);
+    const problems = await startGame(page),
+        alphaAt = () => page.evaluate(() => tc.model.getAgentModel('AL').event);
+    
+    await page.evaluate(() => {
+        const m = tc.model;
+        m.getAgentModel('AL').doFollowExit(m.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'));
+    });
+    await expect(dialogTitle(page, 'First Word')).toBeVisible();
+    await clickBtn(page, 'Acknowledge');
+    await expect(dialogTitle(page, 'Last Word')).toBeVisible();
+    expect(await alphaAt()).toBe('origin');
+    await clickBtn(page, 'Acknowledge');
+    await expect.poll(alphaAt).toBe('aftermath');
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});

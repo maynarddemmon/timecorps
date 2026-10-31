@@ -163,12 +163,36 @@
         }
     });
     
-    /*  Reads the "prompt" of an action, exit or Operation: a prompt's ID, or undefined, with a
-        warning starting with where, if it isn't one. Prompts can be in data loaded later, so
-        whether the ID names a prompt is only known when it's opened. */
-    pkg.isLikeAnID = (where, id) => {
-        if (id === undefined || pkg.isValidId(id)) return id;
-        console.warn(where, 'must be like an ID (ignoring it):', id);
+    /*  Reads the "prompt" of an action, exit or Operation, or an Operation's "promptEarly": 
+        a prompt's ID, or an array of them to open one after another. Returns an array of the 
+        IDs, empty for none, with a warning starting with where for anything that isn't an ID.
+        Prompts can be in data loaded later, so whether an ID names a prompt is only known when
+        it's opened. */
+    pkg.readPromptIds = (where, value) => {
+        if (value === undefined) return [];
+        return (Array.isArray(value) ? value : [value]).filter(id => {
+            if (pkg.isValidId(id)) return true;
+            console.warn(where, 'must be like an ID (ignoring it):', id);
+            return false;
+        });
+    };
+    
+    /*  Opens the prompts with the IDs one after another, then calls finallyCallback once the
+        last is answered, or at once if there are none. Each one's turn is queued now, so 
+        dialogs opened after this, e.g. the dossiers of agents a mission reveals, wait for all
+        of them. Whether a prompt is hidden is decided when its turn comes, so an earlier 
+        answer can hide a later prompt. */
+    pkg.openPrompts = (where, promptIds, finallyCallback) => {
+        const lastIdx = promptIds.length - 1;
+        if (lastIdx < 0) {
+            finallyCallback?.();
+        } else {
+            promptIds.forEach((promptId, idx) => {
+                pkg.dialogUtil.openWhenClear(() => {
+                    pkg.openPrompt(where, promptId, idx === lastIdx ? finallyCallback : undefined);
+                });
+            });
+        }
     };
     
     /*  Shows the prompt with the ID, unless it's hidden, and calls finallyCallback once it's 

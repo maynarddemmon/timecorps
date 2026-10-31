@@ -320,7 +320,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
 - **`group`**: the ID of an [action group](#action-groups) to show the action with, on a line of its own, e.g. HQ's Restock Chronal, which refills the shared pool rather than doing anything for the agent who takes it. Leave it out to show the action with the rest.
 - **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
-- **`prompt`**: the ID of a [prompt](#prompts) to open when the check passes, after everything else the action does.
+- **`prompt`**: the ID of a [prompt](#prompts) to open when the check passes, after everything else the action does, or an array of IDs to open one after another.
 
 Every action counts how many times it's been taken, pass or fail, as its `doneCount`, e.g. `event.actions.recover.doneCount`. Any expression can read it, and constraints update when it changes, so `"hidden":"event.actions.recover.doneCount >= 3"` allows three tries. An action's adjustments are worked out before its own `doneCount`, and the `flipCount` of the values it sets, go up, so they see the counts before this take.
 
@@ -370,7 +370,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
 - **`set`**: as for actions, applied as a success when the exit is taken, before the agent arrives.
 - **`costs`**: as for actions, but an exit costs nothing unless it says so, e.g. `"costs":{"agent.chronal":"1"}`. The button is disabled while the agent can't pay, and its tooltip lists the costs.
-- **`prompt`**: the ID of a [prompt](#prompts) to open as the exit is taken. The agent arrives once it's answered.
+- **`prompt`**: the ID of a [prompt](#prompts) to open as the exit is taken, or an array of IDs to open one after another. The agent arrives once the last is answered.
 
 ## Skill checks
 
@@ -602,8 +602,8 @@ HQ and The Void leave out `_investigate` this way.
 - **Setup.** When a mission is started, its setup is applied once: its `adj` and `set`, the Mission Brief opened (unless it was accepted from the brief), and agents revealed and awarded. Its selection is made whenever it becomes the current mission, once it's started.
 - **Completion.** A started mission is complete when every objective's `success` is true, whether or not it's the current one. An available mission's objectives show their progress, but it can't complete until it's started. Then its `adj` and `set` are applied and agents revealed and awarded, once, and the debrief is shown, with phrases that can describe how it was won.
 - **`set` and `adj`.** As for an [action](#actions), applied as a success: adjustments first, then sets. A mission has no agent or event of its own, so its keys name events and agents by ID (`events.<id>.<stat>`, `events.<id>.values.<value>`, `agents.<id>.<stat>`, `agents.<id>.skills.<skill>`), the timeline or scratch, and its expressions are [check expressions](#check-expressions) without an `agent` or `event`, so they can use `timeline`, `scratch` and dice. `onFailure` is never used. The old `historicityAdjustments`, `awardScore`, `awardCredits` and `awardHQChronal` are ignored, with a warning.
-- **`prompt`.** The ID of a [prompt](#prompts). onSetup's opens after the Mission Brief and the dossiers of the agents it reveals. onSuccess's opens as the mission completes, and Mission Complete, with its save, waits for the answer.
-- **`promptEarly`.** The ID of a prompt that opens before the agents are revealed and awarded, so before their dossiers: onSetup's right after the Mission Brief, onSuccess's before onSuccess's `prompt`. Use it for something a dossier should already reflect, e.g. asking for the player's name. A mission can have both.
+- **`prompt`.** The ID of a [prompt](#prompts), or an array of IDs to open one after another, e.g. `["avatar_name", "avatar_image"]`. onSetup's open after the Mission Brief and the dossiers of the agents it reveals. onSuccess's open as the mission completes, and Mission Complete, with its save, waits for the last answer.
+- **`promptEarly`.** The ID of a prompt, or an array of them, that opens before the agents are revealed and awarded, so before their dossiers: onSetup's right after the Mission Brief, onSuccess's before onSuccess's `prompt`. Use it for something a dossier should already reflect, e.g. asking for the player's name. A mission can have both.
 - **Entanglements.** Each objective lists the events its `success` reads, as buttons that select them: a Causator shows as `Collision: Struck`, a stat as `Collision: Attestation`. Events and Causators the player hasn't discovered show as "Unknown" until they're revealed. Reading a property, as everywhere else, is what counts, so `!events.collision.values.struck.value` lists Struck but a method call doesn't.
 - **The campaign.** `nextOperation` links the missions together. The last mission has none. It's a mission's ID, or a [check expression](#check-expressions) that works out to one when the mission is completed, so how it was won can decide what comes next, e.g. `"agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'"`. It's worked out once, after the success `prompt` is answered, and the mission it names is revealed then, whether or not the player goes on to it from the debrief.
 - **Brief text.** Every mission needs `data/mission/<id>.txt`, the briefing shown in its Mission Brief.
@@ -641,7 +641,7 @@ A prompt is a message the player answers with a button, e.g. an offer to join th
 - **`input`**: for a `text` prompt, required: `scratch`, the [scratch](#scratch) entry the text goes in, and optionally `maxLength`, `allowedChars`, a string of the characters that can be typed, and `placeholder`, shown while the field is empty. The field starts with the entry's value. Confirm can't be clicked while it's blank, and the text is trimmed and put in the entry before its `onClick`. A `text` prompt without a usable `input` is shown as an `ack`.
 - **`buttons`**: by ID: `confirm` for any type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
 
-A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when it's asked to open, and its text when it opens. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.
+A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when its turn comes, and its text when it opens. Prompts given as an array take their turns one after another, all ahead of anything opened after them, e.g. the dossiers of the agents a mission reveals, and an earlier prompt's answer can hide a later one. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.
 
 ## Text and media
 

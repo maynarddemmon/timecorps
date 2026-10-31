@@ -1006,13 +1006,13 @@
             }
         }),
         
-        /*  The prompt an action or exit opens when it's taken and its check passes, by ID, 
-            e.g. "recruit". Expects ActionCheckSupport. */
+        /*  The prompts an action or exit opens, one after another, when it's taken and its check
+            passes, by ID, e.g. "recruit" or ["recruit", "briefing"]. Expects ActionCheckSupport. */
         PromptSupport = new JSModule('PromptSupport', {
-            setPrompt: function(promptId) {this.promptId = pkg.isLikeAnID(this.getSkillCheckOwner() + ' prompt', promptId);},
+            setPrompt: function(v) {this.promptIds = pkg.readPromptIds(this.getSkillCheckOwner() + ' prompt', v);},
             
-            /*  Opens its prompt, if it has one and it isn't hidden. */
-            openPrompt: function(finallyCallback) {pkg.openPrompt(this.getSkillCheckOwner(), this.promptId, finallyCallback);}
+            /*  Opens its prompts that aren't hidden, then calls finallyCallback. */
+            openPrompt: function(finallyCallback) {pkg.openPrompts(this.getSkillCheckOwner(), this.promptIds ?? [], finallyCallback);}
         }),
         
         EventActionModel = new JSClass('EventActionModel', BaseModel, {
