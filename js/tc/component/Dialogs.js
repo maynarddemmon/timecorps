@@ -3,7 +3,8 @@
     
     let confirmMsgDialog,
         ackMsgDialog,
-        textInputDialog;
+        textInputDialog,
+        imageSelectorDialog;
     
     const {Class:JSClass, Module:JSModule} = JS,
         
@@ -358,6 +359,105 @@
             }
         }),
         
+        /*  A message with an image below it, between buttons that step back and forward
+            through a list of images, wrapping around at either end, and a button that confirms
+            the image showing. The arrow keys step too. The images show whole, centered in a 
+            square. */
+        IMAGE_SELECTOR_SIZE = 256,
+        ImageSelectorDialog = pkg.ImageSelectorDialog = new JSClass('ImageSelectorDialog', AckMsgDialog, {
+            initNode: function(parent, attrs) {
+                const self = this;
+                self.callSuper(parent, attrs);
+                
+                const selector = self._selector = new M.View(self, {height:IMAGE_SELECTOR_SIZE}),
+                    stepBtnAttrs = {valign:'middle', fontSize:fontSizeLarge, textColor:colorLight, buttonType:'plain'};
+                self._prevBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_BACK, tooltip:'Previous'}, [{
+                    doActivated: () => {self.step(-1);}
+                }]);
+                self._image = new M.View(selector, {
+                    width:IMAGE_SELECTOR_SIZE, height:IMAGE_SELECTOR_SIZE,
+                    imageSize:'contain', imagePosition:'center', 
+                    bgColor:colorMegaDark, roundedCorners:cornerRadius
+                }, [M.ImageSupport]);
+                self._nextBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_FORWARD, tooltip:'Next'}, [{
+                    doActivated: () => {self.step(1);}
+                }]);
+                new M.SpacedLayout(selector, {spacing:padding, collapseParent:true});
+                
+                self._countTxt = new PaddedText(self, {fontSize:fontSizeMedium, textColor:colorLight});
+                
+                // In the capture phase, so the arrow keys step even while a button inside has 
+                // the focus and keeps its keys to itself.
+                self.attachToDom(self, '_selectorKeyDown', 'keydown', true);
+            },
+            
+            /*  The image showing, as given in the list. */
+            getValue: function() {return this._images?.[this._index] ?? null;},
+            
+            /*  inputCfg is {images, value, baseUrl}. images is the list of images, as paths 
+                that baseUrl, if given, is put before. The image shown first is value, if it's
+                in the list, or else the first. */
+            show: function(title, msg, confirmFunc, cancelFunc, inputCfg) {
+                const self = this,
+                    {images=[], value, baseUrl=''} = inputCfg ?? {};
+                self._images = images;
+                self._baseUrl = baseUrl;
+                self._index = mathMax(0, images.indexOf(value));
+                
+                self.callSuper(title, msg, confirmFunc, cancelFunc);
+                
+                // Wide enough for the image and its buttons, and as tall as everything.
+                const panelView = self.getPanelView(),
+                    selector = self._selector,
+                    countTxt = self._countTxt,
+                    msgTxt = self.getMsgTxt();
+                panelView.setWidth(mathMax(panelView.width, selector.width + 2*padding));
+                msgTxt.sizeViewToDom();
+                self._updateImage();
+                countTxt.sizeViewToDom();
+                selector.setX((panelView.width - selector.width) / 2);
+                selector.setY(msgTxt.height);
+                countTxt.setX((panelView.width - countTxt.width) / 2);
+                countTxt.setY(selector.y + selector.height);
+                panelView.setHeight(mathMin(650, 
+                    self.getHeaderView().height + spacing + countTxt.y + countTxt.height + spacing + self.getFooterView().height
+                ));
+            },
+            
+            /*  Shows the image delta places on in the list, wrapping around at either end. */
+            step: function(delta) {
+                const len = this._images?.length ?? 0;
+                if (len > 0) {
+                    this._index = ((this._index + delta) % len + len) % len;
+                    this._updateImage();
+                }
+            },
+            
+            /** @private */
+            _updateImage: function() {
+                const self = this,
+                    images = self._images,
+                    len = images.length,
+                    toUrl = idx => self._baseUrl + images[(idx + len) % len];
+                self._image.setImageUrl(len > 0 ? toUrl(self._index) : null);
+                self._countTxt.setText(len > 0 ? (self._index + 1) + ' / ' + len : '');
+                
+                // Loads the images either side, so stepping to them shows them at once.
+                if (len > 1) {
+                    for (const idx of [self._index - 1, self._index + 1]) new Image().src = toUrl(idx);
+                }
+            },
+            
+            /** @private */
+            _selectorKeyDown: function(event) {
+                switch (M.KeyObservable.getCodeFromEvent(event)) {
+                    case globalKeys.CODE_ARROW_LEFT: this.step(-1); return false;
+                    case globalKeys.CODE_ARROW_RIGHT: this.step(1); return false;
+                }
+                return true;
+            }
+        }),
+        
         // The QueuedDialogs showing now, and the functions waiting to open a dialog.
         showingQueuedDialogs = new Set(),
         dialogQueue = [],
@@ -407,6 +507,15 @@
             textInputDialog.show(title, msg, () => confirmFunc(textInputDialog.getText()), null, inputCfg);
             textInputDialog.getFooterView().ackBtn.setText(btnLabel ?? DEFAULT_ACK_LABEL);
             return textInputDialog;
+        }),
+        
+        /*  confirmFunc is called with the image showing, as given in the list. See 
+            ImageSelectorDialog.show for inputCfg. */
+        openImageSelectorDialog: (title, msg, confirmFunc, inputCfg, btnLabel=DEFAULT_ACK_LABEL) => openWhenClear(() => {
+            imageSelectorDialog ??= new ImageSelectorDialog(pkg.app);
+            imageSelectorDialog.show(title, msg, () => confirmFunc(imageSelectorDialog.getValue()), null, inputCfg);
+            imageSelectorDialog.getFooterView().ackBtn.setText(btnLabel ?? DEFAULT_ACK_LABEL);
+            return imageSelectorDialog;
         }),
         
         openWhenClear

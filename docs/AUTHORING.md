@@ -634,11 +634,12 @@ A prompt is a message the player answers with a button, e.g. an offer to join th
 }
 ```
 
-- **`type`**: `ack`, one button, `confirm`, two, or `text`, a text field and one button. Default: `ack`.
+- **`type`**: `ack`, one button, `confirm`, two, `text`, a text field and one button, or `image`, images to step through and one button. Default: `ack`.
 - **`title`**: the dialog's title.
 - **`description`**: the message. Phrases, as for an event.
 - **`hidden`**: a constraint expression. A hidden prompt doesn't open.
 - **`input`**: for a `text` prompt, required: `scratch`, the [scratch](#scratch) entry the text goes in, and optionally `maxLength`, `allowedChars`, a string of the characters that can be typed, and `placeholder`, shown while the field is empty. The field starts with the entry's value. Confirm can't be clicked while it's blank, and the text is trimmed and put in the entry before its `onClick`. A `text` prompt without a usable `input` is shown as an `ack`.
+  For an `image` prompt, required: `scratch`, the entry the chosen image goes in, and `images`, an array of paths to images from `img/`, e.g. `["avatar/AA.jpg", "avatar/AB.jpg"]`. The player steps through them with the arrow buttons or keys, wrapping around at either end, each shown whole in a square. It starts on the entry's value if that's one of them, or the first, and the one showing when Confirm is clicked is put in the entry, as listed, before its `onClick`. To use it as a picture, give an `imageExpr` that reads the entry from the model's own folder, e.g. You's `"'../' + scratch.avatar_photo"`. data.spec checks each image exists and that the entry starts as one of them. An `image` prompt without a usable `input` is shown as an `ack`.
 - **`buttons`**: by ID: `confirm` for any type, and `cancel` for a `confirm`. Each has an optional `label`, which replaces the dialog's own, and an optional `onClick` with `set` and `adj`, applied as for a [mission's](#operations-missions): as a success, naming agents and events by ID. `cancel` also applies when the dialog is closed another way.
 
 A prompt waits its turn behind other dialogs, as mission briefs do. Whether it's hidden is decided when its turn comes, and its text when it opens. Prompts given as an array take their turns one after another, all ahead of anything opened after them, e.g. the dossiers of the agents a mission reveals, and an earlier prompt's answer can hide a later one. An exit's arrival and a mission's Mission Complete wait for the answer, so the save made on completion has it. A prompt isn't saved, so one open when the page is reloaded is lost.

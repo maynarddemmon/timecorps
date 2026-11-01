@@ -107,7 +107,7 @@ test('problems with a text prompt\'s input are warned about', async ({page}) => 
     const problems = await startGame(page, {dismissBrief:false});
     expect(problems.warnings).toEqual(expect.arrayContaining([
         'Prompt bare input must be an object with the name of a scratch entry as "scratch" (using "ack"): alpha_name',
-        'Prompt extra input is only for a "text" prompt (ignoring it)',
+        'Prompt extra input is only for a "text" or "image" prompt (ignoring it)',
         'Prompt limits input has keys other than scratch, maxLength, allowedChars, placeholder (ignoring them): size',
         'Prompt limits input maxLength must be a whole number above 0 (ignoring it): 0',
         'Prompt limits input allowedChars must be a string of characters (ignoring it): 5',

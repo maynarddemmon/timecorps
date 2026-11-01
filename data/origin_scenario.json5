@@ -22,14 +22,23 @@
 		},
 		
 		"avatar_photo":{
-			"type":"text",
+			"type":"image",
 			"title":"Your Photo",
 			"description":"You take a quick glance in the mirror to make sure everything is in order before you head out. You don’t think anyone will notice, or care, about that grease stain on your pants. Who do you see staring back at you in the mirror?",
 			"input":{
 				"scratch":"avatar_photo",
-				"maxLength":100,
-				"allowedChars":"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-/",
-				"placeholder":"Path to a picture"
+				"images":[
+					"avatar/AA.jpg", "avatar/AB.jpg", "avatar/AC.jpg", "avatar/AD.jpg", "avatar/AE.jpg", "avatar/AF.jpg", "avatar/AG.jpg", "avatar/AH.jpg",
+					"avatar/AI.jpg", "avatar/AJ.jpg", "avatar/AK.jpg", "avatar/AL.jpg", "avatar/AM.jpg", "avatar/AN.jpg", "avatar/AO.jpg", "avatar/AP.jpg",
+					"avatar/AQ.jpg", "avatar/AR.jpg", "avatar/AS.jpg", "avatar/AT.jpg", "avatar/AU.jpg", "avatar/AV.jpg", "avatar/AW.jpg", "avatar/AX.jpg",
+					"avatar/AY.jpg", "avatar/AZ.jpg", "avatar/BA.jpg", "avatar/BB.jpg", "avatar/BC.jpg", "avatar/BD.jpg", "avatar/BE.jpg", "avatar/BF.jpg",
+					"avatar/BG.jpg", "avatar/BH.jpg", "avatar/BI.jpg", "avatar/BJ.jpg", "avatar/BK.jpg", "avatar/BL.jpg", "avatar/BM.jpg", "avatar/BN.jpg",
+					"avatar/BO.jpg", "avatar/BP.jpg", "avatar/BQ.jpg", "avatar/BR.jpg", "avatar/BS.jpg", "avatar/BT.jpg", "avatar/BU.jpg", "avatar/BV.jpg",
+					"avatar/BW.jpg", "avatar/BX.jpg", "avatar/BY.jpg", "avatar/BZ.jpg", "avatar/CA.jpg", "avatar/CB.jpg", "avatar/CC.jpg", "avatar/CD.jpg",
+					"avatar/CE.jpg", "avatar/CF.jpg", "avatar/CG.jpg", "avatar/CH.jpg", "avatar/CI.jpg", "avatar/CJ.jpg", "avatar/CK.jpg", "avatar/CL.jpg",
+					"avatar/CM.jpg", "avatar/CN.jpg", "avatar/CO.jpg", "avatar/CP.jpg", "avatar/CQ.jpg", "avatar/CR.jpg", "avatar/CS.jpg", "avatar/CT.jpg",
+					"avatar/CU.jpg", "avatar/CV.jpg", "avatar/CW.jpg", "avatar/CX.jpg", "avatar/CY.jpg", "avatar/CZ.jpg"
+				]
 			},
 			"buttons":{
 				"confirm":{"label":"Looks Great!"}
@@ -142,7 +151,7 @@
 	
 	"scratch":{
 		"avatar_name":"", // Your name, from the avatar_name prompt.
-		"avatar_photo":"ME.jpg", // Your picture's path from img/agent/, from the avatar_photo prompt.
+		"avatar_photo":"avatar/AA.jpg", // Your picture's path from img/, from the avatar_photo prompt.
 		"backstory_run":false,
 		"backstory_guitar":false,
 		"backstory_news":false,
@@ -738,7 +747,7 @@
 		},
 		
 		"origin_theater_2":{
-			"name":"The Matinee", "chronoLocked":"true", "image":"origin_theater.jpg",
+			"name":"The Show", "chronoLocked":"true", "image":"origin_theater.jpg",
 			"imageExpr":"'origin_theater_2' + event.values.choice.value + '.jpg'",
 			"start":{"endOf":"origin_theater"}, "duration":{"h":4},
 			"location":"origin_theater",

@@ -4,7 +4,8 @@
     const PROMPT_TYPE_ACK = 'ack',
         PROMPT_TYPE_CONFIRM = 'confirm',
         PROMPT_TYPE_TEXT = 'text',
-        PROMPT_TYPES = [PROMPT_TYPE_ACK, PROMPT_TYPE_CONFIRM, PROMPT_TYPE_TEXT],
+        PROMPT_TYPE_IMAGE = 'image',
+        PROMPT_TYPES = [PROMPT_TYPE_ACK, PROMPT_TYPE_CONFIRM, PROMPT_TYPE_TEXT, PROMPT_TYPE_IMAGE],
         
         BUTTON_ID_CONFIRM = 'confirm',
         BUTTON_ID_CANCEL = 'cancel',
@@ -13,18 +14,56 @@
         BUTTON_IDS_BY_TYPE = {
             [PROMPT_TYPE_ACK]:[BUTTON_ID_CONFIRM],
             [PROMPT_TYPE_CONFIRM]:[BUTTON_ID_CONFIRM, BUTTON_ID_CANCEL],
-            [PROMPT_TYPE_TEXT]:[BUTTON_ID_CONFIRM]
+            [PROMPT_TYPE_TEXT]:[BUTTON_ID_CONFIRM],
+            [PROMPT_TYPE_IMAGE]:[BUTTON_ID_CONFIRM]
         },
         
-        INPUT_KEYS = ['scratch', 'maxLength', 'allowedChars', 'placeholder'],
+        isPlainObject = pkg.isPlainObject,
         
-        isPlainObject = pkg.isPlainObject;
+        warnOfOtherKeys = (where, rest, keys) => {
+            const otherKeys = Object.keys(rest);
+            if (otherKeys.length > 0) console.warn(where, 'has keys other than', keys.join(', '), '(ignoring them):', otherKeys.join(', '));
+        },
+        
+        // How each type of prompt that has an input reads it, leaving out anything wrong with 
+        // it, with a warning. Its scratch entry has been checked already. null if it can't 
+        // be used.
+        INPUT_READERS = {
+            [PROMPT_TYPE_TEXT]:(where, {scratch, maxLength, allowedChars, placeholder, ...rest}) => {
+                warnOfOtherKeys(where, rest, ['scratch', 'maxLength', 'allowedChars', 'placeholder']);
+                const validMaxLength = Number.isInteger(maxLength) && maxLength > 0,
+                    validAllowedChars = typeof allowedChars === 'string' && allowedChars !== '',
+                    validPlaceholder = typeof placeholder === 'string';
+                if (maxLength !== undefined && !validMaxLength) console.warn(where, 'maxLength must be a whole number above 0 (ignoring it):', maxLength);
+                if (allowedChars !== undefined && !validAllowedChars) console.warn(where, 'allowedChars must be a string of characters (ignoring it):', allowedChars);
+                if (placeholder !== undefined && !validPlaceholder) console.warn(where, 'placeholder must be a string (ignoring it):', placeholder);
+                return {
+                    scratch,
+                    maxLength:validMaxLength ? maxLength : undefined,
+                    allowedChars:validAllowedChars ? allowedChars : undefined,
+                    placeholder:validPlaceholder ? placeholder : undefined
+                };
+            },
+            [PROMPT_TYPE_IMAGE]:(where, {scratch, images, ...rest}) => {
+                warnOfOtherKeys(where, rest, ['scratch', 'images']);
+                const validImages = (Array.isArray(images) ? images : []).filter(image => {
+                    if (typeof image === 'string' && image.trim() !== '') return true;
+                    console.warn(where, 'images must be paths to images, from the images folder (ignoring it):', image);
+                    return false;
+                });
+                if (validImages.length === 0) {
+                    console.warn(where, 'images must be an array of paths to images, from the images folder (using "' + PROMPT_TYPE_ACK + '"):', images);
+                    return null;
+                }
+                return {scratch, images:validImages};
+            }
+        };
     
     /*  A message the player answers with a button, e.g. an offer to join the Time Corps.
         Actions, exits and Operations open one by its ID with "prompt". Configured in the
         "prompts" data, in any data file, as:
-            type - "ack", one button, "confirm", two, or "text", a text field and one 
-                button. Defaults to "ack".
+            type - "ack", one button, "confirm", two, "text", a text field and one button, or 
+                "image", images to step through and one button. Defaults to "ack".
             title - The dialog's title.
             description - Describable phrases, the message.
             hidden - A constraint expression. A hidden prompt doesn't open.
@@ -38,6 +77,11 @@
                 value, and confirm can't be clicked while the field is blank. maxLength 
                 limits the length, allowedChars is a string of the characters that can be 
                 typed, and placeholder shows while the field is empty.
+                For an "image" prompt: {scratch, images}. images is an array of paths to 
+                images, from cfg.IMAGE_BASE_DIR, e.g. "avatar/AA.jpg", which the player steps
+                through. The one showing when confirm is clicked is put in the scratch entry,
+                as given, before its onClick. The first shown is the entry's value, if it's 
+                one of them.
         
         A prompt has no agent or Event of its own, so its expressions name them by ID, e.g.
         "agents.ME.faction", as an Operation's do. */
@@ -98,37 +142,25 @@
             this.buttons = retval;
         },
         
-        /*  Only a "text" prompt has an input, and it must have one with a scratch entry. 
-            Anything else wrong with it is left out, with a warning. */
+        /*  Only a "text" or "image" prompt has an input, and it must have one with a scratch 
+            entry. Anything else wrong with it is left out, with a warning. */
         setInput: function(input) {
             const where = 'Prompt ' + this.id + ' input',
-                isText = this.getType() === PROMPT_TYPE_TEXT;
+                type = this.getType(),
+                readInput = INPUT_READERS[type];
             this.input = null;
             if (input === undefined) {
-                if (isText) console.warn(where, 'is missing, which a "' + PROMPT_TYPE_TEXT + '" prompt needs (using "' + PROMPT_TYPE_ACK + '")');
-            } else if (!isText) {
-                console.warn(where, 'is only for a "' + PROMPT_TYPE_TEXT + '" prompt (ignoring it)');
+                if (readInput) console.warn(where, 'is missing, which a "' + type + '" prompt needs (using "' + PROMPT_TYPE_ACK + '")');
+            } else if (!readInput) {
+                console.warn(where, 'is only for a "' + Object.keys(INPUT_READERS).join('" or "') + '" prompt (ignoring it)');
             } else if (!isPlainObject(input) || typeof input.scratch !== 'string' || input.scratch.trim() === '') {
                 console.warn(where, 'must be an object with the name of a scratch entry as "scratch" (using "' + PROMPT_TYPE_ACK + '"):', input);
             } else {
-                const {scratch, maxLength, allowedChars, placeholder, ...rest} = input;
-                if (Object.keys(rest).length > 0) console.warn(where, 'has keys other than', INPUT_KEYS.join(', '), '(ignoring them):', Object.keys(rest).join(', '));
-                const validMaxLength = Number.isInteger(maxLength) && maxLength > 0,
-                    validAllowedChars = typeof allowedChars === 'string' && allowedChars !== '',
-                    validPlaceholder = typeof placeholder === 'string';
-                if (maxLength !== undefined && !validMaxLength) console.warn(where, 'maxLength must be a whole number above 0 (ignoring it):', maxLength);
-                if (allowedChars !== undefined && !validAllowedChars) console.warn(where, 'allowedChars must be a string of characters (ignoring it):', allowedChars);
-                if (placeholder !== undefined && !validPlaceholder) console.warn(where, 'placeholder must be a string (ignoring it):', placeholder);
-                this.input = {
-                    scratch,
-                    maxLength:validMaxLength ? maxLength : undefined,
-                    allowedChars:validAllowedChars ? allowedChars : undefined,
-                    placeholder:validPlaceholder ? placeholder : undefined
-                };
+                this.input = readInput(where, input);
             }
             
-            // A text prompt that can't take text is shown as an ack.
-            if (isText && !this.input) this.set('type', PROMPT_TYPE_ACK, true);
+            // A prompt that can't take its input is shown as an ack.
+            if (readInput && !this.input) this.set('type', PROMPT_TYPE_ACK, true);
         },
         
         
@@ -137,7 +169,7 @@
             opens. Clicking a button applies its changes, then calls finallyCallback, so 
             whatever comes next waits for the answer. */
         show: function(finallyCallback) {
-            const {openAckMsgDialog, openConfirmMsgDialog, openTextInputDialog, openWhenClear} = pkg.dialogUtil,
+            const {openAckMsgDialog, openConfirmMsgDialog, openTextInputDialog, openImageSelectorDialog, openWhenClear} = pkg.dialogUtil,
                 {buttons:{confirm, cancel}, input} = this,
                 click = button => () => {
                     pkg.applySuccessChanges(button?.changes);
@@ -156,6 +188,16 @@
                         rootModel.setScratch(input.scratch, text);
                         click(confirm)();
                     }, {...input, value:typeof current === 'string' ? current : ''}, confirm?.label);
+                } else if (type === PROMPT_TYPE_IMAGE) {
+                    const rootModel = pkg.model;
+                    openImageSelectorDialog(title, msg, image => {
+                        rootModel.setScratch(input.scratch, image);
+                        click(confirm)();
+                    }, {
+                        images:input.images, 
+                        value:rootModel[pkg.SCOPE_SCRATCH][input.scratch],
+                        baseUrl:pkg.cfg.IMAGE_BASE_DIR
+                    }, confirm?.label);
                 } else {
                     openAckMsgDialog(title, msg, click(confirm), null, confirm?.label);
                 }

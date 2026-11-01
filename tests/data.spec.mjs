@@ -140,15 +140,26 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
 
-    test('every prompt has a known type, a title, only the buttons its type has, and an input for a declared scratch entry if it takes text', () => {
+    test('every prompt has a known type, a title, only the buttons its type has, and an input for a declared scratch entry if it takes text or an image', () => {
         const problems = [],
-            BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel'], text:['confirm']};
+            BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel'], text:['confirm'], image:['confirm']};
         for (const [promptId, prompt] of Object.entries(prompts)) {
             const where = 'prompt ' + promptId,
                 {type='ack', title, description, hidden, buttons, input, ...unknown} = prompt;
             for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
-            if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack", "confirm" or "text"');
-            if (type === 'text') {
+            if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack", "confirm", "text" or "image"');
+            if (type === 'image') {
+                // Every image it offers exists, and its scratch entry starts as one of them.
+                const {scratch:scratchName, images, ...rest} = input ?? {};
+                if (!Object.hasOwn(scratch, scratchName ?? '')) problems.push(where + ' input scratch is not a declared scratch entry');
+                for (const key of Object.keys(rest)) problems.push(where + ' input has unknown key ' + key);
+                if (!Array.isArray(images) || images.length === 0) {
+                    problems.push(where + ' input images is not an array of images');
+                } else {
+                    for (const image of images) if (typeof image !== 'string' || !fileExists(MEDIA_DIR + '/' + image)) problems.push(where + ' input image is missing: ' + image);
+                    if (!images.includes(scratch[scratchName])) problems.push(where + ' input scratch entry does not start as one of its images: ' + scratch[scratchName]);
+                }
+            } else if (type === 'text') {
                 const {scratch:scratchName, maxLength, allowedChars, placeholder, ...rest} = input ?? {};
                 if (!Object.hasOwn(scratch, scratchName ?? '')) problems.push(where + ' input scratch is not a declared scratch entry');
                 if (typeof scratch[scratchName] !== 'string') problems.push(where + ' input scratch entry is not a string');
@@ -157,7 +168,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (allowedChars !== undefined && (typeof allowedChars !== 'string' || allowedChars === '')) problems.push(where + ' input allowedChars is not a string of characters');
                 if (placeholder !== undefined && typeof placeholder !== 'string') problems.push(where + ' input placeholder is not a string');
             } else if (input !== undefined) {
-                problems.push(where + ' has an input but isn\'t a "text" prompt');
+                problems.push(where + ' has an input but isn\'t a "text" or "image" prompt');
             }
             if (typeof title !== 'string' || title.trim() === '') problems.push(where + ' has no title');
             if (description === undefined) problems.push(where + ' has no description');
