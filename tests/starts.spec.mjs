@@ -51,7 +51,7 @@ test('a start naming an event that isn\'t loaded yet, or given badly, is warned 
         'Event boats start startOf must name an Event loaded before this one (using 0): boats',
         'Event backlog start offset y must be one of w, d, h, m, s, ms with a number (ignoring it): 1'
     ]));
-    expect(problems.warnings.some(warning => warning.startsWith('Event Ordering Issues'))).toBe(true);
+    await expect.poll(() => problems.warnings.some(warning => warning.startsWith('Event Ordering Issues'))).toBe(true);
     
     // The bad offset is ignored, so backlog starts with plan.
     expect(await readStarts(page, ['backlog'])).toEqual({backlog:'1900-01-01T09:00:00.000Z'});

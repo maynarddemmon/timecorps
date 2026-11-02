@@ -11,7 +11,8 @@
         {
             NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
-            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_EFFECTIVE_AGE,
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, 
+            STAT_ID_EFFECTIVE_AGE, STAT_ID_SCORE, STAT_ID_CREDITS,
             cfg:{
                 EVENT_ID_THE_VOID,
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
@@ -164,10 +165,6 @@
             const modelClass = isAgent ? pkg.AgentModel : pkg.EventModel;
             return typeof modelClass.prototype[M.AccessorSupport.generateSetterName(attrName)] === 'function';
         },
-        
-        // The timeline's score and credits, which set and adj can change like stats.
-        STAT_ID_SCORE = 'score',
-        STAT_ID_CREDITS = 'credits',
         
         /*  The stats set and adj can change, by the scope that has them: the agent taking the 
             action or exit, any agent by ID ("agents.<id>.<stat>"), its Event, any Event by ID 

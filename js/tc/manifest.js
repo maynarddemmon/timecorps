@@ -4,9 +4,8 @@ JS.Packages(file => {
         MODEL_ROOT = TC_ROOT + 'model/',
         VIEW_ROOT = TC_ROOT + 'view/';
     
-    file(TC_ROOT + '../../lib/myt.min.js').provides('myt.all');
     file(TC_ROOT + '../../lib/json5.min.js').provides('JSON5');
-    file(TC_ROOT + 'tc.js').provides('tc').requires('myt.all');
+    file(TC_ROOT + 'tc.js').provides('tc');
     file(TC_ROOT + 'timeUtil.js').provides('tc.timeUtil').requires('tc');
     
     // Component //

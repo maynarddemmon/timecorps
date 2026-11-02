@@ -80,7 +80,7 @@
             new SpacedLayout(vitalsContainer, {axis:'y', inset:spacing, outset:spacing, collapseParent:true});
             
             // Credits decide which skills can be bought.
-            self.attachTo(pkg.model, '_handleCreditsChanged', 'credits');
+            self.attachTo(pkg.model, '_handleCreditsChanged', pkg.STAT_ID_CREDITS);
         },
         
         

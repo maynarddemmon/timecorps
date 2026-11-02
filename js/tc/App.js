@@ -41,7 +41,7 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {View, PlainText, ResizeLayout, SizeToParent, global:G, NOOP} = M,
+        {View, PlainText, ResizeLayout, SizeToParent, global:G, NOOP, I18N:{get:i18n}} = M,
         
         {
             TabBtn, SquareBtn, WideView, wrapInStyledSpan,
@@ -249,17 +249,17 @@
         buildTopView: topView => {
             topView.setTextColor(colorUltraDark);
             
-            new PlainText(topView, {text:'T I M E ◦ C O R P S', fontSize:fontSizeVeryLarge});
+            new PlainText(topView, {text:i18n('game-title'), fontSize:fontSizeVeryLarge});
             
             new pkg.Spacer(topView);
             
-            (new pkg.LabeledValue(topView, {label:'Score', textColor:colorUltraDark, valueTextColor:colorUltraLight}, [{
+            (new pkg.LabeledValue(topView, {label:pkg.I18N_SCORE, textColor:colorUltraDark, valueTextColor:colorUltraLight}, [{
                 update: function(_event) {this.callSuper(model.score.toLocaleString());}
-            }])).attachTo(model, 'update', 'score');
+            }])).attachTo(model, 'update', pkg.STAT_ID_SCORE);
             
-            (new pkg.LabeledValue(topView, {label:'Credits', textColor:colorUltraDark, valueTextColor:colorUltraLight, paddingRight:padding}, [{
+            (new pkg.LabeledValue(topView, {label:pkg.I18N_CREDITS, textColor:colorUltraDark, valueTextColor:colorUltraLight, paddingRight:padding}, [{
                 update: function(_event) {this.callSuper(model.credits.toLocaleString());}
-            }])).attachTo(model, 'update', 'credits');
+            }])).attachTo(model, 'update', pkg.STAT_ID_CREDITS);
             
             timelineParadoxBar = new pkg.ParadoxBar(topView, {labelTemplate:'Timeline {label}'}, [pkg.BigStatBar]);
             

@@ -232,6 +232,29 @@
 <script>
 const getElem = id => document.getElementById(id),
 	writeScript = src => document.write('<script src="./'+src+'.js">\x3C/script>');
+writeScript('lib/myt.min');
+let LOCALE_KEY;
+(() => {
+		const SUPPORTED_LOCALES = {
+			en:{US:{default:true}, default:true}
+		};
+		let [lang, country] = navigator.language.split('-'),
+		supportedEntry = SUPPORTED_LOCALES[lang];
+	if (!supportedEntry) {
+		for (lang in SUPPORTED_LOCALES) {
+			supportedEntry = SUPPORTED_LOCALES[lang];
+			if (supportedEntry.default === true) break;
+		}
+	}
+	if (!supportedEntry[country]) {
+		for (country in supportedEntry) {
+			if (supportedEntry[country].default === true) break;
+		}
+	}
+	document.getElementsByTagName('html')[0].lang = LOCALE_KEY = lang + '-' + country;
+	writeScript('i18n/'+LOCALE_KEY);
+	writeScript('i18n/rsrc-'+LOCALE_KEY);
+})();
 globalThis.hideSpinner = () => {
 	getElem('spinner').className = 'nospin';
 	getElem('loader').style.display = 'none';

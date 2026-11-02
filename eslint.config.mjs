@@ -14,6 +14,7 @@ export default [
                 JS: 'readonly',
                 JSON5: 'readonly',
                 myt: 'readonly',
+                LOCALE_KEY: 'readonly', // Set by index.html's locale detection.
                 tc: 'readonly'
             }
         },

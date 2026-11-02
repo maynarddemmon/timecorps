@@ -27,7 +27,7 @@
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_PROMPTS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_SCORE, STAT_ID_CREDITS,
             CHECK_SKILL_EXPR_PREFIX
         } = pkg,
         
@@ -363,7 +363,7 @@
             SCORE_TO_CREDITS_EARN_AMOUNT it reaches. Lowering it takes no credits away, and 
             raising it back up to a score already reached earns nothing again. */
         setScore: function(v) {
-            this.set('score', v, true);
+            this.set(STAT_ID_SCORE, v, true);
             
             const peakScore = this.peakScore;
             if (v > peakScore) {
@@ -381,7 +381,7 @@
         
         // Credits:Accessors & Methods /////////////////////////////////////////
         /*  Credits are spent on things such as HQ actions. Read as "timeline.credits". */
-        setCredits: function(v) {this.set('credits', v, true);},
+        setCredits: function(v) {this.set(STAT_ID_CREDITS, v, true);},
         adjCredits: function(adj) {this.setCredits(this.getCredits() + adj);},
         getCredits: function() {return this.credits;},
         
@@ -410,8 +410,8 @@
         importFromObj: obj => {
             // The peak first, so restoring the score earns nothing.
             if ('peakScore' in obj) model.set('peakScore', obj.peakScore, true);
-            if ('credits' in obj) model.setCredits(obj.credits);
-            if ('score' in obj) model.setScore(obj.score);
+            if (STAT_ID_CREDITS in obj) model.setCredits(obj.credits);
+            if (STAT_ID_SCORE in obj) model.setScore(obj.score);
             for (const name in obj.scratch) model.setScratch(name, obj.scratch[name]);
             for (const statId of TIMELINE_STAT_IDS) {
                 if (obj[statId]) model[statId].importFromObj(obj[statId]);

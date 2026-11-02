@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {
+    const M = myt,
+        
+        {
             max:mathMax, min:mathMin, floor:mathFloor, ceil:mathCeil, 
             log2:mathLog2, log:mathLog, abs:mathAbs, E:EULER, random:mathRandom,
             exp:mathExp
@@ -34,6 +36,44 @@
         
         DOM_PARSER = new DOMParser(), // Used by stripMarkup
         
+        STAT_ID_PARADOX = 'paradox',
+        STAT_ID_CHRONAL = 'chronal',
+        STAT_ID_HEALTH = 'health',
+        STAT_ID_HISTORICITY = 'historicity',
+        STAT_ID_ATTESTATION = 'attestation',
+        STAT_ID_EFFECTIVE_AGE = 'effectiveAge',
+        STAT_ID_SCORE = 'score',
+        STAT_ID_CREDITS = 'credits',
+        
+        // Localization
+        {get:i18n, getOrdinal} = (locale => {
+            const I18N = M.I18N,
+                getResource = I18N.getResource;
+            I18N.setLocale(locale);
+            
+            for (const funcName of ['getOrdinal']) {
+                I18N[funcName] = getResource(funcName);
+            }
+            
+            return I18N;
+        })(LOCALE_KEY),
+        
+        I18N_PREFIX_STAT = 'stat-',
+        I18N_PREFIX_ICON = 'icon-',
+        
+        ICON_PARADOX = i18n(I18N_PREFIX_ICON + STAT_ID_PARADOX),
+        ICON_CHRONAL = i18n(I18N_PREFIX_ICON + STAT_ID_CHRONAL),
+        ICON_HEALTH =  i18n(I18N_PREFIX_ICON + STAT_ID_HEALTH),
+        
+        I18N_PARADOX =       i18n(I18N_PREFIX_STAT + STAT_ID_PARADOX, ICON_PARADOX),
+        I18N_CHRONAL =       i18n(I18N_PREFIX_STAT + STAT_ID_CHRONAL, ICON_CHRONAL),
+        I18N_HEALTH =        i18n(I18N_PREFIX_STAT + STAT_ID_HEALTH),
+        I18N_HISTORICITY =   i18n(I18N_PREFIX_STAT + STAT_ID_HISTORICITY),
+        I18N_ATTESTATION =   i18n(I18N_PREFIX_STAT + STAT_ID_ATTESTATION),
+        I18N_EFFECTIVE_AGE = i18n(I18N_PREFIX_STAT + STAT_ID_EFFECTIVE_AGE),
+        I18N_SCORE =         i18n(I18N_PREFIX_STAT + STAT_ID_SCORE),
+        I18N_CREDITS =       i18n(I18N_PREFIX_STAT + STAT_ID_CREDITS),
+        
         // RNG Util //
         // Values handed out, in order, before falling back to Math.random. Tests use this to
         // force outcomes.
@@ -53,23 +93,6 @@
             return mathFloor(mathRandom() * max);
         },
         
-        ICON_CHRONAL ='⏲', // ⏲ ⏱ ♾ ⧖
-        ICON_PARADOX = '⥁', // ⥁ ☣ ꩜
-        ICON_HEALTH = '♥',
-        
-        STAT_ID_PARADOX = 'paradox',
-        STAT_ID_CHRONAL = 'chronal',
-        STAT_ID_HEALTH = 'health',
-        STAT_ID_HISTORICITY = 'historicity',
-        STAT_ID_ATTESTATION = 'attestation',
-        STAT_ID_EFFECTIVE_AGE = 'effectiveAge',
-        
-        I18N_PARADOX = 'Parad' + ICON_PARADOX + 'x',
-        I18N_CHRONAL = 'Chr' + ICON_CHRONAL + 'nal',
-        I18N_HEALTH = 'Health',
-        I18N_HISTORICITY = 'Historicity',
-        I18N_ATTESTATION = 'Attestation',
-        
         STAT_NAME_BY_ID = {
             [STAT_ID_PARADOX]:I18N_PARADOX,
             [STAT_ID_CHRONAL]:I18N_CHRONAL,
@@ -77,10 +100,10 @@
             [STAT_ID_HISTORICITY]:I18N_HISTORICITY,
             [STAT_ID_ATTESTATION]:I18N_ATTESTATION,
             // An agent's, in years, which set and adj can change like a stat.
-            [STAT_ID_EFFECTIVE_AGE]:'Effective Age',
+            [STAT_ID_EFFECTIVE_AGE]:I18N_EFFECTIVE_AGE,
             // The timeline's, which set and adj can change like stats.
-            score:'Score',
-            credits:'Credits'
+            [STAT_ID_SCORE]:I18N_SCORE,
+            [STAT_ID_CREDITS]:I18N_CREDITS
         },
         
         STAT_ICON_BY_ID = {
@@ -387,7 +410,7 @@
             },
             
             loadTxt: (url, callback) => {
-                myt.doFetch(url, {}, true,
+                M.doFetch(url, {}, true,
                     response => {
                         callback?.(true, response);
                     },
@@ -447,6 +470,8 @@
             STAT_ID_HISTORICITY,
             STAT_ID_ATTESTATION,
             STAT_ID_EFFECTIVE_AGE,
+            STAT_ID_SCORE,
+            STAT_ID_CREDITS,
             
             // Skill IDS: these should match up to the ID of skills defined in init.json5.
             SKILL_ID_CHRONOGATION:'chronogation',
@@ -456,11 +481,14 @@
             SKILL_ID_DECEPTION:'deception',
             
             // Text Constants
-            I18N_CHRONAL,
             I18N_PARADOX,
+            I18N_CHRONAL,
             I18N_HEALTH,
             I18N_HISTORICITY,
             I18N_ATTESTATION,
+            I18N_EFFECTIVE_AGE,
+            I18N_SCORE,
+            I18N_CREDITS,
             
             // Icons
             ICON_SEPARATOR:'\u00A0·\u00A0',
@@ -498,7 +526,7 @@
             /*  A number in [0, 1) that's always the same for the same value: myt's hash, mixed so that
                 similar strings, e.g. IDs that differ in one character, land far apart. */
             hashToUnit: value => {
-                let h = myt.hash(typeof value === 'string' ? value : myt.stableStringify(value));
+                let h = M.hash(typeof value === 'string' ? value : M.stableStringify(value));
                 h ^= h >>> 16;
                 h = Math.imul(h, 0x85ebca6b);
                 h ^= h >>> 13;

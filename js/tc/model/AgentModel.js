@@ -22,7 +22,7 @@
             theme:{colorAction, fontFamilyMono},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH,
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
         } = pkg,
@@ -372,7 +372,7 @@
         getEffectiveAge: function() {return this.effectiveAge;},
         setEffectiveAge: function(years) {
             if (this.effectiveAge !== years) {
-                this.set('effectiveAge', years, true);
+                this.set(STAT_ID_EFFECTIVE_AGE, years, true);
                 
                 // Declines from the prime, and reaching 0 kills.
                 const statHealth = this[STAT_ID_HEALTH];
@@ -678,7 +678,7 @@
             
             // Set directly, since the saved health already has the maximum they give.
             if ('age' in obj) this.set('age', obj.age, true);
-            if ('effectiveAge' in obj) this.set('effectiveAge', obj.effectiveAge, true);
+            if (STAT_ID_EFFECTIVE_AGE in obj) this.set(STAT_ID_EFFECTIVE_AGE, obj.effectiveAge, true);
             if ('timeLivedAtEvent' in obj) this.timeLivedAtEvent = obj.timeLivedAtEvent;
             
             if (obj.log) {

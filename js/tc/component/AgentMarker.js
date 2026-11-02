@@ -146,9 +146,9 @@
                     inset = 0;
                 for (const [type,color] of [
                     ['action',colorAction],
-                    ['health',colorHealth],
-                    ['chronal',colorChronal],
-                    ['paradox',colorParadox]
+                    [STAT_ID_HEALTH,colorHealth],
+                    [STAT_ID_CHRONAL,colorChronal],
+                    [STAT_ID_PARADOX,colorParadox]
                 ]) {
                     self[type + 'Gauge'] = new RadialGauge(self, {
                         x:inset, y:inset, radius:w, thickness, color,
