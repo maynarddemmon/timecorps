@@ -286,7 +286,7 @@
                     "agent.skills.agl".
                 {kind:'scratch', statId:'scratch.<name>', name} - e.g. "scratch.origin_knocks".
                 {kind:'value', statId:'values.<id>', valueId} - a Value of the action's or exit's
-                    own Event, by its ID, e.g. "bus_arrives".
+                    own Event, by its ID, e.g. "bus".
                 {kind:'stat', scopeName:'events', eventId, statId} - a stat of any Event, e.g. 
                     "events.collision.historicity".
                 {kind:'stat', scopeName:'agents', agentId, statId} - a stat of any agent, e.g.
@@ -536,7 +536,7 @@
         
         /*  One adjustment of an action or exit: an amount added to what its key names: a stat, 
             e.g. "agent.health", "event.attestation" or "timeline.paradox", a skill of the agent, 
-            e.g. "agent.skills.agl", a Value of its Event, e.g. "bus_arrives", or a scratch entry, 
+            e.g. "agent.skills.agl", a Value of its Event, e.g. "bus", or a scratch entry, 
             e.g. "scratch.origin_knocks". Only stats and skills show in tooltips, flags and 
             floating text. Configured as:
                 onSuccess, onFailure - Amount expressions, e.g. "-d(6, 2)". At least one. A 

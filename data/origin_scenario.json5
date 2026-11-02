@@ -233,6 +233,7 @@
 		
 		"origin_bus_stop":{
 			"name":"The Bus Stop", "chronoLocked":"true",
+			"imageExpr":"'origin_bus_stop' + event.values.bus.value + '.jpg'",
 			"start":{"endOf":"origin_alarm", "m":3}, "duration":{"m":5},
 			"location":"origin_city_streets",
 			"actionLimit":1,
@@ -242,13 +243,13 @@
 				"wait":{
 					"label":"Wait for the Bus",
 					"skillCheck":{"actionType":"coin_flip"},
-					"set":{"bus_arrives":{"onSuccess":"1", "onFailure":"-1"}}
+					"set":{"bus":{"onSuccess":"'arrives'", "onFailure":"'late'"}}
 				}
 			},
 			"exits":[
 				{
 					"mode":"board", "toHidden":true, "to":"origin_busride",
-					"hidden":"event.values.bus_arrives.value !== 1",
+					"hidden":"event.values.bus.value !== 'arrives'",
 					"set":{"events.origin_busride.attestation":"1"}
 				},{
 					"mode":"walk", "toHidden":true, "to":"origin_back_home",
@@ -256,13 +257,13 @@
 				}
 			],
 			"values":{
-				"bus_arrives":{
+				"bus":{
 					"name":"Bus Arrives",
-					"value":"0",
+					"value":"''",
 					"description":[
-						{"text":"The bus seems to be running late.", "hidden":"event.values.bus_arrives.value !== 0"},
-						{"text":"The bus arrives. You can still rush home and grab your bike if you’d rather ride to work.", "hidden":"event.values.bus_arrives.value !== 1"},
-						{"text":"The bus is late, you rush home and grab your bike. You‘ll have to ride to work.", "hidden":"event.values.bus_arrives.value !== -1"}
+						{"text":"The bus seems to be running late.", "hidden":"event.values.bus.value !== ''"},
+						{"text":"The bus arrives. You can still rush home and grab your bike if you’d rather ride to work.", "hidden":"event.values.bus.value !== 'arrives'"},
+						{"text":"The red light in the bus shelter comes on. It indicates the bus is way behind schedule. “Why today” you think as you head home to grab your bike. You‘ll have to ride to work in the rain.", "hidden":"event.values.bus.value !== 'late'"}
 					]
 				}
 			},
