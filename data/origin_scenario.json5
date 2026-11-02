@@ -918,7 +918,7 @@
 		
 		"origin_masked":{
 			"name":"The Masked Figure", "chronoLocked":"true",
-			"image":"../location/origin_street.jpg",
+			"imageExpr":"'origin_masked' + event.values.response.value + '.jpg'",
 			"start":"2026-11-13T17:55:00", "duration":{"m":1},
 			"location":"origin_street",
 			"actionLimit":1,
@@ -968,7 +968,8 @@
 		
 		// Act 3: a safe house, late in the 2080s. Hidden until the device is on your wrist.
 		"safehouse_arrival":{
-			"name":"Elsewhere", "chronoLocked":"true", "image":"../location/safehouse_corridor.jpg",
+			"name":"Elsewhere", "chronoLocked":"true",
+			"imageExpr":"'safehouse_arrival' + event.values.concealed.value + '.jpg'",
 			"start":"2087-03-09T23:41:00", "duration":{"m":10},
 			"location":"safehouse_corridor",
 			"actionLimit":1,
@@ -1005,14 +1006,17 @@
 		},
 		
 		"safehouse_fight":{
-			"image":"../location/safehouse_office.jpg",
+			"imageExpr":"'safehouse_fight' + event.attestation.value + '.jpg'",
 			"name":"The Fight", "chronoLocked":"true",
 			"start":"2087-03-09T23:51:00", "duration":{"m":2},
 			"location":"safehouse_office",
-			"actionLimit":1,
+			"actionLimit":2,
 			"actions":{
 				"_rest":null,
-				"_investigate":{"skillCheck":{"difficulty":"no-roll"}},
+				"_investigate":{
+					"skillCheck":{"difficulty":"no-roll"},
+					"adj":{"event.attestation":"5"}
+				},
 			},
 			"exits":[{
 				"mode":"enter", "toHidden":true, "to":"safehouse_room",
@@ -1024,10 +1028,10 @@
 				"<br><br>The blade goes in. The old one gasps, slaps at their wrist,",
 				{"text":"shoots a quick glance in your direction,","hidden":"!events.safehouse_arrival.values.concealed.value"},
 				"and is gone, in a flicker and a sound like a held breath let go.",
-				"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.",
-				{"text":"They turn to look at you as they activate the device on their wrist.","hidden":"events.safehouse_arrival.values.concealed.value"},
-				"A moment later, they too are gone.",
-				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "hidden":"event.attestation.value === 0"}
+				{"text":"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.", "hidden":"event.attestation.value <= 1"},
+				{"text":"They turn to look at you as they activate the device on their wrist.","hidden":"events.safehouse_arrival.values.concealed.value || event.attestation.value <= 1"},
+				{"text":"A moment later, they too are gone.", "hidden":"event.attestation.value <= 1"},
+				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "hidden":"event.attestation.value <= 6"}
 			]
 		},
 		

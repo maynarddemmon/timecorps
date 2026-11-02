@@ -217,8 +217,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     });
     
     /*  The .jpg a model shows, as a file under MEDIA_DIR: its "image" path from its folder, if 
-        it has one, otherwise defaultFile, e.g. "<id>.jpg". An imageExpr can't be checked here. */
+        it has one, otherwise defaultFile, e.g. "<id>.jpg". null for a model with an imageExpr,
+        which decides what it shows and can't be checked here, so it needn't have the file it 
+        would show otherwise. */
     const imageFileFor = (folder, model, defaultFile) => {
+        if (model.imageExpr !== undefined) return null;
         const file = typeof model.image === 'string' ? model.image : defaultFile;
         return file ? path.posix.join(MEDIA_DIR, folder, file) : null;
     };
@@ -238,7 +241,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         for (const locationId of Object.keys(locations)) {
             if (locationId.startsWith('_')) continue; // The Nexus and Nowhere are never shown.
             // The .jpg is required even with a video since it's the fallback and the timeline header.
-            const files = [imageFileFor('location', locations[locationId], locationId + '.jpg'), DATA_DIR + '/location/' + locationId + '.txt'];
+            const files = [imageFileFor('location', locations[locationId], locationId + '.jpg'), DATA_DIR + '/location/' + locationId + '.txt'].filter(file => file);
             if (locations[locationId].video) files.push(MEDIA_DIR + '/location/' + locationId + '.webm');
             for (const file of files) {
                 if (!fileExists(file)) missing.push(file);
@@ -265,7 +268,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         const missing = [];
         for (const [agentId, agent] of Object.entries(agents)) {
             // The .jpg is required even with a video portrait since it's the fallback.
-            const files = [imageFileFor('agent', agent, agentId + '.jpg'), DATA_DIR + '/dossiers/' + agentId + '.txt'];
+            const files = [imageFileFor('agent', agent, agentId + '.jpg'), DATA_DIR + '/dossiers/' + agentId + '.txt'].filter(file => file);
             if (agent.video) files.push(MEDIA_DIR + '/agent/' + agentId + '.webm');
             for (const file of files) {
                 if (!fileExists(file)) missing.push(file);
@@ -726,7 +729,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             const files = [];
             // Its own, or a path from the event folder, e.g. "../location/x.jpg". Events at The 
             // Nexus and Nowhere don't have them yet.
-            if (!event.location?.startsWith('_')) files.push(imageFileFor('event', event, eventId + '.jpg'));
+            const imageFile = event.location?.startsWith('_') ? null : imageFileFor('event', event, eventId + '.jpg');
+            if (imageFile) files.push(imageFile);
             if (event.video) files.push(MEDIA_DIR + '/event/' + eventId + '.webm');
             if (event.brief) files.push(DATA_DIR + '/event/' + eventId + '.txt');
             for (const file of files) {

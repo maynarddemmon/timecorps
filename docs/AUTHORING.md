@@ -667,7 +667,7 @@ Every event, location and agent shows `img/<folder>/<id>.jpg`, where the folder 
 - **`image`**: a path to another `.jpg`, from the model's own folder, e.g. `"image":"../location/origin_street.jpg"` to reuse a location's photo for an event.
 - **`imageExpr`**: a [constraint expression](#constraint-expressions) for such a path, so the picture can follow the game. While it works out to a non-empty string, that's shown. Otherwise `image`, or the default, is. Every view showing the picture updates as it changes, including an open brief, e.g. `"imageExpr":"event.values.struck.value ? 'collision_struck.jpg' : ''"`.
 
-A video (`"video":true`) is always `<id>.webm` and plays instead of the picture where videos are shown, whatever `imageExpr` says. data.spec checks that every event's picture exists (by default, or its `image`), except at The Nexus and Nowhere. It can't check an `imageExpr`'s.
+A video (`"video":true`) is always `<id>.webm` and plays instead of the picture where videos are shown, whatever `imageExpr` says. data.spec checks that every event's picture exists (by default, or its `image`), except at The Nexus and Nowhere. It can't check what an `imageExpr` shows, so a model with one needn't have the picture it would show without it, e.g. You has no `img/agent/ME.jpg`. Give it that file anyway if its expression can work out to `''`.
 
 ## Checking your work
 
