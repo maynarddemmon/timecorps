@@ -47,104 +47,6 @@
 	},
 
 	"events":{
-		// Where the device brings the player once they've heard its message. Watching and
-		// asking around raises its attestation, which reveals its precursors: the trial at 15,
-		// the investor at 25 and the Commission's vote at 35. The fixed observations alone
-		// reach 35, so the mission can't be lost to bad rolls.
-		"lgv_announcement":{
-			"name":"The Announcement", "image":"../location/lgv_expo.jpg",
-			"start":"2087-11-12T02:00:00", "duration":{"h":2},
-			"location":"lgv_expo",
-			"hidden":"!events.safehouse_room.values.heard.value",
-			"actionLimit":1,
-			"actions":{
-				"_investigate":null,
-				"_rest":null,
-				"keynote":{
-					"label":"Listen to the Keynote",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.keynote.doneCount > 0",
-					"costs":{"agent.action":null},
-					"adj":{"event.attestation":"10"}
-				},
-				"press":{
-					"label":"Read the Press Packet",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.press.doneCount > 0",
-					"costs":{"agent.action":null},
-					"adj":{"event.attestation":"10"}
-				},
-				"demonstration":{
-					"label":"Watch the Demonstration",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.demonstration.doneCount > 0",
-					"costs":{"agent.action":null},
-					"adj":{"event.attestation":"10"}
-				},
-				"reporter":{
-					"label":"Talk to a Reporter",
-					"skillCheck":{"actionType":"social"},
-					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
-				},
-				"crowd":{
-					"label":"Watch the Crowd",
-					"skillCheck":{"actionType":"investigate", "difficulty":150},
-					"set":{"watcher":"true"},
-					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
-				}
-			},
-			"values":{
-				"rejuvenation":{
-					"name":"The Treatment Works",
-					"value":"events.lgv_trial.values.reversal.value",
-					"hidden":"events.lgv_trial.hidden",
-					"description":[
-						{"text":"Whatever is announced today, the trial behind it worked.", "hidden":"!event.values.rejuvenation.value || !event.values.goingPublic.value"},
-						{"text":"The trial behind it worked far better than anyone in this hall is being told.", "hidden":"!event.values.rejuvenation.value || event.values.goingPublic.value"},
-						{"text":"Whatever is announced today, the trial behind it failed.", "hidden":"event.values.rejuvenation.value"}
-					]
-				},
-				"forTheFew":{
-					"name":"For the Few",
-					"value":"events.lgv_backer.values.exclusiveLicense.value",
-					"hidden":"events.lgv_backer.hidden",
-					"description":[
-						{"text":"One company owns the right to make it, and will set the price.", "hidden":"!event.values.forTheFew.value"},
-						{"text":"Anyone with a licence may make it.", "hidden":"event.values.forTheFew.value"}
-					]
-				},
-				"goingPublic":{
-					"name":"Going Public",
-					"value":"events.lgv_commission.values.approvedRelease.value",
-					"hidden":"events.lgv_commission.hidden",
-					"description":[
-						{"text":"The world is being told.", "hidden":"!event.values.goingPublic.value"},
-						{"text":"The world is told a modest truth and a careful lie: real benefits, and nothing of the reversal. That stays with those who can pay for it, in secret.", "hidden":"event.values.goingPublic.value"}
-					]
-				},
-				"watcher":{
-					"name":"The Watcher",
-					"value":"false",
-					"hidden":"!event.values.watcher.value",
-					"description":[
-						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "hidden":"!event.values.watcher.value"}
-					]
-				}
-			},
-			"description":[
-				"The hall is packed, and the feeds are carrying it live to half the world. On the stage, under a banner that reads 还春 · SPRING RETURNS, Dr. Shen Yiran of the Zhangjiang Longevity Institute waits for the noise to die down.",
-				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10 || !event.values.goingPublic.value"},
-				{"text":"<br><br>“Today,” she says, carefully, “we can show you the first results of a treatment for some of the diseases of ageing.”", "hidden":"event.attestation.value < 10 || event.values.goingPublic.value"},
-				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20 || !event.values.goingPublic.value"},
-				{"text":"<br><br>The dataset on the screen is mixed but real: stronger hearts, clearer lungs, sharper memories in volunteers in their seventies. Revolutionary, the commentators will say. No one on the stage says anything about anyone growing younger.", "hidden":"event.attestation.value < 20 || event.values.goingPublic.value"},
-				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
-				{"text":"<br><br>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
-				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
-			]
-		},
-		
-		// The precursors. Each is revealed by attesting the announcement, and holds the literal
-		// Value the announcement's own Values follow. Nothing changes them in this mission.
 		"lgv_backer":{
 			"name":"The Private Investor", "image":"../location/lgv_lanfang.jpg",
 			"start":"2087-02-17T07:00:00", "duration":{"h":2},
@@ -166,26 +68,27 @@
 			],
 			"exits":[
 				{
-					"mode":"survive", "to":"lgv_trial", 
+					"mode":"survive", "to":"lgv_trial",
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
-						"agent.skills.deception":{"onBoth":"d(4,2)"}
+						"agent.skills.deception":{"onBoth":"agent.skills.deception >= 25 ? 0 : d(4,2)"}
 					}
 				},{
 					"mode":"survive", "to":"lgv_commission", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
-						"agent.skills.persuasion":{"onBoth":"d(4,3)"}
+						"agent.skills.persuasion":{"onBoth":"agent.skills.persuasion >= 25 ? 0 : d(4,3)"}
 					}
 				},{
 					"mode":"survive", "to":"lgv_announcement", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(8,2)"},
-						"agent.skills.cha":{"onBoth":"d(4,4)"}
+						"agent.skills.cha":{"onBoth":"agent.skills.cha >= 25 ? 0 : d(4,4)"}
 					}
 				}
 			]
 		},
+		
 		"lgv_trial":{
 			"name":"The Trial Results", "image":"../location/lgv_institute.jpg",
 			"start":"2087-06-03T06:00:00", "duration":{"h":3},
@@ -210,91 +113,16 @@
 					"mode":"survive", "to":"lgv_commission", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
-						"agent.skills.deception":{"onBoth":"d(4,2)"}
+						"agent.skills.deception":{"onBoth":"agent.skills.deception >= 25 ? 0 : d(4,2)"}
 					}
 				},{
 					"mode":"survive", "to":"lgv_announcement", 
 					"adj":{
 						"agent.health":{"actionType":"social", "onFailure":"-d(6,2)"},
-						"agent.skills.cha":{"onBoth":"d(4,3)"}
+						"agent.skills.cha":{"onBoth":"agent.skills.cha >= 25 ? 0 : d(4,3)"}
 					}
 				}
 			]
-		},
-		// The vote. Seven commissioners vote to release, three of them because the watcher got
-		// to them first. Research here reveals those three, one at each 10 of attestation,
-		// which the fixed observations alone reach. Six votes of eleven decide it, so swaying
-		// any two keeps the treatment secret.
-		"lgv_commission":{
-			"name":"The Closed Session", "image":"../location/lgv_commission.jpg",
-			"start":"2087-09-22T01:00:00", "duration":{"h":4},
-			"location":"lgv_commission",
-			"hidden":"events.lgv_announcement.attestation.value < 35",
-			"actionLimit":4,
-			"actions":{
-				"_investigate":null,
-				"agenda":{
-					"label":"Read the Agenda",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.agenda.doneCount > 0",
-					"adj":{"event.attestation":"10"}
-				},
-				"commissioners":{
-					"label":"Study the Commissioners",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.commissioners.doneCount > 0",
-					"adj":{"event.attestation":"10"}
-				},
-				"debate":{
-					"label":"Listen to the Debate",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.debate.doneCount > 0",
-					"adj":{"event.attestation":"10"}
-				},
-				"meet":{
-					"label":"Meet the Clerk",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"event.actions.meet.doneCount > 0 || events.lgv_hospice.attestation.value < 10 || events.lgv_banquet.attestation.value < 10 || events.lgv_model.attestation.value < 10",
-					"set":{
-						"agents.AF.hidden":{"onSuccess":"false"},
-						"agents.BA.hidden":{"onSuccess":"true"}
-					}
-				}
-			},
-			"values":{
-				"releaseVotes":{
-					"name":"Votes to Release",
-					"value":"7 - (events.lgv_hospice.values.swayed.value ? 1 : 0) - (events.lgv_banquet.values.swayed.value ? 1 : 0) - (events.lgv_model.values.swayed.value ? 1 : 0)",
-					"description":[
-						{"text":"Seven of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 7"},
-						{"text":"Six of the eleven will vote to tell the world. It is still enough.", "hidden":"event.values.releaseVotes.value !== 6"},
-						{"text":"Only five of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 5"},
-						{"text":"Only four of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 4"}
-					]
-				},
-				"approvedRelease":{
-					"name":"Release Approved",
-					"value":"event.values.releaseVotes.value >= 6",
-					"description":[
-						{"text":"The Commission votes to announce the treatment to the world rather than keep it a state secret.", "hidden":"!event.values.approvedRelease.value"},
-						{"text":"The Commission votes to keep the full results a state secret. The world will be told only of the treatment’s lesser benefits, and the early results it publishes will point the wrong way.", "hidden":"event.values.approvedRelease.value"}
-					]
-				}
-			},
-			"description":[
-				"In Beijing, behind closed doors, eleven officials decide what to do with the end of old age.",
-				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15 || !event.values.approvedRelease.value"},
-				{"text":"<br><br>The warnings carry the room. A world where the rich stop dying, the majority agrees, is not one it wants to announce.", "hidden":"event.attestation.value < 15 || event.values.approvedRelease.value"},
-				{"text":"<br><br>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
-				{"text":"<br><br>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
-			],
-			"exits":[{
-				"mode":"survive", "to":"lgv_announcement", 
-				"adj":{
-					"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
-					"agent.skills.cha":{"onBoth":"d(4,2)"}
-				}
-			}]
 		},
 		
 		// The three commissioners the watcher reached. Each is revealed by researching the vote,
@@ -427,6 +255,178 @@
 			],
 			"exits":[
 				{"mode":"walk", "to":"lgv_commission"}
+			]
+		},
+		
+		// The vote. Seven commissioners vote to release, three of them because the watcher got
+		// to them first. Research here reveals those three, one at each 10 of attestation,
+		// which the fixed observations alone reach. Six votes of eleven decide it, so swaying
+		// any two keeps the treatment secret.
+		"lgv_commission":{
+			"name":"The Closed Session", "image":"../location/lgv_commission.jpg",
+			"start":"2087-09-22T01:00:00", "duration":{"h":4},
+			"location":"lgv_commission",
+			"hidden":"events.lgv_announcement.attestation.value < 35",
+			"actionLimit":4,
+			"actions":{
+				"_investigate":null,
+				"agenda":{
+					"label":"Read the Agenda",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.agenda.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				},
+				"commissioners":{
+					"label":"Study the Commissioners",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.commissioners.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				},
+				"debate":{
+					"label":"Listen to the Debate",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.debate.doneCount > 0",
+					"adj":{"event.attestation":"10"}
+				},
+				"meet":{
+					"label":"Meet the Clerk",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.meet.doneCount > 0 || events.lgv_hospice.attestation.value < 10 || events.lgv_banquet.attestation.value < 10 || events.lgv_model.attestation.value < 10",
+					"set":{
+						"agents.AF.hidden":{"onSuccess":"false"},
+						"agents.BA.hidden":{"onSuccess":"true"}
+					}
+				}
+			},
+			"values":{
+				"releaseVotes":{
+					"name":"Votes to Release",
+					"value":"7 - (events.lgv_hospice.values.swayed.value ? 1 : 0) - (events.lgv_banquet.values.swayed.value ? 1 : 0) - (events.lgv_model.values.swayed.value ? 1 : 0)",
+					"description":[
+						{"text":"Seven of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 7"},
+						{"text":"Six of the eleven will vote to tell the world. It is still enough.", "hidden":"event.values.releaseVotes.value !== 6"},
+						{"text":"Only five of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 5"},
+						{"text":"Only four of the eleven will vote to tell the world.", "hidden":"event.values.releaseVotes.value !== 4"}
+					]
+				},
+				"approvedRelease":{
+					"name":"Release Approved",
+					"value":"event.values.releaseVotes.value >= 6",
+					"description":[
+						{"text":"The Commission votes to announce the treatment to the world rather than keep it a state secret.", "hidden":"!event.values.approvedRelease.value"},
+						{"text":"The Commission votes to keep the full results a state secret. The world will be told only of the treatment’s lesser benefits, and the early results it publishes will point the wrong way.", "hidden":"event.values.approvedRelease.value"}
+					]
+				}
+			},
+			"description":[
+				"In Beijing, behind closed doors, eleven officials decide what to do with the end of old age.",
+				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15 || !event.values.approvedRelease.value"},
+				{"text":"<br><br>The warnings carry the room. A world where the rich stop dying, the majority agrees, is not one it wants to announce.", "hidden":"event.attestation.value < 15 || event.values.approvedRelease.value"},
+				{"text":"<br><br>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
+				{"text":"<br><br>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
+			],
+			"exits":[{
+				"mode":"survive", "to":"lgv_announcement", 
+				"adj":{
+					"agent.health":{"actionType":"social", "onFailure":"-d(4,2)"},
+					"agent.skills.cha":{"onBoth":"agent.skills.cha >= 25 ? 0 : d(4,2)"}
+				}
+			}]
+		},
+		
+		// Where the device brings the player once they've heard its message. Watching and
+		// asking around raises its attestation, which reveals its precursors: the trial at 15,
+		// the investor at 25 and the Commission's vote at 35. The fixed observations alone
+		// reach 35, so the mission can't be lost to bad rolls.
+		"lgv_announcement":{
+			"name":"The Announcement", "image":"../location/lgv_expo.jpg",
+			"start":"2087-11-12T02:00:00", "duration":{"h":2},
+			"location":"lgv_expo",
+			"hidden":"!events.safehouse_room.values.heard.value",
+			"actionLimit":1,
+			"actions":{
+				"_investigate":null,
+				"_rest":null,
+				"keynote":{
+					"label":"Listen to the Keynote",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.keynote.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"press":{
+					"label":"Read the Press Packet",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.press.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"demonstration":{
+					"label":"Watch the Demonstration",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.demonstration.doneCount > 0",
+					"costs":{"agent.action":null},
+					"adj":{"event.attestation":"10"}
+				},
+				"reporter":{
+					"label":"Talk to a Reporter",
+					"skillCheck":{"actionType":"social"},
+					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
+				},
+				"crowd":{
+					"label":"Watch the Crowd",
+					"skillCheck":{"actionType":"investigate", "difficulty":150},
+					"set":{"watcher":"true"},
+					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
+				}
+			},
+			"values":{
+				"rejuvenation":{
+					"name":"The Treatment Works",
+					"value":"events.lgv_trial.values.reversal.value",
+					"hidden":"events.lgv_trial.hidden",
+					"description":[
+						{"text":"Whatever is announced today, the trial behind it worked.", "hidden":"!event.values.rejuvenation.value || !event.values.goingPublic.value"},
+						{"text":"The trial behind it worked far better than anyone in this hall is being told.", "hidden":"!event.values.rejuvenation.value || event.values.goingPublic.value"},
+						{"text":"Whatever is announced today, the trial behind it failed.", "hidden":"event.values.rejuvenation.value"}
+					]
+				},
+				"forTheFew":{
+					"name":"For the Few",
+					"value":"events.lgv_backer.values.exclusiveLicense.value",
+					"hidden":"events.lgv_backer.hidden",
+					"description":[
+						{"text":"One company owns the right to make it, and will set the price.", "hidden":"!event.values.forTheFew.value"},
+						{"text":"Anyone with a licence may make it.", "hidden":"event.values.forTheFew.value"}
+					]
+				},
+				"goingPublic":{
+					"name":"Going Public",
+					"value":"events.lgv_commission.values.approvedRelease.value",
+					"hidden":"events.lgv_commission.hidden",
+					"description":[
+						{"text":"The world is being told.", "hidden":"!event.values.goingPublic.value"},
+						{"text":"The world is told a modest truth and a careful lie: real benefits, and nothing of the reversal. That stays with those who can pay for it, in secret.", "hidden":"event.values.goingPublic.value"}
+					]
+				},
+				"watcher":{
+					"name":"The Watcher",
+					"value":"false",
+					"hidden":"!event.values.watcher.value",
+					"description":[
+						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "hidden":"!event.values.watcher.value"}
+					]
+				}
+			},
+			"description":[
+				"The hall is packed, and the feeds are carrying it live to half the world. On the stage, under a banner that reads 还春 · SPRING RETURNS, Dr. Shen Yiran of the Zhangjiang Longevity Institute waits for the noise to die down.",
+				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10 || !event.values.goingPublic.value"},
+				{"text":"<br><br>“Today,” she says, carefully, “we can show you the first results of a treatment for some of the diseases of ageing.”", "hidden":"event.attestation.value < 10 || event.values.goingPublic.value"},
+				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20 || !event.values.goingPublic.value"},
+				{"text":"<br><br>The dataset on the screen is mixed but real: stronger hearts, clearer lungs, sharper memories in volunteers in their seventies. Revolutionary, the commentators will say. No one on the stage says anything about anyone growing younger.", "hidden":"event.attestation.value < 20 || event.values.goingPublic.value"},
+				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
+				{"text":"<br><br>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
+				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
 			]
 		}
 	}
