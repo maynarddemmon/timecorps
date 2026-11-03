@@ -4,7 +4,9 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs, floor:mathFloor} = Math,
+    const {I18N:{get:i18n, concatenate}} = myt,
+        
+        {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs, floor:mathFloor} = Math,
         
         M = myt,
         
@@ -73,22 +75,22 @@
             // locked Event or loops back at a hub, looping back to an Event takes more 
             // chronogation the shorter it is, and only a Faction's members can go to its HQ.
             if (agentModel.isDead()) {
-                retval.problem = 'Deceased';
+                retval.problem = i18n('problem-deceased');
             } else if (chronoLockedEventModel) {
-                retval.problem = chronoLockedEventModel.name + ' is chrono locked. No one can time travel into or out of it.';
+                retval.problem = i18n('problem-chrono-locked', chronoLockedEventModel.name);
             } else if (isAtEvent && eventModel.isHub()) {
-                retval.problem = 'Looping back not possible at chronal hubs';
+                retval.problem = i18n('problem-loop-back-at-hub');
             } else if (isAtEvent && agentModel.getSkill(SKILL_ID_CHRONOGATION) < pkg.getMinChronogationToLoopbackAtEvent(eventModel)) {
-                retval.problem = 'Not enough chronogation to loop back here';
+                retval.problem = i18n('problem-loop-back-chronogation');
             } else if (hqFactionModel && !agentModel.isInFaction(hqFactionModel)) {
-                retval.problem = 'Only ' + hqFactionModel.getLabel() + ' agents can go here';
+                retval.problem = i18n('problem-faction-only', hqFactionModel.getLabel());
             } else {
                 retval.visible = true;
                 const floodedEventModel = getFloodedEventBlockingTravel(agentModel, eventModel);
                 if (floodedEventModel) {
-                    retval.problem = floodedEventModel.name + ' is flooded with paradox. No one can time travel into or out of it.';
+                    retval.problem = i18n('problem-flooded', floodedEventModel.name);
                 } else if (chronalNeeded > -agentModel[STAT_ID_CHRONAL].getValueToMin()) {
-                    retval.problem = 'Not enough chronal';
+                    retval.problem = i18n('problem-chronal');
                 }
             }
             return retval;
@@ -431,7 +433,7 @@
         },
         canAct: function() {return this.getActionsRemaining() > 0;},
         getActionsPhrase: function() {
-            return 'Actions: ' + pkg.wrapInStyledSpan(this.getActionsRemaining(), colorAction, fontFamilyMono);
+            return i18n('agent-actions', pkg.wrapInStyledSpan(this.getActionsRemaining(), colorAction, fontFamilyMono));
         },
         
         // Event //
@@ -562,15 +564,15 @@
         /*  Why the Agent can't buy the next purchase of a skill now, e.g. "Only at HQ", or 
             null if they can. */
         getSkillPurchaseProblem: function(skillId) {
-            if (!pkg.isSkillId(skillId)) return 'No such skill';
-            if (!this.isPlayerControlled()) return 'Not taking direction from you';
-            if (this.isDead()) return 'Deceased';
-            if (!this.isAtHQ()) return 'Only at HQ';
-            if (!this.canAct()) return 'No days left this visit';
+            if (!pkg.isSkillId(skillId)) return i18n('problem-no-skill');
+            if (!this.isPlayerControlled()) return i18n('problem-not-player-controlled');
+            if (this.isDead()) return i18n('problem-deceased');
+            if (!this.isAtHQ()) return i18n('problem-only-at-hq');
+            if (!this.canAct()) return i18n('problem-no-days-left');
             
             const {points, credits} = getSkillPurchase(this, skillId);
-            if (this.getSkill(skillId) + points > MAX_SKILL_VALUE) return 'At its maximum';
-            if (credits > pkg.model.getCredits()) return 'Not enough credits';
+            if (this.getSkill(skillId) + points > MAX_SKILL_VALUE) return i18n('problem-at-maximum');
+            if (credits > pkg.model.getCredits()) return i18n('problem-credits');
             return null;
         },
         
@@ -733,13 +735,13 @@
             const {isHQ, chronalNeeded, paradoxCost, visible, problem} = getTimeTravelInfo(this, destinationEventModel);
             let text;
             if (isHQ) {
-                text = 'Recall to ' + ICON_HQ;
+                text = i18n('exit-recall') + ' ' + ICON_HQ;
             } else if (this.isAtHQ()) {
-                text = 'Deploy to';
+                text = i18n('exit-deploy');
             } else if (this.isAtEvent(destinationEventModel)) {
-                text = 'Loop back';
+                text = i18n('exit-loop-back');
             } else {
-                text = 'Jump to';
+                text = i18n('exit-jump');
             }
             
             btn.callSetters({
@@ -955,11 +957,11 @@
                     actionCost = amount;
                     if (amount === 1 && canPay) continue;
                 }
-                if (amount !== 0) parts.push((Number.isFinite(amount) ? amount : '?') + ' ' + cost.getName(amount) + (canPay ? '' : " (can't pay)"));
+                if (amount !== 0) parts.push(i18n(canPay ? 'cost-amount' : 'cost-amount-unpayable', Number.isFinite(amount) ? amount : '?', cost.getName(amount)));
             }
             const phrases = [];
-            if (actionCost === 0) phrases.push('Uses no action');
-            if (parts.length > 0) phrases.push('Costs: ' + parts.join(', '));
+            if (actionCost === 0) phrases.push(i18n('cost-no-action'));
+            if (parts.length > 0) phrases.push(i18n('cost-costs', concatenate(parts)));
             return phrases.join(ICON_SEPARATOR);
         },
         
@@ -981,21 +983,21 @@
                     const failPhrase = toDamagePhrase(-(failAmount ?? 0)),
                         passDamage = -(passAmount ?? 0),
                         passPhrase = toDamagePhrase(passDamage);
-                    phrase = ICON_HEALTH + ' Risking: ' + failPhrase + (passDamage >= 1 && passPhrase !== failPhrase ? ' (' + passPhrase + ' if passed)' : '');
+                    phrase = ICON_HEALTH + ' ' + i18n(passDamage >= 1 && passPhrase !== failPhrase ? 'adj-risking-unless-passed' : 'adj-risking', failPhrase, passPhrase);
                 } else {
                     const parts = [];
-                    for (const [amount, when] of [[passAmount, 'if passed'], [failAmount, 'if failed']]) {
+                    for (const [amount, i18nKey] of [[passAmount, 'adj-if-passed'], [failAmount, 'adj-if-failed']]) {
                         if (Number.isFinite(amount)) {
                             const rounded = mathRound(amount);
-                            parts.push(ICON_APPROX + (rounded < 0 ? '-' : '+') + mathAbs(rounded) + ' ' + when);
+                            parts.push(i18n(i18nKey, ICON_APPROX + (rounded < 0 ? '-' : '+') + mathAbs(rounded)));
                         }
                     }
-                    phrase = adjustmentModel.getStatDescription() + ': ' + parts.join(', ');
+                    phrase = i18n('adj-stat', adjustmentModel.getStatDescription(), concatenate(parts));
                 }
                 
                 if (adjustmentModel.hasOwnCheck()) {
                     const name = adjustmentModel.getActionSkillName();
-                    phrase += ICON_SEPARATOR + (name ? name + ' / ' : '') + this.getSkillEasePhrase(adjustmentModel.getActionSkillExpr(), adjustmentModel.getActionSkillDifficulty());
+                    phrase += ICON_SEPARATOR + (name ? name + i18n('check-skill-separator') : '') + this.getSkillEasePhrase(adjustmentModel.getActionSkillExpr(), adjustmentModel.getActionSkillDifficulty());
                 }
                 return phrase;
             }).join(ICON_SEPARATOR);

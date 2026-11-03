@@ -6,6 +6,8 @@
             abs:mathAbs, trunc:mathTrunc
         } = Math,
         
+        {I18N:{get:i18n, getLocale, getOrdinal}} = myt,
+        
         {ICON_ARROW, ICON_SEPARATOR, ICON_APPROX} = pkg,
         
         // Time Parsing and Formatting /////////////////////////////////////////
@@ -27,9 +29,7 @@
         ],
         PRECISION_RANK = PRECISION_ORDER.reduce((o, p, i) => (o[p] = i, o), {}),
         
-        MONTH_NAMES = [
-            'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
-        ],
+        MONTH_NAMES = i18n('time-month-names').split(','),
         
         MILLIS_PER_SECOND = 1000,
         MILLIS_PER_MINUTE = 60 * MILLIS_PER_SECOND,
@@ -52,13 +52,13 @@
         /*  Units for approximate durations, coarse to fine. The first unit the duration reaches 
             is used, rounded, so the result is always a single "N unit" phrase. */
         APPROX_UNITS = [
-            [MILLIS_PER_YEAR,   'year',  'years'],
-            [MILLIS_PER_MONTH,  'month', 'months'],
-            [MILLIS_PER_WEEK,   'week',  'weeks'],
-            [MILLIS_PER_DAY,    'day',   'days'],
-            [MILLIS_PER_HOUR,   'hour',  'hours'],
-            [MILLIS_PER_MINUTE, 'min',   'min'],
-            [MILLIS_PER_SECOND, 'sec',   'sec']
+            [MILLIS_PER_YEAR,   'time-approx-years'],
+            [MILLIS_PER_MONTH,  'time-approx-months'],
+            [MILLIS_PER_WEEK,   'time-approx-weeks'],
+            [MILLIS_PER_DAY,    'time-approx-days'],
+            [MILLIS_PER_HOUR,   'time-approx-hours'],
+            [MILLIS_PER_MINUTE, 'time-approx-minutes'],
+            [MILLIS_PER_SECOND, 'time-approx-seconds']
         ],
         
         /*  A SHAPE GUARD, not a parser. Native Date already handles every
@@ -81,14 +81,9 @@
             BCE" is right. CE stated only where the number could be mistaken for
             a quantity: below 1000 and above 9999. */
         eraLabel = ({n, era}) => {
-            const digits = n >= 10000 ? n.toLocaleString('en-US') : String(n);
-            return era === 'BCE' ? digits + ' BCE'
-                 : (n < 1000 || n >= 10000) ? digits + ' CE' : digits;
-        },
-        
-        ordinal = n => {
-            const tail = n % 100;
-            return n + ((tail >= 11 && tail <= 13) ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
+            const digits = n >= 10000 ? n.toLocaleString(getLocale()) : String(n);
+            return era === 'BCE' ? i18n('time-era-bce', digits)
+                 : (n < 1000 || n >= 10000) ? i18n('time-era-ce', digits) : digits;
         },
         
         pad2 = v => String(v).padStart(2, '0'),
@@ -187,25 +182,25 @@
                 switch (precision) {
                     case TO_MILLENIUM:
                         // "c." only where the number is genuinely a rounding
-                        return 'c. ' + eraLabel({n:mathMax(1000, mathRound(era.n / 1000) * 1000), era:era.era});
+                        return i18n('time-circa', eraLabel({n:mathMax(1000, mathRound(era.n / 1000) * 1000), era:era.era}));
                     case TO_CENTURY:
-                        return ordinal(mathCeil(era.n / 100)) + ' century' + (era.era === 'BCE' ? ' BCE' : '');
+                        return i18n(era.era === 'BCE' ? 'time-century-bce' : 'time-century', getOrdinal(mathCeil(era.n / 100)));
                     case TO_DECADE:
-                        return (mathFloor(era.n / 10) * 10) + 's' + (era.era === 'BCE' ? ' BCE' : '');
+                        return i18n(era.era === 'BCE' ? 'time-decade-bce' : 'time-decade', mathFloor(era.n / 10) * 10);
                     case TO_YEAR:
                         return year;
                     case TO_MONTH:
-                        return month + ', ' + year;
+                        return i18n('time-month-year', month, year);
                     case TO_DAY:
-                        return day + ' ' + month + ', ' + year;
+                        return i18n('time-day-month-year', day, month, year);
                     case TO_HOUR:
                         // "23:00" would claim you know the minute is zero. You do not.
-                        return day + ' ' + month + ', ' + year + ' around ' + pad2(d.getUTCHours()) + ':00';
+                        return i18n('time-around-hour', i18n('time-day-month-year', day, month, year), pad2(d.getUTCHours()) + ':00');
                     case TO_MINUTE:
-                        return day + ' ' + month + ', ' + year + ICON_SEPARATOR +  pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
+                        return i18n('time-day-month-year', day, month, year) + ICON_SEPARATOR +  pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
                     case TO_SECOND:
                     default:
-                        return day + ' ' + month + ', ' + year + ICON_SEPARATOR + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
+                        return i18n('time-day-month-year', day, month, year) + ICON_SEPARATOR + pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes()) + ':' + pad2(d.getUTCSeconds());
                 }
             },
             
@@ -240,37 +235,36 @@
             
             /*  Elapsed time, for action blocks and travel legs. */
             formatDuration: millis => {
-                const abs = mathAbs(millis),
-                    unit = (v, one, many) => v + ' ' + (v === 1 ? one : many);
-                if (abs < MILLIS_PER_SECOND) return millis + ' ms';
-                if (abs < MILLIS_PER_MINUTE) return mathRound(millis / MILLIS_PER_SECOND) + ' sec';
+                const abs = mathAbs(millis);
+                if (abs < MILLIS_PER_SECOND) return i18n('time-duration-ms', millis);
+                if (abs < MILLIS_PER_MINUTE) return i18n('time-duration-sec', mathRound(millis / MILLIS_PER_SECOND));
                 if (abs < MILLIS_PER_HOUR) {
                     const m = mathTrunc(millis / MILLIS_PER_MINUTE),
                         s = mathRound((abs % MILLIS_PER_MINUTE) / MILLIS_PER_SECOND);
-                    return s ? m + 'm ' + s + 's' : m + ' min';
+                    return s ? i18n('time-duration-min-sec', m, s) : i18n('time-duration-min', m);
                 }
                 if (abs < MILLIS_PER_DAY) {
                     const h = mathTrunc(millis / MILLIS_PER_HOUR),
                         m = mathRound((abs % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE);
-                    return m ? h + 'h ' + m + 'm' : h + ' hr';
+                    return m ? i18n('time-duration-hr-min', h, m) : i18n('time-duration-hr', h);
                 }
-                if (abs < 30 * MILLIS_PER_DAY)  return unit(mathRound(millis / MILLIS_PER_DAY), 'day', 'days');
-                if (abs < 365 * MILLIS_PER_DAY) return unit(mathRound(millis / (30 * MILLIS_PER_DAY)), 'month', 'months');
-                return unit(+(millis / (365.2425 * MILLIS_PER_DAY)).toFixed(1), 'year', 'years');
+                if (abs < 30 * MILLIS_PER_DAY)  return i18n('time-duration-days', mathRound(millis / MILLIS_PER_DAY));
+                if (abs < 365 * MILLIS_PER_DAY) return i18n('time-duration-months', mathRound(millis / (30 * MILLIS_PER_DAY)));
+                return i18n('time-duration-years', +(millis / (365.2425 * MILLIS_PER_DAY)).toFixed(1));
             },
             
             /*  A rough, single-unit duration for display: "2 min", "5 hours", "3 weeks", "846 years".
                 Unlike formatDuration this never combines units, since it is meant to be read at a glance. */
             formatApproxDuration: millis => {
                 const abs = mathAbs(millis);
-                for (const [unitMillis, one, many] of APPROX_UNITS) {
+                for (const [unitMillis, i18nKey] of APPROX_UNITS) {
                     if (abs >= unitMillis) {
                         const v = mathRound(abs / unitMillis),
                             prefix = v * unitMillis === abs ? '' : ICON_APPROX;
-                        return prefix + (v >= 10000 ? v.toLocaleString('en-US') : v) + ' ' + (v === 1 ? one : many);
+                        return prefix + i18n(i18nKey, v >= 10000 ? v.toLocaleString(getLocale()) : v, v);
                     }
                 }
-                return abs > 0 ? '< 1 sec' : '';
+                return abs > 0 ? i18n('time-approx-under-second') : '';
             },
             
             /*  Largest boundary at or before the given instant.

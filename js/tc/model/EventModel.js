@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {Class:JSClass, Module:JSModule} = JS,
+    const {I18N:{get:i18n}} = myt,
+        
+        {Class:JSClass, Module:JSModule} = JS,
         
         {max:mathMax, round:mathRound} = Math,
         
@@ -56,20 +58,20 @@
         
         getTravelModePhrase = mode => {
             switch (mode) {
-                case 'wait':     return 'Wait til';
-                case 'continue': return 'Continue to';
-                case 'jump':     return 'Jump to';
-                case 'pulled':   return 'Pulled to';
-                case 'enter':    return 'Enter';
-                case 'board':    return 'Board';
-                case 'walk':     return 'Walk to';
-                case 'take':     return 'Take';
-                case 'swim':     return 'Swim to';
-                case 'bike':     return 'Bike to';
-                case 'lifeboat': return 'Lifeboat to';
-                case 'survive': return 'Survive to';
+                case 'wait':     return i18n('travel-wait');
+                case 'continue': return i18n('travel-continue');
+                case 'jump':     return i18n('travel-jump');
+                case 'pulled':   return i18n('travel-pulled');
+                case 'enter':    return i18n('travel-enter');
+                case 'board':    return i18n('travel-board');
+                case 'walk':     return i18n('travel-walk');
+                case 'take':     return i18n('travel-take');
+                case 'swim':     return i18n('travel-swim');
+                case 'bike':     return i18n('travel-bike');
+                case 'lifeboat': return i18n('travel-lifeboat');
+                case 'survive':  return i18n('travel-survive');
             }
-            return 'To';
+            return i18n('travel-default');
         },
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
@@ -641,10 +643,10 @@
                 const name = getStatName(this.statId);
                 switch (this.scopeName) {
                     case SCOPE_AGENT: return name;
-                    case SCOPE_EVENT: return 'Event ' + name;
-                    case SCOPE_AGENTS: return (pkg.model.getAgentModel(this.parsedKey.agentId)?.getName() ?? this.parsedKey.agentId) + ' ' + name;
-                    case SCOPE_EVENTS: return (pkg.model.getEventModel(this.parsedKey.eventId)?.name ?? this.parsedKey.eventId) + ' ' + name;
-                    default: return 'Timeline ' + name;
+                    case SCOPE_EVENT: return i18n('stat-scope-event', name);
+                    case SCOPE_AGENTS: return i18n('stat-scope-named', pkg.model.getAgentModel(this.parsedKey.agentId)?.getName() ?? this.parsedKey.agentId, name);
+                    case SCOPE_EVENTS: return i18n('stat-scope-named', pkg.model.getEventModel(this.parsedKey.eventId)?.name ?? this.parsedKey.eventId, name);
+                    default: return i18n('stat-scope-timeline', name);
                 }
             },
             
@@ -758,7 +760,8 @@
             destabilizes the timeline. */
         makeStatCost = (scopeName, statId, reserve=0) => {
             const accrues = statId === STAT_ID_PARADOX,
-                name = (scopeName === SCOPE_EVENT ? 'Event ' : scopeName === SCOPE_TIMELINE ? 'Timeline ' : '') + getStatName(statId);
+                statName = getStatName(statId),
+                name = scopeName === SCOPE_EVENT ? i18n('stat-scope-event', statName) : scopeName === SCOPE_TIMELINE ? i18n('stat-scope-timeline', statName) : statName;
             return {
                 scopeName,
                 statId,
@@ -780,7 +783,7 @@
         COSTS = pkg.COSTS = {
             // The agent's actions at its Event. Every action costs one unless it says otherwise.
             [COST_KEY_ACTION]:{
-                getName: amount => amount === 1 ? 'Action' : 'Actions',
+                getName: amount => i18n('cost-actions', amount),
                 getAvailable: agentModel => agentModel.getActionsRemaining(),
                 pay: (agentModel, _actionModel, amount) => {agentModel.setActionExecCount(agentModel.getActionExecCount() + amount);}
             },
@@ -795,13 +798,13 @@
             [SCOPE_TIMELINE + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_TIMELINE, STAT_ID_PARADOX, 1),
             // The player's score. It can't be spent below 0.
             [SCOPE_TIMELINE + '.score']:{
-                getName: () => 'Score',
+                getName: () => i18n('stat-score'),
                 getAvailable: () => pkg.model.getScore(),
                 pay: (_agentModel, _actionModel, amount) => {pkg.model.adjScore(-amount);}
             },
             // The Corps' credits, earned from score and missions.
             [SCOPE_TIMELINE + '.credits']:{
-                getName: amount => amount === 1 ? 'Credit' : 'Credits',
+                getName: amount => i18n('cost-credits', amount),
                 getAvailable: () => pkg.model.getCredits(),
                 pay: (_agentModel, _actionModel, amount) => {pkg.model.adjCredits(-amount);}
             }

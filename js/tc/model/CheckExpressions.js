@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
+    const {I18N:{get:i18n}} = myt,
+        
+        {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
@@ -46,7 +48,6 @@
             } else {
                 throw new RangeError('d(' + sides + ') needs a number of sides');
             }
-            
         },
         
         // Rolls the dice and totals them, each 1 to sides. A queued roll is a die's value minus 1.
@@ -187,35 +188,37 @@
         /*  The ease phrase for an ease, by the lowest ease that earns it. The comment is the
             chance of success at that ease. */
         EASE_PHRASES = [
-            [0,    'certain'],   // 100%
-            [-1,   'ensured'],   // 99.9%
-            [-99,  'trivial'],   // 90.1%
-            [-199, 'very easy'], // 80.1%
-            [-299, 'easy'],      // 70.1%
-            [-399, 'fair'],      // 60.1%
-            [-499, 'even'],      // 50.1%
-            [-599, 'tough'],     // 40.1%
-            [-699, 'hard'],      // 30.1%
-            [-799, 'very hard'], // 20.1%
-            [-899, 'brutal'],    // 10.1%
-            [-999, 'hopeless']   // 0.1%
+            [0,    i18n('ease-certain')],   // 100%
+            [-1,   i18n('ease-ensured')],   // 99.9%
+            [-99,  i18n('ease-trivial')],   // 90.1%
+            [-199, i18n('ease-very-easy')], // 80.1%
+            [-299, i18n('ease-easy')],      // 70.1%
+            [-399, i18n('ease-fair')],      // 60.1%
+            [-499, i18n('ease-even')],      // 50.1%
+            [-599, i18n('ease-tough')],     // 40.1%
+            [-699, i18n('ease-hard')],      // 30.1%
+            [-799, i18n('ease-very-hard')], // 20.1%
+            [-899, i18n('ease-brutal')],    // 10.1%
+            [-999, i18n('ease-hopeless')]   // 0.1%
         ],
-        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? 'impossible',
+        I18N_EASE_IMPOSSIBLE = i18n('ease-impossible'),
+        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? I18N_EASE_IMPOSSIBLE,
         
         /*  The phrase for an amount of damage, by the least damage that earns it. Against an 
             Agent's normal health of 100. */
         DAMAGE_PHRASES = [
-            [150, 'certain death'],
-            [100, 'deadly injury'],
-            [75,  'crippling injury'],
-            [50,  'critical injury'],
-            [25,  'grievous injury'],
-            [15,  'severe injury'],
-            [10,  'serious injury'],
-            [5,   'moderate injury'],
-            [1,   'light injury']
+            [150, i18n('damage-certain-death')],
+            [100, i18n('damage-deadly-injury')],
+            [75,  i18n('damage-crippling-injury')],
+            [50,  i18n('damage-critical-injury')],
+            [25,  i18n('damage-grievous-injury')],
+            [15,  i18n('damage-severe-injury')],
+            [10,  i18n('damage-serious-injury')],
+            [5,   i18n('damage-moderate-injury')],
+            [1,   i18n('damage-light-injury')]
         ],
-        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? 'harmless',
+        I18N_DAMAGE_HARMLESS = i18n('damage-harmless'),
+        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? I18N_DAMAGE_HARMLESS,
         
         /*  Evaluates check expressions for checks such as investigating. An expression is plain 
             JavaScript that evaluates to an ease: the number added to a roll of 0 to 999, where a 
@@ -315,8 +318,8 @@
                 if (btnView && checkResult) {
                     const {success, roll, ease, adjustments=[]} = checkResult,
                         // A no-roll check has no margin or roll to show.
-                        text = (roll == null ? 'Succeeded' : 
-                            (success ? 'Succeeded' : 'Failed') + ' by ' + mathAbs(roll + ease) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
+                        text = (roll == null ? i18n('check-succeeded') : 
+                            i18n(success ? 'check-succeeded-by' : 'check-failed-by', mathAbs(roll + ease)) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
                             // What any adjustments changed, e.g. "Failed by 120 · -7♥ · +2⥁".
                             adjustments.filter(adjustment => adjustment.amount && adjustment.shown !== false).map(adjustment => ICON_SEPARATOR + pkg.formatStatAdj(adjustment.statId, adjustment.amount)).join('');
                     pkg.showFloatingTextAboveView(

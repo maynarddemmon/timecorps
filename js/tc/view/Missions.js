@@ -8,7 +8,9 @@
         // follow is debounced, so it could otherwise undo a newer selection.
         isFollowing = false;
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         M = myt,
         {Grid:{SORT_ORDER_ASC}} = M,
@@ -48,7 +50,7 @@
                 const operationModel = this.model,
                     cell = this.getRef(colId);
                 switch (colId) {
-                    case 'state':    cell.setText(operationModel.getState()); break;
+                    case 'state':    cell.setText(i18n('mission-state-' + operationModel.getState())); break;
                     case 'progress': cell.setText(formatProgress(operationModel)); break;
                     default:
                         this.callSuper(colId);
@@ -74,9 +76,9 @@
                     const WIDTH_NAME = 100,
                         WIDTH_STATE = 90,
                         WIDTH_PROGRESS = 80;
-                    new GridColHdr(gridHeader, {columnId:'name',     minValue:WIDTH_NAME,     maxValue:1000,           text:'Name', flex:1});
-                    new GridColHdr(gridHeader, {columnId:'state',    minValue:WIDTH_STATE,    maxValue:WIDTH_STATE,    text:'State'});
-                    new GridColHdr(gridHeader, {columnId:'progress', minValue:WIDTH_PROGRESS, maxValue:WIDTH_PROGRESS, text:'Progress'});
+                    new GridColHdr(gridHeader, {columnId:'name',     minValue:WIDTH_NAME,     maxValue:1000,           text:i18n('col-name'), flex:1});
+                    new GridColHdr(gridHeader, {columnId:'state',    minValue:WIDTH_STATE,    maxValue:WIDTH_STATE,    text:i18n('col-state')});
+                    new GridColHdr(gridHeader, {columnId:'progress', minValue:WIDTH_PROGRESS, maxValue:WIDTH_PROGRESS, text:i18n('col-progress')});
                 },
                 doRowModelSelected: model => {
                     if (!isFollowing) self.fireEvent('selectionChanged', model);

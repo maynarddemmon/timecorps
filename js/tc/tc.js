@@ -46,12 +46,12 @@
         STAT_ID_CREDITS = 'credits',
         
         // Localization
-        {get:i18n, getOrdinal} = (locale => {
+        {get:i18n} = (locale => {
             const I18N = M.I18N,
                 getResource = I18N.getResource;
             I18N.setLocale(locale);
             
-            for (const funcName of ['getOrdinal']) {
+            for (const funcName of ['getOrdinal','concatenate']) {
                 I18N[funcName] = getResource(funcName);
             }
             
@@ -422,14 +422,14 @@
             },
             
             loadTxtIntoElement: (url, targetView, isStillWanted) => {
-                targetView.setValue('Retrieving…');
+                targetView.setValue(i18n('txt-retrieving'));
                 
                 TC.loadTxt(url, (success, txt) => {
                     if (isStillWanted()) {
                         if (success) {
                             targetView.setValue(txt);
                         } else {
-                            targetView.setValue('MISSING / REDACTED: ' + txt);
+                            targetView.setValue(i18n('txt-missing', txt));
                         }
                     }
                 });

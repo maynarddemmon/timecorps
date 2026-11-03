@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {formatAsPercentage, interpolateString} = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        {formatAsPercentage, interpolateString} = myt,
         
         {min:mathMin, max:mathMax} = Math,
         
@@ -188,7 +190,7 @@
                         return max ? formatAsPercentage(value / max, 0) : ICON_NIL ;
                     case 'verbose':
                         return interpolateString(
-                            template ?? 'Current Value: {value}{ICON_SEPARATOR}Max Value: {max}',
+                            template ?? i18n('stat-verbose-template'),
                             {ICON_SEPARATOR, value, max}
                         );
                     case 'tooltip':

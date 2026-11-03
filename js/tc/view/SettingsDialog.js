@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {Text, Checkbox, SpacedLayout} = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        {Text, Checkbox, SpacedLayout} = myt,
         
         {
             WideView, settings,
@@ -22,10 +24,10 @@
             
             self.callSuper(parent, attrs);
             
-            self.setTitle(pkg.ICON_SETTINGS + ' Settings');
+            self.setTitle(pkg.ICON_SETTINGS + ' ' + i18n('tip-settings'));
             self.getPanelView().setWidth(PANEL_WIDTH);
             
-            self.getFooterView().ackBtn.setText(pkg.ICON_CANCEL + ' Close');
+            self.getFooterView().ackBtn.setText(pkg.ICON_CANCEL + ' ' + i18n('btn-close'));
             
             const container = self.getContentView(),
                 checkboxes = self._checkboxes = {};

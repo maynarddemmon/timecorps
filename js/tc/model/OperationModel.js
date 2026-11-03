@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         {debounce, BaseModel} = myt,
         
@@ -231,7 +233,7 @@
         getName: function() {return this.name;},
         
         setTitle: function(v) {this.set('title', v, true);},
-        getTitle: function() {return this.title ?? 'Mission Brief';},
+        getTitle: function() {return this.title ?? i18n('brief-mission');},
         
         // Objectives
         setObjectives: function(objectives) {

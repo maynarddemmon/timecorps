@@ -3,7 +3,9 @@
     
     let isInitial = true; // Indicates this is the first time the timeline is being layed out.
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         {PI, min:mathMin, max:mathMax, floor:mathFloor, sin:mathSin, random:mathRandom} = Math,
         TWO_PI = 2*PI,
@@ -497,8 +499,8 @@
             const {histPrevBtn, histNextBtn, _hist:hist, _histIdx:idx} = timeline,
                 prevDisabled = idx < 1,
                 nextDisabled = idx === hist.length - 1,
-                prevBtnTooltip = prevDisabled ? 'No last Event to select.' : timeline.model.getEventModel(hist[idx - 1])?.name,
-                nextBtnTooltip = nextDisabled ? 'No next Event to select.' : timeline.model.getEventModel(hist[idx + 1])?.name;
+                prevBtnTooltip = prevDisabled ? i18n('tip-no-last-event') : timeline.model.getEventModel(hist[idx - 1])?.name,
+                nextBtnTooltip = nextDisabled ? i18n('tip-no-next-event') : timeline.model.getEventModel(hist[idx + 1])?.name;
             histPrevBtn.setDisabled(prevDisabled);
             histPrevBtn.setTooltip(prevBtnTooltip);
             
@@ -1149,12 +1151,12 @@
             self.histPrevBtn = new SquareBtn(self, {
                 x:22, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge,
-                tooltip:'Select the last Event you viewed.'
+                tooltip:i18n('tip-select-last-event')
             }, [{doActivated: function() {self.navigateHistory(-1);}}]);
             self.histNextBtn = new SquareBtn(self, {
                 x:49, y:btnY, buttonType:'plain', disabled:true,
                 text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge,
-                tooltip:'Select the next Event you viewed.'
+                tooltip:i18n('tip-select-next-event')
             }, [{doActivated: function() {self.navigateHistory(1);}}]);
             
             self.ready = true;

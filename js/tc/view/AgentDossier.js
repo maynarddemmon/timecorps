@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {PlainText, SpacedLayout, ResizeLayout, SizeToParent} = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        {PlainText, SpacedLayout, ResizeLayout, SizeToParent} = myt,
         
         {
             WideView, TallView, CompactField, CompactFieldRow,
@@ -53,24 +55,24 @@
             new ResizeLayout(row, {inset:spacing, spacing, outset:spacing});
             
             row = new CompactFieldRow(vitalsContainer);
-            self._idView = new CompactField(row, {label:'ID', layoutHint:1});
-            self._nameView = new CompactField(row, {label:'Name', layoutHint:1});
-            self._roleView = new CompactField(row, {label:'Role', layoutHint:1});
+            self._idView = new CompactField(row, {label:i18n('dossier-id'), layoutHint:1});
+            self._nameView = new CompactField(row, {label:i18n('dossier-name'), layoutHint:1});
+            self._roleView = new CompactField(row, {label:i18n('dossier-role'), layoutHint:1});
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
-            const factionView = self._factionView = new CompactField(row, {label:'Faction', tooltip:'Open the faction brief', cursor:'pointer', layoutHint:1});
+            const factionView = self._factionView = new CompactField(row, {label:i18n('dossier-faction'), tooltip:i18n('tip-open-faction-brief'), cursor:'pointer', layoutHint:1});
             self.attachToDom(factionView, '_doFactionClick', 'click');
-            self._ageView = new CompactField(row, {label:'Age', tooltip:'Years lived', layoutHint:1});
-            self._effectiveAgeView = new CompactField(row, {label:'Biological Age', tooltip:'The body’s age, which treatments can wind back. From 35 it lowers the maximum health, to nothing at 85.', layoutHint:1});
+            self._ageView = new CompactField(row, {label:i18n('dossier-age'), tooltip:i18n('dossier-age-tip'), layoutHint:1});
+            self._effectiveAgeView = new CompactField(row, {label:i18n('dossier-biological-age'), tooltip:i18n('dossier-biological-age-tip'), layoutHint:1});
             row.getFirstLayout().update();
             
             row = new CompactFieldRow(vitalsContainer);
-            const whereView = self._whereView = new CompactField(row, {label:'Where', tooltip:'Open the area brief', cursor:'pointer', layoutHint:1});
+            const whereView = self._whereView = new CompactField(row, {label:i18n('dossier-where'), tooltip:i18n('tip-open-area-brief'), cursor:'pointer', layoutHint:1});
             self.attachToDom(whereView, '_doWhereClick', 'click');
             
-            self._whenView = new CompactField(row, {label:'When', layoutHint:1});
-            const eventView = self._eventView = new CompactField(row, {label:'Event', tooltip:'Open the event brief', cursor:'pointer', layoutHint:1});
+            self._whenView = new CompactField(row, {label:i18n('dossier-when'), layoutHint:1});
+            const eventView = self._eventView = new CompactField(row, {label:i18n('dossier-event'), tooltip:i18n('tip-open-event-brief'), cursor:'pointer', layoutHint:1});
             self.attachToDom(eventView, '_doEventClick', 'click');
             row.getFirstLayout().update();
             
@@ -94,7 +96,7 @@
         getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'dossiers/' + briefModel.id + '.txt',
         
         /** @overrides BriefSupport */
-        getBriefReportLabel: () => 'Profile',
+        getBriefReportLabel: () => i18n('brief-profile'),
         
         /** @overrides BriefSupport */
         setBriefModel: function(agentModel) {
@@ -191,17 +193,17 @@
                 const skillId = skillBar.skillId,
                     cfg = pkg.getSkillConfig(skillId),
                     value = agentModel.getSkill(skillId),
-                    label = cfg.name + ' : ' + value,
+                    label = i18n('skill-label', cfg.name, value),
                     {points, credits} = pkg.getSkillPurchase(agentModel, skillId),
                     problem = agentModel.getSkillPurchaseProblem(skillId),
-                    trainLabel = 'Train ' + cfg.name + ' +' + points;
+                    trainLabel = i18n('skill-train', cfg.name, points);
                 skillBar.setValue(value);
                 skillBar.setLabelText(label);
-                skillBar.setTooltip(label + ' - ' + cfg.description);
+                skillBar.setTooltip(i18n('skill-tip', label, cfg.description));
                 skillBar.updateIncreaseBtn(
                     trainLabel,
                     problem != null,
-                    trainLabel + ' for ' + credits + (credits === 1 ? ' credit' : ' credits') + ' and an action' + (problem ? ICON_SEPARATOR + problem : '')
+                    i18n('skill-train-tip', trainLabel, credits) + (problem ? ICON_SEPARATOR + problem : '')
                 );
             }
         },

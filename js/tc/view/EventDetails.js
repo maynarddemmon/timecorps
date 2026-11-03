@@ -3,7 +3,9 @@
     
     let rootModel;
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         {
             View, PaddedText, PaddedPlainText, SizeToParent, 
@@ -46,10 +48,10 @@
                     agentModel.hasHealthChangeRiskFor(actionModel)
                 ),
                 // An action without an actionType has no name to show.
-                tooltip:label + ICON_SEPARATOR + (name ? name + ' / ' : '') + easePhrase + 
+                tooltip:label + ICON_SEPARATOR + (name ? name + i18n('check-skill-separator') : '') + easePhrase + 
                     (costsPhrase ? ICON_SEPARATOR + costsPhrase : '') + 
                     (adjustmentsPhrase ? ICON_SEPARATOR + adjustmentsPhrase : '') +
-                    (blockedByFlood ? ICON_SEPARATOR + 'Could generate paradox, which a flooded event can\'t hold' : ''),
+                    (blockedByFlood ? ICON_SEPARATOR + i18n('problem-flood-blocks-action') : ''),
                 disabled:blockedByFlood || !agentModel.canPayCostsFor(actionModel) || !actionModel.isAvailableFor(agentModel)
             };
         },
@@ -141,14 +143,14 @@
                 
                 if (!agentModel.isPlayerControlled()) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(addActionLine(), {paddingTop:3, text:'Not taking direction from you'});
+                    new TextForFlow(addActionLine(), {paddingTop:3, text:i18n('problem-not-player-controlled')});
                     return;
                 }
                 
                 // The dead can't act, travel or be resupplied.
                 if (agentModel.isDead()) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(addActionLine(), {paddingTop:3, text:'Deceased'});
+                    new TextForFlow(addActionLine(), {paddingTop:3, text:i18n('problem-deceased')});
                     return;
                 }
                 
@@ -199,7 +201,7 @@
                 }
                 
                 // Update Exits
-                new TextForFlow(exitView, {text:'Exits:\u00A0'});
+                new TextForFlow(exitView, {text:i18n('event-exits') + '\u00A0'});
                 const exitModels = eventModel.getExitModels();
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
@@ -245,11 +247,11 @@
                 
                 // Only show links the player is allowed to know about.
                 self.precursorsFlow.update(
-                    'Precursors:\u00A0',
+                    i18n('event-precursors') + '\u00A0',
                     [...valueModel.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
                 );
                 self.descendantsFlow.update(
-                    'Descendants:\u00A0',
+                    i18n('event-descendants') + '\u00A0',
                     [...valueModel.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
                 );
             }
@@ -267,10 +269,10 @@
                 timelineView = pkg.app.getTimelineView();
             
             self.hqBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_HQ, tooltip:'Select HQ'
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_HQ, tooltip:i18n('tip-select-hq')
             }, [{doActivated: () => {pkg.app.selectEventBox(self.selectedAgentModel.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_THE_VOID, tooltip:'Select The Void'
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_THE_VOID, tooltip:i18n('tip-select-the-void')
             }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getTheVoidEventModel());}}]);
             
             new View(header, {width:padding}); // Spacer
@@ -278,7 +280,7 @@
             self.histPrevBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
                 text:pkg.ICON_NAV_BACK, fontSize:fontSizeLarge, 
-                tooltip:'Select the last Event you viewed.'
+                tooltip:i18n('tip-select-last-event')
             }, [{doActivated: function() {timelineView.navigateHistory(-1);}}]);
             self.scrollToBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, disabled:true
@@ -286,7 +288,7 @@
             self.histNextBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
                 text:pkg.ICON_NAV_FORWARD, fontSize:fontSizeLarge, 
-                tooltip:'Select the next Event you viewed.'
+                tooltip:i18n('tip-select-next-event')
             }, [{doActivated: function() {timelineView.navigateHistory(1);}}]);
             
             // The title opens the Event Brief.
@@ -295,7 +297,7 @@
             self.attachToDom(titleView, '_doTitleClick', 'click');
             
             self.noSelectionTxt = new PaddedPlainText(self, {
-                padding, whiteSpace:'normal', text:"Select a historical event in the timeline to see more about it here."
+                padding, whiteSpace:'normal', text:i18n('event-none-selected')
             });
             
             const detailsContainer = self.detailsContainer = new WideView(self, {
@@ -307,13 +309,13 @@
             
             self.chronalBar = new pkg.ChronalBar(detailsContainer, {
                 x:spacing, percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
-                labelTemplate:'HQ {label} Pool', visible:false
+                labelTemplate:i18n('bar-hq-pool-label'), visible:false
             }, [SizeToParent, pkg.BigStatBar]);
             
             new View(detailsContainer, {height:2}); // Spacer.
             
             // Agents
-            let row = self.agentsRow = new ContainerRow(detailsContainer, {label:'Agent Activity'});
+            let row = self.agentsRow = new ContainerRow(detailsContainer, {label:i18n('event-agent-activity')});
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
@@ -323,10 +325,10 @@
             }]);
             
             // Causators
-            self.causatorsRow = new ContainerRow(detailsContainer, {label:'Causators'});
+            self.causatorsRow = new ContainerRow(detailsContainer, {label:i18n('event-causators')});
             
             // Description
-            row = new ContainerRow(detailsContainer, {label:'Historical Account', layoutHint:2});
+            row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:2});
             self.descriptionTxt = new PaddedText(row, {padding, whiteSpace:'normal'});
             
             new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:1});
@@ -394,7 +396,7 @@
                 
                 const descriptionTxt = self.descriptionTxt,
                     description = eventModel.getDescription();
-                descriptionTxt.setText(description || 'The historical record is silent.');
+                descriptionTxt.setText(description || i18n('event-no-description'));
                 descriptionTxt.setFontStyle(description ? null : 'italic');
                 
                 const causatorsRow = self.causatorsRow;
@@ -408,7 +410,7 @@
                 }
                 if (addedCount === 0) {
                     new PaddedPlainText(causatorsRow, {
-                        padding, whiteSpace:'normal', fontStyle:'italic', text:'No known causators for this event.'
+                        padding, whiteSpace:'normal', fontStyle:'italic', text:i18n('event-no-causators')
                     });
                 }
                 
@@ -421,7 +423,7 @@
                 }
                 if (addedCount === 0) {
                     new PaddedPlainText(agentsRow, {
-                        padding, whiteSpace:'normal', fontStyle:'italic', text:'No agents at this event.'
+                        padding, whiteSpace:'normal', fontStyle:'italic', text:i18n('event-no-agents')
                     });
                 }
                 
@@ -462,10 +464,10 @@
         }, 25),
         
         updateTitle: function() {
-            const eventName = this.eventModel?.name ?? 'none';
+            const eventName = this.eventModel?.name ?? i18n('txt-none');
             this.setTitle(
                 ICON_EVENT + ' ' + pkg.wrapInStyledSpan(eventName, colorUltraLight),
-                'Open the event brief for: ' + eventName
+                i18n('tip-open-event-brief-for', eventName)
             );
         },
         

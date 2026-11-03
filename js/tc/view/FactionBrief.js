@@ -1,6 +1,8 @@
 (pkg => {
     'use strict';
     
+    const {I18N:{get:i18n}} = myt;
+    
     /*  Briefs the player on a Faction: its label as the title and its description as field
         notes. It has no photo or report yet. Opens from the Agents grid and the Agent Dossier. */
     pkg.FactionBrief = new JS.Class('FactionBrief', pkg.AckDialog, {
@@ -16,7 +18,7 @@
         
         // Accessors ///////////////////////////////////////////////////////////
         /** @overrides BriefSupport */
-        getBriefTitle: briefModel => pkg.makeBriefTitle('Faction Brief', briefModel.getLabel()),
+        getBriefTitle: briefModel => pkg.makeBriefTitle(i18n('brief-faction'), briefModel.getLabel()),
         
         /** @overrides BriefSupport */
         getBriefReportUrl: () => null

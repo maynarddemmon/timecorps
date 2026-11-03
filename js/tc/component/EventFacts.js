@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {View, PaddedPlainText, WrappingLayout, SpacedLayout} = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        {View, PaddedPlainText, WrappingLayout, SpacedLayout} = myt,
         
         {
             WideView, Row, UnderlineBtn,
@@ -30,7 +32,7 @@
             
             const whereWhen = new WideView(self, {x:spacing, percentOfParentWidthOffset:-2*spacing});
             self._whereBtn = new UnderlineBtn(whereWhen, {
-                fontSize:fontSizeMedium, tooltip:'Open the area brief'
+                fontSize:fontSizeMedium, tooltip:i18n('tip-open-area-brief')
             }, [{doActivated: () => {self._doWhereActivated();}}]);
             self._whenTxt = new PaddedPlainText(whereWhen, {fontSize:fontSizeMedium});
             new WrappingLayout(whereWhen, {collapseParent:true});

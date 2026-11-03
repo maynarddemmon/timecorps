@@ -4,7 +4,9 @@
     let rootModel,
         gridWrapper;
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         {Grid:{SORT_ORDER_ASC}} = myt,
         {
@@ -138,13 +140,13 @@
                         WIDTH_MISC = 55,
                         WIDTH_WHEN = 125,
                         WIDTH_BAR = 65;
-                    new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:'ID',         cellXAdj:padding,   cellWidthAdj:-padding});
-                    new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:1000,       text:'Name',    flex:1});
-                    new GridColHdr(gridHeader, {columnId:'role',          minValue:WIDTH_MISC, maxValue:1000,       text:'Role',    flex:1});
-                    new GridColHdr(gridHeader, {columnId:'faction',       minValue:WIDTH_MISC, maxValue:1000,       text:'Faction', flex:1});
-                    new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:1000,       text:'Event',   flex:1});
-                    new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:1000,       text:'Where',   flex:1});
-                    new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:'When'});
+                    new GridColHdr(gridHeader, {columnId:'id',            minValue:WIDTH_ID,   maxValue:WIDTH_ID,   text:i18n('col-id'),         cellXAdj:padding,   cellWidthAdj:-padding});
+                    new GridColHdr(gridHeader, {columnId:'name',          minValue:WIDTH_MISC, maxValue:1000,       text:i18n('col-name'),    flex:1});
+                    new GridColHdr(gridHeader, {columnId:'role',          minValue:WIDTH_MISC, maxValue:1000,       text:i18n('col-role'),    flex:1});
+                    new GridColHdr(gridHeader, {columnId:'faction',       minValue:WIDTH_MISC, maxValue:1000,       text:i18n('col-faction'), flex:1});
+                    new GridColHdr(gridHeader, {columnId:'event',         minValue:WIDTH_MISC, maxValue:1000,       text:i18n('col-event'),   flex:1});
+                    new GridColHdr(gridHeader, {columnId:'where',         minValue:WIDTH_MISC, maxValue:1000,       text:i18n('col-where'),   flex:1});
+                    new GridColHdr(gridHeader, {columnId:'when',          minValue:WIDTH_WHEN, maxValue:WIDTH_WHEN, text:i18n('col-when')});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_HEALTH,  minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_HEALTH,  cellXAdj:padding/2, cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_PARADOX, cellXAdj:padding/2, cellWidthAdj:-padding});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL, minValue:WIDTH_BAR,  maxValue:WIDTH_BAR,  text:I18N_CHRONAL, cellXAdj:padding/2, cellWidthAdj:-padding});

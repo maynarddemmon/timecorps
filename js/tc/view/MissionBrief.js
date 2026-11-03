@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {
+    const {I18N:{get:i18n}} = myt,
+        
+        {
         cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
         theme:{padding}
     } = pkg;
@@ -36,7 +38,7 @@
         getBriefReportUrl: briefModel => pkg.cfg.DATA_BASE_DIR + 'mission/' + briefModel.id + '.txt',
         
         /** @overrides BriefSupport */
-        getBriefReportLabel: () => 'Briefing',
+        getBriefReportLabel: () => i18n('brief-briefing'),
         
         
         // Methods /////////////////////////////////////////////////////////////
@@ -47,7 +49,7 @@
             // Whether it's an offer is settled as it opens, since starting the mission from
             // elsewhere while it's showing shouldn't turn the button into an acknowledgment.
             const isOffer = this._isOffer = operationModel.isAvailable();
-            this.getDefaultBtn().setText(isOffer ? 'Accept Mission' : this._ackLabel);
+            this.getDefaultBtn().setText(isOffer ? i18n('btn-accept-mission') : this._ackLabel);
         },
         
         /** @overrides AckDialog */

@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const M = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        M = myt,
         
         {
             WideView, DetailRow,
@@ -81,7 +83,7 @@
                     overflow:'autoy'
                 }),
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-labelWidth/1.5}),
-                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {labelWidth, label:'Field Notes'}),
+                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {labelWidth, label:i18n('brief-field-notes')}),
                 profileView = self._profileView = new DetailRow(profileContainer, {labelWidth, label:self.getBriefReportLabel()}),
                 profileViewValue = profileView.getValueView(),
                 fieldNotesValueView = fieldNotesView.getValueView();
@@ -113,7 +115,7 @@
         getPhoto: function() {return this._photo;},
         getProfile: function() {return this._profile;},
         
-        getBriefReportLabel: () => 'Report',
+        getBriefReportLabel: () => i18n('brief-report'),
         
         getBriefModel: function() {return this.briefModel;},
         
@@ -209,5 +211,8 @@
     });
     
     /*  A title naming the model, e.g. "Area Brief : Bridge". */
-    pkg.makeBriefTitle = (prefix, name) => (prefix ? prefix + ' : ' : '') + pkg.wrapInStyledSpan(name, colorUltraLight);
+    pkg.makeBriefTitle = (prefix, name) => {
+        const styledName = pkg.wrapInStyledSpan(name, colorUltraLight);
+        return prefix ? i18n('brief-title', prefix, styledName) : styledName;
+    };
 })(tc);

@@ -193,11 +193,11 @@ test('an action\'s button shows its costs, flags stat costs and is disabled when
         });
     // The usual single action goes without saying, unless it can't be paid.
     expect(info.investigate).toBe('');
-    expect(info.bribe).toBe("Costs: 2 Actions (can't pay), 100 Score");
+    expect(info.bribe).toBe("Costs: 2 Actions (can’t pay), 100 Score");
     expect(info.ponder).toBe('Uses no action');
     expect(info.scoreOnly).toBe('Costs: 10 Score');
     expect(info.spend).toBe('Uses no action · Costs: 10 Chr⏲nal, 10 Health, 1 Parad⥁x, 5 Event Attestation'.replace(/ · /g, ' · '));
-    expect(info.broken).toBe("Costs: ? Score (can't pay)");
+    expect(info.broken).toBe("Costs: ? Score (can’t pay)");
 
     await page.evaluate(() => {
         tc.app.selectEventBox('aftermath');
@@ -253,7 +253,7 @@ test('an exit costs nothing unless it says so, and one that can\'t be paid for i
         event:'aftermath', chronal:10, score:95, logged:{'agent.chronal':10, 'timeline.score':5}
     });
     expect(await takeExit({chronal:9, score:100})).toEqual({
-        canPay:false, phrase:"Costs: 10 Chr⏲nal (can't pay), 5 Score", waitPhrase:'',
+        canPay:false, phrase:"Costs: 10 Chr⏲nal (can’t pay), 5 Score", waitPhrase:'',
         event:'origin', chronal:9, score:100, logged:'none'
     });
     

@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {stableStringify, downloadObjectAsJSON} = myt,
+    const {I18N:{get:i18n}} = myt,
+        
+        {stableStringify, downloadObjectAsJSON} = myt,
         
         SAVE_FORMAT_VERSION = 1,
         DEFAULT_STORAGE_KEY = 'tc.save',
@@ -44,9 +46,9 @@
         /*  Returns why a record can't be used as a save, or null if it can. Only checks the
             outline. Problems deeper in the data are caught when it is restored. */
         validateRecord = record => {
-            if (!isObj(record)) return 'it is not a Time Corps save file';
-            if (record.version !== SAVE_FORMAT_VERSION) return 'it is from an unsupported version (' + record.version + ')';
-            if (!isObj(record.data)) return 'it has no save data';
+            if (!isObj(record)) return i18n('save-problem-not-save');
+            if (record.version !== SAVE_FORMAT_VERSION) return i18n('save-problem-version', record.version);
+            if (!isObj(record.data)) return i18n('save-problem-no-data');
             return null;
         };
     
@@ -101,7 +103,7 @@
         importRecord: function(record) {
             const problem = validateRecord(record);
             if (problem) return problem;
-            return this.save({...record, savedAt:record.savedAt ?? new Date().toISOString()}) ? null : 'the browser blocked storage for this site';
+            return this.save({...record, savedAt:record.savedAt ?? new Date().toISOString()}) ? null : i18n('save-problem-storage-blocked');
         },
         
         /*  Returns null if a save was restored or there was none, otherwise the reason it failed. 
@@ -117,7 +119,7 @@
                     this.importDiff(record.data);
                 } catch (err) {
                     console.error('Restore failed', err);
-                    problem = 'it could not be applied';
+                    problem = i18n('save-problem-not-applied');
                 }
             }
             if (problem) this.clear();

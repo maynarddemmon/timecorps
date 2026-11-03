@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const STORAGE_KEY = 'tc.settings',
+    const {I18N:{get:i18n}} = myt,
+        
+        STORAGE_KEY = 'tc.settings',
         
         SETTING_SAVE_ON_OPERATION_COMPLETION = pkg.SETTING_SAVE_ON_OPERATION_COMPLETION = 'saveOnOperationCompletion',
         SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = pkg.SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY = 'openEventBriefOnFirstEntry',
@@ -15,32 +17,32 @@
             id:SETTING_SAVE_ON_OPERATION_COMPLETION,
             type:'boolean',
             defaultValue:true,
-            label:'Save on mission completion',
-            description:'Automatically save your progress each time a mission is completed.'
+            label:i18n('setting-saveOnOperationCompletion-label'),
+            description:i18n('setting-saveOnOperationCompletion-desc')
         }, {
             id:SETTING_OPEN_EVENT_BRIEF_ON_FIRST_ENTRY,
             type:'boolean',
             defaultValue:true,
-            label:'Open event briefs on first entry',
-            description:'Open an Event’s brief the first time any agent enters it.'
+            label:i18n('setting-openEventBriefOnFirstEntry-label'),
+            description:i18n('setting-openEventBriefOnFirstEntry-desc')
         }, {
             id:SETTING_SHOW_VISITED_BORDERS,
             type:'boolean',
             defaultValue:true,
-            label:'Show visited borders',
-            description:'Outline the Events on the timeline that the selected agent has visited.'
+            label:i18n('setting-showVisitedBorders-label'),
+            description:i18n('setting-showVisitedBorders-desc')
         }, {
             id:SETTING_SHOW_AGENT_HISTORY,
             type:'boolean',
             defaultValue:true,
-            label:'Show agent history',
-            description:'Draw arrows on the timeline from Event to Event, in the order the selected agent visited them.'
+            label:i18n('setting-showAgentHistory-label'),
+            description:i18n('setting-showAgentHistory-desc')
         }, {
             id:SETTING_ANIMATE_TIMELINE_UNREST,
             type:'boolean',
             defaultValue:true,
-            label:'Animate timeline instability',
-            description:'Let the timeline’s connections drift, more as paradox builds. They stay still when your system asks for reduced motion.'
+            label:i18n('setting-animateTimelineUnrest-label'),
+            description:i18n('setting-animateTimelineUnrest-desc')
         }],
         
         DEFINITIONS_BY_ID = new Map(DEFINITIONS.map(def => [def.id, def])),

@@ -86,7 +86,7 @@ test('actions can cost credits, and the header shows them', async ({page}) => {
 
     await expect(page.getByText('Credits').filter({visible:true})).toBeVisible();
     expect(await bribe()).toEqual({canPay:true, phrase:'Uses no action · Costs: 3 Credits', credits:2});
-    expect(await bribe()).toEqual({canPay:false, phrase:"Uses no action · Costs: 3 Credits (can't pay)", credits:2});
+    expect(await bribe()).toEqual({canPay:false, phrase:"Uses no action · Costs: 3 Credits (can’t pay)", credits:2});
     expect(problems.pageErrors).toEqual([]);
 });
 

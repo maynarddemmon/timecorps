@@ -8,7 +8,9 @@
         // follow is debounced, so it could otherwise undo a newer selection.
         isFollowing = false;
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         M = myt,
         {Grid:{SORT_ORDER_ASC}} = M,
@@ -129,11 +131,11 @@
                         WIDTH_AGENTS = 2*btnHeight + padding,
                         WIDTH_BAR = 70,
                         barAttrs = {minValue:WIDTH_BAR, maxValue:WIDTH_BAR, cellXAdj:padding/2, cellWidthAdj:-padding};
-                    new GridColHdr(gridHeader, {columnId:'name',     minValue:WIDTH_NAME,     maxValue:1000,           text:'Name', flex:1});
-                    new GridColHdr(gridHeader, {columnId:'start',    minValue:WIDTH_WHEN,     maxValue:WIDTH_WHEN,     text:'Start'});
-                    new GridColHdr(gridHeader, {columnId:'end',      minValue:WIDTH_WHEN,     maxValue:WIDTH_WHEN,     text:'End'});
-                    new GridColHdr(gridHeader, {columnId:'duration', minValue:WIDTH_DURATION, maxValue:WIDTH_DURATION, text:'Duration'});
-                    new GridColHdr(gridHeader, {columnId:'agents',   minValue:WIDTH_AGENTS,   maxValue:1000,           text:'Agents', flex:1});
+                    new GridColHdr(gridHeader, {columnId:'name',     minValue:WIDTH_NAME,     maxValue:1000,           text:i18n('col-name'), flex:1});
+                    new GridColHdr(gridHeader, {columnId:'start',    minValue:WIDTH_WHEN,     maxValue:WIDTH_WHEN,     text:i18n('col-start')});
+                    new GridColHdr(gridHeader, {columnId:'end',      minValue:WIDTH_WHEN,     maxValue:WIDTH_WHEN,     text:i18n('col-end')});
+                    new GridColHdr(gridHeader, {columnId:'duration', minValue:WIDTH_DURATION, maxValue:WIDTH_DURATION, text:i18n('col-duration')});
+                    new GridColHdr(gridHeader, {columnId:'agents',   minValue:WIDTH_AGENTS,   maxValue:1000,           text:i18n('col-agents'), flex:1});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_HISTORICITY, text:I18N_HISTORICITY, ...barAttrs});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_ATTESTATION, text:I18N_ATTESTATION, ...barAttrs});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX,     text:I18N_PARADOX,     ...barAttrs});

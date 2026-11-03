@@ -56,7 +56,7 @@
             ICON_SEPARATOR, STAT_ID_PARADOX
         } = pkg,
         
-        I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' Close',
+        I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' ' + i18n('btn-close'),
         
         // The value of eventBriefShowCount when each Event's brief was last shown, by Event ID.
         eventBriefShownAt = new Map(),
@@ -65,8 +65,8 @@
             const activeAgents = pkg.model.getActiveAgentsAsList();
             if (!activeAgents || activeAgents.length === 0) {
                 openEndGameDialog(
-                    'Agent Roster Depleted',
-                    'You no longer have any agents under your control.'
+                    i18n('dlg-roster-depleted-title'),
+                    i18n('dlg-roster-depleted-msg')
                 );
             }
         },
@@ -114,10 +114,10 @@
             const lastSavedDate = persistence.getLastSavedDate();
             if (lastSavedDate) {
                 saveBtn?.setTextColor(colorLight);
-                saveBtn?.setTooltip('Last saved ' + lastSavedDate.toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}));
+                saveBtn?.setTooltip(i18n('tip-last-saved', lastSavedDate.toLocaleString(M.I18N.getLocale(), {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})));
             } else {
                 saveBtn?.setTextColor();
-                saveBtn?.setTooltip('Not saved');
+                saveBtn?.setTooltip(i18n('tip-not-saved'));
             }
         },
         
@@ -171,7 +171,7 @@
                                 if (persistence.hasSave()) {
                                     const restoreProblem = persistence.restore();
                                     readyToHandleEvents = true;
-                                    if (restoreProblem) openAckMsgDialog('Save Could Not Be Loaded', 'Your saved progress could not be loaded because ' + restoreProblem + ', so it has been cleared.', appView.doReload, null, 'Start Over');
+                                    if (restoreProblem) openAckMsgDialog(i18n('dlg-restore-failed-title'), i18n('dlg-restore-failed-msg', restoreProblem), appView.doReload, null, i18n('btn-start-over'));
                                 } else {
                                     readyToHandleEvents = true;
                                     model.getInitialOperation()?.start();
@@ -261,25 +261,25 @@
                 update: function(_event) {this.callSuper(model.credits.toLocaleString());}
             }])).attachTo(model, 'update', pkg.STAT_ID_CREDITS);
             
-            timelineParadoxBar = new pkg.ParadoxBar(topView, {labelTemplate:'Timeline {label}'}, [pkg.BigStatBar]);
+            timelineParadoxBar = new pkg.ParadoxBar(topView, {labelTemplate:i18n('bar-timeline-label')}, [pkg.BigStatBar]);
             
             new pkg.Spacer(topView);
             
             saveBtn = new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_SAVE, fontSize:fontSizeVeryLarge}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
-                        'Save Campaign',
-                        'Save your progress? This will overwrite any existing save data.',
+                        i18n('dlg-save-title'),
+                        i18n('dlg-save-msg'),
                         () => {
                             let title,
                                 msg;
                             if (persistence.save()) {
                                 updateLastSaved();
-                                title = 'Save Succeeded';
-                                msg = 'Your progress has been saved.';
+                                title = i18n('dlg-save-succeeded-title');
+                                msg = i18n('dlg-save-succeeded-msg');
                             } else {
-                                title = 'Save Failed';
-                                msg = 'Your progress could not be saved. The browser may be blocking storage for this site.';
+                                title = i18n('dlg-save-failed-title');
+                                msg = i18n('dlg-save-failed-msg');
                             }
                             
                             openAckMsgDialog(title, msg);
@@ -287,11 +287,11 @@
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:'Restart Campaign'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:i18n('dlg-restart-title')}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
-                        'Restart Campaign',
-                        'Are you sure you want to start over with a new campaign? Any currently saved progress will be discarded.',
+                        i18n('dlg-restart-title'),
+                        i18n('dlg-restart-msg'),
                         appView.doRestartCampaign
                     );
                 }
@@ -299,26 +299,26 @@
             
             new PlainText(topView, {text:ICON_SEPARATOR});
             
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_IMPORT, fontSize:fontSizeLarge, tooltip:'Import a “save” file.'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_IMPORT, fontSize:fontSizeLarge, tooltip:i18n('tip-import')}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
-                        'Import Save File',
-                        'Are you sure you want to import a “save” file and continue from there? Any currently saved progress will be overwritten.',
+                        i18n('dlg-import-title'),
+                        i18n('dlg-import-msg'),
                         appView.doImport
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:'Export a “save” file of your current progress.'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:i18n('tip-export')}, [{
                 doActivated: persistence.export.bind(persistence)
             }]);
             
             new PlainText(topView, {text:ICON_SEPARATOR});
             
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:'Settings'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_SETTINGS, fontSize:fontSizeVeryLarge, tooltip:i18n('tip-settings')}, [{
                 doActivated: appView.openSettings
             }]);
             
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:'Help'}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:i18n('tip-help')}, [{
                 doActivated: () => {appView.openHelp();}
             }]);
             
@@ -331,13 +331,13 @@
                 height:rowHeight, bgColor:colorDarkMedium, maxSelected:1
             }, [M.SelectionManager]);
             
-            timelineTabBtn = new TabBtn(tabView, {text:pkg.ICON_CHRONAL + ' Timeline'}, [{
+            timelineTabBtn = new TabBtn(tabView, {text:pkg.ICON_CHRONAL + ' ' + i18n('tab-timeline')}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     timelineView.setVisible(v);
                 }
             }]);
-            eventsTabBtn = new TabBtn(tabView, {text:pkg.ICON_EVENT + ' Events'}, [{
+            eventsTabBtn = new TabBtn(tabView, {text:pkg.ICON_EVENT + ' ' + i18n('tab-events')}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     eventsView.setVisible(v);
@@ -346,13 +346,13 @@
             
             new pkg.Spacer(tabView);
             
-            missionsTabBtn = new TabBtn(tabView, {text:pkg.ICON_MISSION + ' Missions'}, [{
+            missionsTabBtn = new TabBtn(tabView, {text:pkg.ICON_MISSION + ' ' + i18n('tab-missions')}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     missionsView.setVisible(v);
                 }
             }]);
-            agentsTabBtn = new TabBtn(tabView, {text:'♟ Agents'}, [{
+            agentsTabBtn = new TabBtn(tabView, {text:'♟ ' + i18n('tab-agents')}, [{
                 setSelected: function(v) {
                     this.callSuper(v);
                     teamView.setVisible(v);
@@ -540,15 +540,15 @@
                     processJSON: json => {
                         const problem = persistence.importRecord(json);
                         if (problem) {
-                            openAckMsgDialog('Import Failed', 'That file could not be imported because ' + problem + '. Your current progress is unchanged.');
+                            openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-failed-msg', problem));
                         } else {
                             updateLastSaved();
-                            openAckMsgDialog('Import Succeeded', 'Your data has been imported.', appView.doReload, null, 'Continue');
+                            openAckMsgDialog(i18n('dlg-import-succeeded-title'), i18n('dlg-import-succeeded-msg'), appView.doReload, null, i18n('btn-continue'));
                         }
                     },
                     handleJSONParsingError: function(err) {
                         this.callSuper(err);
-                        openAckMsgDialog('Import Failed', 'That file is not a Time Corps save file. Your current progress is unchanged.');
+                        openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-not-save-msg'));
                     }
                 }]);
             }
@@ -565,8 +565,8 @@
         notifyTimelineParadoxExceeded: () => {
             if (readyToHandleEvents) {
                 openEndGameDialog(
-                    'Timeline Destabilized',
-                    'Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.'
+                    i18n('dlg-timeline-destabilized-title'),
+                    i18n('dlg-timeline-destabilized-msg')
                 );
             }
         },
@@ -592,14 +592,14 @@
             if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistence.hasBaseline()) {
                 if (persistence.save()) {
                     updateLastSaved();
-                    saveNote = '<br><br><i>Your progress has been saved.</i>';
+                    saveNote = '<br><br><i>' + i18n('dlg-mission-complete-saved') + '</i>';
                 } else {
-                    saveNote = '<br><br><i>Your progress could not be saved automatically.</i>';
+                    saveNote = '<br><br><i>' + i18n('dlg-mission-complete-not-saved') + '</i>';
                 }
             }
             
-            const title = 'Mission Complete : ' + wrapInStyledSpan(operationModel.getName(), colorUltraLight),
-                debrief = (operationModel.getDebrief() || 'All mission objectives have been achieved.') + saveNote;
+            const title = i18n('dlg-mission-complete-title', wrapInStyledSpan(operationModel.getName(), colorUltraLight)),
+                debrief = (operationModel.getDebrief() || i18n('dlg-mission-complete-msg')) + saveNote;
             
             // Wait for the timeline to finish showing the changes that completed the mission.
             timelineView.doWhenValueChangeAnimsDone(() => {
@@ -608,7 +608,7 @@
                         title, debrief,
                         () => {pkg.app.openMissionBrief(nextOperationModel);},
                         null,
-                        'Next Mission ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
+                        i18n('btn-next-mission') + ' ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
                     );
                 } else {
                     // No next operation case.
@@ -628,8 +628,8 @@
             if (readyToHandleEvents && agentModel.isDevoured()) {
                 const name = agentModel.getName();
                 openAckMsgDialog(
-                    'Agent Devoured : ' + wrapInStyledSpan(name, colorUltraLight),
-                    'The agent was devoured by chronovores.',
+                    i18n('dlg-agent-devoured-title', wrapInStyledSpan(name, colorUltraLight)),
+                    i18n('dlg-agent-devoured-msg'),
                     () => {
                         openAgentDossier(agentModel);
                         checkForActiveRoster();
@@ -642,8 +642,8 @@
             if (readyToHandleEvents && agentModel.isDead()) {
                 const name = agentModel.getName();
                 openAckMsgDialog(
-                    'Agent Death : ' + wrapInStyledSpan(name, colorUltraLight),
-                    'At the Nexus, ' + name + '’s telemetry goes flat between one pulse and the next. The array keeps listening for a recall signal that does not come, and the duty officer marks the time twice: once in the Corps’ own year, and once in a year ' + name + ' would not be born for centuries. Somewhere in the past there is now a body that history has no record of, and a grave that will never be dug. The Corps files the loss as it files every loss, provisionally, because a timeline that can be changed is a timeline in which ' + name + ' might still come home.',
+                    i18n('dlg-agent-death-title', wrapInStyledSpan(name, colorUltraLight)),
+                    i18n('dlg-agent-death-msg', name),
                     () => {
                         openAgentDossier(agentModel);
                         checkForActiveRoster();
@@ -663,7 +663,7 @@
             pkg.loadTxt(DATA_BASE_DIR + 'help.txt', (success, txt) => {
                 if (success) {
                     markHelpSeen();
-                    openAckMsgDialog('Time Corps Field Manual', txt, null, null, I18N_CLOSE_BTN);
+                    openAckMsgDialog(i18n('dlg-help-title'), txt, null, null, I18N_CLOSE_BTN);
                 }
                 afterOpenFunc?.();
             });

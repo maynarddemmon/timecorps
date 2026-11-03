@@ -6,7 +6,9 @@
         textInputDialog,
         imageSelectorDialog;
     
-    const {Class:JSClass, Module:JSModule} = JS,
+    const {I18N:{get:i18n}} = myt,
+        
+        {Class:JSClass, Module:JSModule} = JS,
         
         {min:mathMin, max:mathMax, floor:mathFloor} = Math,
         
@@ -28,9 +30,9 @@
         REF_ID_CANCEL_FUNC = 'cnclFunc',
         REF_ID_CONFIRM_FUNC = 'confFunc',
         
-        DEFAULT_CONFIRM_LABEL = pkg.ICON_CHECKED + ' Confirm',
-        DEFAULT_CANCEL_LABEL = pkg.ICON_UNCHECKED + ' Cancel',
-        DEFAULT_ACK_LABEL = 'Acknowledge',
+        DEFAULT_CONFIRM_LABEL = pkg.ICON_CHECKED + ' ' + i18n('btn-confirm'),
+        DEFAULT_CANCEL_LABEL = pkg.ICON_UNCHECKED + ' ' + i18n('btn-cancel'),
+        DEFAULT_ACK_LABEL = i18n('btn-acknowledge'),
         
         ModalDialog = pkg.ModalDialog = new JSClass('ModalDialog', M.Dimmer, {
             initNode: function(parent, attrs) {
@@ -76,7 +78,7 @@
                 if (cancelable) {
                     const header = self.getHeaderView();
                     self._closeBtn = new pkg.SquareBtn(header, {
-                        y:1, text:pkg.ICON_CANCEL, tooltip:'Close'
+                        y:1, text:pkg.ICON_CANCEL, tooltip:i18n('btn-close')
                     }, [{
                         doActivated: function() {self.doClose();}
                     }]);
@@ -371,7 +373,7 @@
                 
                 const selector = self._selector = new M.View(self, {height:IMAGE_SELECTOR_SIZE}),
                     stepBtnAttrs = {valign:'middle', fontSize:fontSizeLarge, textColor:colorLight, buttonType:'plain'};
-                self._prevBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_BACK, tooltip:'Previous'}, [{
+                self._prevBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_BACK, tooltip:i18n('tip-previous')}, [{
                     doActivated: () => {self.step(-1);}
                 }]);
                 self._image = new M.View(selector, {
@@ -379,7 +381,7 @@
                     imageSize:'contain', imagePosition:'center', 
                     bgColor:colorMegaDark, roundedCorners:cornerRadius
                 }, [M.ImageSupport]);
-                self._nextBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_FORWARD, tooltip:'Next'}, [{
+                self._nextBtn = new pkg.SquareBtn(selector, {...stepBtnAttrs, text:pkg.ICON_NAV_FORWARD, tooltip:i18n('tip-next')}, [{
                     doActivated: () => {self.step(1);}
                 }]);
                 new M.SpacedLayout(selector, {spacing:padding, collapseParent:true});

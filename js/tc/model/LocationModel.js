@@ -1,6 +1,8 @@
 (pkg => {
     'use strict';
     
+    const {I18N:{get:i18n}} = myt;
+    
     /*  Locations scope constraints to themselves, so description phrases use 
         "events.<id>..." or "timeline..." but not "event...". */
     pkg.LocationModel = new JS.Class('LocationModel', myt.BaseModel, {
@@ -21,7 +23,7 @@
         
         // Title
         setTitle: function(v) {this.set('title', v, true);},
-        getTitle: function() {return this.title ?? 'Area Brief';},
+        getTitle: function() {return this.title ?? i18n('brief-area');},
         
         setColor: function(color) {this.set('color', color, true);},
         setTextColor: function(color) {this.set('textColor', color, true);},

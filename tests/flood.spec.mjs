@@ -259,7 +259,7 @@ test('in a flooded Event, actions that could generate paradox can\'t be taken, b
     
     const meddleBtn = page.getByText(/^Meddle/).filter({visible:true});
     await expect(meddleBtn).toHaveClass(/disabled/);
-    await expect(meddleBtn).toHaveAttribute('title', /Could generate paradox, which a flooded event can't hold$/);
+    await expect(meddleBtn).toHaveAttribute('title', /Could generate paradox, which a flooded event can’t hold$/);
     await expect(page.getByText(/^Look/).filter({visible:true})).not.toHaveClass(/disabled/);
     
     expect(problems.warnings.filter(w => !w.startsWith('Cannot take an action'))).toEqual([]);

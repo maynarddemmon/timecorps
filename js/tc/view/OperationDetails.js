@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const JSClass = JS.Class,
+    const {I18N:{get:i18n}} = myt,
+        
+        JSClass = JS.Class,
         
         {PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
@@ -47,13 +49,13 @@
                                 this.setBgColor(colorSuccess);
                                 this.setPaddingLeft(5);
                                 this.setPaddingTop(3);
-                                this.setTooltip('Objective met.');
+                                this.setTooltip(i18n('objective-met'));
                             } else {
                                 this.setText(ICON_UNCHECKED);
                                 this.setBgColor(colorError);
                                 this.setPaddingLeft(7);
                                 this.setPaddingTop(2);
-                                this.setTooltip('Objective not met.');
+                                this.setTooltip(i18n('objective-not-met'));
                             }
                         }
                     }]),
@@ -74,14 +76,14 @@
                 self.successView.setSuccess(objectiveModel.isSuccess());
                 
                 const precursorsFlow = self.precursorsFlow,
-                    label = 'Entanglements:\u00A0',
+                    label = i18n('objective-entanglements') + '\u00A0',
                     precursors = objectiveModel.getPrecursors(),
                     knownPrecursors = precursors.filter(precursor => precursor.known),
                     knownLen = knownPrecursors.length;
                 precursorsFlow.update(label, knownPrecursors, getPrecursorText, precursorModel => precursorModel.eventModel);
                 if (precursors.length > knownLen) {
                     new PaddedText(precursorsFlow, {text:knownLen === 0 ? label : ICON_SEPARATOR});
-                    new PaddedText(precursorsFlow, {text:'Unknown', fontStyle:'italic'});
+                    new PaddedText(precursorsFlow, {text:i18n('objective-unknown'), fontStyle:'italic'});
                     precursorsFlow.setVisible(true);
                 }
             }
@@ -97,11 +99,11 @@
             // Build UI
             const header = self.getHeaderView();
             self.startBtn = new UnderlineBtn(header, {
-                text:'Start Mission ' + ICON_NEXT, visible:false
+                text:i18n('btn-start-mission') + ' ' + ICON_NEXT, visible:false
             }, [{doActivated: function() {self.operationModel.start();}}]);
             
             self.noSelectionTxt = new PaddedPlainText(self, {
-                padding, whiteSpace:'normal', text:'Select a mission in the Missions tab to see more about it here.'
+                padding, whiteSpace:'normal', text:i18n('mission-none-selected')
             });
             
             const detailsContainer = self.detailsContainer = new WideView(self, {
@@ -109,13 +111,13 @@
             });
             
             const objectivesRow = self.objectivesRow = new MiniPanel(detailsContainer, {
-                title:'Mission Objectives', percentOfParentWidth:100
+                title:i18n('mission-objectives'), percentOfParentWidth:100
             }, [GrandWidthMixin, SizeToParent, {
                 clearContent: function() {
                     this.getContentView().destroyAllSubviews();
                 }
             }]);
-            self.progressView = new pkg.LabeledValue(objectivesRow.getHeaderView(), {y:2, label:'Progress', fontSize:fontSizeMedium});
+            self.progressView = new pkg.LabeledValue(objectivesRow.getHeaderView(), {y:2, label:i18n('mission-progress'), fontSize:fontSizeMedium});
             new SpacedLayout(objectivesRow, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
             new SpacedLayout(detailsContainer, {axis:'y', spacing:spacing, collapseParent:true});
@@ -199,10 +201,10 @@
         },
         
         updateTitle: function() {
-            const opName = this.operationModel?.name ?? 'none';
+            const opName = this.operationModel?.name ?? i18n('txt-none');
             this.setTitle(
                 ICON_MISSION + ' ' + pkg.wrapInStyledSpan(opName, colorUltraLight),
-                'Open the mission brief for: ' + opName
+                i18n('tip-open-mission-brief-for', opName)
             );
         },
         
