@@ -337,7 +337,10 @@
             },
             
             // Misc Formatters
-            formatAgentRisks: (chronal, paradox, healthRisk) => {
+            /*  The risks of an action or exit, e.g. " [5⏲ + ⥁]", or an empty string if it has
+                none. travelMillis, if more than 0, is the travel time it shows first, e.g. 
+                " [2h 19m · 5⏲]". */
+            formatAgentRisks: (chronal, paradox, healthRisk, travelMillis) => {
                 const THEME = TC.theme,
                     parts = [];
                 for (const [value, icon, color] of [
@@ -349,7 +352,9 @@
                         parts.push(wrapInStyledSpan((typeof value === 'number' ? value : '') + icon, color));
                     }
                 }
-                return parts.length > 0 ? ' [' + parts.join(' + ') + ']' : '';
+                const risks = parts.join(' + '),
+                    content = travelMillis > 0 ? TC.timeUtil.formatDuration(travelMillis) + (risks ? TC.ICON_SEPARATOR + risks : '') : risks;
+                return content ? ' [' + content + ']' : '';
             },
             
             getStatName,

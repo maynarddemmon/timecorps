@@ -1248,6 +1248,14 @@
                 living through the time between the Events. */
             isTimeTravel: function() {return this.mode === 'jump' || this.mode === 'pulled';},
             
+            /*  The time between leaving this exit's Event and arriving at the one it goes to,
+                which the agent lives through on the way. 0 for time travel. */
+            getTravelTime: function() {
+                if (this.isTimeTravel()) return 0;
+                const toEvent = this.getToEventModel();
+                return toEvent ? toEvent.getStart() - this.event.getEnd() : 0;
+            },
+            
             setTo: function(to) {
                 if (this.to !== to) {
                     this._toEventModel = null;

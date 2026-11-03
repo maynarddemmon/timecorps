@@ -69,7 +69,8 @@
                         agentModel.hasChronalChangeRiskFor(exitModel), 
                         // The paradox for entering the Event, or else whether an adjustment changes it.
                         agentModel.calculateParadoxForEntry(toEvent) || agentModel.hasParadoxChangeRiskFor(exitModel), 
-                        agentModel.hasHealthChangeRiskFor(exitModel)
+                        agentModel.hasHealthChangeRiskFor(exitModel),
+                        exitModel.getTravelTime()
                     )
                 );
                 const costsPhrase = agentModel.getCostsPhrase(exitModel),

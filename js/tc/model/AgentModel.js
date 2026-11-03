@@ -826,7 +826,8 @@
                             // The time between leaving one Event and arriving at the next is
                             // lived through on the way, unless the exit is itself a form of time
                             // travel.
-                            if (!exitModel.isTimeTravel()) self.ageBy(toEvent.getStart() - fromEvent.getEnd());
+                            const travelTime = exitModel.getTravelTime();
+                            if (travelTime !== 0) self.ageBy(travelTime);
                             
                             self.setEvent(toEvent.id, logEntry);
                             pkg.app.selectEventBox(toEvent);

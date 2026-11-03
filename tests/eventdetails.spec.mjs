@@ -100,7 +100,8 @@ test('an exit from the agent\'s event to the selected event can be taken from th
         return {phrase:exitModel.getModePhrase(), chronal:tc.model.getAgentModel('AL').chronal.value};
     });
     await page.evaluate(() => tc.app.selectEventBox('aftermath'));
-    const followBtn = visibleButton(page, new RegExp('^' + exit.phrase + '$'));
+    // The phrase, then the time walked through on the way.
+    const followBtn = visibleButton(page, new RegExp('^' + exit.phrase + ' \\[2h 19m\\]$'));
     await expect(followBtn).toBeVisible();
     await expect(visibleButton(page, /Jump to/)).toBeVisible(); // Still offered alongside.
     
@@ -122,7 +123,7 @@ test('an exit from the agent\'s event to the selected event can be taken from th
 
 test('no exit button without an exit from the agent\'s event to the selected event', async ({page}) => {
     const problems = await startGame(page);
-    // The header button is just the phrase, plus any paradox cost. The agent's own list of 
+    // The header button is just the phrase, plus any travel time and paradox cost. The agent's own list of 
     // exits names the event too, e.g. "Walk to Aftermath".
     const exitPhrases = /^(Walk to|Wait til|To)( \[.*\])?$/;
     
@@ -166,6 +167,38 @@ test('no exit button without an exit from the agent\'s event to the selected eve
         exitModel.setHidden(true);
         return tc.model.getAgentModel('AL').getExitTo(tc.model.getEventModel('aftermath'));
     })).toBeUndefined();
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent\'s exit links show the travel time first, then any risks', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Origin ends at 16:41 and Aftermath starts at 19:00, which Alpha walks through.
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await expect(visibleButton(page, 'Walk to Aftermath [2h 19m]')).toBeVisible();
+    
+    // The time comes before the risks, set apart from them. None at all, as for time 
+    // travel or an Event that starts as this one ends, leaves it out.
+    expect(await page.evaluate(() => [
+        tc.formatAgentRisks(5, true, false, 2 * 60 * 60 * 1000),
+        tc.formatAgentRisks(5, true, false, 0),
+        tc.formatAgentRisks(0, false, false, 0),
+        tc.formatAgentRisks(0, false, false, 90 * 1000)
+    ].map(risks => tc.stripMarkup(risks).trim()))).toEqual([
+        '[2 hr · 5⏲ + ⥁]',
+        '[5⏲ + ⥁]',
+        '',
+        '[1m 30s]'
+    ]);
+    
+    // A time travel exit takes no time.
+    expect(await page.evaluate(() => {
+        const exit = tc.model.getEventModel('origin').getExitModels().find(e => e.to === 'aftermath'),
+            walking = exit.getTravelTime();
+        exit.setMode('jump');
+        return [walking, exit.getTravelTime()];
+    })).toEqual([(2 * 60 + 19) * 60 * 1000, 0]);
     
     expect(problems.pageErrors).toEqual([]);
 });

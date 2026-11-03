@@ -167,14 +167,14 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
         visibleText = text => page.getByText(text, {exact:true}).filter({visible:true});
 
     // In the agent's list of exits.
-    const exitBtn = visibleText('Walk to Aftermath [♥]');
+    const exitBtn = visibleText('Walk to Aftermath [2h 19m\u00A0·\u00A0♥]');
     await expect(exitBtn).toBeVisible();
-    expect(await btnTooltip(page, 'Walk to Aftermath [♥]')).toBe(risk);
+    expect(await btnTooltip(page, 'Walk to Aftermath [2h 19m\u00A0·\u00A0♥]')).toBe(risk);
 
     // In the header, when viewing the Event the exit leads to.
     await page.evaluate(() => tc.app.selectEventBox('aftermath'));
-    await expect(visibleText('Walk to [♥]')).toBeVisible();
-    expect(await btnTooltip(page, 'Walk to [♥]')).toBe(risk);
+    await expect(visibleText('Walk to [2h 19m\u00A0·\u00A0♥]')).toBeVisible();
+    expect(await btnTooltip(page, 'Walk to [2h 19m\u00A0·\u00A0♥]')).toBe(risk);
     await page.evaluate(() => tc.app.selectEventBox('origin'));
 
     // Exits without adjustments have no flag or tooltip. Both Events are made known so the exit shows.
@@ -184,8 +184,8 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
         tc.model.getAgentModel('AL').setEvent('warnings');
         tc.app.selectEventBox('warnings');
     });
-    await expect(visibleText('Wait til Message Backlog')).toBeVisible();
-    expect(await btnTooltip(page, 'Wait til Message Backlog')).toBe('');
+    await expect(visibleText('Wait til Message Backlog [1 hr]')).toBeVisible();
+    expect(await btnTooltip(page, 'Wait til Message Backlog [1 hr]')).toBe('');
     await page.evaluate(() => {
         tc.model.getAgentModel('AL').setEvent('origin');
         tc.app.selectEventBox('origin');
@@ -419,7 +419,7 @@ test('a pass that still hurts floats its damage, and the risk tooltip gives both
         tc.app.selectEventBox('origin');
         tc.rng.queueRolls(500, 3);
     });
-    await page.getByText('Walk to Aftermath [♥]', {exact:true}).filter({visible:true}).click();
+    await page.getByText('Walk to Aftermath [2h 19m\u00A0·\u00A0♥]', {exact:true}).filter({visible:true}).click();
     await expect.poll(() => floatingTexts(page)).toEqual([expect.stringMatching(/^Succeeded by [\d.]+ · -4♥$/)]);
 
     expect(problems.pageErrors).toEqual([]);
@@ -842,13 +842,13 @@ test('buttons flag each stat an adjustment could change, but not a broken amount
         };
     
     // Entering the aftermath costs no paradox, so only the adjustments flag anything.
-    await expectExitTextWith({}, 'Walk to Aftermath');
-    await expectExitTextWith({'timeline.paradox':{onSuccess:'1'}}, 'Walk to Aftermath [⥁]');
-    await expectExitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}}, 'Walk to Aftermath [⏲ + ♥]');
+    await expectExitTextWith({}, 'Walk to Aftermath [2h 19m]');
+    await expectExitTextWith({'timeline.paradox':{onSuccess:'1'}}, 'Walk to Aftermath [2h 19m\u00A0·\u00A0⥁]');
+    await expectExitTextWith({'agent.chronal':{onSuccess:'-2'}, 'agent.health':{onSuccess:'3'}}, 'Walk to Aftermath [2h 19m\u00A0·\u00A0⏲ + ♥]');
     
     // Changes that average to nothing, or can't be worked out, aren't flagged.
-    await expectExitTextWith({'agent.health':{onSuccess:'d(3) - 2'}}, 'Walk to Aftermath');
-    await expectExitTextWith({'agent.health':{onFailure:'nope'}}, 'Walk to Aftermath');
+    await expectExitTextWith({'agent.health':{onSuccess:'d(3) - 2'}}, 'Walk to Aftermath [2h 19m]');
+    await expectExitTextWith({'agent.health':{onFailure:'nope'}}, 'Walk to Aftermath [2h 19m]');
     for (const warning of problems.warnings) expect(warning).toBe('Check expression threw (nope is not defined): nope');
     expect(problems.pageErrors).toEqual([]);
 });
