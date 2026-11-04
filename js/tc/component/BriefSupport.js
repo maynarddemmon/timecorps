@@ -26,7 +26,7 @@
                 there's no photo, for dialogs that put other views beside the photo.
         
         A brief can also put a summary of the model between the photo and the field notes 
-        with setBriefSummaryView.
+        with setBriefSummaryView, and add rows of its own below the report with addProfileRow.
         
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
@@ -76,7 +76,7 @@
             }
             self._photo = new pkg.MediaView(self, photoAttrs, photoMixins);
             
-            const labelWidth = 65,
+            const labelWidth = self._profileLabelWidth = 65,
                 profile = self._profile = new WideView(self, {
                     x:halfPadding, percentOfParentWidthOffset:-padding, percentOfParentHeight:100,
                     roundedCorners:cornerRadius, bgColor:colorMegaDark,
@@ -118,6 +118,18 @@
         getBriefReportLabel: () => i18n('brief-report'),
         
         getBriefModel: function() {return this.briefModel;},
+        
+        /*  Adds a labeled row below the field notes, report and any rows already added, with
+            text styled like the report's but wrapping as ordinary text. Returns the DetailRow. */
+        addProfileRow: function(label) {
+            const row = new DetailRow(this._profileContainer, {labelWidth:this._profileLabelWidth, label}),
+                valueView = row.getValueView();
+            valueView.setWhiteSpace('normal');
+            valueView.setPaddingTop(1);
+            valueView.setFontFamily(fontFamilyMono);
+            valueView.setFontSize(fontSizeMedium);
+            return row;
+        },
         
         /*  Puts the view below the photo, or the photo's space, with the field notes and 
             report below it, following its height. Give it the same x and width as the 

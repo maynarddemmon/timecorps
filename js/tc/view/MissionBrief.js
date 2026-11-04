@@ -5,7 +5,8 @@
         
         {
         cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
-        theme:{padding}
+        theme:{padding},
+        OPERATION_STATE_COMPLETED
     } = pkg;
     
     /*  Briefs the player on an Operation: an optional photo, the Operation's Describable 
@@ -13,7 +14,8 @@
         It opens when a mission is set up or revealed, and from the Mission panel's title. It's 
         acknowledged like an ack dialog, and takes its turn with them. While the mission is 
         available, the button accepts it instead, which starts it, and closing the brief 
-        leaves it available. */
+        leaves it available. Once the mission is completed, its debrief follows the briefing,
+        so the player can review it. */
     pkg.MissionBrief = new JS.Class('MissionBrief', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         
@@ -27,6 +29,7 @@
             this.callSuper(parent, attrs);
             
             this._ackLabel = this.getDefaultBtn().text;
+            this._debriefView = this.addProfileRow(i18n('brief-debrief'));
         },
         
         
@@ -42,6 +45,19 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
+        /*  The debrief is dynamic like the field notes, so it's updated along with them. Only 
+            a completed mission has one to show, the same as the Mission Complete dialog showed.
+            @overrides BriefSupport */
+        updateFieldNotes: function() {
+            this.callSuper();
+            
+            const operationModel = this.getBriefModel(),
+                debriefView = this._debriefView,
+                isCompleted = operationModel?.getState() === OPERATION_STATE_COMPLETED;
+            debriefView.setVisible(isCompleted);
+            if (isCompleted) debriefView.setValue(operationModel.getDebrief() || i18n('dlg-mission-complete-msg'));
+        },
+        
         /** @overrides BriefSupport */
         show: function(operationModel) {
             this.callSuper(operationModel);

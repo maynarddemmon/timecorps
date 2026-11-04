@@ -202,6 +202,7 @@ myt.I18N.setDictionary({
 "save-problem-not-applied":"it could not be applied",
 "brief-profile":"Profile",
 "brief-briefing":"Briefing",
+"brief-debrief":"Debrief",
 
 // Agent Dossier
 "dossier-id":"ID",

@@ -1,7 +1,7 @@
 import {test, expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-import {startGame, dismissMissionBrief, dialogTitle, ROOT, TEST_DATA_DIR} from './helpers.mjs';
+import {startGame, dismissMissionBrief, dismissAgentDossier, setCausator, dialogTitle, ROOT, TEST_DATA_DIR} from './helpers.mjs';
 
 const brief = page => page.locator('.myt-MissionBrief'),
     
@@ -106,4 +106,33 @@ test('a mission image is only loaded when the mission has one', async ({page}) =
             operationModel.setImage(true);
         }
     })).toEqual([[null, null], ['./tests/data/img/mission/first.jpg', null]]);
+});
+
+test('a completed mission\'s brief shows its debrief after the briefing', async ({page}) => {
+    const problems = await startGame(page, {dismissBrief:false}),
+        visibleInBrief = text => brief(page).getByText(text, {exact:true}).filter({visible:true});
+    
+    // Not while the mission is still to be done.
+    await expect(visibleInBrief('Briefing')).toBeVisible();
+    await expect(visibleInBrief('Debrief')).toHaveCount(0);
+    await dismissMissionBrief(page);
+    await dismissAgentDossier(page, 'Alpha');
+    
+    // Completing it shows the debrief in Mission Complete, then in the brief as well.
+    await setCausator(page, 'plan', 'prepared', true);
+    await setCausator(page, 'lever', 'pulled', true);
+    await expect(dialogTitle(page, 'Mission Complete')).toBeVisible();
+    await page.getByRole('button', {name:'X Close'}).filter({visible:true}).click();
+    await page.evaluate(() => {tc.app.openMissionBrief(tc.model.getOperationModel('first'));});
+    
+    await expect(visibleInBrief('Debrief')).toBeVisible();
+    await expect(visibleInBrief('The first mission is complete. The plan was prepared.')).toBeVisible();
+    // It comes after the briefing.
+    const [briefingY, debriefY] = await page.evaluate(() => {
+        const dialog = tc.app.getSubviews().find(sv => sv.isA(tc.MissionBrief));
+        return [dialog._profileView.y, dialog._debriefView.y];
+    });
+    expect(debriefY).toBeGreaterThan(briefingY);
+    
+    expect(problems.pageErrors).toEqual([]);
 });
