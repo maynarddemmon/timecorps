@@ -560,6 +560,7 @@
             const agentModel = this;
             return {
                 get value() {return agentModel.getSkill(skillId);},
+                isInteger: () => true,
                 getAllowedAdj: adj => {
                     const value = agentModel.getSkill(skillId),
                         newValue = mathMin(MAX_SKILL_VALUE, mathMax(-MAX_SKILL_VALUE, value + adj));
@@ -1019,11 +1020,13 @@
                         passPhrase = toDamagePhrase(passDamage);
                     phrase = ICON_HEALTH + ' ' + i18n(passDamage >= 1 && passPhrase !== failPhrase ? 'adj-risking-unless-passed' : 'adj-risking', failPhrase, passPhrase);
                 } else {
-                    const parts = [];
+                    // In whole points, or to 2 decimal places for a stat that isn't, e.g. effective age.
+                    const parts = [],
+                        isInteger = adjustmentModel.getStat(this)?.isInteger() ?? true;
                     for (const [amount, i18nKey] of [[passAmount, 'adj-if-passed'], [failAmount, 'adj-if-failed']]) {
                         if (Number.isFinite(amount)) {
-                            const rounded = mathRound(amount);
-                            parts.push(i18n(i18nKey, ICON_APPROX + (rounded < 0 ? '-' : '+') + mathAbs(rounded)));
+                            const rounded = isInteger ? mathRound(amount) : amount;
+                            parts.push(i18n(i18nKey, ICON_APPROX + (rounded < 0 ? '-' : '+') + pkg.formatAmount(mathAbs(rounded))));
                         }
                     }
                     phrase = i18n('adj-stat', adjustmentModel.getStatDescription(), concatenate(parts));

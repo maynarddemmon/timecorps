@@ -1,7 +1,9 @@
 (pkg => {
     'use strict';
     
-    const {Class:JSClass, Module:JSModule} = JS,
+    const {I18N:{get:i18n}} = myt,
+        
+        {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
         
@@ -32,7 +34,7 @@
                 attrs.trackOutset ??= 1;
                 attrs.trackInset ??= 1;
                 
-                attrs.labelTemplate ??= '{label}: {value} / {max}';
+                attrs.labelTemplate ??= i18n('bar-stat-label');
                 
                 const showLabel = attrs.showLabel ??= true,
                     labelX = attrs.labelX ??= attrs.trackInset,

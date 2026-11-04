@@ -32,6 +32,7 @@ myt.I18N.setDictionary({
 "tab-agents":"Agents",
 
 // Top Bar
+"bar-stat-label":"{label}: {value} / {max}",
 "bar-timeline-label":"Timeline {label}: {value} / {max}",
 "tip-last-saved":"Last saved $0",
 "tip-not-saved":"Not saved",

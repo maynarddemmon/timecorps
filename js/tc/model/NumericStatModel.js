@@ -110,6 +110,10 @@
             },
             getValue: function() {return this.value;},
             
+            /*  Whether adjustments and sets change it in whole points, so their amounts are 
+                rounded. See getChangeTarget in EventModel.js for the one that isn't. */
+            isInteger: () => true,
+            
             /*  How full a stat is, from 0 to 1. */
             getPercentOfMax: function() {
                 const max = this.getMax() ?? 0;

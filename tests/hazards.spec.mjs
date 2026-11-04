@@ -73,7 +73,7 @@ test('the time travel buttons show the risk, and what happened floats above them
     const recallBtn = page.getByText(/^Recall to/).filter({visible:true});
     await expect(recallBtn).toHaveText(/\[6⏲ \+ ♥\]$/);
     expect(await page.evaluate(() => tc.stripMarkup(tc.model.getAgentModel('AL').getTimeTravelHazardsPhrase(6)))).toBe(
-        '♥ Risking: light injury\u00A0·\u00A0Time Travel / fair\u00A0·\u00A0Effective Age: ~+4 if failed\u00A0·\u00A0Time Travel / easy'
+        '♥ Risking: light injury\u00A0·\u00A0Time Travel / fair\u00A0·\u00A0Effective Age: ~+3.5 if failed\u00A0·\u00A0Time Travel / easy'
     );
 
     // Failing the first shows its result and both changes.
@@ -120,5 +120,49 @@ test('without timeTravelAdj, time travel risks nothing', async ({page}) => {
         damage:0, aged:0, event:'time_corps_hq', logged:null, queued:4
     });
     expect(await page.evaluate(() => tc.model.getAgentModel('AL').getTimeTravelHazardsPhrase(5))).toBe('');
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('aging takes fractions of a year, and shows them to 2 decimal places', async ({page}) => {
+    await page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        json.skillChecks.time_travel = {name:'Time Travel', check:'0.75*agent.skills.chronogation + 0.25*agent.skills.luck'};
+        // In months, as the game's own data has it.
+        json.timeTravelAdj = {...HAZARDS, 'agent.effectiveAge':{...HAZARDS['agent.effectiveAge'], onFailure:'d(chronal)/12'}};
+        return route.fulfill({json});
+    });
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.origin.actions.treat = {label:'Treat', skillCheck:{difficulty:'no-roll'}, adj:{'agent.effectiveAge':'-0.5', 'agent.health':'-2.6'}};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    
+    // Averaging 3.5 months on a d(6) in the tooltip.
+    expect(await page.evaluate(() => tc.stripMarkup(tc.model.getAgentModel('AL').getTimeTravelHazardsPhrase(6)))).toContain('Effective Age: ~+0.29 if failed');
+    
+    // Failing both on the way home: 1 health, and 3 months.
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    await page.evaluate(() => tc.rng.queueRolls(0, 0, 0, 2));
+    await page.getByText(/^Recall to/).filter({visible:true}).click();
+    expect(await page.evaluate(() => tc.app.getSubviews().filter(sv => sv.isA(tc.FloatingText)).map(sv => tc.stripMarkup(sv.text)))).toEqual(
+        ['Failed by 375 · -1♥ · +0.25 Effective Age']
+    );
+    expect(await page.evaluate(() => {
+        const log = tc.model.getAgentModel('AL').getLog();
+        return log[log.length - 1].adj;
+    })).toEqual({'agent.health':-1, 'agent.effectiveAge':0.25});
+    
+    // An action's adjustment isn't rounded either, though health still is. Taking it lives
+    // through a little time too.
+    expect(await alphaAfter(page, `
+        alpha.setEvent('origin');
+        const before = alpha.getEffectiveAge();
+        alpha.doAction(tc.model.getEventModel('origin').getActionModels().treat);
+        window._treated = alpha.getEffectiveAge() - before;
+    `)).toMatchObject({damage:3, logged:{'agent.effectiveAge':-0.5, 'agent.health':-3}});
+    expect(await page.evaluate(() => window._treated)).toBeCloseTo(-0.5, 3);
+    
+    expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });

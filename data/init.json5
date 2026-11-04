@@ -78,8 +78,8 @@
 	"timeTravelAdj":{
 		// Injury: a die as big as the chronal cost.
 		"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"},
-		// Premature aging: a die as big as the chronal cost, in years.
-		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)"}
+		// Premature aging: a die as big as the chronal cost, in months.
+		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)/12"}
 	},
 	
 	"skills":{

@@ -204,6 +204,7 @@
             const rootModel = pkg.model,
                 atLeastZero = (getValue, adjValue) => ({
                     get value() {return getValue();},
+                    isInteger: () => true,
                     getAllowedAdj: adj => ({adj:mathMax(adj, -getValue())}),
                     adjValue: adj => {
                         if (adj !== 0) adjValue(adj);
@@ -211,6 +212,7 @@
                 }),
                 numericOnly = (getValue, setValue, what) => ({
                 get value() {return getValue();},
+                isInteger: () => true,
                 getAllowedAdj: adj => {
                     if (Number.isFinite(getValue())) return {adj};
                     console.warn(what, 'is not a number, so adj can\'t change it:', getValue());
@@ -225,9 +227,11 @@
                     switch (parsed.scopeName) {
                         case SCOPE_AGENT:
                         case SCOPE_AGENTS:
-                            // In whole years. Treatments wind it back, but not below the minimum.
+                            // In years, including fractions of one, e.g. "d(6)/12" for up to 
+                            // half a year. Treatments wind it back, but not below the minimum.
                             if (parsed.statId === STAT_ID_EFFECTIVE_AGE) return agentModel && {
                                 get value() {return agentModel.getEffectiveAge();},
+                                isInteger: () => false,
                                 getAllowedAdj: adj => ({adj:agentModel.getAllowedEffectiveAgeAdj(adj)}),
                                 adjValue: adj => {
                                     if (adj !== 0) agentModel.adjEffectiveAge(adj);
@@ -258,6 +262,10 @@
                 }
             }
         },
+        
+        /*  An amount for a change target from getChangeTarget, in whole points unless it's one 
+            that isn't, e.g. effective age. */
+        toTargetAmount = (target, amount) => target.isInteger() ? mathRound(amount) : amount,
         
         /*  Reads one entry of a set or adj block, warning about problems with "where" at the
             front, e.g. "Event origin action toss set outcome". The key must name something 
@@ -450,7 +458,7 @@
                         const result = rollValue(expr, rollCfg),
                             target = getChangeTarget(parsedKey, agentModel, eventModel);
                         if (target && Number.isFinite(result)) {
-                            target.adjValue(target.getAllowedAdj(mathRound(result) - target.value).adj);
+                            target.adjValue(target.getAllowedAdj(toTargetAmount(target, result) - target.value).adj);
                         }
                         break;
                     }
@@ -696,8 +704,7 @@
                 
                 // A broken expression (NaN) does nothing. || 0 so it's never -0.
                 const stat = this.getStat(agentModel),
-                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
-console.log('roll', {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()})
+                    adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(toTargetAmount(stat, amount)).adj : 0) || 0;
                 return {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()};
             }
         }),
@@ -1759,7 +1766,7 @@ console.log('roll', {adjustment:this, key:this.key, statId:this.statId, stat, am
             
             const amount = pkg.checks.rollAmount(expr, rollCfg),
                 target = getChangeTarget(entry.parsedKey, agentModel, eventModel);
-            if (target && Number.isFinite(amount)) target.adjValue(target.getAllowedAdj(mathRound(amount)).adj);
+            if (target && Number.isFinite(amount)) target.adjValue(target.getAllowedAdj(toTargetAmount(target, amount)).adj);
         }
     };
     

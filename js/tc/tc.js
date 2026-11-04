@@ -360,10 +360,15 @@
             getStatName,
             
             /*  An amount a stat changed by, e.g. "-7♥", "+2⥁" or "+5 Attestation". */
+            /*  A change to a stat, e.g. "-7♥" or "+0.25 Effective Age". A fraction, which only 
+                a stat that isn't in whole points has, shows to 2 decimal places at most. */
             formatStatAdj: (statId, amount) => {
                 const label = STAT_ICON_BY_ID[statId] ?? ' ' + getStatName(statId);
-                return (amount < 0 ? '-' : '+') + mathAbs(amount) + label;
+                return (amount < 0 ? '-' : '+') + TC.formatAmount(mathAbs(amount)) + label;
             },
+            
+            /*  A number to 2 decimal places at most, e.g. 3, 0.25 or 0.33. */
+            formatAmount: amount => String(+amount.toFixed(2)),
             
             // Chronal Util
             /*  The fraction of an Agent's maximum health left at an effective age, in years: 1 

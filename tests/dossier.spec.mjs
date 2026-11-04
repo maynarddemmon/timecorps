@@ -207,8 +207,8 @@ test('an agent already visible in a restored save has no dossier shown', async (
 
 test('agent health shows in the dossier and the agents grid, and follows changes', async ({page}) => {
     const problems = await startGame(page),
-        // A stat bar's tooltip, e.g. "Health · 60% · [60/100]".
-        healthTooltip = (value, max) => ['Health', Math.round(100*value/max) + '%', '[' + value + '/' + max + ']'].join('\u00A0·\u00A0'),
+        // A stat bar's tooltip, e.g. "Health: 60 / 100 · 60% · [60/100]".
+        healthTooltip = (value, max) => ['Health: ' + value + ' / ' + max, Math.round(100*value/max) + '%', '[' + value + '/' + max + ']'].join('\u00A0·\u00A0'),
         dossierHealth = (value, max) => page.locator('.myt-AgentDossier').locator(`[title="${healthTooltip(value, max)}"]`);
     
     await page.evaluate(() => {
