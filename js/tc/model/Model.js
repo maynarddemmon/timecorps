@@ -7,6 +7,9 @@
         skillCheckDefaults = {},
         scenarioIds = [],
         
+        // See getTimeTravelHazards.
+        timeTravelHazards = null,
+        
         commonEventActions = {};
     
     pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
@@ -34,6 +37,7 @@
         // The data key for default skill checks by action type.
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
         DATA_KEY_ACTION_GROUPS = 'actionGroups',
+        DATA_KEY_TIME_TRAVEL_ADJ = 'timeTravelAdj',
         
         /*  Merges a config over a base: objects key by key, all the way down, and anything else,
             arrays included, replaces what's there. Changes and returns the base, or returns 
@@ -241,6 +245,11 @@
         
         /*  The action group with the ID, as {id, label, order}, or undefined. */
         getActionGroup: id => actionGroups.get(id),
+        
+        /*  What can happen to an agent who pays chronal to time travel, as a 
+            TimeTravelHazardsModel set for that chronal, or null if there's nothing, either 
+            because the data gives no "timeTravelAdj" or because the time travel is free. */
+        getTimeTravelHazards: chronal => chronal > 0 && timeTravelHazards?.hasAdjustments() ? timeTravelHazards.forTimeTravel(chronal) : null,
         
         /*  Warns about each action whose group names no action group. It's shown with the 
             ungrouped actions. */
@@ -537,6 +546,14 @@
                 }
             } else if (actionGroupsCfg !== undefined) {
                 console.warn('actionGroups must be an object of groups by id (ignoring it):', actionGroupsCfg);
+            }
+            
+            // What time travel can do to an agent, e.g. {"agent.health":{"actionType":"time_travel",
+            // "difficulty":300, "onFailure":"-d(chronal)"}}. A later file's replaces an earlier's.
+            const timeTravelAdj = json[DATA_KEY_TIME_TRAVEL_ADJ];
+            if (timeTravelAdj !== undefined) {
+                if (timeTravelHazards) console.warn(DATA_KEY_TIME_TRAVEL_ADJ, 'is given more than once (using the later one)');
+                timeTravelHazards = new pkg.TimeTravelHazardsModel({adj:timeTravelAdj});
             }
             
             // Default Event Actions

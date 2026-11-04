@@ -18,6 +18,7 @@
         PARAM_DIFFICULTY = 'difficulty',
         PARAM_DIE = 'd',
         PARAM_MARGIN = 'margin',
+        PARAM_CHRONAL = 'chronal',
         FUNC_PARAMS = [
             SCOPE_AGENT, SCOPE_AGENTS, 
             SCOPE_EVENT, SCOPE_EVENTS, 
@@ -25,7 +26,7 @@
             SCOPE_SCRATCH,
             SCOPE_FACTIONS,
             SCOPE_OPERATIONS,
-            PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN
+            PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN, PARAM_CHRONAL
         ],
         
         // An arbitrary limit on the number of dice in one d(sides, count).
@@ -120,7 +121,7 @@
         
         /*  Evaluates an expression with die as its d function, as whatever it gives. 
             undefined, with a warning, if it doesn't compile or throws. */
-        evaluateRaw = (expr, {agent, event, difficulty=0, margin=0}, die) => {
+        evaluateRaw = (expr, {agent, event, difficulty=0, margin=0, chronal=0}, die) => {
             const func = compile(expr);
             if (func !== NOT_COMPILED) {
                 try {
@@ -136,7 +137,8 @@
                         rootModel.getOperationModels(),                        // operations
                         difficulty,                                            // difficulty
                         die,                                                   // d
-                        margin                                                 // margin
+                        margin,                                                // margin
+                        chronal                                                // chronal
                     );
                 } catch (err) {
                     console.warn('Check expression threw (' + err.message + '):', expr);
@@ -238,6 +240,8 @@
                     it: roll + ease, so 0 or more on a pass and negative on a failure. 0 if 
                     nothing was rolled. Working out an amount without rolling uses the average 
                     margin for a pass or a failure. 0 in a check expression itself.
+                chronal - For a time travel hazard's amount, the chronal the time travel cost, 
+                    e.g. "-d(chronal)". 0 anywhere else.
             For example the skill check "(agent.skills.deception)-difficulty" with skill 0 and 
             difficulty 500 has an ease of -500, a 50% chance, and each skill point adds 0.1%.
             

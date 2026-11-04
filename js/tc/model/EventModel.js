@@ -457,7 +457,8 @@
                     case 'event': {
                         // Worked out once, now, to an Event's ID, e.g. "'lgv_announcement'", and 
                         // the agent time travels there as if deployed or jumping, paying the 
-                        // chronal and gaining any paradox, if they can.
+                        // chronal and gaining any paradox, if they can. Unlike the player's time
+                        // travel, it risks none of time travel's hazards.
                         const result = rollValue(expr, rollCfg),
                             travelerModel = parsedKey.agentId === undefined ? agentModel : pkg.model.getAgentModel(parsedKey.agentId),
                             destinationEventModel = typeof result === 'string' ? pkg.model.getEventModel(result) : null;
@@ -466,7 +467,7 @@
                         } else if (!destinationEventModel) {
                             console.warn(key, 'is not an Event ID:', result);
                         } else {
-                            travelerModel.doDeployToEvent(destinationEventModel);
+                            travelerModel.doDeployToEvent(destinationEventModel, null, false);
                         }
                         break;
                     }
@@ -586,7 +587,7 @@
             getAmountExpr: function(success) {return success ? this.onSuccess : this.onFailure;},
             
             /*  What changes, as something stat-like. See getChangeTarget. */
-            getStat: function(agentModel) {return getChangeTarget(this.parsedKey, agentModel, this.owner.event);},
+            getStat: function(agentModel) {return getChangeTarget(this.parsedKey, agentModel, this.owner.event ?? agentModel.getEventModel());},
             
             /*  Whether the player sees the adjustment: stats and skills, not Values or scratch. */
             isShown: function() {return this.kind === 'stat' || this.kind === 'skill';},
@@ -666,7 +667,8 @@
                         agent:agentModel, 
                         event:agentModel.getEventModel(), 
                         difficulty:(this.hasOwnCheck() ? this : this.owner).getActionSkillDifficulty(),
-                        margin
+                        margin,
+                        chronal:this.owner.getChronal?.() ?? 0
                     });
                 }
             },
@@ -695,6 +697,7 @@
                 // A broken expression (NaN) does nothing. || 0 so it's never -0.
                 const stat = this.getStat(agentModel),
                     adj = (stat && Number.isFinite(amount) ? stat.getAllowedAdj(mathRound(amount)).adj : 0) || 0;
+console.log('roll', {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()})
                 return {adjustment:this, key:this.key, statId:this.statId, stat, amount:adj, check, shown:this.isShown()};
             }
         }),
@@ -1787,4 +1790,32 @@
             applySetEntries(changes.set, null, null, true, rollCfg);
         }
     };
+    
+    /*  What can happen to an agent who time travels, configured in init.json5 as 
+        "timeTravelAdj": adjustments, as for an action, rolled whenever an agent pays chronal 
+        to deploy, be recalled or loop back. Not for exits, even time travel ones, which are 
+        the story's. Each should have a check of its own, since there's no action check 
+        to follow, so it can go wrong, e.g. 
+            {"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"}}
+        Amounts see "chronal", the chronal the time travel cost, which forTimeTravel sets 
+        before they're worked out. It has no Event of its own, so "event" is the one the 
+        agent is at. */
+    pkg.TimeTravelHazardsModel = new JSClass('TimeTravelHazardsModel', BaseModel, {
+        include: [ActionCheckSupport, AdjustmentSupport],
+        
+        
+        // Accessors ///////////////////////////////////////////////////////
+        /** @overrides ActionCheckSupport */
+        getSkillCheckOwner: () => 'timeTravelAdj',
+        
+        getChronal: function() {return this.chronal ?? 0;},
+        
+        
+        // Methods /////////////////////////////////////////////////////////
+        /*  Sets the chronal the amounts see, and returns this. */
+        forTimeTravel: function(chronal) {
+            this.chronal = chronal;
+            return this;
+        }
+    });
 })(tc);

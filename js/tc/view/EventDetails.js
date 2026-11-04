@@ -115,7 +115,7 @@
                 self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
                     doActivated: () => {
                         self.agentModel.selectRow();
-                        self.agentModel.doRecallToHQ();
+                        self.agentModel.doRecallToHQ(self.recallBtn);
                     }
                 }]);
                 
@@ -330,7 +330,7 @@
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
             self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
-                doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel);}
+                doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel, self.deployAgentBtn);}
             }]);
             
             // Causators

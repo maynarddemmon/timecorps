@@ -103,6 +103,7 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 | `difficulty` | The check's difficulty |
 | `d(sides, count)` | Rolls `count` dice (1 by default) of 1 to `sides` each and totals them, e.g. `d(6)`, `d(4, 2)`. Sides and count are rounded; sides is at least 1 and count is 1 to 99 |
 | `margin` | Amounts only: how well the deciding check went. See [Adjustments](#adjustments-adj) |
+| `chronal` | [Time travel hazards](#time-travel-hazards) only: the chronal the time travel cost. 0 anywhere else |
 
 `Math` is available as usual, e.g. `Math.max(agent.skills.deception, agent.skills.disguise)`.
 
@@ -168,6 +169,11 @@ The timeline also has a score and credits, read as plain numbers:
 		…
 	},
 	
+	"timeTravelAdj":{
+		"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"},
+		…
+	},
+	
 	"locations":{"_nexus":{…}, "_nowhere":{…}},
 	"events":{"the_void":{…}, "time_corps_hq":{…}},
 	"defaultEventActions":{"_investigate":{…}, "_rest":{…}}
@@ -179,6 +185,7 @@ The timeline also has a score and credits, read as plain numbers:
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
 - **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
 - **`defaultEventActions`**: see [Default actions](#default-actions).
+- <a id="time-travel-hazards"></a>**`timeTravelAdj`**: optional. What can happen to an agent who pays chronal to deploy, be recalled or loop back. Exits never risk it, even `jump` and `pulled` ones, since they're the story's: give one its own `adj` instead, e.g. `"adj":{"agent.health":"-d(4)"}`. [Adjustments](#adjustments-adj), as for an action, keyed by what they change, e.g. `agent.health` or `agent.effectiveAge`. There's no action check to follow, so give each a check of its own, and amounts can use `chronal`, the chronal the time travel cost, e.g. `"-d(chronal)"`. They're rolled as the agent leaves and applied once they arrive, so `event` is where they arrive. The time travel buttons show the health risk as ♥ and their tooltips describe each, and the result floats above the button, as for an action. A move the data makes, with `set` on `agent.event`, risks nothing. A later file's replaces an earlier one's.
 
 Skills and skill checks can also be added by scenario files. A later file's entry replaces an earlier one with the same ID.
 

@@ -98,11 +98,24 @@
         
         getCheckCfg = (agentModel, difficulty) => ({agent:agentModel, event:agentModel.getEventModel(), difficulty}),
         
-        /*  Applies rolled adjustments and records them on the log entry by key. */
+        /*  Applies rolled adjustments and records them on the log entry by key, totalling any
+            that share one. */
         applyAdjustments = (adjustments, logEntry) => {
             if (adjustments.length > 0) {
-                const logged = logEntry.adj = {};
-                for (const {key, stat, amount} of adjustments) stat.adjValue(logged[key] = amount);
+                const logged = logEntry.adj ??= {};
+                for (const {key, stat, amount} of adjustments) {
+                    logged[key] = (logged[key] ?? 0) + amount;
+                    stat.adjValue(amount);
+                }
+            }
+        },
+        
+        /*  Shows the result of rolled adjustments above btnView, as for an action: the first 
+            one with a check of its own gives the result, or else it reads as a success. */
+        showAdjustments = (btnView, adjustments) => {
+            if (adjustments.length > 0) {
+                const shownCheck = adjustments.find(adjustment => adjustment.check)?.check ?? {success:true, roll:null};
+                showFloatingTextForSkillCheck(btnView, {...shownCheck, adjustments});
             }
         },
         
@@ -744,11 +757,12 @@
                 text = i18n('exit-jump');
             }
             
+            const hazards = this.getTimeTravelHazards(chronalNeeded);
             btn.callSetters({
-                text:text + pkg.formatAgentRisks(chronalNeeded, paradoxCost),
+                text:text + pkg.formatAgentRisks(chronalNeeded, paradoxCost, hazards ? hasStatChangeFor(this, hazards, STAT_ID_HEALTH) : false),
                 visible,
                 disabled:problem != null,
-                tooltip:problem
+                tooltip:problem ?? this.getTimeTravelHazardsPhrase(chronalNeeded)
             });
         },
         
@@ -767,13 +781,21 @@
         },
         
         /*  Time travels the Agent to an Event, if they can (see getTimeTravelInfo), paying the 
-            chronal. To HQ it's a recall. */
-        doDeployToEvent: function(destinationEventModel) {
+            chronal. To HQ it's a recall. Unless withHazards is false, as for a move the data 
+            makes, what time travel can do to them is rolled, shown above btnView, if given, and
+            applied once they arrive. */
+        doDeployToEvent: function(destinationEventModel, btnView, withHazards=true) {
             if (destinationEventModel) {
                 const {isHQ, chronalNeeded, problem} = getTimeTravelInfo(this, destinationEventModel);
                 if (problem == null) {
+                    const adjustments = (withHazards ? this.getTimeTravelHazards(chronalNeeded)?.rollAdjustments(this) : null) ?? [],
+                        logEntry = {type:isHQ ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:destinationEventModel};
+                    // Shown first, since arriving rebuilds the views, btnView included.
+                    showAdjustments(btnView, adjustments);
+                    
                     this[STAT_ID_CHRONAL].adjValue(-chronalNeeded);
-                    this.setEvent_Hard(destinationEventModel.id, {type:isHQ ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:destinationEventModel});
+                    this.setEvent_Hard(destinationEventModel.id, logEntry);
+                    applyAdjustments(adjustments, logEntry);
                     pkg.app.selectEventBox(destinationEventModel);
                 } else {
                     console.warn('Cannot time travel', this.id, 'to', destinationEventModel.id + ':', problem);
@@ -782,11 +804,11 @@
                 console.warn('doDeployToEvent: no eventModel');
             }
         },
-        /*  Recalls the Agent to their Faction's HQ, if it has one. */
-        doRecallToHQ: function() {
+        /*  Recalls the Agent to their Faction's HQ, if it has one. See doDeployToEvent. */
+        doRecallToHQ: function(btnView) {
             const hqEventModel = this.getHQEventModel();
             if (hqEventModel) {
-                this.doDeployToEvent(hqEventModel);
+                this.doDeployToEvent(hqEventModel, btnView);
             } else {
                 console.warn('Cannot recall', this.id + ':', 'their faction,', this.getFaction() + ', has no HQ');
             }
@@ -802,15 +824,14 @@
                     // own check gives the result.
                     const costs = self.getCostsFor(exitModel);
                     if (costs.every(cost => cost.canPay)) {
+                        // An exit risks only its own adjustments, even one that's time travel, 
+                        // since those are the story's, not the player's.
                         const adjustments = exitModel.rollAdjustments(self),
                             logEntry = {type:LOG_TYPE_EXIT, exit:exitModel};
                         // Most exits are free, so only those with costs record them.
                         if (costs.length > 0) self.payCosts(costs, logEntry);
-                        if (adjustments.length > 0) {
-                            const shownCheck = adjustments.find(adjustment => adjustment.check)?.check ?? {success:true, roll:null};
-                            showFloatingTextForSkillCheck(btnView, {...shownCheck, adjustments});
-                            applyAdjustments(adjustments, logEntry);
-                        }
+                        showAdjustments(btnView, adjustments);
+                        applyAdjustments(adjustments, logEntry);
                         
                         // Taking an exit always succeeds. Its sets apply before the agent 
                         // arrives, so one that reveals where it leads does so first.
@@ -919,6 +940,18 @@
         /*  Works out what taking an action would cost the agent now. Returns an Array of
             {cost, key, amount, canPay} where amount is in whole points, or NaN if its
             expression is broken, which can't be paid. */
+        // Time Travel Hazards //
+        /*  What time travel costing chronal can do to the agent, or null if nothing. See 
+            Model.getTimeTravelHazards. */
+        getTimeTravelHazards: chronal => pkg.model.getTimeTravelHazards(chronal),
+        
+        /*  Describes what time travel costing chronal can do to the agent, as for an action's
+            adjustments, or an empty string if nothing. */
+        getTimeTravelHazardsPhrase: function(chronal) {
+            const hazards = this.getTimeTravelHazards(chronal);
+            return hazards ? this.getAdjustmentsPhrase(hazards) : '';
+        },
+        
         getCostsFor: function(actionModel) {
             return actionModel.getCosts().map(costModel => {
                 const amount = costModel.getAmount(this);
