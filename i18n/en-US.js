@@ -32,7 +32,7 @@ myt.I18N.setDictionary({
 "tab-agents":"Agents",
 
 // Top Bar
-"bar-timeline-label":"Timeline {label}",
+"bar-timeline-label":"Timeline {label}: {value} / {max}",
 "tip-last-saved":"Last saved $0",
 "tip-not-saved":"Not saved",
 "tip-import":"Import a “save” file.",
@@ -255,7 +255,7 @@ myt.I18N.setDictionary({
 "tip-select-next-event":"Select the next Event you viewed.",
 "tip-no-last-event":"No last Event to select.",
 "tip-no-next-event":"No next Event to select.",
-"bar-hq-pool-label":"HQ {label} Pool",
+"bar-hq-pool-label":"HQ {label} Pool: {value} / {max}",
 "event-none-selected":"Select a historical event in the timeline to see more about it here.",
 "event-agent-activity":"Agent Activity",
 "event-causators":"Causators",

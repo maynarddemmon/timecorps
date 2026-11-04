@@ -32,7 +32,7 @@
                 attrs.trackOutset ??= 1;
                 attrs.trackInset ??= 1;
                 
-                attrs.labelTemplate ??= '{label}';
+                attrs.labelTemplate ??= '{label}: {value} / {max}';
                 
                 const showLabel = attrs.showLabel ??= true,
                     labelX = attrs.labelX ??= attrs.trackInset,
@@ -56,14 +56,17 @@
             
             updateForStat: function(statModel) {
                 const self = this,
+                    value = statModel.getValue(),
+                    min = statModel.getMin(),
+                    max = statModel.getMax(),
                     labelView = self.labelView,
-                    label = M.interpolateString(self.labelTemplate, {label:statModel.formatAsLabel()}),
+                    label = M.interpolateString(self.labelTemplate, {label:statModel.formatAsLabel(), value, min, max}),
                     tooltip = label + statModel.formatAsTooltip('{ICON_SEPARATOR}{percent}{ICON_SEPARATOR}{fraction}');
                 labelView?.setText(label);
                 labelView?.setTooltip(tooltip);
-                self.setMinValue(statModel.getMin());
-                self.setMaxValue(statModel.getMax());
-                self.setValue(statModel.getValue());
+                self.setMinValue(min);
+                self.setMaxValue(max);
+                self.setValue(value);
                 self.setTooltip(tooltip);
             },
             
