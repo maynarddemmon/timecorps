@@ -1,5 +1,5 @@
 import {test, expect} from '@playwright/test';
-import {startGame} from './helpers.mjs';
+import {startGame, readTestData} from './helpers.mjs';
 
 const expandedRows = page => page.evaluate(() => {
         const details = tc.app.getEventDetailsView();
@@ -199,6 +199,25 @@ test('an agent\'s exit links show the travel time first, then any risks', async 
         exit.setMode('jump');
         return [walking, exit.getTravelTime()];
     })).toEqual([(2 * 60 + 19) * 60 * 1000, 0]);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an agent\'s exits are listed by travel time without reordering the Event\'s own exits', async ({page}) => {
+    // The longer wait listed first, and offered though finale is still hidden.
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.origin.exits = [{mode:'wait', to:'finale', toHidden:true}, {mode:'walk', to:'aftermath'}];
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    
+    const exitTexts = page.getByRole('button', {name:/^(Walk to|Wait til) /}).filter({visible:true});
+    await expect(exitTexts).toHaveText([/^Walk to Aftermath/, /^Wait til /]);
+    
+    // The agent's log saves an exit by its index in the Event's list, so that stays as authored.
+    expect(await page.evaluate(() => tc.model.getEventModel('origin').getExitModels().map(exit => exit.to))).toEqual(['finale', 'aftermath']);
     
     expect(problems.pageErrors).toEqual([]);
 });

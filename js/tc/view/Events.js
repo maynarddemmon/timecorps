@@ -23,6 +23,7 @@
             I18N_HISTORICITY, I18N_ATTESTATION, I18N_PARADOX,
             STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
         } = pkg,
+        halfSpacing = spacing/2,
         
         STAT_COL_IDS = [STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX],
         
@@ -47,7 +48,7 @@
                 this.colId = attrs.colId;
                 delete attrs.colId;
                 this.callSuper(parent, attrs);
-                new M.SpacedLayout(this, {inset:padding/2, spacing:spacing/2});
+                new M.SpacedLayout(this, {inset:padding/2, spacing:halfSpacing});
             },
             
             setAgentModels: function(agentModels) {
@@ -128,7 +129,7 @@
                     const WIDTH_NAME = 100,
                         WIDTH_WHEN = 125,
                         WIDTH_DURATION = 70,
-                        WIDTH_AGENTS = 2*btnHeight + padding,
+                        WIDTH_AGENTS = 5*(btnHeight + halfSpacing) - halfSpacing + padding,
                         WIDTH_BAR = 70,
                         barAttrs = {minValue:WIDTH_BAR, maxValue:WIDTH_BAR, cellXAdj:padding/2, cellWidthAdj:-padding};
                     new GridColHdr(gridHeader, {columnId:'name',     minValue:WIDTH_NAME,     maxValue:1000,           text:i18n('col-name'), flex:1});

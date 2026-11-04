@@ -203,7 +203,15 @@
                 
                 // Update Exits
                 new TextForFlow(exitView, {text:i18n('event-exits') + '\u00A0'});
-                const exitModels = eventModel.getExitModels();
+                
+                // Sorted by travel time, then destination. A copy, since the agent log saves
+                // exits by their index in the Event's own list.
+                const exitModels = [...eventModel.getExitModels()].sort((a, b) => {
+                    const aTravelTime = a.getTravelTime(),
+                        bTravelTime = b.getTravelTime();
+                    return aTravelTime === bTravelTime ? a.to.localeCompare(b.to) : aTravelTime - bTravelTime;
+                });
+                
                 let addedCount = 0;
                 for (const exitModel of exitModels) {
                     if (exitModel.isNotHidden() && exitModel.isDestinationOffered()) {
