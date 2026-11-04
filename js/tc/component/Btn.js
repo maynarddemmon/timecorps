@@ -178,8 +178,9 @@
     
     pkg.EventLinkFlow = new JSClass('EventLinkFlow', pkg.WideView, {
         initNode: function(parent, attrs) {
+            // Inset by padding on the right, wherever it starts on the left.
             attrs.x ??= padding;
-            attrs.percentOfParentWidthOffset ??= -2*padding;
+            attrs.percentOfParentWidthOffset ??= -attrs.x - padding;
             this.callSuper(parent, attrs);
             new M.WrappingLayout(this, {spacing, lineSpacing:0, collapseParent:true});
         },
