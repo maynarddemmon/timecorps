@@ -59,6 +59,7 @@
         getTravelModePhrase = mode => {
             switch (mode) {
                 case 'wait':     return i18n('travel-wait');
+                case 'waitFor':  return i18n('travel-waitFor');
                 case 'continue': return i18n('travel-continue');
                 case 'jump':     return i18n('travel-jump');
                 case 'pulled':   return i18n('travel-pulled');

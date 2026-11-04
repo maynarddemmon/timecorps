@@ -65,7 +65,7 @@
 				"answer":{
 					"name":"Answer the Call",
 					"description":"Find out what has happened to you.",
-					"success":"events.safehouse_room.values.heard.value"
+					"success":"events.safehouse_room_message.values.heard.value && agents.ME.event === events.safehouse_room_message.id && agents.ME.health.value === agents.ME.health.max"
 				}
 			},
 			"onSuccess":{
@@ -942,7 +942,10 @@
 				"mode":"pulled", "toHidden":true, "to":"safehouse_arrival",
 				"hidden":"event.values.response.value === ''",
 				"set":{"events.safehouse_arrival.attestation":"1"},
-				"costs":{"agent.chronal":"1"}
+				"costs":{
+					"agent.chronal":"1",
+					"agent.health":"d(4)"
+				}
 			}],
 			"values":{
 				"response":{
@@ -1010,9 +1013,10 @@
 			"actions":{
 				"_rest":null,
 				"_investigate":{
+					"label":"Watch the Two Figures",
 					"skillCheck":{"difficulty":"no-roll"},
 					"adj":{"event.attestation":"5"}
-				},
+				}
 			},
 			"exits":[{
 				"mode":"enter", "toHidden":true, "to":"safehouse_room",
@@ -1034,12 +1038,15 @@
 		"safehouse_room":{
 			"image":"../location/safehouse_office.jpg",
 			"name":"The Empty Room",
-			"start":"2087-03-09T23:54:00", "duration":{"h":1},
+			"start":{"endOf":"safehouse_fight", "m":1}, "duration":{"m":45},
 			"location":"safehouse_office",
 			"actionLimit":3,
 			"actions":{
 				"_rest":null,
-				"_investigate":{"skillCheck":{"difficulty":50}},
+				"_investigate":{
+					"label":"Examine the Room",
+					"skillCheck":{"difficulty":50}
+				},
 				"desk":{
 					"label":"Search the Desk",
 					"skillCheck":{"difficulty":"no-roll"},
@@ -1052,18 +1059,6 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"readScreen":"true"},
 					"available":"!event.values.readScreen.value",
-					"costs":{"agent.action":null}
-				},
-				"answer":{
-					"label":"Answer the Device",
-					"skillCheck":{"difficulty":"no-roll"},
-					"set":{
-						"heard":"true",
-						"agent.chronal":{"onSuccess":"20"},
-						"agent.skills.chronogation":{"onSuccess":"-500"}
-					},
-					"shown":"event.values.foundBadge.value && event.values.readScreen.value",
-					"available":"!event.values.heard.value",
 					"costs":{"agent.action":null}
 				}
 			},
@@ -1083,23 +1078,60 @@
 						{"text":"A screen on the wall is dark.", "hidden":"event.values.readScreen.value"},
 						{"text":"The screen wakes to the date, 9 March 2087, and to a diagram you have seen once before, over a stranger’s wrist: lines of light, branching and rejoining, one of them pulsing red.", "shown":"event.values.readScreen.value"}
 					]
-				},
-				"heard":{
-					"name":"Message Heard",
-					"value":"false",
-					"description":[
-						{"text":"The device on your wrist is flashing, insistently.", "hidden":"event.values.heard.value"},
-						{"text":"You have heard the message, and you have a mission.", "shown":"event.values.heard.value"}
-					]
 				}
 			},
+			"exits":[{
+				"mode":"waitFor", "toHidden":true, "to":"safehouse_room_message",
+				"shown":"event.values.foundBadge.value && event.values.readScreen.value",
+				"set":{"events.safehouse_room_message.attestation":"1"}
+			}],
 			"description":[
 				"The office is empty now. A chair is overturned, and there’s blood on the floor where the old one stood, and a faint scorch mark in a circle around it.",
 				{"text":"<br><br>It isn’t an office, exactly. There’s a cot in one corner, tins of food, spare clothes, a go-bag by the door. Someone has been living here, and hiding.", "hidden":"event.attestation.value < 10"},
 				{"text":"<br><br>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
-				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"},
-				{"text":"<br><br>The device on your wrist chimes, once, and a figure made of light rises from it: the old stranger, recorded, unhurt, looking straight at you.", "shown":"event.actions.answer.shown"},
-				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, not yet. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "shown":"event.values.heard.value"}
+				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"}
+			]
+		},
+		
+		"safehouse_room_message":{
+			"image":"../location/safehouse_office.jpg",
+			"name":"The Message",
+			"start":{"endOf":"safehouse_room"}, "duration":{"m":5},
+			"location":"safehouse_office",
+			"actionLimit":2,
+			"actions":{
+				"_rest":null,
+				"_investigate":null,
+				"answer":{
+					"label":"Touch the Icon on the Device",
+					"skillCheck":{"difficulty":"no-roll"},
+					"set":{
+						"heard":"true",
+						"agent.chronal":{"onSuccess":"20"},
+						"agent.skills.chronogation":{"onSuccess":"-500"}
+					},
+					"available":"!event.values.heard.value"
+				},
+				"restAMoment":{
+					"label":"Rest a Moment",
+					"skillCheck":{"difficulty":"no-roll"},
+					"adj":{"agent.health":"150"},
+					"shown":"event.values.heard.value"
+				}
+			},
+			"values":{
+				"heard":{
+					"name":"Message Heard",
+					"value":"false",
+					"description":[
+						{"text":"The device on your wrist is flashing, insistently. Should you activate it?", "hidden":"event.values.heard.value"},
+						{"text":"You’ve listened to the message, and it seems you now have a mission.", "shown":"event.values.heard.value"}
+					]
+				}
+			},
+			"description":[
+				"You linger in the office, unsure how to proceed. A faint sound drifts in from the corridor. You turn toward the door, ready to head back out and follow it, when the device on your wrist grows warm. A few seconds later it chimes once, and a green icon, something like a play button, begins to flash on its surface.",
+				{"text":"<br><br>A figure made of light rises from the device: the old stranger, unhurt, a recording looking straight at you. “If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, at least not yet. The device will take you there. As for who to trust: no one.<br><br>“You can do this. I know you can, better than anyone.”<br><br>The figure flickers, gives you a smile you almost recognize, and is gone.", "shown":"event.values.heard.value"}
 			]
 		}
 	}

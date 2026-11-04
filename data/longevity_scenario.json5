@@ -57,7 +57,10 @@
 			"description":"Shanghai, 12 November 2087. The day the world learns it no longer has to grow old.",
 			"onSetup":{
 				"initialEventSelection":"lgv_announcement",
-				"adj":{"agents.ME.skills.chronogation":"100"}
+				"adj":{
+					"events.lgv_announcement.historicity":"25",
+					"agents.ME.skills.chronogation":"100"
+				}
 			},
 			"objectives":{
 				"trial":{
@@ -505,7 +508,6 @@
 			"name":"The Announcement", "image":"../location/lgv_expo.jpg",
 			"start":"2087-11-12T02:00:00", "duration":{"h":2},
 			"location":"lgv_expo",
-			"hidden":"!events.safehouse_room.values.heard.value",
 			"actionLimit":1,
 			"actions":{
 				"_investigate":null,

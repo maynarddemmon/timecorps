@@ -157,6 +157,7 @@ myt.I18N.setDictionary({
 
 // Exits by Travel Mode
 "travel-wait":"Wait til",
+"travel-waitFor":"Wait for",
 "travel-continue":"Continue to",
 "travel-jump":"Jump to",
 "travel-pulled":"Pulled to",
