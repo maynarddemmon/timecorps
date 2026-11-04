@@ -606,35 +606,32 @@
         },
         
         processHiddenAttrSetup: () => {
-            for (const eventModel of eventsForHiddenAttrSetup) {
-                model.processHiddenAttrSetupForEvent(eventModel);
-            }
-            eventsForHiddenAttrSetup.length = 0;
-        },
-        
-        processHiddenAttrSetupForEvent: eventModel => {
-            // Default to hidden if nothing is known about this Event.
             const DOT = '.',
                 ATTEST_DOT = STAT_ID_ATTESTATION + DOT,
                 EVENT_DOT = SCOPE_EVENT + DOT,
                 AND_EVENTS_DOT = ' && ' + SCOPE_EVENTS + '.',
                 DESC_SUFFIX = DOT + ATTEST_DOT + 'value < ' + DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL,
-                PREC_SUFFIX = DOT + ATTEST_DOT + 'value < ' + DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL;
+                PREC_SUFFIX = DOT + ATTEST_DOT + 'value < ' + DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL,
+                
+                // Default to hidden if nothing is known about this Event.
+                // event.attestation.value === 0 && event.historicty.value === 0
+                BASE_HIDDEN_EXPR = EVENT_DOT + ATTEST_DOT + 'value === 0 && ' + EVENT_DOT + STAT_ID_HISTORICITY + '.value === 0';
             
-            // event.attestation.value === 0 && event.historicty.value === 0
-            let hiddenExpr = EVENT_DOT + ATTEST_DOT + 'value === 0 && ' + EVENT_DOT + STAT_ID_HISTORICITY + '.value === 0';
-            
-            // If any descendants have an attestation of at least a minimum attestation the event
-            // is unhidden.
-            for (const descendantEvent of eventModel.getDescendants()) {
-                // && events.<event_id>.attestation.value < <default_value>
-                hiddenExpr += AND_EVENTS_DOT + descendantEvent.id + DESC_SUFFIX;
+            for (const eventModel of eventsForHiddenAttrSetup) {
+                // If any descendants have an attestation of at least a minimum attestation the event
+                // is unhidden.
+                let hiddenExpr = BASE_HIDDEN_EXPR;
+                for (const descendantEvent of eventModel.getDescendants()) {
+                    // && events.<event_id>.attestation.value < <default_value>
+                    hiddenExpr += AND_EVENTS_DOT + descendantEvent.id + DESC_SUFFIX;
+                }
+                for (const precursorEvent of eventModel.getPrecursors()) {
+                    // && events.<event_id>.attestation.value < <default_value>
+                    hiddenExpr += AND_EVENTS_DOT + precursorEvent.id + PREC_SUFFIX;
+                }
+                eventModel.setHidden(hiddenExpr);
             }
-            for (const precursorEvent of eventModel.getPrecursors()) {
-                // && events.<event_id>.attestation.value < <default_value>
-                hiddenExpr += AND_EVENTS_DOT + precursorEvent.id + PREC_SUFFIX;
-            }
-            eventModel.setHidden(hiddenExpr);
+            eventsForHiddenAttrSetup.length = 0;
         },
         
         /*  An Event's actions from the data, with the default event actions first. An action

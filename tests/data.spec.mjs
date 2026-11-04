@@ -109,6 +109,22 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
 
+    test('nothing gives both hidden and shown, since shown stands for hidden', () => {
+        const problems = [],
+            visit = (value, where) => {
+                if (Array.isArray(value)) {
+                    value.forEach((child, idx) => visit(child, where + '[' + idx + ']'));
+                } else if (value && typeof value === 'object') {
+                    if ('hidden' in value && 'shown' in value) problems.push(where);
+                    for (const [key, child] of Object.entries(value)) visit(child, where + '.' + key);
+                }
+            };
+        SCENARIO_FILES.forEach((file, idx) => visit(scenarios[idx], file));
+        visit(agentsJson, 'agents.json5');
+        visit(operationsJson, 'operations.json5');
+        expect(problems).toEqual([]);
+    });
+    
     test('every operation link points at something that exists', () => {
         const problems = [];
         for (const [operationId, operation] of Object.entries(operations)) {
@@ -145,7 +161,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             BUTTONS_BY_TYPE = {ack:['confirm'], confirm:['confirm', 'cancel'], text:['confirm'], image:['confirm']};
         for (const [promptId, prompt] of Object.entries(prompts)) {
             const where = 'prompt ' + promptId,
-                {type='ack', title, description, hidden, buttons, input, ...unknown} = prompt;
+                {type='ack', title, description, hidden, shown, buttons, input, ...unknown} = prompt;
             for (const key of Object.keys(unknown)) problems.push(where + ' has unknown key ' + key);
             if (!Object.hasOwn(BUTTONS_BY_TYPE, type)) problems.push(where + ' type is not "ack", "confirm", "text" or "image"');
             if (type === 'image') {
@@ -173,6 +189,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             if (typeof title !== 'string' || title.trim() === '') problems.push(where + ' has no title');
             if (description === undefined) problems.push(where + ' has no description');
             if (hidden !== undefined && typeof hidden !== 'string' && typeof hidden !== 'boolean') problems.push(where + ' hidden is not a string or a boolean');
+            if (shown !== undefined && typeof shown !== 'string' && typeof shown !== 'boolean') problems.push(where + ' shown is not a string or a boolean');
             for (const [buttonId, button] of Object.entries(buttons ?? {})) {
                 const at = where + ' button ' + buttonId;
                 if (!BUTTONS_BY_TYPE[type]?.includes(buttonId)) problems.push(at + ' is not a button of its type');
@@ -554,7 +571,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (exit.toHidden !== undefined) {
                     if (typeof exit.toHidden !== 'boolean') problems.push(where + ' toHidden is not true or false');
                     // It leads to an Event that may be hidden, so something must be able to reveal it.
-                    else if (exit.toHidden && events[exit.to]?.hidden === 'true') problems.push(where + ' is toHidden, but ' + exit.to + ' is always hidden');
+                    else if (exit.toHidden && (events[exit.to]?.hidden === 'true' || events[exit.to]?.shown === 'false')) problems.push(where + ' is toHidden, but ' + exit.to + ' is always hidden');
                 }
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));

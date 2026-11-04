@@ -91,7 +91,7 @@
         
         // Life Cycle //////////////////////////////////////////////////////////
         init: function(attrs) {
-            this.hidden = false;
+            this.initHidden(false);
             
             // Applied after the id, which warnings name. The type first, since it says which
             // buttons there can be.

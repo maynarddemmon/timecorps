@@ -412,6 +412,11 @@
             which may be a literal, e.g. "false". It replaces any expression the attribute had,
             and is saved, so it survives a reload. */
         setAttrByAction = pkg.setAttrByAction = (model, attrName, expr) => {
+            // Shown is set as the hidden it stands for, so it replaces any hidden expression.
+            if (attrName === 'shown') {
+                attrName = 'hidden';
+                expr = pkg.shownToHidden(expr);
+            }
             (model.attrsSetByAction ??= {})[attrName] = expr;
             setConstrainedValue(model.getConstraintScope(), model, attrName, expr);
         },
@@ -970,7 +975,7 @@
             include: [pkg.Hideable],
             
             init: function(attrs) {
-                this.hidden = false;
+                this.initHidden(false);
                 this.callSuper(attrs);
             },
             
@@ -1310,7 +1315,8 @@
                 // another Event names this one in its warnings.
                 self.id = attrs.id;
                 
-                self.chronoLocked = self.hub = self.hidden = self.flooded = self._beenVisited = false;
+                self.chronoLocked = self.hub = self.flooded = self._beenVisited = false;
+                self.initHidden(false);
                 self.actionLimit = DEFAULT_ACTION_LIMIT;
                 
                 self[STAT_ID_HISTORICITY] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_HISTORICITY, absMin:0, min:0, value:0, max:100, absMax:100});
@@ -1340,9 +1346,10 @@
                 self.exits = [];
                 self.hideAffectedBy = {};
                 
-                if (attrs.hidden == null) {
+                if (attrs.hidden == null && attrs.shown == null) {
                     pkg.registerEventForHiddenAttrSetup(self);
                     delete attrs.hidden;
+                    delete attrs.shown;
                 }
                 
                 // Applied after the other attrs so any warnings, including those about the skill 

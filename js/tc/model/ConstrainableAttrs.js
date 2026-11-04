@@ -7,6 +7,9 @@
         
         {setConstrainedValue} = pkg,
         
+        /*  The "hidden" equivalent of a "shown" boolean or constraint expression. */
+        shownToHidden = pkg.shownToHidden = shown => typeof shown === 'boolean' ? !shown : '!(' + shown + ')',
+        
         /*  Hooks:
                 getConstraintScope() - The model that expressions on this model resolve against.
                     Defaults to the model itself.
@@ -25,21 +28,39 @@
             
             Requires: ConstrainableAttrSupport as a sibling mixin.
             
+            "shown" is the inverse, for when that reads more clearly. It's turned into the
+            equivalent "hidden", e.g. "shown":"event.values.lit.value" becomes 
+            "hidden":"!(event.values.lit.value)", so either can be given, but not both. The
+            actual "shown" is kept as the inverse of "hidden", so expressions can read either.
+            Models start one with initHidden rather than by setting "hidden" directly, so 
+            "shown" agrees with it from the start.
+            
             Hooks:
                 getConstraintScope() - See ConstrainableAttrSupport.
                 doHiddenChanged(hidden) - Called after the value actually changes. */
         Hideable = pkg.Hideable = new JSModule('Hideable', {
+            /*  Sets the starting value without notifying, e.g. in init. */
+            initHidden: function(hidden) {
+                this.hidden = hidden;
+                this.shown = !hidden;
+            },
+            
             setHidden: function(value, isActual) {
                 if (isActual) {
                     value = !!value;
                     if (this.hidden !== value) {
                         this.set('hidden', value, true);
+                        this.set('shown', !value, true); // So we can constrain against shown as well.
                         this.doHiddenChanged(value);
                     }
                 } else {
                     setConstrainedValue(this.getConstraintScope(), this, 'hidden', String(value));
                 }
             },
+            setShown: function(value, isActual) {
+                this.setHidden(isActual ? !value : shownToHidden(value), isActual);
+            },
+            
             isHidden: function() {return this.hidden;},
             isNotHidden: function() {return !this.isHidden();},
             
@@ -57,7 +78,7 @@
             init: function(attrs) {
                 this.owner = attrs.owner;
                 delete attrs.owner;
-                this.hidden = false;
+                this.initHidden(false);
                 this.callSuper(attrs);
             },
             

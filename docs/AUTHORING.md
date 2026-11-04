@@ -50,6 +50,12 @@ Used for anything that should stay up to date as the game changes: `hidden`, a v
 "hidden":"event.attestation.value < 15 || !events.collision.values.struck.value"
 ```
 
+Anything that takes `hidden` also takes `shown`, its opposite, for when that reads more clearly. It's turned into the equivalent `hidden`, so it works the same way, including as a `true`/`false` and in a `set`, e.g. `"agents.AF.shown":{"onSuccess":"true"}`. Give one or the other, not both. Expressions can read either, e.g. `events.collision.shown` or `agents.AF.hidden`.
+
+```json5
+"shown":"events.collision.values.struck.value"   // the same as "hidden":"!(events.collision.values.struck.value)"
+```
+
 What an expression can refer to:
 
 | Name | Is | Available in |

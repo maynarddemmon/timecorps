@@ -176,7 +176,7 @@
             self.id = attrs.id;
             
             self.objectives = {};
-            self.hidden = true;
+            self.initHidden(true);
             self.revealed = false;
             
             // Set here so expressions can observe them, e.g. "operations.first.successGranted".

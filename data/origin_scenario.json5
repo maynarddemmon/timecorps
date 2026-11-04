@@ -163,7 +163,7 @@
 			"name":"The Alarm", "chronoLocked":"true",
 			"start":"2026-11-13T07:00:00", "duration":{"h":1},
 			"location":"origin_home",
-			"hidden":"false",
+			"shown":"true",
 			"actionLimit":2,
 			"actions":{
 				"_investigate":null,
@@ -218,10 +218,10 @@
 					"name":"Morning Activities",
 					"value":"''",
 					"description":[
-						{"text":"The morning is yours, for an hour.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"Three miles along the river before breakfast, the way you do most mornings.", "hidden":"!scratch.backstory_run"},
-						{"text":"An hour on the guitar, working at a passage you’ve never quite got.", "hidden":"!scratch.backstory_guitar"},
-						{"text":"Coffee and the news, every word of it, with opinions.", "hidden":"!scratch.backstory_news"}
+						{"text":"The morning is yours, for an hour.", "shown":"event.values.choice.value === ''"},
+						{"text":"Three miles along the river before breakfast, the way you do most mornings.", "shown":"scratch.backstory_run"},
+						{"text":"An hour on the guitar, working at a passage you’ve never quite got.", "shown":"scratch.backstory_guitar"},
+						{"text":"Coffee and the news, every word of it, with opinions.", "shown":"scratch.backstory_news"}
 					]
 				}
 			},
@@ -249,7 +249,7 @@
 			"exits":[
 				{
 					"mode":"board", "toHidden":true, "to":"origin_busride",
-					"hidden":"event.values.bus.value !== 'arrives'",
+					"shown":"event.values.bus.value === 'arrives'",
 					"set":{"events.origin_busride.attestation":"1"}
 				},{
 					"mode":"walk", "toHidden":true, "to":"origin_back_home",
@@ -261,9 +261,9 @@
 					"name":"Bus Arrives",
 					"value":"''",
 					"description":[
-						{"text":"The bus seems to be running late.", "hidden":"event.values.bus.value !== ''"},
-						{"text":"The bus arrives. You can still rush home and grab your bike if you’d rather ride to work.", "hidden":"event.values.bus.value !== 'arrives'"},
-						{"text":"The red light in the bus shelter comes on. It indicates the bus is way behind schedule. “Why today” you think as you head home to grab your bike. You‘ll have to ride to work in the rain.", "hidden":"event.values.bus.value !== 'late'"}
+						{"text":"The bus seems to be running late.", "shown":"event.values.bus.value === ''"},
+						{"text":"The bus arrives. You can still rush home and grab your bike if you’d rather ride to work.", "shown":"event.values.bus.value === 'arrives'"},
+						{"text":"The red light in the bus shelter comes on. It indicates the bus is way behind schedule. “Why today” you think as you head home to grab your bike. You‘ll have to ride to work in the rain.", "shown":"event.values.bus.value === 'late'"}
 					]
 				}
 			},
@@ -290,7 +290,7 @@
 					"name":"Bike Broken",
 					"value":"true",
 					"description":[
-						{"text":"The chain on your bicycle is broken. You’ve got the tools to fix it but it’ll take a moment.", "hidden":"!event.values.bike_broken.value"},
+						{"text":"The chain on your bicycle is broken. You’ve got the tools to fix it but it’ll take a moment.", "shown":"event.values.bike_broken.value"},
 						{"text":"Your bike works fine now, the chain has been repaired.", "hidden":"event.values.bike_broken.value"}
 					]
 				}
@@ -298,7 +298,7 @@
 			"exits":[
 				{
 					"mode":"walk", "toHidden":true, "to":"origin_bikeRepair",
-					"hidden":"!(event.values.bike_broken.value && event.actions.repair.attemptCount === 1)",
+					"shown":"event.values.bike_broken.value && event.actions.repair.attemptCount === 1",
 					"set":{"events.origin_bikeRepair.attestation":"1"}
 				},{
 					"mode":"bike", "toHidden":true, "to":"origin_hospital",
@@ -353,7 +353,7 @@
 					"name":"Bike Broken",
 					"value":"true",
 					"description":[
-						{"text":"The bike mechanic can easily fix your chain once they’re free.", "hidden":"!event.values.bike_broken.value"},
+						{"text":"The bike mechanic can easily fix your chain once they’re free.", "shown":"event.values.bike_broken.value"},
 						{"text":"Your bike works great now, the chain has been repaired.", "hidden":"event.values.bike_broken.value"}
 					]
 				}
@@ -451,10 +451,10 @@
 					"name":"On the Bus",
 					"value":"''",
 					"description":[
-						{"text":"Thirty minutes of stop-and-start traffic to fill.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"You talk to the woman beside you the whole way, and by the end she’s agreed with you about everything.", "hidden":"event.values.choice.value !== 'chat'"},
-						{"text":"You watch the other passengers and guess at their lives: how they stand, what they carry, what they’re pretending not to be.", "hidden":"event.values.choice.value !== 'watch'"},
-						{"text":"You slip on behind a crowd at the back door, and the inspector who gets on at Fifth never looks twice at you.", "hidden":"event.values.choice.value !== 'dodge'"}
+						{"text":"Thirty minutes of stop-and-start traffic to fill.", "shown":"event.values.choice.value === ''"},
+						{"text":"You talk to the woman beside you the whole way, and by the end she’s agreed with you about everything.", "shown":"event.values.choice.value === 'chat'"},
+						{"text":"You watch the other passengers and guess at their lives: how they stand, what they carry, what they’re pretending not to be.", "shown":"event.values.choice.value === 'watch'"},
+						{"text":"You slip on behind a crowd at the back door, and the inspector who gets on at Fifth never looks twice at you.", "shown":"event.values.choice.value === 'dodge'"}
 					]
 				}
 			},
@@ -535,16 +535,16 @@
 					"name":"The Incident",
 					"value":"''",
 					"description":[
-						{"text":"Mr. Abernathy in bed twelve has gone missing again, and the ward is getting restless.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"You find Mr. Abernathy on the roof, in his gown, looking for a bus that stopped running in 1974.", "hidden":"event.values.choice.value !== 'track'"},
-						{"text":"Someone else finds Mr. Abernathy. You keep the rest of the ward in their beds and in good spirits.", "hidden":"event.values.choice.value !== 'calm'"}
+						{"text":"Mr. Abernathy in bed twelve has gone missing again, and the ward is getting restless.", "shown":"event.values.choice.value === ''"},
+						{"text":"You find Mr. Abernathy on the roof, in his gown, looking for a bus that stopped running in 1974.", "shown":"event.values.choice.value === 'track'"},
+						{"text":"Someone else finds Mr. Abernathy. You keep the rest of the ward in their beds and in good spirits.", "shown":"event.values.choice.value === 'calm'"}
 					]
 				}
 			},
 			"description":[
 				"The second half of your shift is extra stressful with Mr. Abernathy going missing.",
-				{"text":"<br><br>You found Mr. Abernathy on the roof, another disaster averted.", "hidden":"event.values.choice.value !== 'track'"},
-				{"text":"<br><br>Your calm demeanor prevents the ward from descending into chaos.", "hidden":"event.values.choice.value !== 'calm'"}
+				{"text":"<br><br>You found Mr. Abernathy on the roof, another disaster averted.", "shown":"event.values.choice.value === 'track'"},
+				{"text":"<br><br>Your calm demeanor prevents the ward from descending into chaos.", "shown":"event.values.choice.value === 'calm'"}
 			]
 		},
 		
@@ -619,16 +619,16 @@
 					"name":"The Story",
 					"value":"''",
 					"description":[
-						{"text":"A city councilman’s name keeps turning up in places it shouldn’t, and your editor doesn’t want to hear about it.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"You follow the councilman’s aide to a parking garage and listen from behind a pillar. You have a story.", "hidden":"event.values.choice.value !== 'chase'"},
-						{"text":"You talk your editor round, one fact at a time, until the story has the front page.", "hidden":"event.values.choice.value !== 'pitch'"}
+						{"text":"A city councilman’s name keeps turning up in places it shouldn’t, and your editor doesn’t want to hear about it.", "shown":"event.values.choice.value === ''"},
+						{"text":"You follow the councilman’s aide to a parking garage and listen from behind a pillar. You have a story.", "shown":"event.values.choice.value === 'chase'"},
+						{"text":"You talk your editor round, one fact at a time, until the story has the front page.", "shown":"event.values.choice.value === 'pitch'"}
 					]
 				}
 			},
 			"description":[
 				"You spend the second half of your day pursuing a story.",
-				{"text":"<br><br>You followed the councilman’s aide to the parking garage and got the story.", "hidden":"event.values.choice.value !== 'chase'"},
-				{"text":"You convince your editor that your story is worth being on the front page.", "hidden":"event.values.choice.value !== 'pitch'"}
+				{"text":"<br><br>You followed the councilman’s aide to the parking garage and got the story.", "shown":"event.values.choice.value === 'chase'"},
+				{"text":"You convince your editor that your story is worth being on the front page.", "shown":"event.values.choice.value === 'pitch'"}
 			]
 		},
 		
@@ -703,16 +703,16 @@
 					"name":"The Job",
 					"value":"''",
 					"description":[
-						{"text":"A 1968 Mustang has been towed in with a knock nobody can find, and its owner is in a hurry.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"Three hours on your back under the Mustang, and you find the knock: a cracked bolt no one else would have looked at twice.", "hidden":"event.values.choice.value !== 'fix'"},
-						{"text":"You let the apprentice find the knock, and talk the owner into a rebuild he didn’t know he wanted.", "hidden":"event.values.choice.value !== 'haggle'"}
+						{"text":"A 1968 Mustang has been towed in with a knock nobody can find, and its owner is in a hurry.", "shown":"event.values.choice.value === ''"},
+						{"text":"Three hours on your back under the Mustang, and you find the knock: a cracked bolt no one else would have looked at twice.", "shown":"event.values.choice.value === 'fix'"},
+						{"text":"You let the apprentice find the knock, and talk the owner into a rebuild he didn’t know he wanted.", "shown":"event.values.choice.value === 'haggle'"}
 					]
 				}
 			},
 			"description":[
 				"The second half of your workday is more challenging than usual.",
-				{"text":"<br><br>You fix the Mustang, finding the cracked bolt no one else would have noticed.", "hidden":"event.values.choice.value !== 'fix'"},
-				{"text":"<br><br>You convince the Mustang’s owner to rebuild the engine.", "hidden":"event.values.choice.value !== 'haggle'"}
+				{"text":"<br><br>You fix the Mustang, finding the cracked bolt no one else would have noticed.", "shown":"event.values.choice.value === 'fix'"},
+				{"text":"<br><br>You convince the Mustang’s owner to rebuild the engine.", "shown":"event.values.choice.value === 'haggle'"}
 			]
 		},
 		
@@ -787,16 +787,16 @@
 					"name":"The Show",
 					"value":"''",
 					"description":[
-						{"text":"The lead has food poisoning, the flying rig is jammed, and curtain is at two.", "hidden":"event.values.choice.value !== ''"},
-						{"text":"You go on in the lead’s wig and costume, and not one person in the house can tell.", "hidden":"event.values.choice.value !== 'cover'"},
-						{"text":"You climb into the fly loft and free the jammed rig with minutes to spare, forty feet above the stage.", "hidden":"event.values.choice.value !== 'rig'"}
+						{"text":"The lead has food poisoning, the flying rig is jammed, and curtain is at two.", "shown":"event.values.choice.value === ''"},
+						{"text":"You go on in the lead’s wig and costume, and not one person in the house can tell.", "shown":"event.values.choice.value === 'cover'"},
+						{"text":"You climb into the fly loft and free the jammed rig with minutes to spare, forty feet above the stage.", "shown":"event.values.choice.value === 'rig'"}
 					]
 				}
 			},
 			"description":[
 				"The latter half of your day presents a unique opportunity.",
-				{"text":"<br><br>You perform the lead role flawlessly.", "hidden":"event.values.choice.value !== 'cover'"},
-				{"text":"<br><br>You heroically free the jammed rig saving the pivotal scene of the show.", "hidden":"event.values.choice.value !== 'rig'"}
+				{"text":"<br><br>You perform the lead role flawlessly.", "shown":"event.values.choice.value === 'cover'"},
+				{"text":"<br><br>You heroically free the jammed rig saving the pivotal scene of the show.", "shown":"event.values.choice.value === 'rig'"}
 			]
 		},
 		
@@ -877,19 +877,15 @@
 					"label":"Catch Them",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"reaction":"'caught'"},
-					"hidden":"event.values.reaction.value !== ''",
-					"adj":{
-						"agent.chronal":{"onSuccess":"1"}
-					}
+					"shown":"event.values.reaction.value === ''",
+					"adj":{"agent.chronal":{"onSuccess":"1"}}
 				},
 				"back":{
 					"label":"Step Back",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"reaction":"'backed'"},
-					"hidden":"event.values.reaction.value !== ''",
-					"adj":{
-						"agent.chronal":{"onSuccess":"1"}
-					}
+					"shown":"event.values.reaction.value === ''",
+					"adj":{"agent.chronal":{"onSuccess":"1"}}
 				}
 			},
 			"exits":[{
@@ -903,9 +899,9 @@
 					"name":"Your Reaction",
 					"value":"''",
 					"description":[
-						{"text":"The stranger lurches toward you.", "hidden":"event.values.reaction.value !== ''"},
-						{"text":"You catch them as they fall, and their blood is warm on your hands.", "hidden":"event.values.reaction.value !== 'caught'"},
-						{"text":"You step back, but not fast enough. They catch your arm as they fall.", "hidden":"event.values.reaction.value !== 'backed'"}
+						{"text":"The stranger lurches toward you.", "shown":"event.values.reaction.value === ''"},
+						{"text":"You catch them as they fall, and their blood is warm on your hands.", "shown":"event.values.reaction.value === 'caught'"},
+						{"text":"You step back, but not fast enough. They catch your arm as they fall.", "shown":"event.values.reaction.value === 'backed'"}
 					]
 				}
 			},
@@ -933,13 +929,13 @@
 						"agent.health":{"onSuccess":"-1","onFailure":"-d(6)"},
 						"agent.skills.agl":{"onSuccess":"d(4)","onFailure":"1"},
 					},
-					"hidden":"event.values.response.value !== ''"
+					"shown":"event.values.response.value === ''"
 				},
 				"stand":{
 					"label":"Stand Your Ground",
 					"skillCheck":{"difficulty":"no-roll"},
 					"set":{"response":"'stood'"},
-					"hidden":"event.values.response.value !== ''"
+					"shown":"event.values.response.value === ''"
 				}
 			},
 			"exits":[{
@@ -953,9 +949,9 @@
 					"name":"Your Response",
 					"value":"''",
 					"description":[
-						{"text":"The gun comes up.", "hidden":"event.values.response.value !== ''"},
-						{"text":"You throw yourself behind a parked car, and skin your hands on the wet road.", "hidden":"event.values.response.value !== 'dove'"},
-						{"text":"You don’t move. You couldn’t if you wanted to.", "hidden":"event.values.response.value !== 'stood'"}
+						{"text":"The gun comes up.", "shown":"event.values.response.value === ''"},
+						{"text":"You throw yourself behind a parked car, and skin your hands on the wet road.", "shown":"event.values.response.value === 'dove'"},
+						{"text":"You don’t move. You couldn’t if you wanted to.", "shown":"event.values.response.value === 'stood'"}
 					]
 				}
 			},
@@ -995,7 +991,7 @@
 					"value":"false",
 					"description":[
 						{"text":"You’re crouched in the open, in plain sight of the glass.", "hidden":"event.values.concealed.value"},
-						{"text":"You’ve squeezed in behind a tall cabinet, where you can see through the glass without being seen.", "hidden":"!event.values.concealed.value"}
+						{"text":"You’ve squeezed in behind a tall cabinet, where you can see through the glass without being seen.", "shown":"event.values.concealed.value"}
 					]
 				}
 			},
@@ -1026,12 +1022,12 @@
 			"description":[
 				"The argument turns into a fight, fast and ugly. The masked figure has a blade, thin and dark, and the old one is slower than they used to be.",
 				"<br><br>The blade goes in. The old one gasps, slaps at their wrist,",
-				{"text":"shoots a quick glance in your direction,","hidden":"!events.safehouse_arrival.values.concealed.value"},
+				{"text":"shoots a quick glance in your direction,","shown":"events.safehouse_arrival.values.concealed.value"},
 				"and is gone, in a flicker and a sound like a held breath let go.",
-				{"text":"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.", "hidden":"event.attestation.value <= 1"},
-				{"text":"They turn to look at you as they activate the device on their wrist.","hidden":"events.safehouse_arrival.values.concealed.value || event.attestation.value <= 1"},
-				{"text":"A moment later, they too are gone.", "hidden":"event.attestation.value <= 1"},
-				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "hidden":"event.attestation.value <= 6"}
+				{"text":"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.", "shown":"event.attestation.value > 1"},
+				{"text":"They turn to look at you as they activate the device on their wrist.","shown":"!events.safehouse_arrival.values.concealed.value && event.attestation.value > 1"},
+				{"text":"A moment later, they too are gone.", "shown":"event.attestation.value > 1"},
+				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "shown":"event.attestation.value > 6"}
 			]
 		},
 		
@@ -1066,7 +1062,7 @@
 						"agent.chronal":{"onSuccess":"20"},
 						"agent.skills.chronogation":{"onSuccess":"-500"}
 					},
-					"hidden":"!(event.values.foundBadge.value && event.values.readScreen.value)",
+					"shown":"event.values.foundBadge.value && event.values.readScreen.value",
 					"available":"!event.values.heard.value",
 					"costs":{"agent.action":null}
 				}
@@ -1077,7 +1073,7 @@
 					"value":"false",
 					"description":[
 						{"text":"The desk is a mess of papers and dead hardware.", "hidden":"event.values.foundBadge.value"},
-						{"text":"Under the papers is a badge: a disc of dark glass that lights at your touch. A circle, two arrows chasing each other around it, and the words TIME CORPS · FIELD AGENT. The name beneath has been scratched out.", "hidden":"!event.values.foundBadge.value"}
+						{"text":"Under the papers is a badge: a disc of dark glass that lights at your touch. A circle, two arrows chasing each other around it, and the words TIME CORPS · FIELD AGENT. The name beneath has been scratched out.", "shown":"event.values.foundBadge.value"}
 					]
 				},
 				"readScreen":{
@@ -1085,7 +1081,7 @@
 					"value":"false",
 					"description":[
 						{"text":"A screen on the wall is dark.", "hidden":"event.values.readScreen.value"},
-						{"text":"The screen wakes to the date, 9 March 2087, and to a diagram you have seen once before, over a stranger’s wrist: lines of light, branching and rejoining, one of them pulsing red.", "hidden":"!event.values.readScreen.value"}
+						{"text":"The screen wakes to the date, 9 March 2087, and to a diagram you have seen once before, over a stranger’s wrist: lines of light, branching and rejoining, one of them pulsing red.", "shown":"event.values.readScreen.value"}
 					]
 				},
 				"heard":{
@@ -1093,7 +1089,7 @@
 					"value":"false",
 					"description":[
 						{"text":"The device on your wrist is flashing, insistently.", "hidden":"event.values.heard.value"},
-						{"text":"You have heard the message, and you have a mission.", "hidden":"!event.values.heard.value"}
+						{"text":"You have heard the message, and you have a mission.", "shown":"event.values.heard.value"}
 					]
 				}
 			},
@@ -1102,8 +1098,8 @@
 				{"text":"<br><br>It isn’t an office, exactly. There’s a cot in one corner, tins of food, spare clothes, a go-bag by the door. Someone has been living here, and hiding.", "hidden":"event.attestation.value < 10"},
 				{"text":"<br><br>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
 				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"},
-				{"text":"<br><br>The device on your wrist chimes, once, and a figure made of light rises from it: the old stranger, recorded, unhurt, looking straight at you.", "hidden":"event.actions.answer.hidden"},
-				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, not yet. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "hidden":"event.actions.answer.hidden || !event.values.heard.value"}
+				{"text":"<br><br>The device on your wrist chimes, once, and a figure made of light rises from it: the old stranger, recorded, unhurt, looking straight at you.", "shown":"event.actions.answer.shown"},
+				{"text":"<br><br>“If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, not yet. The device will take you there. It will tell you who to trust, which is no one.<br><br>“You can do this. I know you can. Better than anyone.”<br><br>The figure flickers, and smiles a smile you almost recognize, and is gone.", "shown":"event.values.heard.value"}
 			]
 		}
 	}

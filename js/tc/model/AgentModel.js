@@ -244,7 +244,7 @@
             self[SCOPE_SKILLS] = {};
             
             // Hidden and NPC unless the data says otherwise.
-            self.hidden = true;
+            self.initHidden(true);
             self.playerControlled = false;
             self.devoured = false;
             self.faction = FACTION_ID_UNALIGNED;
