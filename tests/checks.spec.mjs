@@ -409,7 +409,7 @@ test('every skill named in the data is a known skill', async ({page}) => {
         
         // Skills used in expressions, e.g. agent.skills.stealth in an action's check. A typo
         // would otherwise quietly count as 0.
-        for (const file of [initFile, ...scenarioFiles, dataDir + '/operations.json5', dataDir + '/agents.json5']) {
+        for (const file of [initFile, ...scenarioFiles, dataDir + '/agents.json5']) {
             for (const [, skillId] of JSON.stringify(readJson(file)).matchAll(/\bskills\.(\w+)/g)) {
                 if (!knownIds.includes(skillId)) unknown.add(file + ': ' + skillId);
             }

@@ -13,8 +13,8 @@ test('anything whose ID isn\'t letters, digits and _, or starts with a digit, is
             json.events.plan.actions['bad action'] = {label:'Bad', skillCheck:{difficulty:'no-roll'}};
             return route.fulfill({json});
         }),
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.scratch = {...json.scratch, 'bad.entry':0};
             const [objectiveId] = Object.keys(json.operations.first.objectives);
             json.operations.first.objectives['9lives'] = json.operations.first.objectives[objectiveId];

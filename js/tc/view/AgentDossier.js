@@ -156,9 +156,10 @@
                     skillBars.push(new SkillBar(skillsRow, {
                         x:spacing, minValue:-MAX_SKILL_VALUE, value:skillInfo.value, maxValue:MAX_SKILL_VALUE,
                         percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
-                        skillId, showIncreaseBtn
+                        // A skill that's not trainable, e.g. luck, only grows with experience.
+                        skillId, showIncreaseBtn:showIncreaseBtn && pkg.isSkillTrainable(skillId)
                     }, [SizeToParent, {
-                        doIncrease: () => {agentModel.purchaseSkill(skillId);}
+                        doIncrease: function() {agentModel.purchaseSkill(skillId, this.increaseBtn);}
                     }]));
                 }
                 self.updateSkills(agentModel);

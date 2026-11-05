@@ -21,8 +21,8 @@ const PREPARED = 'events.plan.values.prepared.value',
             json.agents.BR.imageExpr = PREPARED + ' ? \'CH.jpg\' : \'\'';
             return route.fulfill({json});
         }),
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.operations.first.imageExpr = PREPARED + ' ? \'second.jpg\' : \'\'';
             delete json.operations.third.image;
             return route.fulfill({json});

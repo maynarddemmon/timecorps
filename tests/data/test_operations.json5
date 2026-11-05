@@ -1,4 +1,4 @@
-// Three missions:
+// A scenario of missions only, loaded after test_scenario. Three missions:
 //   first - origin not struck: prepare the plan and pull the lever.
 //   second - origin struck, but nobody lost: release the lever and build enough boats.
 //   third - clear the backlog.

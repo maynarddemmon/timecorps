@@ -1,4 +1,58 @@
 {
+	"operations":{
+		"lusitania_nosink":{
+			"name":"Lusitania - Doesn't Sink",
+			"image":true,
+			"description":[
+				"Prevent the sinking of the Lusitania."
+			],
+			"onSetup":{
+				"set":{
+					"events.torpedo_strike.historicity":"75",
+					"events.lusitania_sinks.historicity":"75"
+				},
+				"awardAgents":["PI"]
+			},
+			"objectives":{
+				"afloat":{
+					"name":"Still Afloat",
+					"description":[
+						"The Lusitania must not be sunk."
+					],
+					"success":"!events.lusitania_sinks.values.sinks.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"On the afternoon of 7 May 1915 the Lusitania rounded the Old Head of Kinsale and steamed on toward Liverpool.",
+					{
+						"text":"<br><br>Destroyers met her at the Fastnet, and no U-boat commander would risk a shot with warships at her side.",
+						"hidden":"!events.admiralty_warnings.values.escortProvided.value"
+					},{
+						"text":"<br><br>Running at full speed on a course no one could predict, she never gave U-20 a firing solution.",
+						"hidden":"events.admiralty_warnings.values.escortProvided.value || !(events.four_point_bearing.values.evasiveCourse.value && events.boiler_room_four.values.fullSteamAvailable.value)"
+					},{
+						"text":"Kapitänleutnant Schwieger watched her pass out of range and turned for home with his last torpedoes unspent.",
+						"hidden":"events.admiralty_warnings.values.escortProvided.value"
+					},
+					"<br><br>The 1,198 people who died off Kinsale will live. The sinking that hardened American opinion against Germany never happens, and what that means for the war is not yet clear.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"hidden":"timeline.paradox.value > 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"hidden":"timeline.paradox.value === 0"
+					},
+					"<br><br>This concludes the current campaign."
+				],
+				"adj":{
+					"timeline.chronal":"30",
+					"timeline.score":"13000"
+				}
+			}
+		}
+	},
+	
 	"locationsBaseOrder":200,
 	"locations":{
 		"new_york_pier_54":{

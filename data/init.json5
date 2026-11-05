@@ -82,11 +82,24 @@
 		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)/12"}
 	},
 	
+	// Experience: for every month of lived age (never the body's), a skill picked by 
+	// weight gains a point. The weights are out of 100 here only for readability.
+	"agingSkillGains":{
+		"monthsPerGain":1,
+		"weights":{
+			"luck":37,
+			"chronogation":4,
+			"agl":6, "dex":6, "str":6, "cha":6,
+			"investigation":7, "stealth":7, "disguise":7, "deception":7, "persuasion":7
+		}
+	},
+	
 	"skills":{
 		// Misc
 		"luck":{
 			"name":"Luck",
-			"description":"How much the hand of fate favors you."
+			"description":"How much the hand of fate favors you. It can’t be trained, but grows with experience.",
+			"trainable":false
 		},
 		
 		// Attributes

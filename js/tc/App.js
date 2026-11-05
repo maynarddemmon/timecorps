@@ -142,7 +142,7 @@
             let idx = 0;
             const chainFunc = success => {
                 if (success) {
-                    if (idx === 1) filesToLoad.push(...model.getScenarioIds(), 'agents', 'operations');
+                    if (idx === 1) filesToLoad.push(...model.getScenarioIds(), 'agents');
                     const namePart = filesToLoad[idx++];
                     if (namePart) {
                         loadDataIntoModel(DATA_BASE_DIR + namePart + '.json5', chainFunc);

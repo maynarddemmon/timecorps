@@ -21,7 +21,7 @@
                 PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
             },
             timeUtil:{MILLIS_PER_YEAR},
-            theme:{colorAction, fontFamilyMono},
+            theme:{colorAction, fontFamilyMono, colorSuccess, colorMegaDark},
             checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
@@ -30,6 +30,30 @@
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
+        
+        // How far above an action or exit's own floating text its skill gains show, so the 
+        // two rise together.
+        SKILL_GAINS_FLOAT_OFFSET = 22,
+        
+        /*  Where a view's floating text starts, in page coordinates: centered just above it.
+            Taken before anything rebuilds the view. null without a view. */
+        getFloatAnchor = view => {
+            if (view) {
+                const pos = view.getPagePosition();
+                return {x:pos.x + view.width / 2, y:pos.y};
+            }
+            return null;
+        },
+        
+        /*  Picks a skill from getAgingSkillGains by weight, with tc.rng. */
+        pickAgingSkill = ({weights, totalWeight}) => {
+            let roll = pkg.rng.roll(totalWeight);
+            for (const [skillId, weight] of weights) {
+                if (roll < weight) return skillId;
+                roll -= weight;
+            }
+            return weights[weights.length - 1][0];
+        },
         
         LOG_TYPE_ORIGIN = 'origin',
         LOG_TYPE_DEPLOY = 'deploy',
@@ -268,6 +292,9 @@
             // How much of the Event they're in the Agent has lived through, in milliseconds.
             self.timeLivedAtEvent = 0;
             
+            // Lived time, in milliseconds, toward the next skill gained with experience.
+            self.livedTowardSkillGain = 0;
+            
             self[STAT_ID_PARADOX] = new NotifyingNumericStatModel({
                 notifyTargets:self, id:STAT_ID_PARADOX,
                 absMin:0, min:0, value:AGENT_DEFAULT_PARADOX, max:AGENT_PARADOX_LIMIT
@@ -422,12 +449,56 @@
             this.ageBy(millis);
         },
         
-        /*  Ages the Agent by time they live through, in milliseconds: both ages grow. */
+        /*  Ages the Agent by time they live through, in milliseconds: both ages grow, and so
+            may their skills, with experience. */
         ageBy: function(millis) {
             if (millis > 0 && this.isNotDead()) {
                 const years = millis / MILLIS_PER_YEAR;
                 this.set('age', this.age + years, true);
                 this.setEffectiveAge(this.effectiveAge + years);
+                this.gainSkillsByLiving(millis);
+            }
+        },
+        
+        /*  For every monthsPerGain of lived time, from init.json5's "agingSkillGains", a skill
+            picked by weight gains a point, within ±MAX_SKILL_VALUE. Only lived time counts, 
+            never the effective age, so treatments and the hazards of time travel don't change 
+            it. Gains are kept for showSkillGains. */
+        gainSkillsByLiving: function(millis) {
+            const table = pkg.model.getAgingSkillGains();
+            if (!table) return;
+            
+            const millisPerGain = table.monthsPerGain * MILLIS_PER_YEAR / 12;
+            let lived = this.livedTowardSkillGain + millis;
+            while (lived >= millisPerGain) {
+                lived -= millisPerGain;
+                const skillId = pickAgingSkill(table),
+                    skillStat = this.getSkillStat(skillId),
+                    adj = skillStat.getAllowedAdj(1).adj;
+                if (adj !== 0) {
+                    skillStat.adjValue(adj);
+                    const gains = this._skillGains ??= new Map();
+                    gains.set(skillId, (gains.get(skillId) ?? 0) + adj);
+                }
+            }
+            this.livedTowardSkillGain = lived;
+        },
+        
+        /*  Starts collecting skill gains for something the Agent does, e.g. an action, and 
+            returns where to show them: above btnView, if given. See showSkillGains. */
+        startSkillGains: function(btnView) {
+            this._skillGains = null;
+            return getFloatAnchor(btnView);
+        },
+        
+        /*  Shows the skill gains since startSkillGains as floating text, e.g. "+1 Luck · +2 
+            Stealth", just above anchor's own floating text, then forgets them. */
+        showSkillGains: function(anchor) {
+            const gains = this._skillGains;
+            this._skillGains = null;
+            if (anchor && gains?.size > 0) {
+                const text = [...gains].map(([skillId, amount]) => i18n('skill-gain', amount, pkg.getSkillConfig(skillId).name)).join(ICON_SEPARATOR);
+                pkg.showFloatingText(text, {bgColor:colorSuccess, textColor:colorMegaDark}, anchor.x, anchor.y - SKILL_GAINS_FLOAT_OFFSET);
             }
         },
         
@@ -579,6 +650,7 @@
             null if they can. */
         getSkillPurchaseProblem: function(skillId) {
             if (!pkg.isSkillId(skillId)) return i18n('problem-no-skill');
+            if (!pkg.isSkillTrainable(skillId)) return i18n('problem-not-trainable');
             if (!this.isPlayerControlled()) return i18n('problem-not-player-controlled');
             if (this.isDead()) return i18n('problem-deceased');
             if (!this.isAtHQ()) return i18n('problem-only-at-hq');
@@ -592,15 +664,17 @@
         
         /*  Spends credits, and an action of the Agent's time at HQ, to raise a skill, by 
             getSkillPurchase. Returns true if it was bought. */
-        purchaseSkill: function(skillId) {
+        purchaseSkill: function(skillId, btnView) {
             // First check if there are any problems preventing purchase of a skill.
             if (this.getSkillPurchaseProblem(skillId) == null) {
-                const {points, credits} = getSkillPurchase(this, skillId);
+                const {points, credits} = getSkillPurchase(this, skillId),
+                    anchor = this.startSkillGains(btnView);
                 pkg.model.adjCredits(-credits);
                 this.setActionExecCount(this.getActionExecCount() + 1);
                 this.liveThroughActions(1);
                 this[SCOPE_SKILLS] = {...this[SCOPE_SKILLS], [skillId]:this.getSkill(skillId) + points};
                 this.notifyCollectionOfUpdate();
+                this.showSkillGains(anchor);
                 return true;
             }
             return false;
@@ -655,6 +729,7 @@
                 age:this.age,
                 effectiveAge:this.effectiveAge,
                 timeLivedAtEvent:this.timeLivedAtEvent,
+                livedTowardSkillGain:this.livedTowardSkillGain,
                 log:this.log.map(exportLogEntry)
             };
             if (this.attrsSetByAction) retval.attrsSetByAction = {...this.attrsSetByAction};
@@ -696,6 +771,7 @@
             if ('age' in obj) this.set('age', obj.age, true);
             if (STAT_ID_EFFECTIVE_AGE in obj) this.set(STAT_ID_EFFECTIVE_AGE, obj.effectiveAge, true);
             if ('timeLivedAtEvent' in obj) this.timeLivedAtEvent = obj.timeLivedAtEvent;
+            if ('livedTowardSkillGain' in obj) this.livedTowardSkillGain = obj.livedTowardSkillGain;
             
             if (obj.log) {
                 const log = [];
@@ -825,6 +901,7 @@
                     // own check gives the result.
                     const costs = self.getCostsFor(exitModel);
                     if (costs.every(cost => cost.canPay)) {
+                        const anchor = self.startSkillGains(btnView);
                         // An exit risks only its own adjustments, even one that's time travel, 
                         // since those are the story's, not the player's.
                         const adjustments = exitModel.rollAdjustments(self),
@@ -850,6 +927,7 @@
                             // travel.
                             const travelTime = exitModel.getTravelTime();
                             if (travelTime !== 0) self.ageBy(travelTime);
+                            self.showSkillGains(anchor);
                             
                             self.setEvent(toEvent.id, logEntry);
                             pkg.app.selectEventBox(toEvent);
@@ -878,6 +956,8 @@
             // The costs are worked out before anything changes, since they may depend on it.
             const costs = this.getCostsFor(actionModel);
             if (actionModel.isAvailableFor(this) && costs.every(cost => cost.canPay)) {
+                const anchor = this.startSkillGains(btnView);
+                
                 // A failed check still pays the costs.
                 const check = this.checkSkillExpression(
                         actionModel.getActionSkillExpr(),
@@ -905,6 +985,7 @@
                 // Each action spent lives through an equal share of the Event, so spending them
                 // all lives through the whole of it. A free action takes no time.
                 this.liveThroughActions(costs.find(({cost}) => cost.isActionCost())?.amount ?? 0);
+                this.showSkillGains(anchor);
                 
                 if (check.success) actionModel.openPrompt();
             }

@@ -2,7 +2,7 @@
 // the game's data can change freely without breaking them. It's shaped to exercise the engine,
 // not to tell a story: change it when a test needs something different.
 {
-	"scenarios":["test_scenario"],
+	"scenarios":["test_scenario", "test_operations"],
 	
 	"factions":{
 		"timecorps":{"label":"Time Corps", "hq":"time_corps_hq", "defaultAgentRole":"Agent", "description":"Keeps the causal thread intact."},

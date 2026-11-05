@@ -84,8 +84,8 @@ test('an exit opens its prompt before arriving, and its cancel button applies it
 });
 
 test('a mission\'s setup prompt follows its brief, and Mission Complete waits for its success prompt', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5');
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5');
         json.operations.first.onSetup.prompt = 'notice';
         json.operations.first.onSuccess.prompt = 'recruit';
         return route.fulfill({json});
@@ -129,8 +129,8 @@ test('set can put an agent in a Faction, and problems with prompts are warned ab
                 prompt:'missing', set:{'agents.BR.faction':"'nowhere'"}, adj:{'agent.faction':'1'}
             }
         }),
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.prompts.bad = {
                 type:'choice', title:'Bad',
                 buttons:{
@@ -166,8 +166,8 @@ test('set can put an agent in a Faction, and problems with prompts are warned ab
 });
 
 test('a mission\'s promptEarly opens before its agents are revealed, and its prompt after', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5'),
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5'),
             ack = title => ({type:'ack', title, description:[title + '.']});
         Object.assign(json.prompts, {setupEarly:ack('Setup Early'), setupLate:ack('Setup Late'), successEarly:ack('Success Early'), successLate:ack('Success Late')});
         Object.assign(json.operations.first.onSetup, {promptEarly:'setupEarly', prompt:'setupLate'});
@@ -205,8 +205,8 @@ test('a mission\'s promptEarly opens before its agents are revealed, and its pro
 });
 
 test('a list of prompts opens one after another, and whether each is hidden is decided in its turn', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5'),
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5'),
             ack = (title, extra) => ({type:'ack', title, description:[title + '.'], ...extra});
         json.scratch = {...json.scratch, skip_late:false};
         Object.assign(json.prompts, {
@@ -257,8 +257,8 @@ test('an exit with a list of prompts arrives once the last is answered', async (
             json.events.origin.exits.find(exit => exit.to === 'aftermath').prompt = ['firstWord', 'lastWord'];
             return route.fulfill({json});
         }),
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             Object.assign(json.prompts, {
                 firstWord:{type:'ack', title:'First Word', description:['One.']},
                 lastWord:{type:'ack', title:'Last Word', description:['Two.']}

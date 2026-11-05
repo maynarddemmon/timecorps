@@ -25,14 +25,13 @@ How to write the files in `data/` that make up the game: scenarios with their ev
 
 | File | Holds |
 |---|---|
-| `data/init.json5` | Loaded first: the list of scenario files, skills, default skill checks, the special locations and events, and the actions every event offers |
-| `data/<scenario>.json5` | One per scenario, e.g. `titanic_scenario.json5`: its locations and events |
+| `data/init.json5` | Loaded first: the list of scenario files, which mission the campaign starts with, skills, default skill checks, the special locations and events, and the actions every event offers |
+| `data/<scenario>.json5` | One per scenario, e.g. `titanic_scenario.json5`: its locations, events and missions |
 | `data/agents.json5` | The agents, and description phrases they all share |
-| `data/operations.json5` | The missions, and which one the campaign starts with |
 | `data/help.txt`, `data/mission/`, `data/location/`, `data/dossiers/`, `data/event/` | Text shown in the game |
 | `img/agent/`, `img/location/`, `img/mission/`, `img/event/` | Portraits and photos, plus optional videos |
 
-The files load in this order: `init.json5`, the scenarios it lists, `agents.json5`, `operations.json5`. A later file can refer to anything in an earlier one, and expressions can refer to anything at all, since they're only worked out once everything has loaded.
+The files load in this order: `init.json5`, the scenarios it lists, then `agents.json5`. A later file can refer to anything in an earlier one, and expressions can refer to anything at all, since they're only worked out once everything has loaded.
 
 **Format.** The files are [JSON5](https://json5.org): JSON plus `//` and `/* */` comments and trailing commas. Keep keys quoted and strings in double quotes, so the files stay plain JSON apart from the comments (the data tests check this). Use comments to record *why* a number is what it is.
 
@@ -169,6 +168,8 @@ The timeline also has a score and credits, read as plain numbers:
 		…
 	},
 	
+	"agingSkillGains":{"monthsPerGain":1, "weights":{"luck":25, "investigation":9, …}},
+	
 	"timeTravelAdj":{
 		"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"},
 		…
@@ -181,10 +182,11 @@ The timeline also has a score and credits, read as plain numbers:
 ```
 
 - **`factions`**: the sides an agent can be on, by ID, with a `label` and a `description` (phrases, as for an event, shown as the Faction Brief's field notes), optionally a `defaultAgentRole`, the [role](#agents) of its agents who have none of their own, and optionally an `hq`, the ID of the event that's its HQ: only its agents can time travel there, they're recalled there, and they buy skills there. Every agent is in exactly one; `unaligned` must exist, since it's the default. The Agents grid and the dossier show an agent's faction, and clicking it opens the Faction Brief.
-- **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip). The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
+- **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip), and optionally `"trainable":false` for one that can't be bought at HQ, such as luck, which only grows with experience. The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
 - **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
 - **`defaultEventActions`**: see [Default actions](#default-actions).
+- <a id="experience"></a>**`agingSkillGains`**: optional. Experience: for every `monthsPerGain` (default 1) of an agent's lived age, a skill picked by `weights`, whole numbers by skill ID, gains a point, within ±1000. Only the [lived age](#ages) counts: the effective age, which treatments and time travel change, never does. A gain floats above whatever caused it, e.g. "+1 Luck", just over the action's or exit's own result. Unknown skills and bad weights are warned about and left out. A later file's replaces an earlier one's.
 - <a id="time-travel-hazards"></a>**`timeTravelAdj`**: optional. What can happen to an agent who pays chronal to deploy, be recalled or loop back. Exits never risk it, even `jump` and `pulled` ones, since they're the story's: give one its own `adj` instead, e.g. `"adj":{"agent.health":"-d(4)"}`. [Adjustments](#adjustments-adj), as for an action, keyed by what they change, e.g. `agent.health` or `agent.effectiveAge`. There's no action check to follow, so give each a check of its own, and amounts can use `chronal`, the chronal the time travel cost, e.g. `"-d(chronal)"`, or `"d(chronal)/12"` for that many months of aging. They're rolled as the agent leaves and applied once they arrive, so `event` is where they arrive. The time travel buttons show the health risk as ♥ and their tooltips describe each, and the result floats above the button, as for an action. A move the data makes, with `set` on `agent.event`, risks nothing. A later file's replaces an earlier one's.
 
 Skills and skill checks can also be added by scenario files. A later file's entry replaces an earlier one with the same ID.
@@ -568,10 +570,10 @@ HQ and The Void leave out `_investigate` this way.
 
 ## Operations (missions)
 
+Each scenario file holds its own missions, under `operations`. The mission the campaign starts with is `initialOperation`, given in `init.json5` (a later file's replaces it).
+
 ```json5
 {
-	"initialOperation":"titanic_noCollision",
-	
 	"operations":{
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",

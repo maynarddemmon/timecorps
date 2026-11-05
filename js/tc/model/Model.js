@@ -10,6 +10,9 @@
         // See getTimeTravelHazards.
         timeTravelHazards = null,
         
+        // See getAgingSkillGains.
+        agingSkillGains = null,
+        
         commonEventActions = {};
     
     pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
@@ -38,6 +41,40 @@
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
         DATA_KEY_ACTION_GROUPS = 'actionGroups',
         DATA_KEY_TIME_TRAVEL_ADJ = 'timeTravelAdj',
+        DATA_KEY_AGING_SKILL_GAINS = 'agingSkillGains',
+        
+        /*  Reads the agingSkillGains config, e.g. {"monthsPerGain":1, "weights":{"luck":25, …}},
+            into {monthsPerGain, weights:[[skillId, weight], …], totalWeight}, warning about its
+            problems. Weights are whole numbers above 0 and name skills the data has given so 
+            far. null if nothing usable is left. */
+        readAgingSkillGains = cfg => {
+            const where = DATA_KEY_AGING_SKILL_GAINS;
+            if (!isPlainObject(cfg)) {
+                console.warn(where, 'must be an object, e.g. {"monthsPerGain":1, "weights":{"luck":25}} (ignoring it):', cfg);
+                return null;
+            }
+            const {monthsPerGain=1, weights, ...unknown} = cfg;
+            if (Object.keys(unknown).length > 0) console.warn(where, 'has unknown keys', Object.keys(unknown).join(', '), '(ignoring them)');
+            if (!(typeof monthsPerGain === 'number' && monthsPerGain > 0)) {
+                console.warn(where, 'monthsPerGain must be a number above 0 (ignoring it all):', monthsPerGain);
+                return null;
+            }
+            if (!isPlainObject(weights)) {
+                console.warn(where, 'weights must be an object of whole numbers by skill ID (ignoring it all):', weights);
+                return null;
+            }
+            const usable = [];
+            for (const [skillId, weight] of Object.entries(weights)) {
+                if (!pkg.isSkillId(skillId)) {
+                    console.warn(where, 'weights names no skill', skillId, '(ignoring it)');
+                } else if (!(Number.isInteger(weight) && weight > 0)) {
+                    console.warn(where, 'weight for', skillId, 'must be a whole number above 0 (ignoring it):', weight);
+                } else {
+                    usable.push([skillId, weight]);
+                }
+            }
+            return usable.length > 0 ? {monthsPerGain, weights:usable, totalWeight:usable.reduce((total, [, weight]) => total + weight, 0)} : null;
+        },
         
         /*  Merges a config over a base: objects key by key, all the way down, and anything else,
             arrays included, replaces what's there. Changes and returns the base, or returns 
@@ -250,6 +287,11 @@
             TimeTravelHazardsModel set for that chronal, or null if there's nothing, either 
             because the data gives no "timeTravelAdj" or because the time travel is free. */
         getTimeTravelHazards: chronal => chronal > 0 && timeTravelHazards?.hasAdjustments() ? timeTravelHazards.forTimeTravel(chronal) : null,
+        
+        /*  The skills an agent gains with experience, from init.json5's "agingSkillGains": 
+            {monthsPerGain, weights:[[skillId, weight], …], totalWeight}, or null if none. For 
+            every monthsPerGain of lived age, a skill picked by weight gains a point. */
+        getAgingSkillGains: () => agingSkillGains,
         
         /*  Warns about each action whose group names no action group. It's shown with the 
             ungrouped actions. */
@@ -556,6 +598,13 @@
                 timeTravelHazards = new pkg.TimeTravelHazardsModel({adj:timeTravelAdj});
             }
             
+            // Skills gained with experience. A later file's replaces an earlier's.
+            const agingSkillGainsCfg = json[DATA_KEY_AGING_SKILL_GAINS];
+            if (agingSkillGainsCfg !== undefined) {
+                if (agingSkillGains) console.warn(DATA_KEY_AGING_SKILL_GAINS, 'is given more than once (using the later one)');
+                agingSkillGains = readAgingSkillGains(agingSkillGainsCfg);
+            }
+            
             // Default Event Actions
             const defaultEventActions = json.defaultEventActions ?? {};
             for (const actionId in defaultEventActions) {
@@ -676,6 +725,10 @@
     
     /*  A skill's config, {name, description}, or undefined if there's no such skill. */
     pkg.getSkillConfig = skillId => skillCfgs[skillId];
+    
+    /*  Whether a skill can be trained at HQ: unless its config says "trainable":false, e.g. 
+        luck, which only grows with experience. */
+    pkg.isSkillTrainable = skillId => skillCfgs[skillId]?.trainable !== false;
     
     /*  The IDs of the default skill checks (action types) configured in the data. */
     pkg.getSkillCheckIds = () => Object.keys(skillCheckDefaults);

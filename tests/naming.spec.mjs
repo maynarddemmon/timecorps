@@ -7,8 +7,8 @@ const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
 
     // First's setup asks for Alpha's name, which Alpha's nameExpr reads.
     routeNaming = (page, prompt) => Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.scratch = {alpha_name:''};
             json.prompts.naming = prompt ?? {
                 type:'text',

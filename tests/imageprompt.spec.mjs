@@ -7,8 +7,8 @@ const IMAGES = ['agent/BR.jpg', 'agent/CH.jpg', 'agent/DE.jpg'],
     
     // First's setup asks for Alpha's picture, which Alpha's imageExpr reads.
     routePicking = (page, prompt) => Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.scratch = {...json.scratch, alpha_photo:'agent/CH.jpg'};
             json.prompts.picking = prompt ?? {
                 type:'image',

@@ -173,7 +173,6 @@
 	// whose research reveals three commissioners the watcher got to first. Swaying two of
 	// them keeps the treatment secret. Its rows sit between Origin's and the Titanic's.
 	"locationsBaseOrder":50,
-
 	"locations":{
 		"lgv_expo":{
 			"name":"Shanghai Expo Centre",

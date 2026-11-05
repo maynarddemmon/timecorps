@@ -25,8 +25,8 @@ test('a mission\'s setup sets, and its success adjusts, as the data says', async
 });
 
 test('a mission\'s old award keys, and an onFailure it never uses, are warned about', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5'),
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5'),
             first = json.operations.first;
         first.onSetup.awardCredits = 5;
         first.onSuccess.awardScore = 100;
@@ -91,8 +91,8 @@ test('an action or exit can change another Event\'s stats and Values', async ({p
 
 test('set and adj can change any agent\'s stats and skills, from a mission or an action', async ({page}) => {
     await Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5');
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5');
             json.operations.first.onSuccess.adj['agents.BR.skills.chronogation'] = '100';
             json.operations.first.onSuccess.set = {'agents.BR.chronal':'10'};
             return route.fulfill({json});
@@ -130,8 +130,8 @@ test('set and adj can change any agent\'s stats and skills, from a mission or an
 
 test('set can put an agent at an Event, as a deploy or jump that pays its way', async ({page}) => {
     await Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5'),
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5'),
                 first = json.operations.first;
             first.onSetup.set['agents.BR.chronal'] = '50';
             first.onSetup.set['agents.BR.event'] = "'origin'";
@@ -180,8 +180,8 @@ test('set can put an agent at an Event, as a deploy or jump that pays its way', 
 
 test('check expressions can read any agent or Event, and nextOperation can be one', async ({page}) => {
     await Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5'),
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5'),
                 first = json.operations.first;
             // Alpha is in the Time Corps, so the first mission leads to the third.
             first.onSuccess.nextOperation = "agents.AL.faction === 'timecorps' ? 'third' : 'second'";

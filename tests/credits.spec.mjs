@@ -8,8 +8,8 @@ const NO_ROLL = {difficulty:'no-roll'},
     /*  Serves the test data with credits awarded by the first mission, and an action at the
         origin, where Alpha starts, that costs credits. */
     routeDataWithCredits = page => Promise.all([
-        page.route('**/tests/data/operations.json5', route => {
-            const json = readTestData('operations.json5'),
+        page.route('**/tests/data/test_operations.json5', route => {
+            const json = readTestData('test_operations.json5'),
                 first = json.operations.first;
             first.onSetup.adj = {'timeline.credits':'5'};
             first.onSuccess.adj['timeline.credits'] = '7';
@@ -110,8 +110,8 @@ test('credits and the peak score survive a save and reload, without earning agai
 });
 
 test('a mission can take credits and score away, but not below 0', async ({page}) => {
-    await page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5');
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5');
         json.operations.first.onSetup.adj = {'timeline.credits':'3', 'timeline.score':'250'};
         json.operations.first.onSuccess.adj = {'timeline.credits':'-10', 'timeline.score':'-1000'};
         return route.fulfill({json});

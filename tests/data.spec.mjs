@@ -22,7 +22,6 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     const scenarios = SCENARIO_FILES.map(readJson),
         agentsJson = readJson(DATA_DIR + '/agents.json5'),
-        operationsJson = readJson(DATA_DIR + '/operations.json5'),
     
         locations = Object.assign({}, ...scenarios.map(s => s.locations ?? {})),
         events = Object.assign({}, ...scenarios.map(s => s.events ?? {})),
@@ -30,11 +29,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         agents = agentsJson.agents,
         // Operations, scratch entries and prompts can be in any data file, and so can the
         // initialOperation, of which the last one loaded counts.
-        operations = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.operations ?? {})),
-        initialOperation = [...scenarios, agentsJson, operationsJson].map(s => s.initialOperation).filter(id => id !== undefined).at(-1),
-        scratch = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.scratch ?? {})),
+        operations = Object.assign({}, ...[...scenarios, agentsJson].map(s => s.operations ?? {})),
+        initialOperation = [...scenarios, agentsJson].map(s => s.initialOperation).filter(id => id !== undefined).at(-1),
+        scratch = Object.assign({}, ...[...scenarios, agentsJson].map(s => s.scratch ?? {})),
         factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
-        prompts = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(s => s.prompts ?? {})),
+        prompts = Object.assign({}, ...[...scenarios, agentsJson].map(s => s.prompts ?? {})),
     
         // Every string anywhere inside a JSON value.
         collectStrings = (value, accum=[]) => {
@@ -121,7 +120,6 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             };
         SCENARIO_FILES.forEach((file, idx) => visit(scenarios[idx], file));
         visit(agentsJson, 'agents.json5');
-        visit(operationsJson, 'operations.json5');
         expect(problems).toEqual([]);
     });
     
@@ -627,7 +625,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         const problems = [];
         const files = [
             ...SCENARIO_FILES.map((file, idx) => [file, scenarios[idx]]),
-            [DATA_DIR + '/agents.json5', agentsJson], [DATA_DIR + '/operations.json5', operationsJson]
+            [DATA_DIR + '/agents.json5', agentsJson]
         ];
         for (const [file, json] of files) {
             const cfg = json.scratch;
@@ -685,7 +683,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
 
     test('every action group has a label and an order other than 0, and every action\'s group exists', () => {
         const problems = [],
-            actionGroups = Object.assign({}, ...[...scenarios, agentsJson, operationsJson].map(json => json.actionGroups ?? {}));
+            actionGroups = Object.assign({}, ...[...scenarios, agentsJson].map(json => json.actionGroups ?? {}));
         for (const [groupId, group] of Object.entries(actionGroups)) {
             if (typeof group?.label !== 'string' || group.label.trim() === '') problems.push('action group ' + groupId + ' has no label');
             if (!Number.isFinite(group?.order) || group.order === 0) problems.push('action group ' + groupId + ' order must be a number other than 0: ' + group?.order);
@@ -704,7 +702,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             checkIds = (where, obj) => {
                 for (const id of Object.keys(obj ?? {})) if (!ID.test(id)) problems.push(where + ' ' + id);
             };
-        for (const json of [...scenarios, agentsJson, operationsJson]) {
+        for (const json of [...scenarios, agentsJson]) {
             for (const key of ['locations', 'events', 'agents', 'operations', 'factions', 'prompts', 'scratch']) checkIds(key, json[key]);
             for (const [eventId, event] of Object.entries(json.events ?? {})) {
                 checkIds('events.' + eventId + '.values', event.values);
@@ -768,7 +766,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             toPlainJson = text => text.replace(TOKENS, token => token[0] === '"' ? token : '');
     
         const problems = [];
-        for (const file of [...SCENARIO_FILES, DATA_DIR + '/agents.json5', DATA_DIR + '/operations.json5']) {
+        for (const file of [...SCENARIO_FILES, DATA_DIR + '/agents.json5']) {
             const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
             let plain;
             try {

@@ -61,7 +61,6 @@
 			"born":"2139-01-27", "age":48,
 			"faction":"timecorps",
 			"video":true,
-			"event":"collision",
 			"health":{"value":35, "max":85},
 			"skills":{
 				"chronogation":-100,

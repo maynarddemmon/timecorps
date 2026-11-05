@@ -103,6 +103,7 @@ myt.I18N.setDictionary({
 "problem-only-at-hq":"Only at HQ",
 "problem-no-days-left":"No days left this visit",
 "problem-at-maximum":"At its maximum",
+"problem-not-trainable":"Can’t be trained; it grows with experience",
 "problem-credits":"Not enough credits",
 
 // Agents
@@ -224,6 +225,7 @@ myt.I18N.setDictionary({
 "skill-tip":"$0 - $1",
 "skill-train":"Train $0 +$1",
 "skill-train-tip":"$0 for $1 {{plural:$1|credit|credits}} and an action",
+"skill-gain":"+$0 $1",
 
 // Grid Columns
 "col-id":"ID",

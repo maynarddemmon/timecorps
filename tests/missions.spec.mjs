@@ -33,8 +33,8 @@ const grid = page => page.locator('.myt-Missions'),
     },
 
     // Third is revealed as soon as first is completed.
-    routeThirdRevealedByFirst = page => page.route('**/tests/data/operations.json5', route => {
-        const json = readTestData('operations.json5');
+    routeThirdRevealedByFirst = page => page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5');
         json.operations.third.hidden = '!operations.first.successGranted';
         return route.fulfill({json});
     });
