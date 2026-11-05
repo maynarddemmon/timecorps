@@ -182,6 +182,7 @@ The timeline also has a score and credits, read as plain numbers:
 ```
 
 - **`factions`**: the sides an agent can be on, by ID, with a `label` and a `description` (phrases, as for an event, shown as the Faction Brief's field notes), optionally a `defaultAgentRole`, the [role](#agents) of its agents who have none of their own, and optionally an `hq`, the ID of the event that's its HQ: only its agents can time travel there, they're recalled there, and they buy skills there. Every agent is in exactly one; `unaligned` must exist, since it's the default. The Agents grid and the dossier show an agent's faction, and clicking it opens the Faction Brief.
+- **`skillTracks`**: what training a skill at HQ costs, by track, for an agent's affinity for it. Each track has `minCredits`, the price of a point near 0 (default 1), and `pointsPerExtraCredit`, how far from 0 the skill goes, either way, for each credit more (default 100). Exactly one is marked `"default":true`, the track for any skill an agent's `skillsByTrack` leaves out. E.g. `"skillTracks":{"standard":{"default":true, "minCredits":1, "pointsPerExtraCredit":100}, "high":{"minCredits":1, "pointsPerExtraCredit":200}}`. Without any, or with none marked the default, a point costs a credit, and one more for every 100 the skill is from 0. A later file's track replaces an earlier one with the same ID.
 - **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip), and optionally `"trainable":false` for one that can't be bought at HQ, such as luck, which only grows with experience. The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
 - **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
@@ -548,6 +549,7 @@ HQ and The Void leave out `_investigate` this way.
 			"chronal":75,                       // Default 75.
 			"paradox":0,
 			"skills":{"investigation":100, "str":50, …},  // Any skill left out is 0.
+			"skillsByTrack":{"high":["chronogation", "persuasion"], "low":["str", "cha"]},  // Optional. See Skills below.
 			"video":true,                       // There's a .webm portrait as well as the .jpg.
 			"hidden":"events.lifeboat_capacity.attestation.value < 5",  // Optional. See below.
 			"playerControlled":true,            // Optional. See below.
@@ -567,7 +569,7 @@ HQ and The Void leave out `_investigate` this way.
   - **Time travel** (deploy, jump, recall, loop back) lives through nothing, not even the rest of the event left.
   
   The effective age is the body's. It grows with the lived age, and treatments wind it back: `set` or `adj` on `agent.effectiveAge`, in years, e.g. `"adj":{"agent.effectiveAge":"-10"}`. Unlike every other stat it isn't rounded to whole points, so `"d(6)/12"` ages by up to half a year, and tooltips and floating text show it to 2 decimal places, though never below 25 (`AGE_MIN_EFFECTIVE`). From an effective age of 35 the agent's maximum health declines, slowly at first and then faster, to 0, and death, at 85. The `health` max in the data is the agent's in their prime. The thresholds and curve are `AGE_*` in `js/tc/tc.js`. The Agent Dossier shows both ages.
-- **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, a point at a time. Each point takes an action (a day at HQ, which ages the agent) and costs a credit, plus one for every 100 the skill is from 0, either way: 99 to 100 costs 1, 100 to 101 costs 2. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
+- **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, a point at a time. Each point takes an action (a day at HQ, which ages the agent) and costs credits by the skill's track for that agent: the track's `minCredits`, plus one for every `pointsPerExtraCredit` the skill is from 0, either way. On a track of 1 and 100, 99 to 100 costs 1, and 100 to 101 costs 2. An agent's `skillsByTrack` puts skills on tracks by the IDs of init.json5's [`skillTracks`](#initjson5), and any skill it leaves out is on the default track. A track or skill that doesn't exist is ignored, with a warning, and a skill on two tracks is on the later one. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
 
 ## Operations (missions)
 

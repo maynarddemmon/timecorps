@@ -1,5 +1,6 @@
 // Buying skill points: at HQ, from the agent's dossier, for credits and a day (an action), up to
-// MAX_SKILL_VALUE. A point costs a credit, and one more for every 100 the skill is from 0.
+// MAX_SKILL_VALUE. A point costs a credit, and one more for every 100 the skill is from 0, 
+// unless the skill's track for the agent, from init.json5's "skillTracks", says otherwise.
 import {test, expect} from '@playwright/test';
 import {startGame, reloadGame, readTestData} from './helpers.mjs';
 
@@ -250,5 +251,88 @@ test('training takes a day of the agent\'s month at HQ, aging them, until the mo
     expect(out.agedForOne).toBeCloseTo(out.day / YEAR, 9);
     expect(out).toMatchObject({limit:30, bought:30, problem:'No days left this visit'});
     expect(out.agedForAll).toBeCloseTo(out.month / YEAR, 9);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+/*  Gives init.json5 skill tracks, and Alpha skillsByTrack. */
+const routeSkillTracks = (page, skillTracks, skillsByTrack) => Promise.all([
+    page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        json.skillTracks = skillTracks;
+        return route.fulfill({json});
+    }),
+    page.route('**/tests/data/agents.json5', route => {
+        const json = readTestData('agents.json5');
+        json.agents.AL.skillsByTrack = skillsByTrack;
+        return route.fulfill({json});
+    })
+]);
+
+test('a skill\'s track for the agent sets its price: a minimum, and one more credit for every so many points from 0', async ({page}) => {
+    await routeSkillTracks(page, {
+        standard:{default:true, minCredits:1, pointsPerExtraCredit:100},
+        high:{minCredits:1, pointsPerExtraCredit:200},
+        low:{minCredits:2, pointsPerExtraCredit:50}
+    }, {high:['cha'], low:['str']});
+    const problems = await startGame(page),
+        prices = skillId => page.evaluate(skillId => {
+            const alpha = tc.model.getAgentModel('AL');
+            return [-250, -100, -50, 0, 49, 50, 199, 200, 250].map(value => {
+                alpha.setSkills({...alpha.getSkills(), [skillId]:value});
+                return tc.getSkillPurchase(alpha, skillId).credits;
+            });
+        }, skillId);
+    expect(await prices('cha')).toEqual([2, 1, 1, 1, 1, 1, 1, 2, 2]);
+    expect(await prices('str')).toEqual([7, 4, 3, 2, 2, 3, 5, 6, 7]);
+    // Left out, so on the default.
+    expect(await prices('dex')).toEqual([3, 2, 1, 1, 1, 1, 2, 3, 3]);
+    
+    // Buying pays the track's price.
+    await page.evaluate(() => tc.model.getAgentModel('AL').setSkills({...tc.model.getAgentModel('AL').getSkills(), str:50}));
+    await openAtHQ(page, 10);
+    await buyBtn(page, 'Strength').click();
+    expect(await readAlpha(page, 'str')).toEqual({skill:51, credits:7});
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('without skill tracks, or with none marked the default, a point costs a credit and one more for every 100 points', async ({page}) => {
+    await routeSkillTracks(page, {high:{minCredits:3, pointsPerExtraCredit:200}}, {high:['cha']});
+    const problems = await startGame(page);
+    expect(await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.setSkills({...alpha.getSkills(), cha:250, str:250});
+        return [tc.getSkillPurchase(alpha, 'cha').credits, tc.getSkillPurchase(alpha, 'str').credits];
+    })).toEqual([4, 3]);
+    expect(problems.warnings).toEqual([
+        'skillTracks marks no track the default, with "default":true (using a credit, and one more for every 100 points from 0)'
+    ]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('broken skill tracks and skillsByTrack are warned about, keeping what\'s usable', async ({page}) => {
+    await routeSkillTracks(page, {
+        standard:{default:true},
+        odd:{minCredits:-1, pointsPerExtraCredit:0, extra:1},
+        other:{default:true, minCredits:5},
+        bad:7
+    }, {odd:['cha', 'nope'], other:['cha'], missing:['str'], standard:'dex'});
+    const problems = await startGame(page);
+    expect(problems.warnings).toEqual([
+        'Skill track odd has unknown keys extra (ignoring them)',
+        'Skill track odd minCredits must be a whole number, 0 or more (using 1): -1',
+        'Skill track odd pointsPerExtraCredit must be a whole number above 0 (using 100): 0',
+        'Skill track other is marked the default, as standard is (using other)',
+        'Skill track bad must be an object, e.g. {"minCredits":1, "pointsPerExtraCredit":100} (ignoring it): 7',
+        'Agent AL skillsByTrack odd names no skill nope (ignoring it)',
+        'Agent AL skillsByTrack puts cha on both odd and other (using other)',
+        'Agent AL skillsByTrack names no skill track missing (ignoring it)',
+        'Agent AL skillsByTrack standard must be an array of skill IDs (ignoring it): dex'
+    ]);
+    expect(await page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        return ['cha', 'str', 'dex'].map(skillId => alpha.getSkillTrack(skillId).id);
+    })).toEqual(['other', 'other', 'other']);
     expect(problems.pageErrors).toEqual([]);
 });

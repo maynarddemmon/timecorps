@@ -316,6 +316,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         // A difficulty is optional, and is an integer or "no-roll", which always succeeds.
         isValidDifficulty = difficulty => difficulty === undefined || Number.isInteger(difficulty) || difficulty === 'no-roll',
         skillCfgs = Object.assign({}, ...scenarios.map(s => s.skills ?? {})),
+        skillTracks = Object.assign({}, ...scenarios.map(s => s.skillTracks ?? {})),
     
         // Returns why a skill expression doesn't compile, or null if it does. Compiled the same way 
         // as tc.checks.skill, with the same parameters.
@@ -696,6 +697,29 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         for (const [eventId, event] of Object.entries(events)) {
             for (const [actionId, action] of Object.entries(event.actions ?? {})) {
                 if (action?.group !== undefined && !Object.hasOwn(actionGroups, action.group)) problems.push(eventId + '.' + actionId + ' group names no action group: ' + action.group);
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
+    test('exactly one skill track is the default, and every agent\'s skillsByTrack names tracks and skills that exist', () => {
+        const problems = [],
+            defaults = Object.keys(skillTracks).filter(trackId => skillTracks[trackId].default === true);
+        if (Object.keys(skillTracks).length > 0 && defaults.length !== 1) problems.push('skill tracks marked the default: ' + (defaults.join(', ') || 'none'));
+        for (const [trackId, track] of Object.entries(skillTracks)) {
+            if (track.minCredits !== undefined && !(Number.isInteger(track.minCredits) && track.minCredits >= 0)) problems.push('skill track ' + trackId + ' minCredits is not a whole number, 0 or more');
+            if (track.pointsPerExtraCredit !== undefined && !(Number.isInteger(track.pointsPerExtraCredit) && track.pointsPerExtraCredit > 0)) problems.push('skill track ' + trackId + ' pointsPerExtraCredit is not a whole number above 0');
+        }
+        for (const [agentId, agent] of Object.entries(agents)) {
+            const seen = new Set();
+            for (const [trackId, skillIds] of Object.entries(agent.skillsByTrack ?? {})) {
+                if (!skillTracks[trackId]) problems.push(agentId + ' skillsByTrack names no track ' + trackId);
+                for (const skillId of Array.isArray(skillIds) ? skillIds : []) {
+                    if (!skillCfgs[skillId]) problems.push(agentId + ' skillsByTrack ' + trackId + ' names no skill ' + skillId);
+                    if (seen.has(skillId)) problems.push(agentId + ' skillsByTrack puts ' + skillId + ' on two tracks');
+                    seen.add(skillId);
+                }
+                if (!Array.isArray(skillIds)) problems.push(agentId + ' skillsByTrack ' + trackId + ' is not an array');
             }
         }
         expect(problems).toEqual([]);

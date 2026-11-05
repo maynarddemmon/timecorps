@@ -26,7 +26,8 @@
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX
+            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
+            isPlainObject
         } = pkg,
         
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
@@ -184,13 +185,16 @@
         /*  The Event a log entry put the agent in, or undefined for one that didn't. */
         getEnteredEventModel = entry => getVisit(entry)?.event,
         
-        /*  What the next purchase of an Agent's skill gets and costs: {points, credits}. One 
-            credit for one point. Kept on its own so the pricing can be tuned. */
-        getSkillPurchase = pkg.getSkillPurchase = (agentModel, skillId) => ({
-            points:1, 
-            // A credit for a point near 0, and one more for every 100 the skill is from 0.
-            credits:1 + mathFloor(mathAbs(agentModel.getSkill(skillId)) / 100)
-        }),
+        /*  What the next purchase of an Agent's skill gets and costs: {points, credits}, by the 
+            skill's track for the Agent: its minCredits for a point near 0, and one more for 
+            every pointsPerExtraCredit the skill is from 0, either way. */
+        getSkillPurchase = pkg.getSkillPurchase = (agentModel, skillId) => {
+            const {minCredits, pointsPerExtraCredit} = agentModel.getSkillTrack(skillId);
+            return {
+                points:1, 
+                credits:minCredits + mathFloor(mathAbs(agentModel.getSkill(skillId)) / pointsPerExtraCredit)
+            };
+        },
         
         accrueEntryParadox = (agentModel, eventModelOrId) => {
             const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, 1); // 1 because we will have just pushed an entry event of some kind onto the log.
@@ -623,6 +627,43 @@
             this[SCOPE_SKILLS] = clean;
         },
         getSkills: function() {return this[SCOPE_SKILLS];},
+        
+        /*  Puts skills on tracks other than the default, e.g. {"high":["chronogation"], 
+            "low":["str", "cha"]}, by the IDs of tracks init.json5's "skillTracks" gives. A
+            track or skill that doesn't exist is warned about and ignored, and a skill put on
+            two tracks is on the later one. */
+        setSkillsByTrack: function(skillsByTrack) {
+            const where = 'Agent ' + this.id + ' skillsByTrack',
+                trackIdBySkill = {};
+            if (skillsByTrack != null && !isPlainObject(skillsByTrack)) {
+                console.warn(where, 'must be an object of skill IDs by track ID, e.g. {"high":["chronogation"]} (ignoring it):', skillsByTrack);
+            } else {
+                for (const trackId in skillsByTrack) {
+                    const skillIds = skillsByTrack[trackId];
+                    if (!pkg.getSkillTrack(trackId)) {
+                        console.warn(where, 'names no skill track', trackId, '(ignoring it)');
+                    } else if (!Array.isArray(skillIds)) {
+                        console.warn(where, trackId, 'must be an array of skill IDs (ignoring it):', skillIds);
+                    } else {
+                        for (const skillId of skillIds) {
+                            if (!pkg.isSkillId(skillId)) {
+                                console.warn(where, trackId, 'names no skill', skillId, '(ignoring it)');
+                            } else {
+                                if (trackIdBySkill[skillId]) console.warn(where, 'puts', skillId, 'on both', trackIdBySkill[skillId], 'and', trackId, '(using', trackId + ')');
+                                trackIdBySkill[skillId] = trackId;
+                            }
+                        }
+                    }
+                }
+            }
+            this.trackIdBySkill = trackIdBySkill;
+        },
+        
+        /*  The track a skill is on for the Agent, which sets what training it costs. See 
+            setSkillsByTrack and pkg.getSkillTrack. */
+        getSkillTrack: function(skillId) {
+            return pkg.getSkillTrack(this.trackIdBySkill?.[skillId]) ?? pkg.getDefaultSkillTrack();
+        },
         getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
         
         /*  A skill as an adjustment sees a stat: it can change within ±MAX_SKILL_VALUE. */

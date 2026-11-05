@@ -13,6 +13,11 @@
         // See getAgingSkillGains.
         agingSkillGains = null,
         
+        // The skill tracks the data gives, by ID, and the one marked the default. See 
+        // getSkillTrack.
+        skillTracks = new Map(),
+        defaultSkillTrack = null,
+        
         commonEventActions = {};
     
     pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
@@ -42,6 +47,39 @@
         DATA_KEY_ACTION_GROUPS = 'actionGroups',
         DATA_KEY_TIME_TRAVEL_ADJ = 'timeTravelAdj',
         DATA_KEY_AGING_SKILL_GAINS = 'agingSkillGains',
+        DATA_KEY_SKILL_TRACKS = 'skillTracks',
+        
+        /*  The track for a skill no track is given for, when the data marks none the default:
+            a credit for a point near 0, and one more for every 100 the skill is from 0. A 
+            track leaving out either number takes it from here. */
+        BUILT_IN_SKILL_TRACK = Object.freeze({id:'default', minCredits:1, pointsPerExtraCredit:100}),
+        
+        /*  Reads one skill track's config, e.g. {"default":true, "minCredits":1, 
+            "pointsPerExtraCredit":100}, into {id, minCredits, pointsPerExtraCredit, isDefault},
+            warning about its problems. A number that's left out or unusable is the built-in 
+            track's. */
+        readSkillTrack = (id, cfg) => {
+            const where = 'Skill track ' + id;
+            if (!isPlainObject(cfg)) {
+                console.warn(where, 'must be an object, e.g. {"minCredits":1, "pointsPerExtraCredit":100} (ignoring it):', cfg);
+                return null;
+            }
+            let {default:isDefault=false, minCredits=BUILT_IN_SKILL_TRACK.minCredits, pointsPerExtraCredit=BUILT_IN_SKILL_TRACK.pointsPerExtraCredit, ...unknown} = cfg;
+            if (Object.keys(unknown).length > 0) console.warn(where, 'has unknown keys', Object.keys(unknown).join(', '), '(ignoring them)');
+            if (typeof isDefault !== 'boolean') {
+                console.warn(where, 'default must be true or false (using false):', isDefault);
+                isDefault = false;
+            }
+            if (!(Number.isInteger(minCredits) && minCredits >= 0)) {
+                console.warn(where, 'minCredits must be a whole number, 0 or more (using ' + BUILT_IN_SKILL_TRACK.minCredits + '):', minCredits);
+                minCredits = BUILT_IN_SKILL_TRACK.minCredits;
+            }
+            if (!(Number.isInteger(pointsPerExtraCredit) && pointsPerExtraCredit > 0)) {
+                console.warn(where, 'pointsPerExtraCredit must be a whole number above 0 (using ' + BUILT_IN_SKILL_TRACK.pointsPerExtraCredit + '):', pointsPerExtraCredit);
+                pointsPerExtraCredit = BUILT_IN_SKILL_TRACK.pointsPerExtraCredit;
+            }
+            return {id, minCredits, pointsPerExtraCredit, isDefault};
+        },
         
         /*  Reads the agingSkillGains config, e.g. {"monthsPerGain":1, "weights":{"luck":25, …}},
             into {monthsPerGain, weights:[[skillId, weight], …], totalWeight}, warning about its
@@ -292,6 +330,12 @@
             {monthsPerGain, weights:[[skillId, weight], …], totalWeight}, or null if none. For 
             every monthsPerGain of lived age, a skill picked by weight gains a point. */
         getAgingSkillGains: () => agingSkillGains,
+        
+        /*  Warns if the data gives skill tracks but marks none the default, so skills an 
+            agent's skillsByTrack leaves out are on the built-in one. */
+        validateSkillTracks: () => {
+            if (skillTracks.size > 0 && !defaultSkillTrack) console.warn(DATA_KEY_SKILL_TRACKS, 'marks no track the default, with "default":true (using a credit, and one more for every 100 points from 0)');
+        },
         
         /*  Warns about each action whose group names no action group. It's shown with the 
             ungrouped actions. */
@@ -598,6 +642,29 @@
                 timeTravelHazards = new pkg.TimeTravelHazardsModel({adj:timeTravelAdj});
             }
             
+            // How much training skills costs, by track, e.g. {"high":{"minCredits":1, 
+            // "pointsPerExtraCredit":200}}. One is marked the default, with "default":true. A 
+            // later file's track replaces an earlier one with the same ID.
+            const skillTracksCfg = json[DATA_KEY_SKILL_TRACKS];
+            if (isPlainObject(skillTracksCfg)) {
+                for (const id in skillTracksCfg) {
+                    if (!pkg.checkId('Skill track', id)) continue;
+                    const track = readSkillTrack(id, skillTracksCfg[id]);
+                    if (track) {
+                        if (skillTracks.has(id)) console.warn('Duplicate skill track', id, '(using the later one)');
+                        skillTracks.set(id, track);
+                        if (track.isDefault) {
+                            if (defaultSkillTrack && defaultSkillTrack.id !== id) console.warn('Skill track', id, 'is marked the default, as', defaultSkillTrack.id, 'is (using', id + ')');
+                            defaultSkillTrack = track;
+                        } else if (defaultSkillTrack?.id === id) {
+                            defaultSkillTrack = null;
+                        }
+                    }
+                }
+            } else if (skillTracksCfg !== undefined) {
+                console.warn(DATA_KEY_SKILL_TRACKS, 'must be an object of tracks by ID (ignoring it):', skillTracksCfg);
+            }
+            
             // Skills gained with experience. A later file's replaces an earlier's.
             const agingSkillGainsCfg = json[DATA_KEY_AGING_SKILL_GAINS];
             if (agingSkillGainsCfg !== undefined) {
@@ -729,6 +796,16 @@
     /*  Whether a skill can be trained at HQ: unless its config says "trainable":false, e.g. 
         luck, which only grows with experience. */
     pkg.isSkillTrainable = skillId => skillCfgs[skillId]?.trainable !== false;
+    
+    /*  A skill track by ID, as {id, minCredits, pointsPerExtraCredit, isDefault}, or undefined.
+        An agent's skillsByTrack puts their skills on tracks, which set what training costs: 
+        minCredits for a point near 0, and one more for every pointsPerExtraCredit the skill
+        is from 0. */
+    pkg.getSkillTrack = trackId => skillTracks.get(trackId);
+    
+    /*  The track for skills an agent's skillsByTrack leaves out: the one the data marks the 
+        default, or else the built-in one. */
+    pkg.getDefaultSkillTrack = () => defaultSkillTrack ?? BUILT_IN_SKILL_TRACK;
     
     /*  The IDs of the default skill checks (action types) configured in the data. */
     pkg.getSkillCheckIds = () => Object.keys(skillCheckDefaults);
