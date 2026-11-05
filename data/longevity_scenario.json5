@@ -622,7 +622,7 @@
 		},
 		
 		"lgv_watcher":{
-			"name":"The Trace", "image":"../location/_nexus.jpg",
+			"name":"The Trace",
 			"start":{"endOf":"lgv_announcement"}, "duration":{"h":1},
 			"location":"_nexus",
 			"actionLimit":3,
