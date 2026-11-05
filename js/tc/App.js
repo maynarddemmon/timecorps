@@ -175,6 +175,8 @@
                                     if (restoreProblem) openAckMsgDialog(i18n('dlg-restore-failed-title'), i18n('dlg-restore-failed-msg', restoreProblem), appView.doReload, null, i18n('btn-start-over'));
                                 } else {
                                     readyToHandleEvents = true;
+                                    // After the baseline, so what's picked is always saved.
+                                    model.pickRandomSkillsByTrack();
                                     model.getInitialOperation()?.start();
                                 }
                                 ready = true;

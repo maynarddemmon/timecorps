@@ -31,6 +31,7 @@
 			"event":"origin_alarm",
 			"health":{"value":70, "max":70},
 			"chronal":{"value":0, "max":25},
+			"randomSkillsByTrack":{"high":2, "low":2},
 			"skills":{
 				"chronogation":-1000,
 			},

@@ -371,3 +371,70 @@ test('the dossier shows a skill\'s track label after its name, unless it\'s on t
     expect(problems.warnings).toEqual(['Skill track low has no label (showing its ID)']);
     expect(problems.pageErrors).toEqual([]);
 });
+
+/*  Alpha's skills by track, as picked for randomSkillsByTrack. */
+const readPicked = page => page.evaluate(() => tc.model.getAgentModel('AL').pickedSkillsByTrack);
+
+test('randomSkillsByTrack puts trainable skills skillsByTrack leaves out on tracks at random as a new game starts, and the save keeps them', async ({page}) => {
+    await page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        json.skills.luck = {name:'Luck', description:'Fate.', trainable:false};
+        json.skillTracks = {standard:{label:'Standard', default:true}, high:{label:'Affinity'}, low:{label:'Aversion'}};
+        return route.fulfill({json});
+    });
+    await page.route('**/tests/data/agents.json5', route => {
+        const json = readTestData('agents.json5');
+        Object.assign(json.agents.AL, {skillsByTrack:{high:['cha']}, randomSkillsByTrack:{high:3, low:3}});
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        picked = await readPicked(page);
+    expect(picked.high).toHaveLength(3);
+    expect(picked.low).toHaveLength(3);
+    const all = [...picked.high, ...picked.low];
+    expect(new Set(all).size).toBe(6);
+    expect(all).not.toContain('luck');
+    expect(all).not.toContain('cha');
+    expect(await page.evaluate(all => {
+        const alpha = tc.model.getAgentModel('AL');
+        return [alpha.getSkillTrack('cha').id, ...all.map(skillId => alpha.getSkillTrack(skillId).id)];
+    }, all)).toEqual(['high', 'high', 'high', 'high', 'low', 'low', 'low']);
+    
+    // A reload keeps them.
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    expect(await readPicked(page)).toEqual(picked);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('randomSkillsByTrack picks with tc.rng, and a broken one is warned about', async ({page}) => {
+    await page.route('**/tests/data/init.json5', route => {
+        const json = readTestData('init.json5');
+        json.skillTracks = {standard:{label:'Standard', default:true}, high:{label:'Affinity'}, low:{label:'Aversion'}};
+        return route.fulfill({json});
+    });
+    await page.route('**/tests/data/agents.json5', route => {
+        const json = readTestData('agents.json5');
+        // 10 skills, 2 put on tracks, so 8 to pick from.
+        Object.assign(json.agents.AL, {skillsByTrack:{low:['agl', 'str']}, randomSkillsByTrack:{high:2, nope:1, low:1.5, standard:7}});
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    
+    // Each roll picks out of what's left: dex, cha, chronogation, investigation, stealth, … 
+    expect(await page.evaluate(() => {
+        tc.rng.queueRolls(1, 0, 0, 0, 0, 0, 0, 0);
+        const alpha = tc.model.getAgentModel('AL');
+        alpha.pickRandomSkillsByTrack();
+        return alpha.pickedSkillsByTrack;
+    })).toEqual({high:['cha', 'dex'], standard:['chronogation', 'investigation', 'stealth', 'disguise', 'deception', 'persuasion']});
+    
+    expect([...new Set(problems.warnings)]).toEqual([
+        'Agent AL randomSkillsByTrack names no skill track nope (ignoring it)',
+        'Agent AL randomSkillsByTrack low must be a whole number, 0 or more (ignoring it): 1.5',
+        'Agent AL randomSkillsByTrack standard runs out of trainable skills to pick (picking 6 of 7)'
+    ]);
+    expect(problems.pageErrors).toEqual([]);
+});

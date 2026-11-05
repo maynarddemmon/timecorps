@@ -336,6 +336,12 @@
             every monthsPerGain of lived age, a skill picked by weight gains a point. */
         getAgingSkillGains: () => agingSkillGains,
         
+        /*  Puts each agent's randomSkillsByTrack skills on their tracks, as a new game 
+            starts. */
+        pickRandomSkillsByTrack: () => {
+            for (const agentModel of model.getAgentModelsAsList()) agentModel.pickRandomSkillsByTrack();
+        },
+        
         /*  Warns if the data gives skill tracks but marks none the default, so skills an 
             agent's skillsByTrack leaves out are on the built-in one, and about each other 
             track without a label, which shows its ID instead. */

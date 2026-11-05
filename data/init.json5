@@ -100,9 +100,9 @@
 	// from 0. Skills an agent leaves out are on the default track. The dossier shows the 
 	// label beside a skill on any other track.
 	"skillTracks":{
-		"high":{"label":"Talented", "minCredits":1, "pointsPerExtraCredit":150},
-		"standard":{"label":"Standard", "default":true, "minCredits":1, "pointsPerExtraCredit":100},
-		"low":{"label":"Untalented", "minCredits":2, "pointsPerExtraCredit":75}
+		"high":{"label":"Talented", "minCredits":1, "pointsPerExtraCredit":125},
+		"standard":{"label":"Standard", "default":true, "minCredits":2, "pointsPerExtraCredit":100},
+		"low":{"label":"Untalented", "minCredits":3, "pointsPerExtraCredit":75}
 	},
 	
 	"skills":{

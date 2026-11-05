@@ -659,10 +659,75 @@
             this.trackIdBySkill = trackIdBySkill;
         },
         
-        /*  The track a skill is on for the Agent, which sets what training it costs. See 
-            setSkillsByTrack and pkg.getSkillTrack. */
+        /*  How many skills to put on tracks at random for each new game, e.g. {"high":3, 
+            "low":3}, by the IDs of tracks init.json5's "skillTracks" gives. They're picked from
+            the trainable skills skillsByTrack leaves out. A track that doesn't exist, or a 
+            count that isn't a whole number, is warned about and ignored. */
+        setRandomSkillsByTrack: function(randomSkillsByTrack) {
+            const where = 'Agent ' + this.id + ' randomSkillsByTrack',
+                counts = {};
+            if (randomSkillsByTrack != null && !isPlainObject(randomSkillsByTrack)) {
+                console.warn(where, 'must be an object of counts by track ID, e.g. {"high":3, "low":3} (ignoring it):', randomSkillsByTrack);
+            } else {
+                for (const trackId in randomSkillsByTrack) {
+                    const count = randomSkillsByTrack[trackId];
+                    if (!pkg.getSkillTrack(trackId)) {
+                        console.warn(where, 'names no skill track', trackId, '(ignoring it)');
+                    } else if (!(Number.isInteger(count) && count >= 0)) {
+                        console.warn(where, trackId, 'must be a whole number, 0 or more (ignoring it):', count);
+                    } else {
+                        counts[trackId] = count;
+                    }
+                }
+            }
+            this.randomSkillsByTrack = counts;
+        },
+        
+        /*  Picks the skills randomSkillsByTrack puts on tracks, with tc.rng, replacing any 
+            picked before. Done as a new game starts, and saved with it. Warns if there aren't
+            enough trainable skills left to pick from. */
+        pickRandomSkillsByTrack: function() {
+            const counts = this.randomSkillsByTrack ?? {};
+            if (Object.keys(counts).length === 0) return;
+            
+            const explicit = this.trackIdBySkill ?? {},
+                candidates = pkg.getSkillIds().filter(skillId => pkg.isSkillTrainable(skillId) && !explicit[skillId]),
+                picked = {};
+            for (const trackId in counts) {
+                const skillIds = picked[trackId] = [];
+                for (let i = 0; i < counts[trackId]; i++) {
+                    if (candidates.length === 0) {
+                        console.warn('Agent', this.id, 'randomSkillsByTrack', trackId, 'runs out of trainable skills to pick (picking', skillIds.length, 'of', counts[trackId] + ')');
+                        break;
+                    }
+                    skillIds.push(candidates.splice(pkg.rng.roll(candidates.length), 1)[0]);
+                }
+            }
+            this.setPickedSkillsByTrack(picked);
+        },
+        
+        /*  Puts skills on tracks as picked by pickRandomSkillsByTrack, e.g. from a save, 
+            {"high":["dex", …], …}. A track or skill that no longer exists is ignored. */
+        setPickedSkillsByTrack: function(picked) {
+            const trackIdBySkill = {},
+                kept = {};
+            if (isPlainObject(picked)) {
+                for (const trackId in picked) {
+                    if (!pkg.getSkillTrack(trackId) || !Array.isArray(picked[trackId])) continue;
+                    kept[trackId] = picked[trackId].filter(skillId => pkg.isSkillId(skillId));
+                    for (const skillId of kept[trackId]) trackIdBySkill[skillId] = trackId;
+                }
+            }
+            this.pickedSkillsByTrack = Object.keys(kept).length > 0 ? kept : null;
+            this.pickedTrackIdBySkill = trackIdBySkill;
+            this.notifyCollectionOfUpdate();
+        },
+        
+        /*  The track a skill is on for the Agent, which sets what training it costs: by 
+            skillsByTrack, or else as picked for randomSkillsByTrack, or else the default. See
+            pkg.getSkillTrack. */
         getSkillTrack: function(skillId) {
-            return pkg.getSkillTrack(this.trackIdBySkill?.[skillId]) ?? pkg.getDefaultSkillTrack();
+            return pkg.getSkillTrack(this.trackIdBySkill?.[skillId] ?? this.pickedTrackIdBySkill?.[skillId]) ?? pkg.getDefaultSkillTrack();
         },
         
         /*  What the dossier shows beside a skill for its track: the track's label, or its ID
@@ -778,6 +843,8 @@
                 effectiveAge:this.effectiveAge,
                 timeLivedAtEvent:this.timeLivedAtEvent,
                 livedTowardSkillGain:this.livedTowardSkillGain,
+                // Picked as the game started, after the baseline is taken, so always saved.
+                pickedSkillsByTrack:this.pickedSkillsByTrack ?? null,
                 log:this.log.map(exportLogEntry)
             };
             if (this.attrsSetByAction) retval.attrsSetByAction = {...this.attrsSetByAction};
@@ -820,6 +887,7 @@
             if (STAT_ID_EFFECTIVE_AGE in obj) this.set(STAT_ID_EFFECTIVE_AGE, obj.effectiveAge, true);
             if ('timeLivedAtEvent' in obj) this.timeLivedAtEvent = obj.timeLivedAtEvent;
             if ('livedTowardSkillGain' in obj) this.livedTowardSkillGain = obj.livedTowardSkillGain;
+            if ('pickedSkillsByTrack' in obj) this.setPickedSkillsByTrack(obj.pickedSkillsByTrack);
             
             if (obj.log) {
                 const log = [];

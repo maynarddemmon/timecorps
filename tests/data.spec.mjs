@@ -702,7 +702,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
     
-    test('exactly one skill track is the default, and every agent\'s skillsByTrack names tracks and skills that exist', () => {
+    test('exactly one skill track is the default, and every agent\'s skillsByTrack and randomSkillsByTrack name tracks and skills that exist', () => {
         const problems = [],
             defaults = Object.keys(skillTracks).filter(trackId => skillTracks[trackId].default === true);
         if (Object.keys(skillTracks).length > 0 && defaults.length !== 1) problems.push('skill tracks marked the default: ' + (defaults.join(', ') || 'none'));
@@ -721,6 +721,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     seen.add(skillId);
                 }
                 if (!Array.isArray(skillIds)) problems.push(agentId + ' skillsByTrack ' + trackId + ' is not an array');
+            }
+            for (const [trackId, count] of Object.entries(agent.randomSkillsByTrack ?? {})) {
+                if (!skillTracks[trackId]) problems.push(agentId + ' randomSkillsByTrack names no track ' + trackId);
+                if (!(Number.isInteger(count) && count >= 0)) problems.push(agentId + ' randomSkillsByTrack ' + trackId + ' is not a whole number, 0 or more');
             }
         }
         expect(problems).toEqual([]);
