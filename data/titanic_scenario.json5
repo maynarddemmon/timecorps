@@ -3,8 +3,7 @@
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
 			"image":true,
-			// Offered from either faction's HQ job board, which sets this.
-			"shown":"scratch.operation_titanicOffered",
+			// Offered from either faction's HQ job board, which reveals it.
 			"description":[
 				{
 					"text":"Too few lifeboats means a massive loss of life is imminent.",

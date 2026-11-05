@@ -1,7 +1,7 @@
 // set and adj on missions (onSetup and onSuccess), and set and adj keys that name another
 // Event, e.g. "events.aftermath.attestation", which actions and exits can use too.
 import {test, expect} from '@playwright/test';
-import {startGame, readTestData} from './helpers.mjs';
+import {startGame, readTestData, reloadGame, dialogTitle} from './helpers.mjs';
 
 const readStats = page => page.evaluate(() => {
     const m = tc.model;
@@ -224,5 +224,52 @@ test('check expressions can read any agent or Event, and nextOperation can be on
     })).toEqual([null, null]);
     
     expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('set can reveal an Operation by its hidden or shown, which offers it, and it stays revealed', async ({page}) => {
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        Object.assign(json.events.origin.actions, {
+            offer:{label:'Offer', skillCheck:{difficulty:'no-roll'}, set:{'operations.third.hidden':'false'}},
+            withdraw:{label:'Withdraw', skillCheck:{difficulty:'no-roll'}, set:{'operations.third.shown':'false'}},
+            // Live, so it reveals once there's a note.
+            promise:{label:'Promise', skillCheck:{difficulty:'no-roll'}, set:{'operations.second.shown':'scratch.plan_noteCount > 0'}},
+            // Neither can be: an adj, or anything but hidden and shown.
+            bad:{label:'Bad', skillCheck:{difficulty:'no-roll'}, adj:{'operations.third.hidden':'1'}, set:{'operations.third.name':"'Renamed'"}}
+        });
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        act = actionId => page.evaluate(actionId => {
+            tc.model.getAgentModel('AL').doAction(tc.model.getEventModel('origin').getActionModels()[actionId]);
+        }, actionId),
+        readStates = () => page.evaluate(() => ['second', 'third'].map(id => tc.model.getOperationModel(id).getState()));
+    expect(await readStates()).toEqual(['hidden', 'hidden']);
+    
+    // Revealing it offers its brief.
+    await act('offer');
+    expect(await readStates()).toEqual(['hidden', 'available']);
+    await expect(dialogTitle(page, 'Mission Brief : Third Mission')).toBeVisible();
+    await page.getByRole('button', {name:'X', exact:true}).filter({visible:true}).click();
+    
+    // Once revealed, a set can't hide it again.
+    await act('withdraw');
+    expect(await readStates()).toEqual(['hidden', 'available']);
+    
+    // A live expression is saved until it reveals.
+    await act('promise');
+    expect(await readStates()).toEqual(['hidden', 'available']);
+    await page.evaluate(() => tc.persistence.save());
+    await reloadGame(page);
+    expect(await readStates()).toEqual(['hidden', 'available']);
+    await page.evaluate(() => tc.model.setScratch('plan_noteCount', 1));
+    expect(await readStates()).toEqual(['available', 'available']);
+    
+    // Once at each load.
+    expect([...new Set(problems.warnings)]).toEqual([
+        'Event origin action bad adj operations.third.hidden can only be set, not adjusted (ignoring it): 1',
+        'Event origin action bad set operations.third.name names nothing of an Operation that can be set, only hidden or shown (ignoring it): \'Renamed\''
+    ]);
     expect(problems.pageErrors).toEqual([]);
 });

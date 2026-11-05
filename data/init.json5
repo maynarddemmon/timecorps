@@ -167,8 +167,7 @@
 		"transfer":0, // Used when an amount needs to be calculated before it is used in multiple set/adj.
 		"syndicate_hq_hidden":"true",
 		"time_corps_hq_hidden":"true",
-		"the_void_hidden":"true",
-		"operation_titanicOffered":false
+		"the_void_hidden":"true"
 	},
 	
 	"events":{
@@ -269,7 +268,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"hidden":"operations.titanic_noCollision.shown",
 					"costs":{"agent.action":null},
-					"set":{"scratch.operation_titanicOffered":"true"}
+					"set":{"operations.titanic_noCollision.hidden":"false"}
 				}
 			}
 		},
@@ -359,7 +358,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"hidden":"operations.titanic_noCollision.shown",
 					"costs":{"agent.action":null},
-					"set":{"scratch.operation_titanicOffered":"true"}
+					"set":{"operations.titanic_noCollision.hidden":"false"}
 				}
 			}
 		}

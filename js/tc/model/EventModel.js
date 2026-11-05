@@ -20,7 +20,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH,
+            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS,
             DIFFICULTY_NO_ROLL, toDifficulty
         } = pkg,
         
@@ -160,6 +160,9 @@
         // Attributes a set can't change, though they have setters: the ID, and collections
         // that have keys of their own, e.g. "agent.skills.agl" or "events.x.values.y".
         UNSETTABLE_ATTR_NAMES = ['id', SCOPE_SKILLS, 'actions', 'values', 'exits'],
+        
+        // What set can change about an Operation, e.g. "operations.titanic_noCollision.hidden".
+        SETTABLE_OPERATION_ATTR_NAMES = ['hidden', 'shown'],
         
         /*  Whether set can change an attribute of an agent or Event, e.g. "hidden": anything
             with a setter, other than what has a key of its own. */
@@ -310,6 +313,9 @@
                 {kind:'attr', scopeName, agentId, eventId, statId:attrName, attrName} - any 
                     other attribute with a setter of an agent or Event, theirs or any by ID, 
                     e.g. "agents.AF.hidden" or "event.chronoLocked". Set only.
+                {kind:'attr', scopeName:'operations', operationId, statId:attrName, attrName} -
+                    whether an Operation is hidden, e.g. "operations.titanic_noCollision.hidden"
+                    or its "shown". Set only.
                 {error} - a phrase for a warning. */
             let parsedKey;
             const [scopeName, statId, ...rest] = String(key).split('.');
@@ -346,6 +352,17 @@
                 parsedKey = {kind:'value', eventId:statId, statId:'values.' + rest[1], valueId:rest[1]};
             } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
                 parsedKey = {kind:'stat', scopeName, statId};
+            } else if (scopeName === SCOPE_OPERATIONS && rest.length === 1) {
+                const attrName = rest[0];
+                if (!SETTABLE_OPERATION_ATTR_NAMES.includes(attrName)) {
+                    warn('names nothing of an Operation that can be set, only hidden or shown (ignoring it)');
+                    return null;
+                }
+                if (!isSet) {
+                    warn('can only be set, not adjusted (ignoring it)');
+                    return null;
+                }
+                parsedKey = {kind:'attr', scopeName, operationId:statId, statId:attrName, attrName};
             } else if (
                 ((scopeName === SCOPE_AGENT || scopeName === SCOPE_EVENT) && rest.length === 0) ||
                 ((scopeName === SCOPE_AGENTS || scopeName === SCOPE_EVENTS) && rest.length === 1)
@@ -367,7 +384,7 @@
                     eventId:byId && !isAgent ? statId : undefined
                 };
             } else {
-                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", an attribute with a setter of an agent or Event, e.g. "agents.AF.hidden", or "scratch.<name>" (ignoring it)');
+                warn('must be named for a stat of the agent, event or timeline, e.g. "agent.health", a skill of the agent, e.g. "agent.skills.agl", a Value of the Event, a stat or Value of another Event, e.g. "events.collision.historicity" or "events.collision.values.struck", a stat, skill, Event or Faction of another agent, e.g. "agents.ME.chronal", "agents.ME.skills.agl", "agents.ME.event" or "agents.ME.faction", an attribute with a setter of an agent or Event, e.g. "agents.AF.hidden", whether an Operation is hidden or shown, e.g. "operations.titanic_noCollision.hidden", or "scratch.<name>" (ignoring it)');
                 return null;
             }
             
@@ -493,13 +510,17 @@
                         break;
                     }
                     case 'attr': {
-                        const {attrName, agentId, eventId, scopeName} = parsedKey,
+                        const {attrName, agentId, eventId, operationId, scopeName} = parsedKey,
                             rootModel = pkg.model,
                             target = agentId !== undefined ? rootModel.getAgentModel(agentId) : 
                                 eventId !== undefined ? rootModel.getEventModel(eventId) :
+                                operationId !== undefined ? rootModel.getOperationModel(operationId) :
                                 scopeName === SCOPE_AGENT ? agentModel : eventModel;
                         if (!target) {
-                            console.warn('No agent or Event to set', key, 'of');
+                            console.warn('No agent, Event or Operation to set', key, 'of');
+                        } else if (operationId !== undefined && target.revealed) {
+                            // Once revealed, an Operation stays revealed, so there's nothing 
+                            // left to change, e.g. for a job board checked a second time.
                         } else if (isPerResult) {
                             // Set as a literal, so it stays what it was worked out to be.
                             const result = rollValue(expr, rollCfg);

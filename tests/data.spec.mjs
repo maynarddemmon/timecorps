@@ -449,6 +449,11 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     if (rest.length === 1 && isSet) return null;
                     return 'is not a stat or Value of that Event';
                 }
+                if (scope === 'operations') {
+                    if (!operations[statId]) return 'names no Operation';
+                    if (rest.length === 1 && ['hidden', 'shown'].includes(rest[0])) return isSet ? null : 'is whether an Operation is hidden, which can only be set';
+                    return 'is not hidden or shown, all a set can change of an Operation';
+                }
                 if (scope === 'scratch' && rest.length === 0) return Object.hasOwn(scratch, statId) ? null : 'is not declared';
                 if (scope === 'agent' && statId === 'skills' && rest.length === 1) return Object.hasOwn(skillCfgs, rest[0]) ? null : 'is not a skill';
                 if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scope) && ADJUSTMENT_STAT_IDS[scope].includes(statId)) return null;

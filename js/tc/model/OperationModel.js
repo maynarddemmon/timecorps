@@ -350,7 +350,11 @@
         
         // Persistence /////////////////////////////////////////////////
         exportToObj: function() {
-            return {revealed:!!this.revealed, setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
+            const retval = {revealed:!!this.revealed, setupApplied:!!this.setupApplied, successGranted:!!this.successGranted};
+            // A "hidden" a set gave it, e.g. a live expression yet to reveal it. Once revealed,
+            // it's nothing.
+            if (this.attrsSetByAction && !this.revealed) retval.attrsSetByAction = {...this.attrsSetByAction};
+            return retval;
         },
         
         /*  Restoring these before the current Operation is set keeps the setup and success
@@ -358,7 +362,11 @@
             being offered again. A started Operation was revealed, as saves from before
             "revealed" was kept don't say. */
         importFromObj: function(obj) {
-            if (obj.revealed || obj.setupApplied) this.reveal();
+            if (obj.revealed || obj.setupApplied) {
+                this.reveal();
+            } else {
+                for (const attrName in obj.attrsSetByAction) pkg.setAttrByAction(this, attrName, obj.attrsSetByAction[attrName]);
+            }
             if ('setupApplied' in obj) this.setupApplied = obj.setupApplied;
             if ('successGranted' in obj) this.set('successGranted', obj.successGranted, true);
         },
