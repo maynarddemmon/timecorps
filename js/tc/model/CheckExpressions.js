@@ -4,6 +4,7 @@
     const {I18N:{get:i18n}} = myt,
         
         {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
+        isFinite = Number.isFinite,
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
@@ -29,19 +30,20 @@
             PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN, PARAM_CHRONAL
         ],
         
-        // An arbitrary limit on the number of dice in one d(sides, count).
-        MAX_DICE = 99,
-        
-        /*  The d(sides, count) function an expression sees. Sides and count must be numbers, so
-            anything else throws and fails the check. Numbers are cleaned up so a computed count, 
-            e.g. from an Event's duration, still rolls: both are rounded, sides to at least 1 and 
-            count to 1 to MAX_DICE. Returns [sides, count]. */
+        // Die Rolling /////////////////////////////////////////////////////////
+        /*  Cleans up the sides and count the die function in an expression uses. Sides and count 
+            must be integers of at least 1, and count is capped at 99.
+            Returns an Array with [sides, count]. */
         cleanDice = (sides, count) => {
-            if (Number.isFinite(sides)) {
-                if (Number.isFinite(count)) {
+            if (isFinite(sides)) {
+                if (isFinite(count)) {
                     return [
-                        mathMax(1, mathRound(sides)), // At least 1 side
-                        mathMin(MAX_DICE, mathMax(1, mathRound(count))) // Between 1 and MAX_DICE
+                        // At least 1 side
+                        mathMax(1, mathRound(sides)),
+                        
+                        // We place an arbitrary upper limit of 99 on the count to prevent 
+                        // exceptionally high die counts.
+                        mathMin(99, mathMax(1, mathRound(count)))
                     ];
                 } else {
                     throw new RangeError('d(' + sides + ', ' + count + ') needs a number of dice');
@@ -51,24 +53,26 @@
             }
         },
         
-        // Rolls the dice and totals them, each 1 to sides. A queued roll is a die's value minus 1.
+        // Rolls a die 1 or more times and returns the total.
         rollDie = (sides, count=1) => {
             [sides, count] = cleanDice(sides, count);
-            let total = 0;
-            for (let i = 0; i < count; i++) total += roll(sides) + 1;
+            let total = count; // Because roll() is 0-(sides-1).
+            while (count--) total += roll(sides);
             return total;
         },
         
-        /*  The dice's average total, count * (1 + sides) / 2, for working out an ease without 
-            rolling. Success is linear in the ease, so a check's chance at the average ease is its
-            true chance, unless the ease gets clamped. */
+        /*  The dice's average total. Used for working out an ease without rolling. Success is 
+            linear in the ease, so a check's chance at the average ease is its true chance, unless 
+            the ease gets clamped. */
         averageDie = (sides, count=1) => {
             [sides, count] = cleanDice(sides, count);
             return count * (1 + sides) / 2;
         },
         
-        // Compiled check functions by expression text. The parameters are the same for every
-        // check, so events that share an expression share one function.
+        
+        // Expression Compilations /////////////////////////////////////////////
+        /*  Compiled check functions by expression text. The parameters are the same for every
+            check, so events that share an expression share one function. */
         COMPILED = new Map(),
         
         // Skills an agent doesn't have count as 0, so a check can name any skill without error.
@@ -80,12 +84,14 @@
         AGENT_HANDLER = {
             get: (agentModel, key) => key === SCOPE_SKILLS ? new Proxy(agentModel.getSkills(), SKILLS_HANDLER) : agentModel[key]
         },
+        
         AGENT_VIEWS = new WeakMap(),
         
         // Any agent by ID, as "agents.<id>", seen as the acting agent is.
         AGENTS_HANDLER = {
             get: (agentModels, key) => typeof key === 'string' ? getAgentView(agentModels[key]) : agentModels[key]
         },
+        
         getAgentView = agentModel => {
             if (!agentModel) return agentModel;
             let view = AGENT_VIEWS.get(agentModel);
@@ -109,7 +115,7 @@
                 try {
                     func = build(expr);
                 } catch (err) {
-                    console.warn('Check expression does not compile (' + err.message + '):', expr);
+                    console.warn('Expression does not compile (' + err.message + '):', expr);
                     // Stands in for an expression that doesn't compile. It's cached like any 
                     // other, so the warning only happens once per expression.
                     func = NOT_COMPILED;
@@ -155,7 +161,7 @@
             const value = evaluateRaw(expr, cfg, die);
             if (value !== undefined) {
                 const number = Number(value);
-                if (Number.isFinite(number)) {
+                if (isFinite(number)) {
                     return number;
                 } else {
                     console.warn('Check expression is not a finite number (' + value + '):', expr);
@@ -203,8 +209,7 @@
             [-899, i18n('ease-brutal')],    // 10.1%
             [-999, i18n('ease-hopeless')]   // 0.1%
         ],
-        I18N_EASE_IMPOSSIBLE = i18n('ease-impossible'),
-        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? I18N_EASE_IMPOSSIBLE,
+        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? i18n('ease-impossible'),
         
         /*  The phrase for an amount of damage, by the least damage that earns it. Against an 
             Agent's normal health of 100. */
@@ -219,8 +224,7 @@
             [5,   i18n('damage-moderate-injury')],
             [1,   i18n('damage-light-injury')]
         ],
-        I18N_DAMAGE_HARMLESS = i18n('damage-harmless'),
-        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? I18N_DAMAGE_HARMLESS,
+        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? i18n('damage-harmless'),
         
         /*  Evaluates check expressions for checks such as investigating. An expression is plain 
             JavaScript that evaluates to an ease: the number added to a roll of 0 to 999, where a 
