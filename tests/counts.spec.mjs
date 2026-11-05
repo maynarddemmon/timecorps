@@ -107,18 +107,18 @@ test('counts survive a save and reload, are saved only once changed, and restori
     const problems = await startGame(page);
 
     // Untouched, nothing is saved.
-    let diff = await page.evaluate(() => tc.persistence.exportDiff());
+    let diff = await page.evaluate(() => tc.getPersistenceManager().exportDiff());
     expect(diff.events?.plan).toBeUndefined();
 
     await takeAction(page, 'AL', 'plan', 'prepare');
     await takeAction(page, 'AL', 'plan', 'unprepare');
     await takeAction(page, 'AL', 'plan', 'prepare');
-    diff = await page.evaluate(() => tc.persistence.exportDiff());
+    diff = await page.evaluate(() => tc.getPersistenceManager().exportDiff());
     expect(diff.events.plan.values.prepared).toEqual({value:'true', flipCount:3});
     expect(diff.events.plan.actions).toEqual({prepare:{attemptCount:2,doneCount:2}, unprepare:{attemptCount:1,doneCount:1}});
     expect(diff.events.relay).toBeUndefined();
 
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readFlips(page)).toEqual({prepared:true, preparedFlips:3, ready:true, readyFlips:0});
     expect(await page.evaluate(() => {

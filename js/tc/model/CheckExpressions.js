@@ -4,7 +4,7 @@
     const {I18N:{get:i18n}} = myt,
         
         {min:mathMin, max:mathMax, abs:mathAbs, round:mathRound} = Math,
-        isFinite = Number.isFinite,
+        isFiniteNumber = Number.isFinite,
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
@@ -12,31 +12,23 @@
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
-            isNoRollDifficulty,
             ICON_SEPARATOR
         } = pkg,
         
         PARAM_DIFFICULTY = 'difficulty',
-        PARAM_DIE = 'd',
-        PARAM_MARGIN = 'margin',
-        PARAM_CHRONAL = 'chronal',
-        FUNC_PARAMS = [
-            SCOPE_AGENT, SCOPE_AGENTS, 
-            SCOPE_EVENT, SCOPE_EVENTS, 
-            SCOPE_TIMELINE,
-            SCOPE_SCRATCH,
-            SCOPE_FACTIONS,
-            SCOPE_OPERATIONS,
-            PARAM_DIFFICULTY, PARAM_DIE, PARAM_MARGIN, PARAM_CHRONAL
-        ],
+        
+        // A difficulty in the data that skips the roll, so the check always succeeds. It's
+        // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
+        DIFFICULTY_NO_ROLL = 'no-roll',
+        DIFFICULTY_NO_ROLL_THRESHOLD = -999999,
         
         // Die Rolling /////////////////////////////////////////////////////////
         /*  Cleans up the sides and count the die function in an expression uses. Sides and count 
-            must be integers of at least 1, and count is capped at 99.
-            Returns an Array with [sides, count]. */
+            will be converted to integers of at least 1, and count is capped at 99.
+            Returns an Array with [sides, count] or throws an Error. */
         cleanDice = (sides, count) => {
-            if (isFinite(sides)) {
-                if (isFinite(count)) {
+            if (isFiniteNumber(sides)) {
+                if (isFiniteNumber(count)) {
                     return [
                         // At least 1 side
                         mathMax(1, mathRound(sides)),
@@ -68,6 +60,9 @@
             [sides, count] = cleanDice(sides, count);
             return count * (1 + sides) / 2;
         },
+        
+        /*  True if a check at this difficulty skips the roll and always succeeds. */
+        isNumericNoRollDifficulty = difficulty => difficulty <= DIFFICULTY_NO_ROLL_THRESHOLD,
         
         
         // Expression Compilations /////////////////////////////////////////////
@@ -101,56 +96,61 @@
         
         /*  What compile gives for an expression that doesn't compile. NaN makes every check
             with it fail, and evaluateExpr doesn't warn about it again. */
-        NOT_COMPILED = () => NaN,
-        
-        /*  Returns the function, or throws if the expression doesn't compile. */
-        build = expr => {
-            if (typeof expr !== 'string' || expr.trim() === '') throw new TypeError('expression must be a non-empty string');
-            return new Function(...FUNC_PARAMS, '"use strict";return(' + expr + ');');
-        },
-        
-        compile = expr => {
-            let func = COMPILED.get(expr);
-            if (!func) {
-                try {
-                    func = build(expr);
-                } catch (err) {
-                    console.warn('Expression does not compile (' + err.message + '):', expr);
-                    // Stands in for an expression that doesn't compile. It's cached like any 
-                    // other, so the warning only happens once per expression.
-                    func = NOT_COMPILED;
-                }
-                COMPILED.set(expr, func);
-            }
-            return func;
-        },
+        NOT_COMPILED_FUNC = () => NaN,
         
         /*  Evaluates an expression with die as its d function, as whatever it gives. 
             undefined, with a warning, if it doesn't compile or throws. */
         evaluateRaw = (expr, {agent, event, difficulty=0, margin=0, chronal=0}, die) => {
-            const func = compile(expr);
-            if (func !== NOT_COMPILED) {
+            // Get the expression function or attempt to compile it.
+            let func = COMPILED.get(expr);
+            if (!func) {
+                if (typeof expr !== 'string' || expr.trim() === '') {
+                    console.warn('Expression does not compile (expression must be a non-empty string):', expr);
+                    // Stands in for an expression that doesn't compile. It's cached like any 
+                    // other, so the warning only happens once per expression.
+                    func = NOT_COMPILED_FUNC;
+                } else {
+                    func = new Function(
+                        SCOPE_AGENT,
+                        SCOPE_AGENTS,
+                        SCOPE_EVENT,
+                        SCOPE_EVENTS,
+                        SCOPE_TIMELINE,
+                        SCOPE_SCRATCH,
+                        SCOPE_FACTIONS,
+                        SCOPE_OPERATIONS,
+                        PARAM_DIFFICULTY,
+                        'd', // The die roll param.
+                        'margin', // The margin of success param.
+                        'chronal', // The chronal used param.
+                        '"use strict";return(' + expr + ');'
+                    );
+                }
+                COMPILED.set(expr, func);
+            }
+            
+            // Execute the expression function.
+            if (func !== NOT_COMPILED_FUNC) {
                 try {
                     const rootModel = pkg.model;
                     return func(
-                        getAgentView(agent),                                   // agent
-                        new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER), // agents
-                        event,                                                 // event
-                        rootModel.getEventModels(),                            // events
-                        rootModel,                                             // timeline
-                        rootModel[SCOPE_SCRATCH],                              // scratch
-                        rootModel.getFactionModels(),                          // factions
-                        rootModel.getOperationModels(),                        // operations
-                        difficulty,                                            // difficulty
-                        die,                                                   // d
-                        margin,                                                // margin
-                        chronal                                                // chronal
+                        getAgentView(agent),                                   // SCOPE_AGENT
+                        new Proxy(rootModel.getAgentModels(), AGENTS_HANDLER), // SCOPE_AGENTS
+                        event,                                                 // SCOPE_EVENT
+                        rootModel.getEventModels(),                            // SCOPE_EVENTS
+                        rootModel,                                             // SCOPE_TIMELINE
+                        rootModel[SCOPE_SCRATCH],                              // SCOPE_SCRATCH
+                        rootModel.getFactionModels(),                          // SCOPE_FACTIONS
+                        rootModel.getOperationModels(),                        // SCOPE_OPERATIONS
+                        difficulty,                                            // PARAM_DIFFICULTY
+                        die,                                                   // 'd'
+                        margin,                                                // 'margin'
+                        chronal                                                // 'chronal'
                     );
                 } catch (err) {
                     console.warn('Check expression threw (' + err.message + '):', expr);
                 }
             }
-            return undefined;
         },
         
         /*  Evaluates an expression with die as its d function, as a number: a boolean is 1
@@ -161,11 +161,9 @@
             const value = evaluateRaw(expr, cfg, die);
             if (value !== undefined) {
                 const number = Number(value);
-                if (isFinite(number)) {
-                    return number;
-                } else {
-                    console.warn('Check expression is not a finite number (' + value + '):', expr);
-                }
+                if (isFiniteNumber(number)) return number;
+                
+                console.warn('Check expression is not a finite number (' + value + '):', expr);
             }
             return NaN;
         },
@@ -177,13 +175,14 @@
             const {difficulty=0, maxEase=0, minEase=-DIE_SIZE} = cfg;
             
             // A no-roll check always succeeds, whatever the expression, and rolls no dice.
-            if (isNoRollDifficulty(difficulty)) return 0;
+            if (isNumericNoRollDifficulty(difficulty)) return 0;
             
             return mathMax(minEase, mathMin(maxEase, evaluateExpr(expr, cfg, die))); // NaN stays NaN.
         },
         
         /*  The ease without rolling: any d(sides) counts as its average. */
-        getEase = (expr, cfg={}) => evaluateEase(expr, cfg, averageDie),
+        getSkillEase = (skillExpr, cfg) => evaluateEase(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg), averageDie),
+        
         
         /*  The expression for a skill check: (skillExpr) - difficulty. The parentheses keep an 
             expression using ||, ?: or comparisons from changing what difficulty is taken from. */
@@ -192,6 +191,15 @@
         /*  Skill checks always have at least a 0.1% chance of success and of failure, unless 
             the cfg says otherwise. */
         toSkillCheckCfg = cfg => ({maxEase:MAX_SKILL_EASE, minEase:MIN_SKILL_EASE, ...cfg}),
+        
+        /*  The average margin, roll + ease, of a check that passes or fails at this ease, for 
+            working out an amount without rolling. Rolls run from 0 to DIE_SIZE - 1, so a pass 
+            averages the passing results and a failure the failing ones. Meaningless for a result 
+            that can't happen at that ease. */
+        getAverageMargin = (ease, success) => {
+            const lowestPassingRoll = mathMax(0, -ease);
+            return success ? (lowestPassingRoll + DIE_SIZE - 1) / 2 + ease : (ease - 1) / 2;
+        },
         
         /*  The ease phrase for an ease, by the lowest ease that earns it. The comment is the
             chance of success at that ease. */
@@ -209,7 +217,6 @@
             [-899, i18n('ease-brutal')],    // 10.1%
             [-999, i18n('ease-hopeless')]   // 0.1%
         ],
-        toEasePhrase = ease => EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? i18n('ease-impossible'),
         
         /*  The phrase for an amount of damage, by the least damage that earns it. Against an 
             Agent's normal health of 100. */
@@ -224,7 +231,6 @@
             [5,   i18n('damage-moderate-injury')],
             [1,   i18n('damage-light-injury')]
         ],
-        toDamagePhrase = damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? i18n('damage-harmless'),
         
         /*  Evaluates check expressions for checks such as investigating. An expression is plain 
             JavaScript that evaluates to an ease: the number added to a roll of 0 to 999, where a 
@@ -251,39 +257,34 @@
             
             An expression that doesn't compile, throws or isn't a number fails, with a warning. */
         CHECK = pkg.checks = {
-            /*  Returns why an expression can't be compiled, or null if it can.
-                Used for testing only. */
-            getCompileError: expr => {
-                try {
-                    build(expr);
-                    return null;
-                } catch (err) {
-                    return err.message;
+            /*  Validates a difficulty value configured in the JSON and converts it to a
+                numeric difficulty value. */
+            validateDifficultyValue: (difficulty, warnFunc) => {
+                if (Number.isInteger(difficulty) || difficulty === DIFFICULTY_NO_ROLL) {
+                    return CHECK.toNumericDifficulty(difficulty);
                 }
+                warnFunc?.('difficulty must be an integer or "' + DIFFICULTY_NO_ROLL + '"');
             },
             
-            compile, // Exposed for testing only.
-            getEase, // Exposed for testing only.
+            /*  A difficulty from the data as a number, so DIFFICULTY_NO_ROLL becomes the 
+                threshold. Anything else is returned as is. */
+            toNumericDifficulty: v => v === DIFFICULTY_NO_ROLL ? DIFFICULTY_NO_ROLL_THRESHOLD : v,
             
-            /*  The average margin, roll + ease, of a check that passes or fails at this ease,
-                for working out an amount without rolling. Rolls run from 0 to DIE_SIZE - 1, so
-                a pass averages the passing results and a failure the failing ones. Meaningless 
-                for a result that can't happen at that ease. */
-            getAverageMargin: (ease, success) => {
-                const lowestPassingRoll = mathMax(0, -ease);
-                return success ? (lowestPassingRoll + DIE_SIZE - 1) / 2 + ease : (ease - 1) / 2;
-            },
-            
-            /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
-                Returns {success, result, roll, difficulty, ease} where result is roll + ease. A
-                no-roll check doesn't roll, so its roll is null and its result is 0. Any dice in
-                the expression are rolled first, then the check's roll. */
-            evaluate: (expr, cfg={}) => {
-                const difficulty = cfg.difficulty ?? 0,
-                    ease = evaluateEase(expr, cfg, rollDie),
-                    dieRoll = isNoRollDifficulty(difficulty) ? null : roll(),
-                    result = (dieRoll ?? 0) + ease;
-                return {success:result >= 0, result, roll:dieRoll, difficulty, ease};
+            /*  The average margin of the check that decides it, for a pass or a failure: its own
+                check, or else its action's. 0 if nothing is rolled, as for an exit without a check 
+                of its own or a no-roll check. */
+            getAverageMarginForAgent: (statAdjModel, agentModel, success) => {
+                const decider = statAdjModel.hasOwnCheck() ? statAdjModel : (statAdjModel.owner.isGatedByActionSkillCheck() ? statAdjModel.owner : null);
+                if (decider) {
+                    const difficulty = decider.getActionSkillDifficulty();
+                    if (!isNumericNoRollDifficulty(difficulty)) {
+                        return getAverageMargin(
+                            getSkillEase(decider.getActionSkillExpr(), {agent:agentModel, event:agentModel.getEventModel(), difficulty}), 
+                            success
+                        );
+                    }
+                }
+                return 0;
             },
             
             /*  Evaluates an amount, such as damage, rolling any dice. The same parameters as a 
@@ -306,21 +307,34 @@
                 than quietly allowing everything. */
             isTrue: (expr, cfg={}) => !!CHECK.getAverageAmount(expr, cfg),
             
+            /*  Rolls and evaluates against cfg {agent, event, difficulty, maxEase, minEase}. 
+                Returns {success, result, roll, difficulty, ease} where result is roll + ease. A
+                no-roll check doesn't roll, so its roll is null and its result is 0. Any dice in
+                the expression are rolled first, then the check's roll. */
+            skill: (skillExpr, cfg) => {
+                cfg = toSkillCheckCfg(cfg);
+                const difficulty = cfg.difficulty ?? 0,
+                    ease = evaluateEase(toSkillCheckExpr(skillExpr), cfg, rollDie),
+                    dieRoll = isNumericNoRollDifficulty(difficulty) ? null : roll(),
+                    result = (dieRoll ?? 0) + ease;
+                return {
+                    success:result >= 0, 
+                    result, 
+                    roll:dieRoll, 
+                    difficulty, 
+                    ease
+                };
+            },
+            
+            /*  Describes how likely a skill check is to succeed, without 
+                rolling, e.g. 'easy' or 'toss-up'. */
+            getEasePhrase: (skillExpr, cfg) => {
+                const ease = getSkillEase(skillExpr, cfg);
+                return EASE_PHRASES.find(([minEase]) => ease >= minEase)?.[1] ?? i18n('ease-impossible');
+            },
+            
             /*  Describes an amount of damage, e.g. 'light' or 'deadly'. */
-            toDamagePhrase,
-            
-            /*  Rolls a skill check: success when roll + (skillExpr) - difficulty >= 0. Returns the
-                same as evaluate. */
-            skill: (skillExpr, cfg) => CHECK.evaluate(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg)),
-            
-            /*  The ease of a skill check, without rolling. */
-            getSkillEase: (skillExpr, cfg) => getEase(toSkillCheckExpr(skillExpr), toSkillCheckCfg(cfg)),
-            
-            /*  Describes how likely an ease is to succeed, e.g. 'easy' or 'toss-up'. */
-            toEasePhrase,
-            
-            /*  Describes how likely a skill check is to succeed, without rolling. */
-            getEasePhrase: (skillExpr, cfg) => toEasePhrase(CHECK.getSkillEase(skillExpr, cfg)),
+            toDamagePhrase: damage => DAMAGE_PHRASES.find(([minDamage]) => damage >= minDamage)?.[1] ?? i18n('damage-harmless'),
             
             showFloatingTextForSkillCheck: (btnView, checkResult) => {
                 if (btnView && checkResult) {

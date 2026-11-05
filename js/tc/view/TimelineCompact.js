@@ -3,15 +3,13 @@
     
     let isInitial = true; // Indicates this is the first time the timeline is being layed out.
     
-    const {I18N:{get:i18n}} = myt,
-        
-        JSClass = JS.Class,
+    const JSClass = JS.Class,
         
         {PI, min:mathMin, max:mathMax, floor:mathFloor, sin:mathSin, random:mathRandom} = Math,
         TWO_PI = 2*PI,
         
         M = myt,
-        {Text, View, PaddedPlainText, PlainText, Selectable, debounce} = M,
+        {I18N:{get:i18n}, Text, View, PaddedPlainText, PlainText, Selectable, debounce} = M,
         
         {
             SquareBtn, Btn, MiniStatBar, settings, SETTING_SHOW_VISITED_BORDERS, SETTING_SHOW_AGENT_HISTORY,
@@ -24,7 +22,7 @@
                 TL_EVENT_DRIFT_X_MAX_PIXELS, TL_EVENT_DRIFT_Y_MAX_PIXELS,
                 MAX_HISTORY_LENGTH, 
                 TL_ROW_HEADER_WIDTH, TL_COL_WIDTH, TL_COL_HEADER_HEIGHT,
-                TL_COL_SPACING, TL_CLICK_TO_DESELECT, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
+                TL_COL_SPACING, TL_EVENT_BOX_HEIGHT, TL_EVENT_BOX_X_MARGIN,
                 TL_EVENT_BOX_Y_MARGIN, TL_TICK_LINE_HEIGHT, 
                 TL_GAP_ROW_HEIGHT, TL_GAP_MIN_MILLIS,
                 TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET, TL_AGENT_TOKEN_SIZE, TL_AGENTS_PER_ROW
@@ -129,7 +127,8 @@
             );
         }, SCROLL_TO_DEBOUNCE_MILLIS),
         
-        // Value Change Animation //
+        
+        // Value Change Animation //////////////////////////////////////////////
         /*  When a Value of an Event changes, its box pops: it grows, then bounces back. Boxes take 
             turns in the order their Values changed, so a change that cascades through the 
             timeline reads like a row of dominoes falling. A box that's animating or already 
@@ -138,17 +137,21 @@
         VALUE_CHANGE_SCALE = 1.5,
         VALUE_CHANGE_MILLIS = 500,
         VALUE_CHANGE_MILLIS_CUTOFF = mathMax(50, SCROLL_TO_DEBOUNCE_MILLIS),
-        valueChangeAnims = {queue:[], current:null, whenDone:[]},
+        VALUE_CHANGE_ANIMS = {
+            queue:[],
+            current:null,
+            whenDone:[]
+        },
         runNextValueChangeAnim = () => {
-            const [eventBox, duration] = valueChangeAnims.queue.shift() ?? [null, 0];
-            valueChangeAnims.current = eventBox;
+            const [eventBox, duration] = VALUE_CHANGE_ANIMS.queue.shift() ?? [null, 0];
+            VALUE_CHANGE_ANIMS.current = eventBox;
             if (!eventBox) {
                 // Scroll back to the currently selected event after animation.
                 pkg.app.scrollToSelectedEvent(true, false);
                 
                 // Run whatever was waiting for the animations to finish. Taken first since a
                 // callback could start more animations.
-                const whenDone = valueChangeAnims.whenDone.splice(0);
+                const whenDone = VALUE_CHANGE_ANIMS.whenDone.splice(0);
                 for (const func of whenDone) func();
             } else if (eventBox.destroyed || !eventBox.visible || duration <= VALUE_CHANGE_MILLIS_CUTOFF) {
                 runNextValueChangeAnim();
@@ -168,15 +171,20 @@
             }
         },
         queueValueChangeAnim = eventBox => {
-            const {queue, current} = valueChangeAnims;
-            if (eventBox !== current && !queue.some(([queuedBox]) => queuedBox === eventBox)) {
-                const newLen = queue.length + 1,
-                    duration = VALUE_CHANGE_MILLIS *  4 / (newLen + 3); // About 37 animations by the time it reaches 50 millis.
-                queue.push([eventBox, duration]);
-                if (!current) runNextValueChangeAnim();
+            if (eventBox.timeline?.animateValueChanges) {
+                const {queue, current} = VALUE_CHANGE_ANIMS;
+                if (eventBox !== current && !queue.some(([queuedBox]) => queuedBox === eventBox)) {
+                    queue.push([
+                        eventBox,
+                        VALUE_CHANGE_MILLIS *  4 / (queue.length + 4) // About 37 animations by the time it reaches 50 millis.
+                    ]);
+                    if (!current) runNextValueChangeAnim();
+                }
             }
         },
         
+        
+        // Core Timeline Update ////////////////////////////////////////////////
         updateTimeLineLayoutDebounced = debounce(timeline => {
             const {model, colHeaders, rowHeaders, flowLayer} = timeline,
                 {events:orderedEvents, locations:locModels} = model.getOrderedEventsAndLocationsForTimeline();
@@ -474,7 +482,8 @@
             }
         }, 2*STANDARD_DEBOUNCE_MILLIS),
         
-        // History //
+        
+        // History /////////////////////////////////////////////////////////////
         pushOntoHistory = (timeline, eventId) => {
             if (eventId && !timeline._noHistUpdate) {
                 const hist = timeline._hist,
@@ -511,10 +520,19 @@
         },
         
         
-        // Event Box //
+        // Event Box ///////////////////////////////////////////////////////////
+        getConnectionsForEventBox = (eventBox, filter) => {
+            const retval = eventBox.timeline.flowLayer.getConnections(eventBox);
+            return filter ? retval.filter(filter) : retval;
+        },
+        
+        getAffectiveConnectionsForEventBox = eventBox => getConnectionsForEventBox(
+            eventBox, connection => connection.splineId.startsWith(SPLINE_ID_PREFIX_AFFECT)
+        ),
+        
         refreshConnectionsForSelection = eventBox => {
             const selected = eventBox.selected;
-            for (const connection of eventBox.timeline.getAffectiveConnectionsForEventBox(eventBox)) {
+            for (const connection of getAffectiveConnectionsForEventBox(eventBox)) {
                 connection.setStyle(connection.endView.selected || connection.startView.selected ? SELECTED_CONNECTION_STYLE : null);
                 connection[connection.startView === eventBox ? 'endView' : 'startView'].setAdjacentIsSelected(selected);
             }
@@ -683,14 +701,14 @@
             },
             
             setVisited: function(v) {
-                this.set('visited', v, true);
-                if (this.inited) this.updateUI();
+                if (this.visited !== v) {
+                    this.set('visited', v, true);
+                    if (this.inited) this.updateUI();
+                }
             },
             
             /** @private */
-            _doValueChanged: function(_event) {
-                if (this.timeline?.animateValueChanges) queueValueChangeAnim(this);
-            },
+            _doValueChanged: function(_event) {queueValueChangeAnim(this);},
             
             setSelected: function(v) {
                 this.callSuper(v);
@@ -726,9 +744,11 @@
                 }
             },
             
-            setAdjacentIsSelected: function(adjacentIsSelected) {
-                this.set('adjacentIsSelected', adjacentIsSelected, true);
-                this.updateUI();
+            setAdjacentIsSelected: function(v) {
+                if (this.adjacentIsSelected !== v) {
+                    this.set('adjacentIsSelected', v, true);
+                    this.updateUI();
+                }
             },
             
             _doDblClick: function(_event) {
@@ -736,45 +756,37 @@
             },
             
             doActivated: function() {
-                if (TL_CLICK_TO_DESELECT) {
-                    this.timeline[this.selected ? 'deselect' : 'select'](this);
-                } else {
-                    if (!this.selected) this.timeline.select(this);
-                }
+                this.timeline.select(this);
             },
             
             updateUI: function() {
-                this.callSuper();
+                const self = this,
+                    selected = self.selected;
                 
-                let outline = null;
-                if (this.selected) {
-                    if (this.visited) {
-                        outline = BOX_VISITED_OUTLINE;
-                    } else {
-                        outline = BOX_SELECTED_OUTLINE;
-                    }
-                } else {
-                    if (this.visited) {
-                        outline = BOX_VISITED_OUTLINE;
-                    }
-                }
-                this.setOutline(outline);
+                self.callSuper();
                 
-                let barBgColor;
-                if (this.selected) {
-                    this.setBgColor(this.flooded ? colorParadoxLight : colorLight);
-                    this.setTextColor(colorDark);
-                    barBgColor = colorMedium;
-                } else if (this.adjacentIsSelected && !this.flooded) {
-                    this.setBgColor(colorMedium);
-                    this.setTextColor(null);
-                    barBgColor = colorMediumDark;
-                } else {
-                    this.setTextColor(null);
+                let outline = null,
+                    textColor = null,
                     barBgColor = colorMegaDark;
+                if (self.visited) {
+                    outline = BOX_VISITED_OUTLINE;
+                } else if (selected) {
+                    outline = BOX_SELECTED_OUTLINE;
                 }
                 
-                for (const sv of [this._historicityBar, this._attestationBar, this._paradoxBar]) {
+                if (selected) {
+                    self.setBgColor(self.flooded ? colorParadoxLight : colorLight);
+                    textColor = colorDark;
+                    barBgColor = colorMedium;
+                } else if (self.adjacentIsSelected && !self.flooded) {
+                    self.setBgColor(colorMedium);
+                    barBgColor = colorMediumDark;
+                }
+                
+                self.setOutline(outline);
+                self.setTextColor(textColor);
+                
+                for (const sv of [self._historicityBar, self._attestationBar, self._paradoxBar]) {
                     sv?.setBgColor(barBgColor);
                 }
             },
@@ -784,19 +796,18 @@
             },
             
             _revalidateForEvent: function() {
-                const {timeline, model:eventModel} = this;
-                
+                const timeline = this.timeline;
                 updateEventBox(this);
                 refreshExitSplines(timeline);
-                
-                for (const descEventModel of eventModel.getDescendants()) {
+                for (const descEventModel of this.model.getDescendants()) {
                     const descEventBox = timeline.getEventBox(descEventModel);
                     if (descEventBox) updateEventBox(descEventBox);
                 }
             }
         }),
         
-        // Agent //
+        
+        // Agent ///////////////////////////////////////////////////////////////
         AgentToken = new JSClass('AgentToken', pkg.StatusAgentMarker, {
             include: [M.TransformSupport],
             
@@ -838,7 +849,7 @@
         }),
         
         
-        // Tick //
+        // Tick ////////////////////////////////////////////////////////////////
         Tick = new JSClass('Tick', View, {
             initNode: function(parent, attrs) {
                 const time = this.time = attrs.time;
@@ -869,7 +880,7 @@
         }),
         
         
-        // Gap Row //
+        // Gap Row /////////////////////////////////////////////////////////////
         GapRow = new JSClass('GapRow', View, {
             initNode: function(parent, attrs) {
                 attrs.bgColor ??= '#fff3';
@@ -887,7 +898,7 @@
         }),
         
         
-        // Location Column //
+        // Location Column /////////////////////////////////////////////////////
         updateLocationColumn = locationColumn => {
             const {model, _label, _photo} = locationColumn,
                 label = model.name || '';
@@ -926,7 +937,8 @@
             }
         }),
         
-        // Spline and Event Drift //
+        
+        // Spline and Event Drift //////////////////////////////////////////////
         /*  While the timeline shows, the ends of its curves drift a little, as if it were unsteady,
             and more as paradox builds: in the timeline as a whole, and in either Event a curve 
             joins, with a flooded Event at its most unsteady. Each end's angle wanders around the 
@@ -1251,24 +1263,6 @@
             this.fireEvent('selectionChanged', this.getSelectedEventBox());
         },
         
-        getConnectionsForEventBox: function(eventBox, filter) {
-            const retval = this.flowLayer.getConnections(eventBox);
-            return filter ? retval.filter(filter) : retval;
-        },
-        
-        getAffectiveConnectionsForEventBox: function(eventBox) {
-            return this.getConnectionsForEventBox(eventBox, connection => connection.splineId.startsWith(SPLINE_ID_PREFIX_AFFECT));
-        },
-        
-        getExitConnectionsForEventBox: function(eventBox) {
-            // Only fetch exit type splines that originate from the provided eventBox.
-            const matchStr = SPLINE_ID_PREFIX_EXIT + eventBox.model.id + '-';
-            return this.getConnectionsForEventBox(
-                eventBox, 
-                connection => connection.splineId.startsWith(matchStr)
-            );
-        },
-        
         getEventBox: function(eventModelOrId) {
             if (eventModelOrId) return this.boxesByEventId[typeof eventModelOrId === 'string' ? eventModelOrId : eventModelOrId.id];
         },
@@ -1351,8 +1345,8 @@
         
         /*  Calls func once the value change animations are done, or right away if none are
             running, e.g. so a dialog doesn't cover the end of a chain of changes. */
-        doWhenValueChangeAnimsDone: func => {
-            const {queue, current, whenDone} = valueChangeAnims;
+        doWhenValueChangeAnimsComplete: func => {
+            const {queue, current, whenDone} = VALUE_CHANGE_ANIMS;
             if (current || queue.length > 0) {
                 whenDone.push(func);
             } else {
@@ -1363,8 +1357,8 @@
         /*  The value change animations, as Event IDs: the box animating now and the boxes 
             waiting their turn. For tests and debugging. */
         getValueChangeAnimState: () => ({
-            current:valueChangeAnims.current?.model?.id ?? null,
-            queued:valueChangeAnims.queue.map(([eventBox]) => eventBox.model?.id)
+            current:VALUE_CHANGE_ANIMS.current?.model?.id ?? null,
+            queued:VALUE_CHANGE_ANIMS.queue.map(([eventBox]) => eventBox.model?.id)
         }),
         
         notifyEventVisibilityChange: function(_eventModel) {
@@ -1376,8 +1370,10 @@
         },
         
         notifyAgentSelectedChanged: function(agentModel) {
-            this.selectedAgentModel = agentModel;
-            if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
+            if (this.selectedAgentModel !== agentModel) {
+                this.selectedAgentModel = agentModel;
+                if (this.timelineReady) updateVisitedStatusForSelectedAgent(this);
+            }
         },
         
         /*  The settings for showing the selected Agent's visited borders or history changed. */

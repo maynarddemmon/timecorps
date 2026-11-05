@@ -137,7 +137,7 @@ test('bought skill points survive a save and reload', async ({page}) => {
         tc.model.setCredits(3);
         alpha.purchaseSkill('agl');
         alpha.purchaseSkill('agl');
-        tc.persistence.save();
+        tc.getPersistenceManager().save();
     });
     await reloadGame(page);
     expect(await readAlpha(page, 'agl')).toEqual({skill:27, credits:1});
@@ -210,7 +210,7 @@ test('skills changed by adjustments show in the dossier and survive a save and r
         return before;
     });
     await expect(page.getByText('Agility : ' + (before + 15), {exact:true}).filter({visible:true})).toBeVisible();
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect((await readAlpha(page, 'agl')).skill).toBe(before + 15);
     expect(problems.pageErrors).toEqual([]);
@@ -401,7 +401,7 @@ test('randomSkillsByTrack puts trainable skills skillsByTrack leaves out on trac
     }, all)).toEqual(['high', 'high', 'high', 'high', 'low', 'low', 'low']);
     
     // A reload keeps them.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readPicked(page)).toEqual(picked);
     

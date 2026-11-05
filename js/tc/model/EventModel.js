@@ -20,8 +20,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS,
-            DIFFICULTY_NO_ROLL, toDifficulty
+            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS
         } = pkg,
         
         RELATIVE_START_OFFSET_KEYS = ['w', 'd', 'h', 'm', 's', 'ms'],
@@ -80,6 +79,10 @@
         PREFIX_SKILL_TYPE = '_SkTyp_',
         PREFIX_SKILL_EXPR = '_SkExp_',
         
+        getActionSkillType = (actionCheckSupport, actionId=ACTION_TYPE_SINGULAR) => {
+            return actionCheckSupport[PREFIX_SKILL_TYPE + actionId] ?? actionId;
+        },
+        
         /*  Skill checks for an action, exit or adjustment. Checks are stored by action ID, so a model
             could have one per action it offers. */
         ActionCheckSupport = new JSModule('ActionCheckSupport', {
@@ -108,11 +111,7 @@
                 const {difficulty, check, actionType, ...unknown} = cfg;
                 
                 if (difficulty !== undefined) {
-                    if (Number.isInteger(difficulty) || difficulty === DIFFICULTY_NO_ROLL) {
-                        self[diffId] = toDifficulty(difficulty);
-                    } else {
-                        warn('difficulty must be an integer or "' + DIFFICULTY_NO_ROLL + '"');
-                    }
+                    self[diffId] = pkg.checks.validateDifficultyValue(difficulty, warn);
                 }
                 
                 if (actionType !== undefined) {
@@ -140,16 +139,13 @@
                 return this.event ? 'Event ' + this.event.id + ' action ' + this.id : 'Event ' + this.id + ' ' + actionId;
             },
             getActionSkillDifficulty: function(actionId=ACTION_TYPE_SINGULAR) {
-                return this[PREFIX_SKILL_DIFF + actionId] ?? pkg.getSkillDifficulty(this.getActionSkillType(actionId));
+                return this[PREFIX_SKILL_DIFF + actionId] ?? pkg.getSkillDifficulty(getActionSkillType(this, actionId));
             },
             getActionSkillExpr: function(actionId=ACTION_TYPE_SINGULAR) {
-                return this[PREFIX_SKILL_EXPR + actionId] ?? pkg.getSkillCheckExpr(this.getActionSkillType(actionId));
+                return this[PREFIX_SKILL_EXPR + actionId] ?? pkg.getSkillCheckExpr(getActionSkillType(this, actionId));
             },
             getActionSkillName: function(actionId=ACTION_TYPE_SINGULAR) {
-                return pkg.getSkillName(this.getActionSkillType(actionId));
-            },
-            getActionSkillType: function(actionId=ACTION_TYPE_SINGULAR) {
-                return this[PREFIX_SKILL_TYPE + actionId] ?? actionId;
+                return pkg.getSkillName(getActionSkillType(this, actionId));
             }
         }),
         
@@ -555,20 +551,6 @@
         ADJUSTMENT_WHEN_FAILURE = 'failure',
         ADJUSTMENT_WHEN_BOTH = 'both',
         
-        /*  The average margin of the check that decides it, for a pass or a failure: its own
-            check, or else its action's. 0 if nothing is rolled, as for an exit without a 
-            check of its own or a no-roll check. */
-        getAvrgMargin = (statAdjModel, agentModel, success) => {
-            const decider = statAdjModel.hasOwnCheck() ? statAdjModel : (statAdjModel.owner.isGatedByActionSkillCheck() ? statAdjModel.owner : null);
-            if (decider) {
-                const difficulty = decider.getActionSkillDifficulty();
-                if (!pkg.isNoRollDifficulty(difficulty)) {
-                    return pkg.checks.getAverageMargin(agentModel.getSkillExpressionEase(decider.getActionSkillExpr(), difficulty), success);
-                }
-            }
-            return 0;
-        },
-        
         /*  One adjustment of an action or exit: an amount added to what its key names: a stat, 
             e.g. "agent.health", "event.attestation" or "timeline.paradox", a skill of the agent, 
             e.g. "agent.skills.agl", a Value of its Event, e.g. "bus", or a scratch entry, 
@@ -704,7 +686,7 @@
             
             /*  Its average amount for an agent for a pass or a failure, without rolling. */
             getAvrgAmount: function(agentModel, success) {
-                return this.getAmount(agentModel, success, pkg.checks.getAverageAmount, getAvrgMargin(this, agentModel, success));
+                return this.getAmount(agentModel, success, pkg.checks.getAverageAmount, pkg.checks.getAverageMarginForAgent(this, agentModel, success));
             },
             
             /*  Rolls it for an agent, given the action's own check if it has one, without applying

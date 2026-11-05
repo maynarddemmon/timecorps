@@ -194,7 +194,7 @@ test('an agent already visible in a restored save has no dossier shown', async (
     const problems = await startGame(page);
     await page.evaluate(() => tc.model.getEventModel('boats').attestation.setValue(10));
     await dismissAgentDossier(page, 'Charlie');
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     
     // The reload helper fails if any dossier shows.
     await reloadGame(page);

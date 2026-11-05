@@ -61,7 +61,7 @@ test('a text prompt names an agent with what the player types, within its limits
     await expect(page.locator('.myt-Agents').getByText('Zd-Q-', {exact:true})).toHaveCount(1);
 
     // The name comes back with the scratch entry it reads, and isn't asked for again.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     await expect(dialogTitle(page, 'Your Name')).toHaveCount(0);
     expect((await readState(page)).name).toBe('Zd-Q-');

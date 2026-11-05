@@ -38,9 +38,10 @@
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_PROMPTS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_SCORE, STAT_ID_CREDITS,
-            CHECK_SKILL_EXPR_PREFIX
+            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_SCORE, STAT_ID_CREDITS
         } = pkg,
+        
+        CHECK_SKILL_EXPR_PREFIX = pkg.SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
         
         // The data key for default skill checks by action type.
         DATA_KEY_SKILL_CHECKS = 'skillChecks',
@@ -823,38 +824,26 @@
         default, or else the built-in one. */
     pkg.getDefaultSkillTrack = () => defaultSkillTrack ?? BUILT_IN_SKILL_TRACK;
     
-    /*  The IDs of the default skill checks (action types) configured in the data. */
-    pkg.getSkillCheckIds = () => Object.keys(skillCheckDefaults);
-    
     /*  The skill expression of a default skill check, by action type. If not found an attempt is
         made to return a simple skill check expression, otherwise a default expression
         is returned. */
     pkg.getSkillCheckExpr = actionType => {
-        let expr = skillCheckDefaults[actionType]?.check;
-        if (expr == null) {
-            if (pkg.isSkillId(actionType)) {
-                expr = CHECK_SKILL_EXPR_PREFIX + actionType;
-            } else {
-                expr = DEFAULT_SKILL_EXPR;
-            }
-        }
-        return expr;
+        const expr = skillCheckDefaults[actionType]?.check;
+        return expr == null ? 
+            (pkg.isSkillId(actionType) ? CHECK_SKILL_EXPR_PREFIX + actionType : DEFAULT_SKILL_EXPR) 
+            : expr;
     };
     
     /*  The difficulty of a default skill check, by action type. */
-    pkg.getSkillDifficulty = actionType => pkg.toDifficulty(skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY);
+    pkg.getSkillDifficulty = actionType => pkg.checks.toNumericDifficulty(skillCheckDefaults[actionType]?.difficulty ?? DEFAULT_SKILL_DIFFICULTY);
     
     /*  The display name of a default skill check, by action type. Falls back to the name of the
         skill with that ID, otherwise the action type itself. */
     pkg.getSkillName = actionType => {
-        let name = skillCheckDefaults[actionType]?.name;
+        const name = skillCheckDefaults[actionType]?.name;
         if (name == null) {
             const skillCfg = pkg.getSkillConfig(actionType);
-            if (skillCfg != null) {
-                name = skillCfg.name;
-            } else {
-                name = actionType;
-            }
+            return skillCfg != null ? skillCfg.name : actionType;
         }
         return name;
     };

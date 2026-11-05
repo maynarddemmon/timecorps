@@ -48,7 +48,7 @@ test('each month of lived age gains a point in a skill picked by weight', async 
     // What's toward the next gain is saved.
     await page.evaluate(MILLIS_PER_MONTH => tc.model.getAgentModel('AL').ageBy(0.25 * MILLIS_PER_MONTH), MILLIS_PER_MONTH);
     const beforeSave = await alphaSkills(page);
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await alphaSkills(page)).toEqual(beforeSave);
 

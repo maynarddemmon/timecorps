@@ -57,7 +57,7 @@ test('an unknown faction is warned about and leaves the agent unaligned, and the
         bravo.setFaction('pirates');
         const afterUnknown = bravo.getFaction();
         bravo.setFaction('timecorps');
-        tc.persistence.save();
+        tc.getPersistenceManager().save();
         return afterUnknown;
     })).toBe('unaligned');
     expect(problems.warnings).toEqual(['Agent BR has unknown faction pirates (using unaligned)']);
@@ -190,7 +190,7 @@ test('no one time travels into or out of a chrono locked Event, which an express
     ]);
     
     // The lock is worked out again after a reload.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await page.evaluate(() => tc.model.getEventModel('boats').isChronoLocked())).toBe(true);
     await page.evaluate(() => tc.model.setScratch('plan_noteCount', 3));

@@ -6,8 +6,8 @@
         
         appView,
         model,
-        persistence,
-        hiddenSaveFileImporter,
+        persistenceMgr, // The PersistenceManager.
+        hiddenSaveFileImporter, // A myt.HiddenJSONImporter used for importing save files.
         
         timelineParadoxBar,
         saveBtn,
@@ -37,6 +37,8 @@
         settingsDialog;
     
     pkg.isAppReady = () => ready;
+    
+    pkg.getPersistenceManager = () => persistenceMgr;
     
     const JSClass = JS.Class,
         
@@ -111,7 +113,7 @@
         
         // Save //
         updateLastSaved = () => {
-            const lastSavedDate = persistence.getLastSavedDate();
+            const lastSavedDate = persistenceMgr.getLastSavedDate();
             if (lastSavedDate) {
                 saveBtn?.setTextColor(colorLight);
                 saveBtn?.setTooltip(i18n('tip-last-saved', lastSavedDate.toLocaleString(M.I18N.getLocale(), {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})));
@@ -122,6 +124,27 @@
         },
         
         // Data Loading //
+        doImport = () => {
+            if (!hiddenSaveFileImporter) {
+                hiddenSaveFileImporter = new M.HiddenJSONImporter(appView, null, [{
+                    processJSON: json => {
+                        const problem = persistenceMgr.importRecord(json);
+                        if (problem) {
+                            openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-failed-msg', problem));
+                        } else {
+                            updateLastSaved();
+                            openAckMsgDialog(i18n('dlg-import-succeeded-title'), i18n('dlg-import-succeeded-msg'), appView.doReload, null, i18n('btn-continue'));
+                        }
+                    },
+                    handleJSONParsingError: function(err) {
+                        this.callSuper(err);
+                        openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-not-save-msg'));
+                    }
+                }]);
+            }
+            hiddenSaveFileImporter.promptForFile();
+        },
+        
         loadDataIntoModel = (url, resultCallback) => {
             M.doFetch(url, {}, true,
                 response => {
@@ -167,10 +190,10 @@
                             model.reset();
                             
                             // The baseline is the fresh campaign a save gets applied on top of.
-                            persistence.captureBaseline();
+                            persistenceMgr.captureBaseline();
                             const startCampaign = () => {
-                                if (persistence.hasSave()) {
-                                    const restoreProblem = persistence.restore();
+                                if (persistenceMgr.hasSave()) {
+                                    const restoreProblem = persistenceMgr.restore();
                                     readyToHandleEvents = true;
                                     if (restoreProblem) openAckMsgDialog(i18n('dlg-restore-failed-title'), i18n('dlg-restore-failed-msg', restoreProblem), appView.doReload, null, i18n('btn-start-over'));
                                 } else {
@@ -231,7 +254,7 @@
             
             // Build Model
             model = pkg.model = new pkg.Model(appView);
-            persistence = pkg.persistence = new pkg.PersistenceManager(model);
+            persistenceMgr = new pkg.PersistenceManager(model);
             
             // Build UI
             appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:TOP_VIEW_HEIGHT}));
@@ -276,7 +299,7 @@
                         () => {
                             let title,
                                 msg;
-                            if (persistence.save()) {
+                            if (persistenceMgr.save()) {
                                 updateLastSaved();
                                 title = i18n('dlg-save-succeeded-title');
                                 msg = i18n('dlg-save-succeeded-msg');
@@ -307,12 +330,12 @@
                     openConfirmMsgDialog(
                         i18n('dlg-import-title'),
                         i18n('dlg-import-msg'),
-                        appView.doImport
+                        doImport
                     );
                 }
             }]);
             new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:i18n('tip-export')}, [{
-                doActivated: persistence.export.bind(persistence)
+                doActivated: persistenceMgr.export.bind(persistenceMgr)
             }]);
             
             new PlainText(topView, {text:ICON_SEPARATOR});
@@ -433,7 +456,18 @@
         getEventDetailsView: () => eventDetailsView,
         getOpsView: () => opsView,
         
-        // Convienence Functions
+        doReload: () => {
+            location.reload(); // reload the browser.
+        },
+        
+        /*  Clears the save first since a reload would otherwise restore it. */
+        doRestartCampaign: () => {
+            persistenceMgr.clear();
+            appView.doReload();
+        },
+        
+        
+        // Convienence Functions ///////////////////////////////////////////////
         /*  The selected Event and Agent by id, or null, for saving. */
         getSelectionForSave: () => ({
             event:timelineView.getSelectedEventId(),
@@ -468,7 +502,8 @@
             }
         },
         
-        // Event Dispatching
+        
+        // Event Dispatching ///////////////////////////////////////////////////
         _onEventSelectionChanged: event => { // value is an EventBox
             eventDetailsView.notifyEventSelectedChanged(event.value);
             eventsView.selectEvent(event.value?.model);
@@ -527,37 +562,6 @@
             }
         },
         
-        doReload: () => {
-            location.reload(); // reload the browser.
-        },
-        
-        /*  Clears the save first since a reload would otherwise restore it. */
-        doRestartCampaign: () => {
-            persistence.clear();
-            appView.doReload();
-        },
-        
-        doImport: () => {
-            if (!hiddenSaveFileImporter) {
-                hiddenSaveFileImporter = new M.HiddenJSONImporter(appView, null, [{
-                    processJSON: json => {
-                        const problem = persistence.importRecord(json);
-                        if (problem) {
-                            openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-failed-msg', problem));
-                        } else {
-                            updateLastSaved();
-                            openAckMsgDialog(i18n('dlg-import-succeeded-title'), i18n('dlg-import-succeeded-msg'), appView.doReload, null, i18n('btn-continue'));
-                        }
-                    },
-                    handleJSONParsingError: function(err) {
-                        this.callSuper(err);
-                        openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-not-save-msg'));
-                    }
-                }]);
-            }
-            hiddenSaveFileImporter.promptForFile();
-        },
-        
         /*  Called when a setting changes, so what shows it can update. */
         notifySettingChanged: (id, _value) => {
             if (id === pkg.SETTING_SHOW_VISITED_BORDERS || id === pkg.SETTING_SHOW_AGENT_HISTORY) {
@@ -589,35 +593,35 @@
         /*  Called when an Operation has completed successfully, with the Operation that 
             comes next, if any, whose brief the debrief can open. */
         notifyOperationCompleted: (operationModel, nextOperationModel) => {
-            if (!readyToHandleEvents) return;
-            
-            let saveNote = '';
-            if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistence.hasBaseline()) {
-                if (persistence.save()) {
-                    updateLastSaved();
-                    saveNote = '<br><br><i>' + i18n('dlg-mission-complete-saved') + '</i>';
-                } else {
-                    saveNote = '<br><br><i>' + i18n('dlg-mission-complete-not-saved') + '</i>';
+            if (readyToHandleEvents) {
+                let saveNote = '';
+                if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistenceMgr.hasBaseline()) {
+                    if (persistenceMgr.save()) {
+                        updateLastSaved();
+                        saveNote = '<br><br><i>' + i18n('dlg-mission-complete-saved') + '</i>';
+                    } else {
+                        saveNote = '<br><br><i>' + i18n('dlg-mission-complete-not-saved') + '</i>';
+                    }
                 }
+                
+                const title = i18n('dlg-mission-complete-title', wrapInStyledSpan(operationModel.getName(), colorUltraLight)),
+                    debrief = (operationModel.getDebrief() || i18n('dlg-mission-complete-msg')) + saveNote;
+                
+                // Wait for the timeline to finish showing the changes that completed the mission.
+                timelineView.doWhenValueChangeAnimsComplete(() => {
+                    if (nextOperationModel) {
+                        openConfirmMsgDialog(
+                            title, debrief,
+                            () => {pkg.app.openMissionBrief(nextOperationModel);},
+                            null,
+                            i18n('btn-next-mission') + ' ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
+                        );
+                    } else {
+                        // No next operation case.
+                        openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
+                    }
+                });
             }
-            
-            const title = i18n('dlg-mission-complete-title', wrapInStyledSpan(operationModel.getName(), colorUltraLight)),
-                debrief = (operationModel.getDebrief() || i18n('dlg-mission-complete-msg')) + saveNote;
-            
-            // Wait for the timeline to finish showing the changes that completed the mission.
-            timelineView.doWhenValueChangeAnimsDone(() => {
-                if (nextOperationModel) {
-                    openConfirmMsgDialog(
-                        title, debrief,
-                        () => {pkg.app.openMissionBrief(nextOperationModel);},
-                        null,
-                        i18n('btn-next-mission') + ' ' + pkg.ICON_NEXT, I18N_CLOSE_BTN
-                    );
-                } else {
-                    // No next operation case.
-                    openAckMsgDialog(title, debrief, null, null, I18N_CLOSE_BTN);
-                }
-            });
         },
         
         notifyAgentLocOrVisChange: function(agentModel, isHiddenChange) {
@@ -655,6 +659,8 @@
             }
         },
         
+        
+        // Opening Dialogs /////////////////////////////////////////////////////
         openSettings: () => {
             settingsDialog ??= new pkg.SettingsDialog(appView);
             settingsDialog.show();

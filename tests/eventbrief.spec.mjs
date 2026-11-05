@@ -121,7 +121,7 @@ test('an agent at an event when it is revealed counts as a first visit, and a re
     await expect(eventBriefTitle(page)).toHaveText('Office : Plan');
     await page.keyboard.press('Escape');
     
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     await page.waitForTimeout(500);
     await expect(eventBriefTitle(page)).toHaveCount(0);

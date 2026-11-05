@@ -27,7 +27,7 @@ const exportModel = page => page.evaluate(() => JSON.parse(JSON.stringify(tc.mod
     
     // What a fresh campaign would save: only the first mission's setup.
     expectFreshCampaign = async page => {
-        const diff = await page.evaluate(() => tc.persistence.exportDiff());
+        const diff = await page.evaluate(() => tc.getPersistenceManager().exportDiff());
         expect(diff.currentOperation).toBe('first');
         expect(diff.operations).toEqual({first:{revealed:true, setupApplied:true}});
         expect(Object.keys(diff.agents)).toEqual(['AL']);
@@ -329,7 +329,7 @@ test('agent health and constitution survive a save and reload', async ({page}) =
         const statHealth = tc.model.getAgentModel('AL').health;
         statHealth.setMax(120);
         statHealth.setValue(70);
-        tc.persistence.save();
+        tc.getPersistenceManager().save();
     });
     expect((await readSave(page)).data.agents.AL.health).toMatchObject({value:70, max:120});
     
@@ -352,7 +352,7 @@ test('a devoured agent stays devoured after a save and reload', async ({page}) =
     await page.evaluate(() => tc.model.getAgentModel('BR').setDevoured(true));
     await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
     await dismissAgentDossier(page, 'Bravo');
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     
     await reloadGame(page);
     expect(await page.evaluate(() => {
@@ -374,7 +374,7 @@ test('timeline paradox above the starting limit survives a save and reload', asy
             tc.model.getEventModel(eventId).attestation.setValue(10);
         }
         tc.model.paradox.setValue(tc.model.paradox.max);
-        tc.persistence.save();
+        tc.getPersistenceManager().save();
     });
     const saved = await read();
     expect(saved.value).toBe(saved.max);

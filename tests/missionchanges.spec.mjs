@@ -260,7 +260,7 @@ test('set can reveal an Operation by its hidden or shown, which offers it, and i
     // A live expression is saved until it reveals.
     await act('promise');
     expect(await readStates()).toEqual(['hidden', 'available']);
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readStates()).toEqual(['hidden', 'available']);
     await page.evaluate(() => tc.model.setScratch('plan_noteCount', 1));

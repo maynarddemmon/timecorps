@@ -113,9 +113,9 @@ test('scratch entries survive a save and reload, and only changed ones are saved
     const problems = await startGame(page);
     await takeAction(page, 'knock');
     await takeAction(page, 'knock');
-    expect((await page.evaluate(() => tc.persistence.exportDiff())).scratch).toEqual({origin_knocks:2});
+    expect((await page.evaluate(() => tc.getPersistenceManager().exportDiff())).scratch).toEqual({origin_knocks:2});
     
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readScratch(page)).toEqual({...FRESH, origin_knocks:2});
     

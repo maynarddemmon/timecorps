@@ -157,7 +157,7 @@ test('clicking the current mission opens its brief, and deselecting it leaves no
     await expect.poll(async () => (await readRows(page)).map(row => row.state)).toEqual(['active']);
     expect(await selectedId(page)).toBeNull();
 
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await currentId()).toBeNull();
     await expect(noMissionText).toBeVisible();

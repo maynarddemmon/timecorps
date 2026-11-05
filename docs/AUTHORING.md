@@ -106,7 +106,7 @@ Used for skill checks (`check`), for adjustment amounts (`onSuccess`, `onFailure
 
 `Math` is available as usual, e.g. `Math.max(agent.skills.deception, agent.skills.disguise)`.
 
-The result is taken as a number: `true` is 1 and `false` is 0. An expression that doesn't compile, throws or doesn't give a finite number (say `agent.skils.stealth`, misspelled, which gives NaN) fails its check, or does nothing as an amount, with a warning in the console.
+The result is taken as a number: `true` is 1 and `false` is 0. An expression that throws or doesn't give a finite number (say `agent.skils.stealth`, misspelled, which gives NaN) fails its check, or does nothing as an amount, with a warning in the console. One that doesn't compile, a syntax error, throws when it's first used and stops the game, so it can't ship: the data tests (see [Checking your work](#checking-your-work)) catch it first.
 
 A check is the check expression minus the difficulty, so a comparison such as `agent.skills.stealth > 50` isn't caught: it's 1 or 0 minus the difficulty, which is a valid but nearly useless check. Write a check as an amount of skill, e.g. `agent.skills.stealth`.
 
@@ -690,7 +690,7 @@ A video (`"video":true`) is always `<id>.webm` and plays instead of the picture 
 
 ## Checking your work
 
-- **At startup** the game checks that events at the same location don't overlap, and that every event starts no earlier than the end of the events it depends on. Problems with a config, like an unknown key, a bad difficulty or an expression that doesn't compile, are warned about in the browser console, naming the event and action.
+- **At startup** the game checks that events at the same location don't overlap, and that every event starts no earlier than the end of the events it depends on. Problems with a config, like an unknown key or a bad difficulty, are warned about in the browser console, naming the event and action.
 - **`npm test`** includes `tests/data.spec.mjs`, which checks the data without playing. It looks for:
   - references to events, agents, operations and locations that don't exist;
   - configs that aren't valid;

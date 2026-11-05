@@ -225,7 +225,11 @@ test('the default investigate check gets harder as attestation rises', async ({p
         const alpha = tc.model.getAgentModel('AL'),
             plan = tc.model.getEventModel('plan'),
             investigate = plan.getActionModels()._investigate,
-            getEase = () => alpha.getSkillExpressionEase(investigate.getActionSkillExpr(), investigate.getActionSkillDifficulty());
+            // The ease of a check, as rolling it gives.
+            getEase = () => {
+                tc.rng.queueRolls(0);
+                return alpha.checkSkillExpression(investigate.getActionSkillExpr(), investigate.getActionSkillDifficulty()).ease;
+            };
         alpha.doDeployToEvent(plan);
         alpha.setSkills({investigation:100});
         const out = {difficulty:investigate.getActionSkillDifficulty()};
@@ -293,7 +297,10 @@ test('an action succeeds or fails on its skill check, and a failure still uses t
             prevent = plan.getActionModels().prepare,
             value = plan.getValueModels().prepared,
             // The roll that just succeeds is -ease, so one less just fails.
-            ease = () => alpha.getSkillExpressionEase(prevent.getActionSkillExpr(), prevent.getActionSkillDifficulty()),
+            ease = () => {
+                tc.rng.queueRolls(0);
+                return alpha.checkSkillExpression(prevent.getActionSkillExpr(), prevent.getActionSkillDifficulty()).ease;
+            },
             act = roll => {
                 const actionCount = alpha.getActionExecCount();
                 tc.rng.queueRolls(roll);
@@ -320,7 +327,7 @@ test('an action\'s skill check comes from its actionType, with the action\'s own
     const DEFAULTS = readTestData('init.json5').skillChecks;
     const result = await page.evaluate(() => {
         const plan = tc.model.getEventModel('plan'),
-            read = action => [action.getActionSkillType(), action.getActionSkillDifficulty(), action.getActionSkillExpr()];
+            read = action => [action.getActionSkillName(), action.getActionSkillDifficulty(), action.getActionSkillExpr()];
         plan.setActions({
             byType:{label:'By Type', skillCheck:{actionType:'sneak'}},
             overridden:{label:'Overridden', skillCheck:{actionType:'sneak', difficulty:5, check:'agent.skills.disguise'}},
@@ -340,10 +347,10 @@ test('an action\'s skill check comes from its actionType, with the action\'s own
     });
     const sneak = DEFAULTS.sneak,
         [defaultDifficulty, defaultExpr] = result.defaults;
-    expect(result.byType).toEqual(['sneak', sneak.difficulty, sneak.check]);
-    expect(result.overridden).toEqual(['sneak', 5, 'agent.skills.disguise']);
+    expect(result.byType).toEqual([sneak.name, sneak.difficulty, sneak.check]);
+    expect(result.overridden).toEqual([sneak.name, 5, 'agent.skills.disguise']);
     expect(result.unchecked).toEqual(['', defaultDifficulty, defaultExpr]);
-    expect(result.bad).toEqual(['sneak', sneak.difficulty, sneak.check]);
+    expect(result.bad).toEqual([sneak.name, sneak.difficulty, sneak.check]);
     expect(result.notObject).toEqual(['', defaultDifficulty, defaultExpr]);
     
     // Warnings name the action and its Event, and a config that isn't an object doesn't throw.
@@ -378,7 +385,7 @@ test('action button tooltips show the action type and how easy the check is', as
 test('an actionType that names a skill checks that skill alone', async ({page}) => {
     const problems = await startGame(page);
     const result = await page.evaluate(() => {
-        const read = action => [action.getActionSkillType(), action.getActionSkillName(), action.getActionSkillDifficulty(), action.getActionSkillExpr()],
+        const read = action => [action.getActionSkillName(), action.getActionSkillDifficulty(), action.getActionSkillExpr()],
             plan = tc.model.getEventModel('plan');
         plan.setActions({
             bySkill:{label:'By Skill', skillCheck:{actionType:'stealth'}},
@@ -396,14 +403,14 @@ test('an actionType that names a skill checks that skill alone', async ({page}) 
     });
     const [defaultDifficulty, defaultExpr] = result.defaults,
         initJson = readTestData('init.json5');
-    expect(result.bySkillHarder).toEqual(['cha', initJson.skills.cha.name, 150, 'agent.skills.cha']);
-    expect(result.bySkill).toEqual(['stealth', initJson.skills.stealth.name, defaultDifficulty, 'agent.skills.stealth']);
+    expect(result.bySkillHarder).toEqual([initJson.skills.cha.name, 150, 'agent.skills.cha']);
+    expect(result.bySkill).toEqual([initJson.skills.stealth.name, defaultDifficulty, 'agent.skills.stealth']);
     
     // Neither a default check nor a skill: the global defaults, shown by its id.
-    expect(result.unknownType).toEqual(['juggling', 'juggling', defaultDifficulty, defaultExpr]);
+    expect(result.unknownType).toEqual(['juggling', defaultDifficulty, defaultExpr]);
     
     // A default check takes its name from the check.
-    expect(result.byCheck[1]).toBe(initJson.skillChecks.social.name);
+    expect(result.byCheck[0]).toBe(initJson.skillChecks.social.name);
     expect(problems.warnings).toEqual([]);
 });
 

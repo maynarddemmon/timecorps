@@ -97,7 +97,7 @@ test('credits and the peak score survive a save and reload, without earning agai
     await adjScore(page, -300);
     expect(await readCredits(page)).toEqual({score:40, credits:8});
 
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readCredits(page)).toEqual({score:40, credits:8});
 

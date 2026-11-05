@@ -13,7 +13,7 @@
         /*  The parts of cur that differ from base. Objects recurse so only changed keys are
             kept and unchanged models drop out entirely. Arrays and primitives are kept whole
             when they differ. Returns undefined when nothing differs. */
-        diff = pkg.diffForSave = (base, cur) => {
+        diff = (base, cur) => {
             if (isObj(base) && isObj(cur)) {
                 let retval;
                 for (const key in cur) {

@@ -4,11 +4,10 @@
     // Monotonic counter used to order Agents by when they arrived at their current Event.
     let arrivalCounter = 0;
     
-    const {I18N:{get:i18n, concatenate}} = myt,
-        
-        {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs, floor:mathFloor} = Math,
+    const {max:mathMax, min:mathMin, round:mathRound, abs:mathAbs, floor:mathFloor} = Math,
         
         M = myt,
+        {I18N:{get:i18n, concatenate}} = M,
         
         {
             NotifyingNumericStatModel, getConstrainedValueCfg, setConstrainedValue,
@@ -22,11 +21,11 @@
             },
             timeUtil:{MILLIS_PER_YEAR},
             theme:{colorAction, fontFamilyMono, colorSuccess, colorMegaDark},
-            checks:{skill, getSkillEase, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
+            checks:{skill, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
-            SCOPE_AGENT, SCOPE_SKILLS, CHECK_SKILL_EXPR_PREFIX,
+            SCOPE_AGENT, SCOPE_SKILLS,
             isPlainObject
         } = pkg,
         
@@ -577,7 +576,6 @@
             const hqEventModel = this.getHQEventModel();
             return hqEventModel != null && this.getEventModel() === hqEventModel;
         },
-        isAtTheVoid: function() {return this.event === EVENT_ID_THE_VOID;},
         
         doHiddenChanged: function(hidden) {
             if (this.inited) {
@@ -811,20 +809,9 @@
             return skill(skillExpr, getCheckCfg(this, difficulty));
         },
         
-        /*  The ease of a skill expression check, without rolling. */
-        getSkillExpressionEase: function(skillExpr, difficulty) {
-            return getSkillEase(skillExpr, getCheckCfg(this, difficulty));
-        },
-        
         /*  Describes how likely a skill expression check is to succeed, without rolling. */
         getSkillEasePhrase: function(skillExpr, difficulty) {
             return getEasePhrase(skillExpr, getCheckCfg(this, difficulty));
-        },
-        
-        /*  Rolls a check of one skill against a difficulty. Returns the same as 
-            checkSkillExpression. */
-        checkSkill: function(skillName, difficulty) {
-            return this.checkSkillExpression(CHECK_SKILL_EXPR_PREFIX + skillName, difficulty);
         },
         
         

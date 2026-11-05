@@ -72,7 +72,7 @@ test('a set can give each result its own value, worked out once with margin, and
     expect(await act(page, 'fumble', 900)).toMatchObject({outcome:-9, flipCount:3, done:1});
     
     // Per result sets are literals, so the Value survives a reload as it was.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await page.evaluate(() => tc.model.getEventModel('origin').getValueModels().outcome.value)).toBe(-9);
     
@@ -275,7 +275,7 @@ test('set can change any attribute with a setter of an agent or Event, once or a
     expect(await readState()).toEqual({hidden:false, controlled:true, locked:false});
     
     // All of it survives a reload, the expression still live.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readState()).toEqual({hidden:false, controlled:true, locked:false});
     await page.evaluate(() => tc.model.setScratch('plan_noteCount', 2));

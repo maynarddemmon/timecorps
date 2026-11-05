@@ -76,7 +76,7 @@ test('set can change shown, once or as a live expression, and it survives a relo
     expect(await readState()).toEqual({bravoHidden:false, boatsHidden:false});
 
     // Saved as the hidden it stands for, still live.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readState()).toEqual({bravoHidden:false, boatsHidden:false});
     await page.evaluate(() => tc.model.setScratch('plan_noteCount', 0));

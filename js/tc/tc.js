@@ -118,11 +118,6 @@
             (statId.startsWith(SCOPE_SKILLS + '.') ? TC.getSkillConfig?.(statId.slice(SCOPE_SKILLS.length + 1))?.name : undefined) ?? 
             statId,
         
-        // A difficulty in the data that skips the roll, so the check always succeeds. It's
-        // stored as DIFFICULTY_NO_ROLL_THRESHOLD, or any difficulty at or below it.
-        DIFFICULTY_NO_ROLL = 'no-roll',
-        DIFFICULTY_NO_ROLL_THRESHOLD = -999999,
-        
         SCOPE_AGENT = 'agent',
         SCOPE_SKILLS = 'skills',
         
@@ -285,7 +280,6 @@
                 TL_EVENT_BOX_Y_MARGIN:4,
                 TL_EVENT_BOX_X_MARGIN:4,
                 TL_TICK_LINE_HEIGHT:1,
-                TL_CLICK_TO_DESELECT:false,
                 TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET:32, // A few pixels below the progess bars in an EventBox.
                 
                 TL_AGENT_TOKEN_SIZE:0, // Set programatically below
@@ -444,18 +438,6 @@
                     }
                 });
             },
-            
-            DIFFICULTY_NO_ROLL,
-            DIFFICULTY_NO_ROLL_THRESHOLD,
-            
-            /*  A difficulty from the data as a number, so DIFFICULTY_NO_ROLL becomes the 
-                threshold. Anything else is returned as is. */
-            toDifficulty: v => v === DIFFICULTY_NO_ROLL ? DIFFICULTY_NO_ROLL_THRESHOLD : v,
-            
-            /*  True if a check at this difficulty skips the roll and always succeeds. */
-            isNoRollDifficulty: difficulty => difficulty <= DIFFICULTY_NO_ROLL_THRESHOLD,
-            
-            CHECK_SKILL_EXPR_PREFIX: SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
             
             // Constraint Scopes
             SCOPE_TIMELINE:'timeline',

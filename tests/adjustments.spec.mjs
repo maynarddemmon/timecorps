@@ -163,7 +163,7 @@ test('exit buttons flag the injury risk and explain it in the tooltip, and a fai
     await routeScenarioWithInjuries(page);
     const problems = await startGame(page),
         // -(d(6)+4) averages -7.5: moderate.
-        risk = '♥ Risking: moderate injury\u00A0·\u00A0Athletic / ' + await page.evaluate(ease => tc.checks.toEasePhrase(ease), alphaAthleticEase),
+        risk = '♥ Risking: moderate injury\u00A0·\u00A0Athletic / ' + await page.evaluate(ease => tc.checks.getEasePhrase(String(ease), {}), alphaAthleticEase),
         visibleText = text => page.getByText(text, {exact:true}).filter({visible:true});
 
     // In the agent's list of exits.
@@ -909,9 +909,9 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
         out = await page.evaluate(() => {
             const alpha = tc.model.getAgentModel('AL'),
                 origin = tc.model.getEventModel('origin'),
-                withAction = (adjustmentCfg, skillCheck) => {
+                withAction = (adjustmentCfg, skillCheck, statId='event.paradox') => {
                     delete origin.getActionModels().measured;
-                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{'event.paradox':adjustmentCfg}}});
+                    origin.setActions({measured:{label:'Measured', skillCheck, set:{}, adj:{[statId]:adjustmentCfg}}});
                     const actionModel = origin.getActionModels().measured;
                     return {
                         phrase:alpha.getAdjustmentsPhrase(actionModel).replace(/\u00A0/g, ' '),
@@ -924,8 +924,12 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
             exitModel.setAdjustments({'event.paradox':{onSuccess:'margin + 3'}});
             
             return {
-                // At an ease of -500, passes run from 0 to 499 and failures from -500 to -1.
-                averages:[[-500, true], [-500, false], [-1, true], [-1, false]].map(([ease, success]) => tc.checks.getAverageMargin(ease, success)),
+                // The margin itself, on a stat that isn't rounded. At an ease of -500, passes 
+                // run from 0 to 499 and failures from -500 to -1. At -1, passes run from 0 to
+                // 998 and the only failure is -1.
+                averages:[500, 1].map(difficulty => withAction(
+                    {onSuccess:'margin', onFailure:'margin'}, {difficulty, check:'0'}, 'agent.effectiveAge'
+                ).phrase),
                 hard:withAction(TENTH, HARD),
                 
                 // An adjustment's own check is as sure as a check gets, so a pass averages 499.
@@ -936,7 +940,10 @@ test('without rolling, an amount uses the average margin of a pass or a failure'
                 exit:alpha.getAdjustmentsPhrase(exitModel)
             };
         });
-    expect(out.averages).toEqual([249.5, -250.5, 499, -1]);
+    expect(out.averages).toEqual([
+        'Effective Age: ~+249.5 if passed, ~-250.5 if failed',
+        'Effective Age: ~+499 if passed, ~-1 if failed'
+    ]);
     expect(out.hard).toEqual({phrase:'Event Parad⥁x: ~+25 if passed, ~-25 if failed', flagged:true});
     expect(out.own).toEqual({phrase:'Event Parad⥁x: ~+50 if passed · ensured', flagged:true});
     expect(out.noRoll).toEqual({phrase:'Event Parad⥁x: ~+0 if passed', flagged:false});

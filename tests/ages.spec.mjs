@@ -106,7 +106,7 @@ test('maximum health declines with effective age, to death at 85; treatments win
     expect(treated).toMatchObject({healthMax:prime, dead:false});
     
     // Saved and restored.
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readAges(page, 'AL')).toEqual(treated);
     

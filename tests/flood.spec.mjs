@@ -183,9 +183,9 @@ test('a flooded Event stays flooded after a save and reload, without flooding ag
     const problems = await startGame(page);
     await flood(page, 'origin');
     const before = await readEvents(page);
-    expect((await page.evaluate(() => tc.persistence.exportDiff())).events.origin.flooded).toBe(true);
+    expect((await page.evaluate(() => tc.getPersistenceManager().exportDiff())).events.origin.flooded).toBe(true);
 
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     expect(await readEvents(page)).toEqual(before);
     expect(await page.evaluate(() => tc.model.getAgentModel('AL').paradox.value)).toBe(1);
@@ -208,7 +208,7 @@ test('restoring a save with stats at their limits doesn\'t devour or flood again
         bravo.paradox.setValue(bravo.paradox.max);
         const origin = tc.model.getEventModel('origin');
         origin.paradox.setValue(origin.paradox.max);
-        tc.persistence.save();
+        tc.getPersistenceManager().save();
     });
     const before = await snapshot();
     expect([before.devoured, before.flooded]).toEqual([true, true]);

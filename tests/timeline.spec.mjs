@@ -94,7 +94,7 @@ test('nothing animates while the campaign starts or a save is restored', async (
     // A save with the chain known and changed restores those values on reload.
     await reveal(page, CHAIN);
     await page.evaluate(() => tc.model.getEventModel('plan').getValueModels().prepared.setValue('true', false));
-    await page.evaluate(() => tc.persistence.save());
+    await page.evaluate(() => tc.getPersistenceManager().save());
     await reloadGame(page);
     
     expect(await page.evaluate(() => tc.model.getEventModel('plan').getValueModels().prepared.value)).toBe(true);
@@ -137,7 +137,7 @@ test('waiting for the animations runs right away when none are running', async (
     await startGame(page);
     expect(await page.evaluate(() => {
         let ran = false;
-        tc.app.getTimelineView().doWhenValueChangeAnimsDone(() => {ran = true;});
+        tc.app.getTimelineView().doWhenValueChangeAnimsComplete(() => {ran = true;});
         return ran;
     })).toBe(true);
 });
@@ -387,6 +387,30 @@ test('the box of an event with paradox is shown drifting around where it belongs
             return c.startX === x && c.startY === y;
         });
     })).toBe(true);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a selected box is light with dark text, and its neighbors and the rest aren\'t', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    const readBoxes = () => page.evaluate(() => {
+        const {colorLight, colorDark} = tc.theme,
+            retval = {};
+        for (const [id, box] of Object.entries(tc.app.getTimelineView().boxesByEventId)) {
+            if (box.visible) retval[id] = {light:box.bgColor === colorLight, darkText:box.textColor === colorDark};
+        }
+        return retval;
+    });
+    const boxes = await readBoxes();
+    expect(boxes.origin).toEqual({light:true, darkText:true});
+    for (const [id, box] of Object.entries(boxes)) {
+        if (id !== 'origin') expect(box, id).toEqual({light:false, darkText:false});
+    }
+    
+    // And back, once another is selected.
+    await page.evaluate(() => tc.app.selectEventBox('aftermath'));
+    expect((await readBoxes()).origin).toEqual({light:false, darkText:false});
     
     expect(problems.pageErrors).toEqual([]);
 });
