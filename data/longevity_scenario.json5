@@ -145,7 +145,7 @@
 				// Beniko joins You wherever You are, and makes her offer.
 				"set":{"agents.BA.event":"agents.ME.event"},
 				"prompt":"corps_offer",
-				"nextOperation":"agents.ME.faction === 'timecorps' ? 'titanic_noCollision' : 'syndicate_offer'"
+				"nextOperation":"agents.ME.faction === 'timecorps' ? 'NOOP' : 'syndicate_offer'"
 			}
 		},
 		

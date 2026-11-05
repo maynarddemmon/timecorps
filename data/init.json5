@@ -7,7 +7,8 @@
 	// Groups of actions. An action joins one with its "group", and each group is shown on a line
 	// of its own, after an agent's other actions (a positive order) or before them (a negative one).
 	"actionGroups":{
-		"chronal_pool":{"label":"Chronal Pool", "order":1}
+		"chronal_pool":{"label":"Chronal Pool", "order":1},
+		"jobs":{"label":"Open Jobs", "order":2}
 	},
 	
 	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
@@ -166,7 +167,8 @@
 		"transfer":0, // Used when an amount needs to be calculated before it is used in multiple set/adj.
 		"syndicate_hq_hidden":"true",
 		"time_corps_hq_hidden":"true",
-		"the_void_hidden":"true"
+		"the_void_hidden":"true",
+		"operation_titanicOffered":false
 	},
 	
 	"events":{
@@ -202,11 +204,7 @@
 						"agent.action":"7",
 						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
 					},
-					"adj":{
-						"agent.health":{
-							"onSuccess":"d(8,6)"
-						}
-					}
+					"adj":{"agent.health":{"onSuccess":"d(8,6)"}}
 				},
 				
 				"_restockChronal":{
@@ -218,11 +216,7 @@
 						"agent.action":null,
 						"timeline.credits":"1"
 					},
-					"adj":{
-						"timeline.chronal":{
-							"onSuccess":"1"
-						}
-					}
+					"adj":{"timeline.chronal":{"onSuccess":"1"}}
 				},
 				
 				// Agents can reload their chronal from the shared HQ pool.
@@ -254,11 +248,7 @@
 						"agent.action":"7",
 						"timeline.credits":"50"
 					},
-					"adj":{
-						"agent.effectiveAge":{
-							"onSuccess":"-5"
-						}
-					}
+					"adj":{"agent.effectiveAge":{"onSuccess":"-5"}}
 				},
 				
 				// Agents can be treated to remove paradox, one point at a time.
@@ -270,11 +260,16 @@
 						"agent.action":"7",
 						"timeline.credits":"30"
 					},
-					"adj":{
-						"agent.paradox":{
-							"onSuccess":"-1"
-						}
-					}
+					"adj":{"agent.paradox":{"onSuccess":"-1"}}
+				},
+				
+				"jobBoard_1":{
+					"label":"Check the Job Board",
+					"group":"jobs",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"operations.titanic_noCollision.shown",
+					"costs":{"agent.action":null},
+					"set":{"scratch.operation_titanicOffered":"true"}
 				}
 			}
 		},
@@ -299,11 +294,7 @@
 						"agent.action":"7",
 						"timeline.credits":"(agent.health.max - agent.health.value) / 2"
 					},
-					"adj":{
-						"agent.health":{
-							"onSuccess":"d(8,6)"
-						}
-					}
+					"adj":{"agent.health":{"onSuccess":"d(8,6)"}}
 				},
 				
 				"_restockChronal":{
@@ -315,11 +306,7 @@
 						"agent.action":null,
 						"timeline.credits":"1"
 					},
-					"adj":{
-						"timeline.chronal":{
-							"onSuccess":"1"
-						}
-					}
+					"adj":{"timeline.chronal":{"onSuccess":"1"}}
 				},
 				
 				// Agents can reload their chronal from the shared HQ pool.
@@ -351,11 +338,7 @@
 						"agent.action":"7",
 						"timeline.credits":"50"
 					},
-					"adj":{
-						"agent.effectiveAge":{
-							"onSuccess":"-5"
-						}
-					}
+					"adj":{"agent.effectiveAge":{"onSuccess":"-5"}}
 				},
 				
 				// Agents can be treated to remove paradox, one point at a time.
@@ -367,11 +350,16 @@
 						"agent.action":"7",
 						"timeline.credits":"30"
 					},
-					"adj":{
-						"agent.paradox":{
-							"onSuccess":"-1"
-						}
-					}
+					"adj":{"agent.paradox":{"onSuccess":"-1"}}
+				},
+				
+				"jobBoard_1":{
+					"label":"Check the Job Board",
+					"group":"jobs",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"operations.titanic_noCollision.shown",
+					"costs":{"agent.action":null},
+					"set":{"scratch.operation_titanicOffered":"true"}
 				}
 			}
 		}

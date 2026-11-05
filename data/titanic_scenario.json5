@@ -3,6 +3,9 @@
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
 			"image":true,
+			// The Corps reveals it once The Vote is done. A Syndicate recruit is offered it on
+			// reaching the Warehouse instead.
+			"shown":"scratch.operation_titanicOffered",
 			"description":[
 				{
 					"text":"Too few lifeboats means a massive loss of life is imminent.",

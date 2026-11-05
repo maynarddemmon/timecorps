@@ -145,29 +145,6 @@
     pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
         include: [ConstrainableAttrSupport, Hideable, Describable, pkg.MediaSupport],
         
-        /** @overrides ConstrainableAttrSupport */
-        getConstraintScopeName: () => SCOPE_OPERATION,
-        
-        /** @overrides MediaSupport */
-        getMediaFolder: () => 'mission',
-        
-        /*  Unlike other models, an Operation's image is optional, so it only shows mission/<id>.jpg
-            when the data says "image":true. Without one there's nothing to load, and no failed 
-            request for a missing file. It can also be a path, as for any model, and an 
-            imageExpr can name one either way. */
-        setImage: function(v) {
-            if (typeof v === 'boolean') {
-                this.hasOwnImage = v;
-                this.imageData = null;
-            } else {
-                this.callSuper(v);
-            }
-        },
-        
-        /** @overrides MediaSupport */
-        getDefaultImageFile: function() {return this.hasOwnImage ? this.id + '.jpg' : null;},
-        
-        
         // Life Cycle //////////////////////////////////////////////////////
         init: function(attrs) {
             const self = this;
@@ -211,6 +188,28 @@
         
         
         // Accessors ///////////////////////////////////////////////////////
+        /** @overrides ConstrainableAttrSupport */
+        getConstraintScopeName: () => SCOPE_OPERATION,
+        
+        /** @overrides MediaSupport */
+        getMediaFolder: () => 'mission',
+        
+        /*  Unlike other models, an Operation's image is optional, so it only shows mission/<id>.jpg
+            when the data says "image":true. Without one there's nothing to load, and no failed 
+            request for a missing file. It can also be a path, as for any model, and an 
+            imageExpr can name one either way. */
+        setImage: function(v) {
+            if (typeof v === 'boolean') {
+                this.hasOwnImage = v;
+                this.imageData = null;
+            } else {
+                this.callSuper(v);
+            }
+        },
+        
+        /** @overrides MediaSupport */
+        getDefaultImageFile: function() {return this.hasOwnImage ? this.id + '.jpg' : null;},
+        
         isCurrent: function() {return pkg.model.getCurrentOperation() === this;},
         
         /*  Started and not yet completed, so progress can be made on it. */
@@ -318,7 +317,7 @@
             if (!operationModel) {
                 const nextId = pkg.checks.rollValue(next);
                 operationModel = rootModel.getOperationModel(nextId);
-                if (!operationModel) console.warn('Operation', this.id, 'nextOperation names no Operation:', next, '→', nextId);
+                if (!operationModel && nextId != 'NOOP') console.warn('Operation', this.id, 'nextOperation names no Operation:', next, '→', nextId);
             }
             return operationModel ?? null;
         },
