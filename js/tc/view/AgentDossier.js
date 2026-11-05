@@ -200,6 +200,7 @@
                     trainLabel = i18n('skill-train', cfg.name, points);
                 skillBar.setValue(value);
                 skillBar.setLabelText(label);
+                skillBar.setTrackLabelText(agentModel.getSkillTrackLabel(skillId));
                 skillBar.setTooltip(i18n('skill-tip', label, cfg.description));
                 skillBar.updateIncreaseBtn(
                     trainLabel,

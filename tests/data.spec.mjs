@@ -707,6 +707,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             defaults = Object.keys(skillTracks).filter(trackId => skillTracks[trackId].default === true);
         if (Object.keys(skillTracks).length > 0 && defaults.length !== 1) problems.push('skill tracks marked the default: ' + (defaults.join(', ') || 'none'));
         for (const [trackId, track] of Object.entries(skillTracks)) {
+            if (track.default !== true && !(typeof track.label === 'string' && track.label.trim() !== '')) problems.push('skill track ' + trackId + ' has no label');
             if (track.minCredits !== undefined && !(Number.isInteger(track.minCredits) && track.minCredits >= 0)) problems.push('skill track ' + trackId + ' minCredits is not a whole number, 0 or more');
             if (track.pointsPerExtraCredit !== undefined && !(Number.isInteger(track.pointsPerExtraCredit) && track.pointsPerExtraCredit > 0)) problems.push('skill track ' + trackId + ' pointsPerExtraCredit is not a whole number above 0');
         }

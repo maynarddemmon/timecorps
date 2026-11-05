@@ -54,18 +54,23 @@
             track leaving out either number takes it from here. */
         BUILT_IN_SKILL_TRACK = Object.freeze({id:'default', minCredits:1, pointsPerExtraCredit:100}),
         
-        /*  Reads one skill track's config, e.g. {"default":true, "minCredits":1, 
-            "pointsPerExtraCredit":100}, into {id, minCredits, pointsPerExtraCredit, isDefault},
-            warning about its problems. A number that's left out or unusable is the built-in 
-            track's. */
+        /*  Reads one skill track's config, e.g. {"label":"Affinity", "minCredits":1, 
+            "pointsPerExtraCredit":200}, into {id, label, minCredits, pointsPerExtraCredit, 
+            isDefault}, warning about its problems. A number that's left out or unusable is the
+            built-in track's. The label is shown beside a skill on the track, unless it's the 
+            default, and is undefined if left out or unusable. */
         readSkillTrack = (id, cfg) => {
             const where = 'Skill track ' + id;
             if (!isPlainObject(cfg)) {
                 console.warn(where, 'must be an object, e.g. {"minCredits":1, "pointsPerExtraCredit":100} (ignoring it):', cfg);
                 return null;
             }
-            let {default:isDefault=false, minCredits=BUILT_IN_SKILL_TRACK.minCredits, pointsPerExtraCredit=BUILT_IN_SKILL_TRACK.pointsPerExtraCredit, ...unknown} = cfg;
+            let {label, default:isDefault=false, minCredits=BUILT_IN_SKILL_TRACK.minCredits, pointsPerExtraCredit=BUILT_IN_SKILL_TRACK.pointsPerExtraCredit, ...unknown} = cfg;
             if (Object.keys(unknown).length > 0) console.warn(where, 'has unknown keys', Object.keys(unknown).join(', '), '(ignoring them)');
+            if (label !== undefined && (typeof label !== 'string' || label.trim() === '')) {
+                console.warn(where, 'label must be a non-empty string (ignoring it):', label);
+                label = undefined;
+            }
             if (typeof isDefault !== 'boolean') {
                 console.warn(where, 'default must be true or false (using false):', isDefault);
                 isDefault = false;
@@ -78,7 +83,7 @@
                 console.warn(where, 'pointsPerExtraCredit must be a whole number above 0 (using ' + BUILT_IN_SKILL_TRACK.pointsPerExtraCredit + '):', pointsPerExtraCredit);
                 pointsPerExtraCredit = BUILT_IN_SKILL_TRACK.pointsPerExtraCredit;
             }
-            return {id, minCredits, pointsPerExtraCredit, isDefault};
+            return {id, label, minCredits, pointsPerExtraCredit, isDefault};
         },
         
         /*  Reads the agingSkillGains config, e.g. {"monthsPerGain":1, "weights":{"luck":25, …}},
@@ -332,9 +337,13 @@
         getAgingSkillGains: () => agingSkillGains,
         
         /*  Warns if the data gives skill tracks but marks none the default, so skills an 
-            agent's skillsByTrack leaves out are on the built-in one. */
+            agent's skillsByTrack leaves out are on the built-in one, and about each other 
+            track without a label, which shows its ID instead. */
         validateSkillTracks: () => {
             if (skillTracks.size > 0 && !defaultSkillTrack) console.warn(DATA_KEY_SKILL_TRACKS, 'marks no track the default, with "default":true (using a credit, and one more for every 100 points from 0)');
+            for (const track of skillTracks.values()) {
+                if (track !== defaultSkillTrack && track.label === undefined) console.warn('Skill track', track.id, 'has no label (showing its ID)');
+            }
         },
         
         /*  Warns about each action whose group names no action group. It's shown with the 
@@ -797,7 +806,8 @@
         luck, which only grows with experience. */
     pkg.isSkillTrainable = skillId => skillCfgs[skillId]?.trainable !== false;
     
-    /*  A skill track by ID, as {id, minCredits, pointsPerExtraCredit, isDefault}, or undefined.
+    /*  A skill track by ID, as {id, label, minCredits, pointsPerExtraCredit, isDefault}, or 
+        undefined.
         An agent's skillsByTrack puts their skills on tracks, which set what training costs: 
         minCredits for a point near 0, and one more for every pointsPerExtraCredit the skill
         is from 0. */

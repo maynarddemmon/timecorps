@@ -664,6 +664,13 @@
         getSkillTrack: function(skillId) {
             return pkg.getSkillTrack(this.trackIdBySkill?.[skillId]) ?? pkg.getDefaultSkillTrack();
         },
+        
+        /*  What the dossier shows beside a skill for its track: the track's label, or its ID
+            without one, or '' for the default track. */
+        getSkillTrackLabel: function(skillId) {
+            const track = this.getSkillTrack(skillId);
+            return track === pkg.getDefaultSkillTrack() ? '' : (track.label ?? track.id);
+        },
         getSkill: function(skillId) {return this.getSkills()[skillId] ?? 0;},
         
         /*  A skill as an adjustment sees a stat: it can change within ±MAX_SKILL_VALUE. */

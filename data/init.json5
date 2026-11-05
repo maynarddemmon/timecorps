@@ -97,11 +97,12 @@
 	
 	// What training a skill at HQ costs, by the track an agent's "skillsByTrack" puts it on:
 	// minCredits for a point near 0, and one more for every pointsPerExtraCredit the skill is
-	// from 0. Skills an agent leaves out are on the default track.
+	// from 0. Skills an agent leaves out are on the default track. The dossier shows the 
+	// label beside a skill on any other track.
 	"skillTracks":{
-		"high":{"minCredits":1, "pointsPerExtraCredit":150},
-		"standard":{"default":true, "minCredits":1, "pointsPerExtraCredit":100},
-		"low":{"minCredits":2, "pointsPerExtraCredit":75}
+		"high":{"label":"Talented", "minCredits":1, "pointsPerExtraCredit":150},
+		"standard":{"label":"Standard", "default":true, "minCredits":1, "pointsPerExtraCredit":100},
+		"low":{"label":"Untalented", "minCredits":2, "pointsPerExtraCredit":75}
 	},
 	
 	"skills":{

@@ -6,9 +6,10 @@
         {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
+        {PlainText, ProgressBar} = M,
         
         {
-            colorUltraLight, colorMedium, colorDark, colorMegaDark, colorHistoricity, colorAttestation, colorParadox, 
+            colorUltraLight, colorLight, colorMedium, colorDark, colorMegaDark, colorHistoricity, colorAttestation, colorParadox, 
             colorChronal, colorHealth,
             fontSizeMicro
         } = pkg.theme,
@@ -26,7 +27,7 @@
             valueView.set(isXAxis ? 'y' : 'x', (crossFullSize - crossSize)/2);
         },
         
-        StatProgressBar = new JSClass('StatProgressBar', M.ProgressBar, {
+        StatProgressBar = new JSClass('StatProgressBar', ProgressBar, {
             initNode: function(parent, attrs) {
                 attrs.bgColor ??= colorMegaDark;
                 attrs.height ??= 6;
@@ -49,7 +50,7 @@
                 
                 this.callSuper(parent, attrs);
                 
-                if (showLabel) this.labelView = new M.PlainText(this, {x:labelX, y:labelY, textColor:labelColor, fontSize:labelFontSize});
+                if (showLabel) this.labelView = new PlainText(this, {x:labelX, y:labelY, textColor:labelColor, fontSize:labelFontSize});
             },
             
             setLabelTemplate: function(v) {
@@ -72,7 +73,7 @@
                 self.setTooltip(tooltip);
             },
             
-            /** @overrides M.ProgressBar */
+            /** @overrides myt.ProgressBar */
             updateValueView: function() {
                 updateValueViewForRounding(this);
             }
@@ -115,7 +116,7 @@
     
     /*  A skill's value on a bar from red to green, labeled above. With showIncreaseBtn, a
         button at the right of the label calls doIncrease, e.g. to buy points. */
-    pkg.SkillBar = new JSClass('SkillBar', M.ProgressBar, {
+    pkg.SkillBar = new JSClass('SkillBar', ProgressBar, {
         initNode: function(parent, attrs) {
             attrs.valueColor ??= colorUltraLight;
             attrs.bgColor ??= colorDark;
@@ -161,7 +162,7 @@
             
             gradientView.sendToBack();
             
-            if (showLabel) this.labelView = new M.PlainText(this, {x:labelX, y:labelY, text:label, textColor:labelColor, fontSize:labelFontSize});
+            if (showLabel) this.labelView = new PlainText(this, {x:labelX, y:labelY, text:label, textColor:labelColor, fontSize:labelFontSize});
             
             if (showIncreaseBtn) {
                 // Not focusable, since it can become disabled by its own click, e.g. when the
@@ -174,7 +175,33 @@
             this.updateValueView();
         },
         
-        setLabelText: function(text) {this.labelView?.setText(text);},
+        setLabelText: function(text) {
+            this.labelView?.setText(text);
+            this._placeTrackLabel();
+        },
+        
+        /*  Sets the text shown just after the label, brighter, e.g. the skill's track for the 
+            agent. '' shows nothing. */
+        setTrackLabelText: function(text) {
+            const labelView = this.labelView;
+            if (!labelView) return;
+            let trackLabelView = this.trackLabelView;
+            if (!trackLabelView) {
+                if (!text) return;
+                trackLabelView = this.trackLabelView = new PlainText(this, {
+                    y:labelView.y, textColor:colorLight, fontSize:labelView.fontSize
+                });
+            }
+            trackLabelView.setText(pkg.ICON_SEPARATOR + text);
+            trackLabelView.setVisible(!!text);
+            this._placeTrackLabel();
+        },
+        
+        /** @private */
+        _placeTrackLabel: function() {
+            const {labelView, trackLabelView} = this;
+            if (labelView && trackLabelView) trackLabelView.setX(labelView.x + labelView.width);
+        },
         
         /*  Sets the increase button's text, whether it's disabled and its tooltip. */
         updateIncreaseBtn: function(text, disabled, tooltip) {

@@ -271,8 +271,8 @@ const routeSkillTracks = (page, skillTracks, skillsByTrack) => Promise.all([
 test('a skill\'s track for the agent sets its price: a minimum, and one more credit for every so many points from 0', async ({page}) => {
     await routeSkillTracks(page, {
         standard:{default:true, minCredits:1, pointsPerExtraCredit:100},
-        high:{minCredits:1, pointsPerExtraCredit:200},
-        low:{minCredits:2, pointsPerExtraCredit:50}
+        high:{label:'Affinity', minCredits:1, pointsPerExtraCredit:200},
+        low:{label:'Aversion', minCredits:2, pointsPerExtraCredit:50}
     }, {high:['cha'], low:['str']});
     const problems = await startGame(page),
         prices = skillId => page.evaluate(skillId => {
@@ -298,7 +298,7 @@ test('a skill\'s track for the agent sets its price: a minimum, and one more cre
 });
 
 test('without skill tracks, or with none marked the default, a point costs a credit and one more for every 100 points', async ({page}) => {
-    await routeSkillTracks(page, {high:{minCredits:3, pointsPerExtraCredit:200}}, {high:['cha']});
+    await routeSkillTracks(page, {high:{label:'Affinity', minCredits:3, pointsPerExtraCredit:200}}, {high:['cha']});
     const problems = await startGame(page);
     expect(await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL');
@@ -328,11 +328,42 @@ test('broken skill tracks and skillsByTrack are warned about, keeping what\'s us
         'Agent AL skillsByTrack odd names no skill nope (ignoring it)',
         'Agent AL skillsByTrack puts cha on both odd and other (using other)',
         'Agent AL skillsByTrack names no skill track missing (ignoring it)',
-        'Agent AL skillsByTrack standard must be an array of skill IDs (ignoring it): dex'
+        'Agent AL skillsByTrack standard must be an array of skill IDs (ignoring it): dex',
+        // No longer the default, so it's shown.
+        'Skill track standard has no label (showing its ID)',
+        'Skill track odd has no label (showing its ID)'
     ]);
     expect(await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL');
         return ['cha', 'str', 'dex'].map(skillId => alpha.getSkillTrack(skillId).id);
     })).toEqual(['other', 'other', 'other']);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('the dossier shows a skill\'s track label after its name, unless it\'s on the default track', async ({page}) => {
+    await routeSkillTracks(page, {
+        standard:{label:'Standard', default:true},
+        high:{label:'Affinity', pointsPerExtraCredit:200},
+        // No label, so its ID shows.
+        low:{minCredits:2}
+    }, {high:['cha'], low:['str'], standard:['dex']});
+    const problems = await startGame(page);
+    await openAtHQ(page, 10);
+    const trackLabels = () => page.evaluate(() => {
+        const dossier = tc.app.getSubviews().find(sv => sv.isA(tc.AgentDossier) && sv.visible),
+            retval = {};
+        for (const bar of dossier._skillBars) {
+            const view = bar.trackLabelView;
+            if (view?.visible) retval[bar.skillId] = {text:view.text, afterLabel:view.x > bar.labelView.x + bar.labelView.width};
+        }
+        return retval;
+    });
+    expect(await trackLabels()).toEqual({cha:{text:'Affinity', afterLabel:true}, str:{text:'low', afterLabel:true}});
+    
+    // It keeps after the label as the skill's value grows.
+    await buyBtn(page, 'Charisma').click();
+    expect(await trackLabels()).toEqual({cha:{text:'Affinity', afterLabel:true}, str:{text:'low', afterLabel:true}});
+    
+    expect(problems.warnings).toEqual(['Skill track low has no label (showing its ID)']);
     expect(problems.pageErrors).toEqual([]);
 });
