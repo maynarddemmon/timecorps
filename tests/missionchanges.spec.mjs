@@ -214,6 +214,15 @@ test('check expressions can read any agent or Event, and nextOperation can be on
     await page.evaluate(() => tc.model.getAgentModel('AL').setFaction('unaligned'));
     expect(await page.evaluate(() => tc.model.getOperationModel('first').getNextOperation().id)).toBe('second');
     
+    // One that works out to null or an empty string leads nowhere, without a warning.
+    expect(await page.evaluate(() => {
+        const first = tc.model.getOperationModel('first');
+        return ["agents.AL.faction === 'unaligned' ? null : 'second'", "agents.AL.faction === 'unaligned' ? '' : 'second'"].map(next => {
+            first.setNextOperation(next);
+            return first.getNextOperation();
+        });
+    })).toEqual([null, null]);
+    
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
