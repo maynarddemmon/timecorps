@@ -1107,7 +1107,7 @@
                     for (const [amount, i18nKey] of [[passAmount, 'adj-if-passed'], [failAmount, 'adj-if-failed']]) {
                         if (Number.isFinite(amount)) {
                             const rounded = isInteger ? mathRound(amount) : amount;
-                            parts.push(i18n(i18nKey, ICON_APPROX + (rounded < 0 ? '-' : '+') + pkg.formatAmount(mathAbs(rounded))));
+                            parts.push(i18n(i18nKey, ICON_APPROX + (rounded < 0 ? '-' : '+') + pkg.cleanToFixed(mathAbs(rounded))));
                         }
                     }
                     phrase = i18n('adj-stat', adjustmentModel.getStatDescription(), concatenate(parts));

@@ -323,7 +323,7 @@
                     const {success, roll, ease, adjustments=[]} = checkResult,
                         // A no-roll check has no margin or roll to show.
                         text = (roll == null ? i18n('check-succeeded') : 
-                            i18n(success ? 'check-succeeded-by' : 'check-failed-by', mathAbs(roll + ease)) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
+                            i18n(success ? 'check-succeeded-by' : 'check-failed-by', pkg.cleanToFixed(mathAbs(roll + ease))) + (CHECK_EXPR_SHOW_DIE_ROLL ? ICON_SEPARATOR + '⚅' + roll : '')) +
                             // What any adjustments changed, e.g. "Failed by 120 · -7♥ · +2⥁".
                             adjustments.filter(adjustment => adjustment.amount && adjustment.shown !== false).map(adjustment => ICON_SEPARATOR + pkg.formatStatAdj(adjustment.statId, adjustment.amount)).join('');
                     pkg.showFloatingTextAboveView(
