@@ -31,7 +31,15 @@
 		"syndicate_offer":{
 			"type":"confirm",
 			"title":"Syndicate’s Offer",
-			"description":"“Embrace your destiny?”",
+			"description":[
+				// At The Trace, having followed him there.
+				{"text":"The man in the dark suit looks you over, from your shoes to the device on your wrist, and seems to approve of about half of it. “You followed a cold trace with a borrowed device and no training,” he says. “The Corps spends years teaching people to do what you just did by accident.”", "shown":"agents.ME.event === 'lgv_watcher'"},
+				// Anywhere else, e.g. at the closed session, having turned Beniko down.
+				{"text":"The man in the dark suit is waiting at the back of the room, applauding something no one else in it will remember. “You turned Beniko down,” he says. “Good. She’d have had you filing reports by Tuesday.”", "hidden":"agents.ME.event === 'lgv_watcher'"},
+				"<br><br>He offers a hand. “Ambrose Fenwick. I was Corps, once, until I noticed who the Corps works for. We don’t answer to Command, and we don’t pretend the thread was ever straight. We pull it where it pays, or where it ought to go, and we keep what we find.”",
+				"<br><br>He nods at the device on your wrist. “That was one of ours before the Corps got hold of it. Whatever they’ve told you. It chose you, and I’m inclined to take its word.”",
+				"<br><br>“Well?” He smiles, a little too pleased with the line. “Embrace your destiny?”"
+			],
 			"buttons":{
 				"confirm":{
 					"label":"Join the Syndicate",
@@ -115,6 +123,11 @@
 					"name":"Keep It Secret",
 					"description":"The Commission must vote to keep the treatment a state secret.",
 					"success":"!events.lgv_commission.values.approvedRelease.value"
+				},
+				"unaligned":{
+					"name":"Unaligned",
+					"description":"You must not have joined a faction yet.",
+					"success":"agents.ME.faction === 'unaligned'"
 				}
 			},
 			"onSuccess":{
@@ -164,7 +177,7 @@
 			}
 		}
 	},
-
+	
 	// Spring Returns: Shanghai, 2087. The day the world learns it no longer has to grow old,
 	// and the three things that made that day happen: a trial that worked, an investor who
 	// paid for it, and a vote to tell everyone. In the first mission the player only watches,
@@ -210,7 +223,7 @@
 			"order":7
 		}
 	},
-
+	
 	"events":{
 		"lgv_backer":{
 			"name":"The Private Investor", "image":"../location/lgv_lanfang.jpg",
@@ -297,7 +310,7 @@
 			"name":"The Hospice", "image":"../location/lgv_hospice.jpg",
 			"start":"2087-09-03T10:00:00", "duration":{"h":2},
 			"location":"lgv_hospice",
-			"hidden":"events.lgv_commission.attestation.value < 10",
+			"hidden":"events.lgv_commission.attestation.value < 30",
 			"actionLimit":6,
 			"actions":{
 				"_rest":null,
@@ -384,7 +397,7 @@
 			"name":"The Projection", "image":"../location/lgv_tsinghua.jpg",
 			"start":"2087-09-16T14:00:00", "duration":{"h":2},
 			"location":"lgv_tsinghua",
-			"hidden":"events.lgv_commission.attestation.value < 30",
+			"hidden":"events.lgv_commission.attestation.value < 10",
 			"actionLimit":6,
 			"actions":{
 				"_rest":null,
@@ -535,12 +548,14 @@
 				"reporter":{
 					"label":"Talk to a Reporter",
 					"skillCheck":{"actionType":"social"},
+					"hidden":"event.actions.reporter.doneCount > 0",
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
 				},
 				"crowd":{
 					"label":"Watch the Crowd",
-					"skillCheck":{"actionType":"investigate", "difficulty":150},
-					"set":{"watcher":"true"},
+					"skillCheck":{"actionType":"investigate", "difficulty":200},
+					"hidden":"event.values.watcher.value",
+					"set":{"watcher":{"onSuccess":"true", "onFailure":"event.paradox.value > 0"}},
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
 				}
 			},
@@ -576,9 +591,10 @@
 				"watcher":{
 					"name":"The Watcher",
 					"value":"false",
-					"hidden":"!event.values.watcher.value",
+					"shown":"event.values.watcher.value",
 					"description":[
-						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "hidden":"!event.values.watcher.value"}
+						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "shown":"event.values.watcher.value"},
+						{"text":"<br><br>This time you wait for the hall to empty, then make your way to the seat in the third row. You hold the device on your wrist over it, not sure what you expect it to do. It grows warm. Something is still fading from the air there, a signal or the memory of one, and the device catches it and flashes: “Chrono Lock Obtained. Activate to initiate jump.” A countdown begins. If you’re going to follow, it has to be now.", "shown":"event.values.watcher.value && event.paradox.value > 0"}
 					]
 				}
 			},
@@ -591,7 +607,48 @@
 				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
 				{"text":"<br><br>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
 				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
-			]
+			],
+			"exits":[{
+				"mode":"jump", "toHidden":true, "to":"lgv_watcher",
+				"shown":"event.values.watcher.value && event.paradox.value > 0",
+				"set":{
+					"events.lgv_watcher.attestation":"1",
+					"agents.AF.hidden":"false",
+					"agents.AF.event":"'lgv_watcher'"
+				},
+				"adj":{"agent.health":"-d(6,3)"},
+				"costs":{"agent.chronal":"1"}
+			}]
+		},
+		
+		"lgv_watcher":{
+			"name":"The Trace", "image":"../location/_nexus.jpg",
+			"start":{"endOf":"lgv_announcement"}, "duration":{"h":1},
+			"location":"_nexus",
+			"actionLimit":3,
+			"actions":{
+				"_investigate":null,
+				"talk":{
+					"label":"Talk to the Man in the Dark Suit",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"event.actions.talk.doneCount > 0",
+					"costs":{"agent.action":null},
+					"prompt":"syndicate_offer"
+				}
+			},
+			"description":[
+				"The trace drops you somewhere that isn’t anywhere. A corridor of frosted glass, lit from no direction at all, runs away from you both ways, and the device on your wrist can’t decide what year it is. It settles, eventually, on the night you left: 12 November 2087, a few minutes after four in the morning.",
+				"<br><br>Beyond the glass, things move that might be streets, or rooms, or the same room at different times. None of them quite hold still when you look.",
+				{"text":"<br><br>At the end of the corridor, someone in a dark suit is waiting, one hand in a pocket, as if you were late. He is younger than you expected, and very well dressed, in the cut of a century that hasn’t happened yet.", "shown":"event.actions.talk.doneCount === 0"},
+				{"text":"<br><br>Ambrose Fenwick straightens a cuff that doesn’t need it. “Welcome aboard,” he says. “Mind the step. The warehouse is a little way back from here, and the Corps has never found it. Try not to be the one who shows them.”", "shown":"event.actions.talk.doneCount > 0 && agents.ME.faction === 'syndicate'"},
+				{"text":"<br><br>Ambrose shrugs, as if he expected nothing else. “The offer stands,” he says. “It usually does, right up until it doesn’t.” He walks off down the corridor, and the glass swallows him a few steps before it should.", "shown":"event.actions.talk.doneCount > 0 && agents.ME.faction !== 'syndicate'"}
+			],
+			"exits":[{
+				"mode":"pulled", "to":"lgv_hospice", "toHidden":true,
+				"shown":"event.actions.talk.doneCount > 0 && agents.ME.faction === 'unaligned'",
+				"set":{"events.lgv_hospice.hidden":"false"},
+				"adj":{"agent.health":"-d(4,5)"}
+			}]
 		}
 	}
 }
