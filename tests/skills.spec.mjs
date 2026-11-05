@@ -354,7 +354,11 @@ test('the dossier shows a skill\'s track label after its name, unless it\'s on t
             retval = {};
         for (const bar of dossier._skillBars) {
             const view = bar.trackLabelView;
-            if (view?.visible) retval[bar.skillId] = {text:view.text, afterLabel:view.x > bar.labelView.x + bar.labelView.width};
+            // After a separator, right after the label.
+            if (view?.visible) retval[bar.skillId] = {
+                text:view.text.startsWith(tc.ICON_SEPARATOR) ? view.text.slice(tc.ICON_SEPARATOR.length) : view.text,
+                afterLabel:view.x === bar.labelView.x + bar.labelView.width
+            };
         }
         return retval;
     });

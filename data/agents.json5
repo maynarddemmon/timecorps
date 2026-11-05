@@ -62,6 +62,7 @@
 			"faction":"timecorps",
 			"video":true,
 			"health":{"value":35, "max":85},
+			"skillsByTrack":{"high":["dex", "investigation", "persuasion"], "low":["chronogation", "disguise", "deception"]},
 			"skills":{
 				"chronogation":-100,
 				"investigation":100,
@@ -82,6 +83,7 @@
 			"health":{"value":50, "max":90},
 			"chronal":{"value":0},
 			"paradox":1,
+			"skillsByTrack":{"high":["stealth", "disguise", "deception"], "low":["cha", "chronogation", "persuasion"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":75,
@@ -101,6 +103,7 @@
 			"faction":"timecorps",
 			"health":{"value":25},
 			"event":"lifeboat_capacity",
+			"skillsByTrack":{"high":["agl", "dex", "cha"], "low":["str", "stealth", "deception"]},
 			"skills":{
 				"chronogation":-50,
 				"investigation":100,
@@ -121,6 +124,7 @@
 			"name":"Gordon",
 			"born":"2135-01-07", "age":35,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["agl", "disguise", "persuasion"], "low":["dex", "str", "investigation"]},
 			"skills":{
 				"investigation":50,
 				"str":-25,
@@ -138,6 +142,7 @@
 			"born":"2141-04-27", "age":33,
 			"faction":"timecorps",
 			"video":true,
+			"skillsByTrack":{"high":["chronogation", "investigation", "stealth"], "low":["str", "cha", "deception"]},
 			"skills":{
 				"chronogation":200,
 				"investigation":-50,
@@ -155,6 +160,7 @@
 			"name":"Alexander Aimes",
 			"born":"2146-03-20", "age":33,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "investigation", "persuasion"], "low":["str", "chronogation", "stealth"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":50,
@@ -173,6 +179,7 @@
 			"born":"2131-02-19", "age":33,
 			"faction":"timecorps",
 			"paradox":1,
+			"skillsByTrack":{"high":["str", "chronogation", "disguise"], "low":["investigation", "stealth", "persuasion"]},
 			"skills":{
 				"chronogation":-25,
 				"investigation":75,
@@ -192,6 +199,7 @@
 			"faction":"timecorps",
 			"health":{"value":10},
 			"paradox":2,
+			"skillsByTrack":{"high":["agl", "chronogation", "investigation"], "low":["str", "cha", "disguise"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -210,6 +218,7 @@
 			"born":"2138-06-26", "age":40,
 			"faction":"timecorps",
 			"health":{"value":56},
+			"skillsByTrack":{"high":["dex", "stealth", "disguise"], "low":["agl", "cha", "deception"]},
 			"skills":{
 				"chronogation":100,
 				"investigation":-25,
@@ -228,6 +237,7 @@
 			"born":"2140-12-28", "age":29,
 			"faction":"timecorps",
 			"health":{"value":88},
+			"skillsByTrack":{"high":["stealth", "disguise", "deception"], "low":["str", "cha", "chronogation"]},
 			"skills":{
 				"chronogation":-50,
 				"investigation":150,
@@ -247,6 +257,7 @@
 			"faction":"syndicate",
 			"event":"lgv_commission",
 			"health":{"value":91},
+			"skillsByTrack":{"high":["agl", "disguise", "persuasion"], "low":["dex", "chronogation", "investigation"]},
 			"skills":{
 				"chronogation":75,
 				"investigation":0,
@@ -265,6 +276,7 @@
 			"born":"2136-09-12", "age":51,
 			"faction":"timecorps",
 			"health":{"value":93},
+			"skillsByTrack":{"high":["agl", "dex", "deception"], "low":["cha", "chronogation", "investigation"]},
 			"skills":{
 				"chronogation":150,
 				"investigation":-50,
@@ -284,6 +296,7 @@
 			"faction":"timecorps",
 			"health":{"value":79},
 			"paradox":1,
+			"skillsByTrack":{"high":["str", "disguise", "persuasion"], "low":["agl", "dex", "cha"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":25,
@@ -301,6 +314,7 @@
 			"name":"Aldous Ingram",
 			"born":"2128-06-13", "age":44,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["chronogation", "disguise", "deception"], "low":["str", "cha", "persuasion"]},
 			"skills":{
 				"chronogation":-25,
 				"investigation":100,
@@ -318,6 +332,7 @@
 			"name":"Asher Jansen",
 			"born":"2150-04-24", "age":37,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["disguise", "deception", "persuasion"], "low":["cha", "investigation", "stealth"]},
 			"skills":{
 				"chronogation":100,
 				"investigation":25,
@@ -335,6 +350,7 @@
 			"name":"Arjun Kasliwal",
 			"born":"2137-03-24",
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["cha", "chronogation", "deception"], "low":["agl", "dex", "stealth"]},
 			"skills":{
 				"chronogation":0,
 				"investigation":75,
@@ -352,6 +368,7 @@
 			"name":"Abram Lowe",
 			"born":"2134-02-03", "age":31,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["disguise", "deception", "persuasion"], "low":["dex", "str", "stealth"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":0,
@@ -369,6 +386,7 @@
 			"name":"Amadou Mensah",
 			"born":"2133-09-18", "age":33,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["disguise", "deception", "persuasion"], "low":["cha", "chronogation", "stealth"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":50,
@@ -387,6 +405,7 @@
 			"born":"2118-05-03", "age":36,
 			"faction":"timecorps",
 			"paradox":2,
+			"skillsByTrack":{"high":["agl", "chronogation", "investigation"], "low":["cha", "stealth", "persuasion"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":100,
@@ -404,6 +423,7 @@
 			"name":"Alden Orme",
 			"born":"2147-01-21", "age":38,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["chronogation", "disguise", "deception"], "low":["dex", "cha", "investigation"]},
 			"skills":{
 				"chronogation":-75,
 				"investigation":125,
@@ -421,6 +441,7 @@
 			"name":"Aurelien Pascal",
 			"born":"2144-05-03", "age":30,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "chronogation", "disguise"], "low":["agl", "str", "persuasion"]},
 			"skills":{
 				"chronogation":125,
 				"investigation":-25,
@@ -438,6 +459,7 @@
 			"name":"Anya Quill",
 			"born":"2142-08-01", "age":31,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["str", "stealth", "disguise"], "low":["agl", "investigation", "persuasion"]},
 			"skills":{
 				"chronogation":0,
 				"investigation":100,
@@ -455,6 +477,7 @@
 			"name":"Ayumi Reyes",
 			"born":"2148-12-07", "age":37,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "disguise", "deception"], "low":["chronogation", "investigation", "persuasion"]},
 			"skills":{
 				"chronogation":125,
 				"investigation":0,
@@ -472,6 +495,7 @@
 			"name":"Ava Sato",
 			"born":"2145-08-15", "age":35,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["agl", "dex", "chronogation"], "low":["str", "investigation", "stealth"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":75,
@@ -490,6 +514,7 @@
 			"born":"2139-12-09", "age":37,
 			"faction":"timecorps",
 			"paradox":1,
+			"skillsByTrack":{"high":["agl", "str", "investigation"], "low":["chronogation", "stealth", "disguise"]},
 			"skills":{
 				"chronogation":-25,
 				"investigation":75,
@@ -507,6 +532,7 @@
 			"name":"Aurora Ueda",
 			"born":"2146-02-28", "age":49,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["str", "cha", "disguise"], "low":["dex", "chronogation", "persuasion"]},
 			"skills":{
 				"chronogation":75,
 				"investigation":25,
@@ -524,6 +550,7 @@
 			"name":"Asha Varga",
 			"born":"2143-01-17", "age":45,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["chronogation", "deception", "persuasion"], "low":["agl", "dex", "cha"]},
 			"skills":{
 				"chronogation":125,
 				"investigation":25,
@@ -542,6 +569,7 @@
 			"born":"2152-04-22", "age":41,
 			"faction":"timecorps",
 			"health":{"value":65,"max":75},
+			"skillsByTrack":{"high":["str", "chronogation", "stealth"], "low":["dex", "cha", "deception"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -561,6 +589,7 @@
 			"faction":"timecorps",
 			"health":{"value":33},
 			"paradox":1,
+			"skillsByTrack":{"high":["agl", "cha", "stealth"], "low":["disguise", "deception", "persuasion"]},
 			"skills":{
 				"chronogation":150,
 				"investigation":-75,
@@ -579,6 +608,7 @@
 			"born":"2138-07-20", "age":38,
 			"faction":"timecorps",
 			"paradox":2,
+			"skillsByTrack":{"high":["agl", "investigation", "deception"], "low":["stealth", "disguise", "persuasion"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -596,6 +626,7 @@
 			"name":"Anika Zeller",
 			"born":"2146-03-06", "age":31,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["investigation", "disguise", "deception"], "low":["str", "cha", "persuasion"]},
 			"skills":{
 				"chronogation":-50,
 				"investigation":125,
@@ -614,6 +645,7 @@
 			"born":"2140-07-09", "age":30,
 			"faction":"timecorps",
 			"health":{"max":95},
+			"skillsByTrack":{"high":["dex", "investigation", "disguise"], "low":["cha", "chronogation", "persuasion"]},
 			"skills":{
 				"chronogation":100,
 				"investigation":25,
@@ -632,6 +664,7 @@
 			"born":"2147-08-01", "age":39,
 			"faction":"timecorps",
 			"health":{"max":80},
+			"skillsByTrack":{"high":["str", "cha", "persuasion"], "low":["chronogation", "disguise", "deception"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":75,
@@ -649,6 +682,7 @@
 			"name":"Bree Castellanos",
 			"born":"2142-02-26", "age":27,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "cha", "disguise"], "low":["agl", "chronogation", "deception"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":50,
@@ -666,6 +700,7 @@
 			"name":"Brigid Dunne",
 			"born":"2145-07-25", "age":37,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["agl", "str", "cha"], "low":["chronogation", "investigation", "disguise"]},
 			"skills":{
 				"chronogation":0,
 				"investigation":75,
@@ -684,6 +719,7 @@
 			"born":"2144-09-18", "age":34,
 			"faction":"timecorps",
 			"health":{"value":98},
+			"skillsByTrack":{"high":["cha", "disguise", "persuasion"], "low":["agl", "investigation", "stealth"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":25,
@@ -702,6 +738,7 @@
 			"born":"2139-09-15", "age":37,
 			"faction":"timecorps",
 			"health":{"value":50},
+			"skillsByTrack":{"high":["str", "cha", "deception"], "low":["dex", "chronogation", "stealth"]},
 			"skills":{
 				"chronogation":75,
 				"investigation":-25,
@@ -721,6 +758,7 @@
 			"faction":"timecorps",
 			"health":{"value":80},
 			"paradox":1,
+			"skillsByTrack":{"high":["str", "stealth", "persuasion"], "low":["cha", "chronogation", "deception"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":100,
@@ -738,6 +776,7 @@
 			"name":"Beatrix Hsu",
 			"born":"2143-03-09", "age":56,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "stealth", "persuasion"], "low":["str", "disguise", "deception"]},
 			"skills":{
 				"chronogation":-25,
 				"investigation":150,
@@ -756,6 +795,7 @@
 			"born":"2140-07-26", "age":42,
 			"faction":"timecorps",
 			"paradox":2,
+			"skillsByTrack":{"high":["str", "chronogation", "disguise"], "low":["cha", "stealth", "persuasion"]},
 			"skills":{
 				"chronogation":100,
 				"investigation":50,
@@ -773,6 +813,7 @@
 			"name":"Brynn Jaeger",
 			"born":"2146-06-13", "age":33,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["str", "investigation", "disguise"], "low":["cha", "chronogation", "persuasion"]},
 			"skills":{
 				"chronogation":200,
 				"investigation":-50,
@@ -790,6 +831,7 @@
 			"name":"Beatrice Kaur",
 			"born":"2141-04-19", "age":34,
 			"faction":"timecorps",
+			"skillsByTrack":{"high":["dex", "chronogation", "deception"], "low":["agl", "stealth", "persuasion"]},
 			"skills":{
 				"chronogation":50,
 				"investigation":75,
@@ -809,6 +851,7 @@
 			"faction":"timecorps",
 			"health":{"value":95},
 			"paradox":3,
+			"skillsByTrack":{"high":["agl", "dex", "cha"], "low":["str", "investigation", "persuasion"]},
 			"skills":{
 				"chronogation":25,
 				"investigation":50,
