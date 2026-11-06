@@ -404,8 +404,10 @@
                 self.eventFacts.update(eventModel);
                 
                 const descriptionTxt = self.descriptionTxt,
-                    description = eventModel.getDescription();
-                descriptionTxt.setText(description || i18n('event-no-description'));
+                    description = eventModel.getDescription(),
+                    // An agent was lost here, in this game or an earlier one.
+                    haunting = pkg.legacy.getHaunting(eventModel.id);
+                descriptionTxt.setText((description || i18n('event-no-description')) + (haunting ? '<br><br><i>' + haunting + '</i>' : ''));
                 descriptionTxt.setFontStyle(description ? null : 'italic');
                 
                 const causatorsRow = self.causatorsRow;

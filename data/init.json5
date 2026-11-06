@@ -91,6 +91,28 @@
 		"agent.paradox":"Math.max(0, chronal - Math.floor((d(1001) - 1 + agent.skills.causalStability) / 33))"
 	},
 	
+	// What carries from one game to the next. Each of the player's agents lost in any game, 
+	// devoured by chronovores or dead of their wounds, gives this agent these skills at the
+	// start of every new game, and leaves the Event they fell at haunted, in every game, by 
+	// one of these lines under its description. The ☠ button shows it all, and clears it.
+	"legacy":{
+		"agent":"ME",
+		"devoured":{"agent.skills.causalStability":3},
+		"died":{"agent.skills.luck":1},
+		"hauntings":[
+			"You feel as if you are being watched, but can’t identify the source.",
+			"A spectral presence seems always just out of sight.",
+			"Somewhere close by, someone breathes in time with you.",
+			"The air here is colder than it has any right to be.",
+			"For an instant you glimpse a familiar silhouette, and then nothing.",
+			"Footsteps echo your own, half a beat behind.",
+			"You catch the scent of ozone and something burnt, though nothing is burning.",
+			"A voice you almost recognize whispers a warning you can’t quite make out.",
+			"The shadows here pool in the shape of someone who isn’t there.",
+			"This moment feels worn thin, as if something tore through it once before."
+		]
+	},
+	
 	// Experience: for every month of lived age (never the body's), a skill picked by 
 	// weight gains a point. The weights are out of 100 here only for readability.
 	"agingSkillGains":{

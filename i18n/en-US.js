@@ -39,6 +39,7 @@ myt.I18N.setDictionary({
 "tip-import":"Import a “save” file.",
 "tip-export":"Export a “save” file of your current progress.",
 "tip-settings":"Settings",
+"tip-legacy":"Accrued advantages",
 "tip-help":"Help",
 
 // Campaign Dialogs
@@ -50,6 +51,11 @@ myt.I18N.setDictionary({
 "dlg-save-failed-msg":"Your progress could not be saved. The browser may be blocking storage for this site.",
 "dlg-restart-title":"Restart Campaign",
 "dlg-restart-msg":"Are you sure you want to start over with a new campaign? Any currently saved progress will be discarded.",
+"dlg-legacy-title":"Accrued Advantages",
+"dlg-legacy-none-msg":"Nothing has accrued yet. Each agent of yours devoured by chronovores, or dead of their wounds, starts $0 a little stronger in every new game, and leaves the Event where they fell haunted.",
+"dlg-legacy-msg":"In past games $0 {{plural:$0|agent was|agents were}} devoured by chronovores and $1 died of their wounds, so $2 starts each new game with $3. $4 {{plural:$4|Event is|Events are}} haunted.<br><br>Clear them? The game in progress keeps what it started with.",
+"dlg-legacy-no-bonuses":"nothing extra",
+"btn-legacy-clear":"Clear",
 "dlg-import-title":"Import Save File",
 "dlg-import-msg":"Are you sure you want to import a “save” file and continue from there? Any currently saved progress will be overwritten.",
 "dlg-import-failed-title":"Import Failed",

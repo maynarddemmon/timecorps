@@ -59,8 +59,9 @@ JS.Packages(file => {
     file(MODEL_ROOT + 'OperationModel.js').provides('tc.OperationModel').requires(
         'tc.Describable','tc.MediaSupport','tc.PromptModel'
     );
+    file(MODEL_ROOT + 'Legacy.js').provides('tc.legacy').requires('tc');
     file(MODEL_ROOT + 'Model.js').provides('tc.Model').requires(
-        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel'
+        'tc.LocationModel','tc.FactionModel','tc.AgentModel','tc.EventModel','tc.OperationModel','tc.legacy'
     );
     file(MODEL_ROOT + 'PersistenceManager.js').provides('tc.PersistenceManager').requires('tc.Model');
     file(MODEL_ROOT + 'Settings.js').provides('tc.settings').requires('tc');

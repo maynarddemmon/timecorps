@@ -11,6 +11,7 @@
         
         timelineParadoxBar,
         saveBtn,
+        legacyBtn, // Shown once the data turns the legacy on.
         
         timelineView,
         eventDetailsView,
@@ -111,6 +112,29 @@
             }
         },
         
+        // Legacy //
+        /*  Shows what past games' losses have accrued, and offers to clear it. */
+        openLegacyDialog = () => {
+            const {devoured, died, hauntedCount, agentModel, bonuses} = pkg.legacy.getSummary(),
+                title = i18n('dlg-legacy-title');
+            if (devoured + died === 0) {
+                openAckMsgDialog(title, i18n('dlg-legacy-none-msg', agentModel?.getName() ?? ''));
+            } else {
+                const bonusesTxt = bonuses.map(([skillId, amount]) => i18n('skill-gain', pkg.cleanToFixed(amount), pkg.getSkillConfig(skillId)?.name ?? skillId)).join(', ');
+                openConfirmMsgDialog(
+                    title,
+                    i18n('dlg-legacy-msg', devoured, died, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), hauntedCount),
+                    () => {
+                        pkg.legacy.clear();
+                        // The selected Event's haunting goes with it.
+                        eventDetailsView.notifyEventSelectedChanged(timelineView.getSelectedEventBox());
+                    },
+                    null,
+                    i18n('btn-legacy-clear')
+                );
+            }
+        },
+        
         // Save //
         updateLastSaved = () => {
             const lastSavedDate = persistenceMgr.getLastSavedDate();
@@ -192,14 +216,16 @@
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistenceMgr.captureBaseline();
                             const startCampaign = () => {
+                                legacyBtn.setVisible(pkg.legacy.isEnabled());
                                 if (persistenceMgr.hasSave()) {
                                     const restoreProblem = persistenceMgr.restore();
                                     readyToHandleEvents = true;
                                     if (restoreProblem) openAckMsgDialog(i18n('dlg-restore-failed-title'), i18n('dlg-restore-failed-msg', restoreProblem), appView.doReload, null, i18n('btn-start-over'));
                                 } else {
                                     readyToHandleEvents = true;
-                                    // After the baseline, so what's picked is always saved.
+                                    // After the baseline, so what's picked and given is always saved.
                                     model.pickRandomSkillsByTrack();
+                                    pkg.legacy.applyToNewGame();
                                     model.getInitialOperation()?.start();
                                 }
                                 ready = true;
@@ -321,6 +347,10 @@
                         appView.doRestartCampaign
                     );
                 }
+            }]);
+            
+            legacyBtn = new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_LEGACY, fontSize:fontSizeLarge, tooltip:i18n('tip-legacy'), visible:false}, [{
+                doActivated: openLegacyDialog
             }]);
             
             new PlainText(topView, {text:ICON_SEPARATOR});

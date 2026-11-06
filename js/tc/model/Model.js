@@ -681,6 +681,9 @@
                 console.warn(DATA_KEY_SKILL_TRACKS, 'must be an object of tracks by ID (ignoring it):', skillTracksCfg);
             }
             
+            // What carries from one game to the next. See pkg.legacy.
+            pkg.legacy.readData(json);
+            
             // Skills gained with experience. A later file's replaces an earlier's.
             const agingSkillGainsCfg = json[DATA_KEY_AGING_SKILL_GAINS];
             if (agingSkillGainsCfg !== undefined) {

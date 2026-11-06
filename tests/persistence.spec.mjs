@@ -59,7 +59,9 @@ test('agent moves, actions and investigation survive a reload', async ({page}) =
         tc.rng.queueRolls(999); // So the investigation succeeds and changes attestation.
         alpha.doAction(plan.getActionModels()._investigate);
         alpha.doFollowExit(plan.getExitModels().find(exit => exit.to === 'supply'));
+        tc.rng.queueRolls(0); // So the paradox of coming back is kept, not resisted.
         alpha.doDeployToEvent(plan);
+        tc.rng.clearQueuedRolls();
     });
 
     await saveGame(page);

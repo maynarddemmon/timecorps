@@ -366,6 +366,7 @@
             }, [{
                 triggerValueAtMin: function() {
                     this.callSuper();
+                    pkg.legacy.recordLoss(self, pkg.legacy.LOSS_DIED, self.event);
                     pkg.app.notifyAgentAliveChange(self);
                 }
             }]);
@@ -1081,6 +1082,13 @@
                         showAdjustments(btnView, adjustments);
                         applyAdjustments(adjustments, logEntry);
                         
+                        // Devoured on the way, and so already in The Void, or dead, the agent 
+                        // goes no further.
+                        if (self.isDevoured() || self.isDead()) {
+                            self.showSkillGains(anchor);
+                            return;
+                        }
+                        
                         // Taking an exit always succeeds. Its sets apply before the agent 
                         // arrives, so one that reveals where it leads does so first.
                         exitModel.applySets(self, true, 0);
@@ -1178,6 +1186,9 @@
             if (this.devoured !== v) {
                 this.set('devoured', v, true);
                 if (this.devoured) {
+                    // Where they were taken, before they're moved to The Void.
+                    pkg.legacy.recordLoss(this, pkg.legacy.LOSS_DEVOURED, this.event);
+                    
                     // Do devoured by chronovores
                     this[STAT_ID_CHRONAL].setMax(0); // They have lost the ability to time travel.
                     this.setEvent(EVENT_ID_THE_VOID, {type:LOG_TYPE_DEVOURED});

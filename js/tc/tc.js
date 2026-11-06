@@ -505,6 +505,7 @@
             ICON_SAVE:'✇',
             ICON_SETTINGS:'⚙',
             ICON_RESTART:'⌫',
+            ICON_LEGACY:'☠',
             ICON_EXPANDED:'⊟',
             ICON_COLLAPSED:'⊞',
             ICON_IMPORT:'↥',

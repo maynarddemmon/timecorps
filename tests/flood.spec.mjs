@@ -119,14 +119,20 @@ test('an adjustment that takes paradox to the limit floods the Event, or devours
             bravo.doFollowExit(exit);
             r.originFlooded = origin.isFlooded();
 
-            exit.setAdjustments({'agent.paradox':{onSuccess:'10'}});
-            bravo.setEvent('origin');
+            // The exit's own adjustment devours Bravo, not the paradox of coming back, which
+            // is all resisted, so Bravo stays in The Void rather than going on.
+            exit.setAdjustments({'agent.paradox':'10'});
             bravo.paradox.setValue(0);
+            tc.rng.queueRolls(...Array(10).fill(999));
+            bravo.setEvent('origin');
+            tc.rng.clearQueuedRolls();
+            r.devouredBefore = bravo.isDevoured();
             bravo.doFollowExit(exit);
             r.bravo = {devoured:bravo.isDevoured(), event:bravo.event};
             return r;
         });
     expect(out.originFlooded).toBe(true);
+    expect(out.devouredBefore).toBe(false);
     expect(out.bravo).toEqual({devoured:true, event:'the_void'});
     expect(problems.pageErrors).toEqual([]);
 });
