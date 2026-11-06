@@ -85,7 +85,10 @@
 		// Injury: a die as big as the chronal cost.
 		"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"},
 		// Premature aging: a die as big as the chronal cost, in months.
-		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)/12"}
+		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)/12"},
+		// Time travel always risks the agent acquiring some paradox: one per chronal paid, less
+		// one for every 25 of a d1000 roll plus the agent's causal stability.
+		"agent.paradox":"Math.max(0, chronal - Math.floor((d(1001) - 1 + agent.skills.causalStability) / 33))"
 	},
 	
 	// Experience: for every month of lived age (never the body's), a skill picked by 
@@ -93,10 +96,11 @@
 	"agingSkillGains":{
 		"monthsPerGain":1,
 		"weights":{
-			"luck":37,
-			"chronogation":4,
-			"agl":6, "dex":6, "str":6, "cha":6,
-			"investigation":7, "stealth":7, "disguise":7, "deception":7, "persuasion":7
+			"luck":30,
+			"causalStability":15,
+			"chronogation":3,
+			"agl":5, "dex":5, "str":4, "cha":5,
+			"investigation":6, "stealth":6, "disguise":7, "deception":7, "persuasion":7
 		}
 	},
 	
@@ -276,8 +280,8 @@
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
-						"agent.action":"7",
-						"timeline.credits":"15"
+						"agent.action":"5",
+						"timeline.credits":"10"
 					},
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},
@@ -367,8 +371,8 @@
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
-						"agent.action":"7",
-						"timeline.credits":"15"
+						"agent.action":"5",
+						"timeline.credits":"10"
 					},
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},
