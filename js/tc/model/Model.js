@@ -31,7 +31,7 @@
             isPlainObject,
             cfg:{
                 EVENT_ID_THE_VOID,
-                TIMELINE_STARTING_CHRONAL, TIMELINE_CHRONAL_LIMIT,
+                HQ_STARTING_CHRONAL, HQ_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
                 SCORE_TO_CREDITS_EARN_AMOUNT,
                 DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
@@ -215,7 +215,7 @@
             model = this;
             
             model[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
-                notifyTargets:model, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:TIMELINE_CHRONAL_LIMIT
+                notifyTargets:model, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:HQ_CHRONAL_LIMIT
             });
             
             // Entries the data declares, e.g. "wireless_clearBacklogEarlier_flipCount", read and
@@ -578,7 +578,7 @@
         },
         
         reset: isInit => {
-            model[STAT_ID_CHRONAL].setValue(TIMELINE_STARTING_CHRONAL);
+            model[STAT_ID_CHRONAL].setValue(HQ_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
             model.updateTimelineParadoxMax();
             // The peak and credits first, so setting the score earns nothing.

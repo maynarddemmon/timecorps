@@ -75,7 +75,7 @@
 		},
 		"resistParadox":{
 			"name":"Resist Paradox",
-			"check":"0.8*agent.skills.stealth + 0.1*agent.skills.chronogation + 0.1*agent.skills.luck"
+			"check":"0.8*agent.skills.causalStability + 0.1*agent.skills.stealth + 0.1*agent.skills.luck"
 		}
 	},
 	
@@ -140,6 +140,10 @@
 		"chronogation":{
 			"name":"Chronogation",
 			"description":"The efficiencty with which an agent employs “chronal” to travel through time and space."
+		},
+		"causalStability":{
+			"name":"Causal Stability",
+			"description":"How anchored you are to the weave of time and space. This provides a degree of protection from the predation of chronovores."
 		},
 		"investigation":{
 			"name":"Investigation",
@@ -273,7 +277,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
 						"agent.action":"7",
-						"timeline.credits":"30"
+						"timeline.credits":"15"
 					},
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},
@@ -364,7 +368,7 @@
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
 						"agent.action":"7",
-						"timeline.credits":"30"
+						"timeline.credits":"15"
 					},
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},

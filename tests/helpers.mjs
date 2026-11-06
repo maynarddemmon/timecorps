@@ -40,7 +40,8 @@ export const TEST_DATA_DIR = 'tests/data',
         // The tuning the tests were written against, so retuning the game doesn't break them.
         DEFAULT_ACTION_LIMIT:3,
         AGENT_PARADOX_LIMIT:3,
-        EVENT_PARADOX_LIMIT:4
+        EVENT_PARADOX_LIMIT:4,
+        AGE_MIN_EFFECTIVE:25
     };
 
 /*  Loads the game and waits until it is ready to play. Returns an object that collects page

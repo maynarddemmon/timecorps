@@ -120,12 +120,12 @@ Every stat has a value and a range, and changes stay within it.
 |---|---|---|
 | `event.historicity` | 0–100 | How fixed the event is in history. Usually set by a mission's setup (`set`) |
 | `event.attestation` | 0–100 | How much the Corps knows about the event. Raised by investigating. Knowing more reveals more |
-| `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (6) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
+| `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (15) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
 | `agent.health` | 0–`max`, max up to 150 | Default 100. 0 is death |
 | `agent.chronal` | 0–100 | Spent to time travel. Default starting value 75 |
-| `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (5) | Raised by revisiting an event. Reaching the limit devours the agent |
+| `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (10) | Raised by revisiting an event. Reaching the limit devours the agent |
 | `timeline.chronal` | 0–100 | HQ's reserve, used to reload agents. Starts at 25 |
-| `timeline.paradox` | 0–limit | The limit is 9 plus 0.25 per known event that isn't a hub. Reaching it destabilizes the timeline |
+| `timeline.paradox` | 0–limit | The limit is 20 plus 0.25 per known event that isn't a hub. Reaching it destabilizes the timeline |
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
 
@@ -145,7 +145,7 @@ A flood's paradox doesn't cost score. Expressions can read `event.flooded`, e.g.
 
 The timeline also has a score and credits, read as plain numbers:
 
-- **`timeline.score`**: the player's score. Missions award it (an `adj` of `timeline.score`), attestation adds 3 a point however it's gained or lost, and each point of paradox an agent gains by revisiting an event takes away 500.
+- **`timeline.score`**: the player's score. Missions award it (an `adj` of `timeline.score`), attestation adds 3 a point however it's gained or lost, and each point of paradox an agent gains by revisiting an event takes away 250.
 - **`timeline.credits`**: what the Corps spends, e.g. on HQ actions' [costs](#costs). One credit is earned each time the score reaches a new multiple of `SCORE_TO_CREDITS_EARN_AMOUNT` (100) for the first time: a score of 78 earns none, and reaching 100 earns one. Losing score takes no credits away, and regaining it earns none until the score passes its highest yet. Missions can also award credits (an `adj` of `timeline.credits`). `set` and `adj` can change both score and credits, but never below 0.
 
 ## init.json5
@@ -571,7 +571,7 @@ HQ and The Void leave out `_investigate` this way.
   - **An exit** lives through the rest of the event left, e.g. its unused actions, then the time from its end to the start of the one arrived at, unless its `mode` is `jump` or `pulled`, which are time travel and skip the time between.
   - **Time travel** (deploy, jump, recall, loop back) lives through nothing, not even the rest of the event left.
   
-  The effective age is the body's. It grows with the lived age, and treatments wind it back: `set` or `adj` on `agent.effectiveAge`, in years, e.g. `"adj":{"agent.effectiveAge":"-10"}`. Unlike every other stat it isn't rounded to whole points, so `"d(6)/12"` ages by up to half a year, and tooltips and floating text show it to 2 decimal places, though never below 25 (`AGE_MIN_EFFECTIVE`). From an effective age of 35 the agent's maximum health declines, slowly at first and then faster, to 0, and death, at 85. The `health` max in the data is the agent's in their prime. The thresholds and curve are `AGE_*` in `js/tc/tc.js`. The Agent Dossier shows both ages.
+  The effective age is the body's. It grows with the lived age, and treatments wind it back: `set` or `adj` on `agent.effectiveAge`, in years, e.g. `"adj":{"agent.effectiveAge":"-10"}`. Unlike every other stat it isn't rounded to whole points, so `"d(6)/12"` ages by up to half a year, and tooltips and floating text show it to 2 decimal places, though never below 28 (`AGE_MIN_EFFECTIVE`). From an effective age of 35 the agent's maximum health declines, slowly at first and then faster, to 0, and death, at 85. The `health` max in the data is the agent's in their prime. The thresholds and curve are `AGE_*` in `js/tc/tc.js`. The Agent Dossier shows both ages.
 - **Skills** run from -1000 to `MAX_SKILL_VALUE` (1000). The player can raise a player-controlled agent's skills while they're at HQ, from the buttons in their dossier, a point at a time. Each point takes an action (a day at HQ, which ages the agent) and costs credits by the skill's track for that agent: the track's `minCredits`, plus one for every `pointsPerExtraCredit` the skill is from 0, either way. On a track of 1 and 100, 99 to 100 costs 1, and 100 to 101 costs 2. An agent's `skillsByTrack` puts skills on tracks by the IDs of init.json5's [`skillTracks`](#initjson5), and any skill it leaves out is on the default track. A track or skill that doesn't exist is ignored, with a warning, and a skill on two tracks is on the later one. `randomSkillsByTrack` instead gives how many skills to put on each track at random, e.g. `{"high":3, "low":3}` for the player's own agent. They're picked as each new game starts, from the trainable skills `skillsByTrack` leaves out, and saved with the game. The price is set by `getSkillPurchase` in `js/tc/model/AgentModel.js`.
 
 ## Operations (missions)

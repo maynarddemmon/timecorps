@@ -217,7 +217,7 @@
                 AGE_HEALTH_ZERO:85,
                 AGE_HEALTH_DECLINE_CURVE:3,
                 // Treatments can't wind an Agent's effective age back below this.
-                AGE_MIN_EFFECTIVE:25,
+                AGE_MIN_EFFECTIVE:28,
                 
                 // The most an Agent's skill can be raised to by purchasing it.
                 MAX_SKILL_VALUE:1000,
@@ -230,17 +230,17 @@
                 
                 // The starting maximum paradox an Agent can have.
                 AGENT_DEFAULT_PARADOX:0,
-                AGENT_PARADOX_LIMIT:5,
+                AGENT_PARADOX_LIMIT:10,
                 
                 // The starting maximum paradox an Event can have.
-                EVENT_PARADOX_LIMIT:6,
+                EVENT_PARADOX_LIMIT:15,
                 
                 // The default actions allowed by an Agent per visit within an Event.
                 DEFAULT_ACTION_LIMIT:5,
                 
                 // This is the HQ chronal used to resupply Agents.
-                TIMELINE_STARTING_CHRONAL:25,
-                TIMELINE_CHRONAL_LIMIT:100,
+                HQ_STARTING_CHRONAL:25,
+                HQ_CHRONAL_LIMIT:100,
                 
                 // The amount of paradox the Timeline begins the game with.
                 TIMELINE_STARTING_PARADOX:0,
@@ -248,7 +248,7 @@
                 // The maximum paradox for the Timeline is this fixed amount plus 
                 // TIMELINE_PARADOX_LIMIT_PER_EVENT for each non-hub Event that isn't hidden, so
                 // it grows as Events are revealed.
-                TIMELINE_PARADOX_LIMIT:9,
+                TIMELINE_PARADOX_LIMIT:20,
                 TIMELINE_PARADOX_LIMIT_PER_EVENT:0.25,
                 
                 //// Timeline UI Config ////
@@ -291,7 +291,7 @@
                 
                 // Scoring
                 SCORE_PER_ATTESTATION:3,
-                PARADOX_SCORE_MULTIPLIER:-500,
+                PARADOX_SCORE_MULTIPLIER:-250,
                 
                 // A credit is earned for each time the score reaches a new multiple of this.
                 SCORE_TO_CREDITS_EARN_AMOUNT:100,
