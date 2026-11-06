@@ -129,6 +129,8 @@ Every stat has a value and a range, and changes stay within it.
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
 
+**Resisting paradox.** Revisiting an event owes a point of paradox for each earlier visit, and each point is kept, or resisted, by its own roll. The chance of keeping it runs from 95% down to 5%: lower the better the agent's `resistParadox` skill check (init.json5's `skillChecks`, e.g. `"resistParadox":{"name":"Resist Paradox", "check":"0.8*agent.skills.stealth + 0.1*agent.skills.chronogation + 0.1*agent.skills.luck"}`, taken from -1000 to 1000), and lower the fuller the agent's, the event's and the timeline's paradox already are. So it's easy to make a little paradox in many events, and hard to flood one. What's kept, and what's resisted, floats above the button that made the trip, e.g. "+1⥁ · 2⥁ resisted". The paradox shown on a button before the trip is what's owed, before any is resisted.
+
 Any paradox reaching its limit counts, however it gets there: revisiting, an adjustment, a cost, a flood. Adjustments and costs are cut to what a stat allows, so they can reach a limit but never pass it.
 
 **Flooding.** When an event's paradox reaches its limit, the event floods with paradox, once:

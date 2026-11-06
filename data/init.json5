@@ -8,7 +8,8 @@
 	// of its own, after an agent's other actions (a positive order) or before them (a negative one).
 	"actionGroups":{
 		"chronal_pool":{"label":"Chronal Pool", "order":1},
-		"jobs":{"label":"Open Jobs", "order":2}
+		"treatments":{"label":"Treatments", "order":2},
+		"jobs":{"label":"Open Jobs", "order":3}
 	},
 	
 	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
@@ -71,6 +72,10 @@
 		"time_travel":{
 			"name":"Time Travel",
 			"check":"0.75*agent.skills.chronogation + 0.25*agent.skills.luck"
+		},
+		"resistParadox":{
+			"name":"Resist Paradox",
+			"check":"0.8*agent.skills.stealth + 0.1*agent.skills.chronogation + 0.1*agent.skills.luck"
 		}
 	},
 	
@@ -232,8 +237,7 @@
 				"_reloadChronal":{
 					"label":"Reload Chronal +3",
 					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"timeline.chronal.value <= 0",
-					"available":"agent.chronal.value < agent.chronal.max",
+					"available":"timeline.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
 					// time. The cost and the adj are the same amount: up to 3, as much as the pool
 					// has and the agent has room for.
@@ -251,6 +255,7 @@
 				// Agents can reduce their effective age.
 				"_rejuvenate":{
 					"label":"Rejuvenate",
+					"group":"treatments",
 					"available":"agent.effectiveAge > timeline.cfg.AGE_MIN_EFFECTIVE",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
@@ -263,6 +268,7 @@
 				// Agents can be treated to remove paradox, one point at a time.
 				"_stabilize":{
 					"label":"Causality Stabilization Treatment",
+					"group":"treatments",
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
@@ -322,8 +328,7 @@
 				"_reloadChronal":{
 					"label":"Reload Chronal +3",
 					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"timeline.chronal.value <= 0",
-					"available":"agent.chronal.value < agent.chronal.max",
+					"available":"timeline.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
 					// time. The cost and the adj are the same amount: up to 3, as much as the pool
 					// has and the agent has room for.
@@ -341,6 +346,7 @@
 				// Agents can reduce their effective age.
 				"_rejuvenate":{
 					"label":"Rejuvenate",
+					"group":"treatments",
 					"available":"agent.effectiveAge > timeline.cfg.AGE_MIN_EFFECTIVE",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{
@@ -353,6 +359,7 @@
 				// Agents can be treated to remove paradox, one point at a time.
 				"_stabilize":{
 					"label":"Causality Stabilization Treatment",
+					"group":"treatments",
 					"available":"agent.paradox.value > 0",
 					"skillCheck":{"difficulty":"no-roll"},
 					"costs":{

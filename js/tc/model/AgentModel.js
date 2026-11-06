@@ -17,12 +17,12 @@
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
                 AGENT_DEFAULT_AGE, AGE_MIN_EFFECTIVE,
-                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE
+                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE, DIE_SIZE
             },
             timeUtil:{MILLIS_PER_YEAR},
-            theme:{colorAction, fontFamilyMono, colorSuccess, colorMegaDark},
+            theme:{colorAction, fontFamilyMono, colorSuccess, colorMegaDark, colorParadox},
             checks:{skill, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
-            ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX,
+            ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX, ICON_PARADOX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
             SKILL_ID_INVESTIGATION, SKILL_ID_CHRONOGATION,
             SCOPE_AGENT, SCOPE_SKILLS,
@@ -32,8 +32,11 @@
         AGENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH],
         
         // How far above an action or exit's own floating text its skill gains show, so the 
-        // two rise together.
+        // two rise together. The paradox an arrival generates shows a step above those.
         SKILL_GAINS_FLOAT_OFFSET = 22,
+        
+        // The init.json5 skill check for resisting the paradox of entering an Event again.
+        SKILL_CHECK_RESIST_PARADOX = 'resistParadox',
         
         /*  Where a view's floating text starts, in page coordinates: centered just above it.
             Taken before anything rebuilds the view. null without a view. */
@@ -195,21 +198,63 @@
             };
         },
         
+        /*  Each point of paradox an entry would generate is kept, or resisted, by its own roll:
+            a 5% to 95% chance of keeping it. The more paradox present the higher the chance of
+            resisting more paradox since things are already off kilter. The Agent's resistance
+            to paradox skill is also factored into the check. Returns the points kept. */
+        resistParadox = (agentModel, paradox) => {
+            if (paradox > 0) {
+                const eventModel = agentModel.getEventModel(),
+                    // 1 with no paradox anywhere, 0 with all three at their max. Each contributes
+                    // one third of the total.
+                    room = (3 - agentModel[STAT_ID_PARADOX].getPercentOfMax()
+                        - (eventModel?.[STAT_ID_PARADOX].getPercentOfMax() ?? 0)
+                        - pkg.model[STAT_ID_PARADOX].getPercentOfMax()) / 3,
+                    
+                    // A skill value from -1000 to 1000.
+                    skill = pkg.checks.rollAmount(pkg.getSkillCheckExpr(SKILL_CHECK_RESIST_PARADOX), {agent:agentModel, event:eventModel}),
+                    
+                    // The skill as a fraction from -1 to 1, limited to the skill range. A broken expression
+                    // counts as no skill.
+                    skillFraction = mathMax(-1, mathMin(1, (skill || 0) / MAX_SKILL_VALUE)),
+                    
+                    // 1 at the worst skill, 0.5 at none and 0 at the best.
+                    unskill = (1 - skillFraction) / 2,
+                    
+                    // Out of DIE_SIZE, as a whole number so a roll is either side of it exactly.
+                    // This maps the check into a 5% to 95% range.
+                    keepChance = mathRound(DIE_SIZE * (0.05 + 0.9 * (room + unskill) / 2));
+                
+                let kept = 0;
+                while (paradox--) if (pkg.rng.roll() < keepChance) kept++;
+                return kept;
+            }
+            return paradox;
+        },
+        
+        /*  Paradox for entering an Event already visited, less what's resisted (see 
+            resistParadox), on the Event, the agent and the score. What happened is kept for
+            showEntryParadox. */
         accrueEntryParadox = (agentModel, eventModelOrId) => {
             const paradox = agentModel.calculateParadoxForEntry(eventModelOrId, 1); // 1 because we will have just pushed an entry event of some kind onto the log.
+            agentModel._entryParadox = null;
             if (paradox > 0) {
-                // Accrue in Event first since the Agent might get sent to The Void.
-                const eventModel = agentModel.getEventModel();
-                if (eventModel) {
-                    agentModel.getEventModel()[STAT_ID_PARADOX].adjValue(paradox);
-                } else {
-                    console.warn('accrueEntryParadox for timeline should be mediated by an event');
+                const kept = resistParadox(agentModel, paradox);
+                agentModel._entryParadox = {owed:paradox, kept};
+                if (kept > 0) {
+                    // Accrue in Event first since the Agent might get sent to The Void.
+                    const eventModel = agentModel.getEventModel();
+                    if (eventModel) {
+                        eventModel[STAT_ID_PARADOX].adjValue(kept);
+                    } else {
+                        console.warn('accrueEntryParadox for timeline should be mediated by an event');
+                    }
+                    
+                    agentModel[STAT_ID_PARADOX].adjValue(kept);
+                    
+                    // Adjust score for paradox generated.
+                    pkg.model.adjScore(kept * PARADOX_SCORE_MULTIPLIER);
                 }
-                
-                agentModel[STAT_ID_PARADOX].adjValue(paradox);
-                
-                // Adjust score for paradox generated.
-                pkg.model.adjScore(paradox * PARADOX_SCORE_MULTIPLIER);
             }
         },
         
@@ -495,13 +540,32 @@
         },
         
         /*  Shows the skill gains since startSkillGains as floating text, e.g. "+1 Luck · +2 
-            Stealth", just above anchor's own floating text, then forgets them. */
+            Stealth", just above anchor's own floating text, then forgets them. Returns true 
+            if any were shown. */
         showSkillGains: function(anchor) {
             const gains = this._skillGains;
             this._skillGains = null;
             if (anchor && gains?.size > 0) {
                 const text = [...gains].map(([skillId, amount]) => i18n('skill-gain', amount, pkg.getSkillConfig(skillId).name)).join(ICON_SEPARATOR);
                 pkg.showFloatingText(text, {bgColor:colorSuccess, textColor:colorMegaDark}, anchor.x, anchor.y - SKILL_GAINS_FLOAT_OFFSET);
+                return true;
+            }
+            return false;
+        },
+        
+        /*  Shows the paradox the last arrival generated, and how much of it was resisted, as 
+            floating text, e.g. "+2⥁ · 1⥁ resisted", level steps above anchor, then forgets it. 
+            Nothing if the arrival owed none. */
+        showEntryParadox: function(anchor, level=0) {
+            const entryParadox = this._entryParadox;
+            this._entryParadox = null;
+            if (anchor && entryParadox) {
+                const {owed, kept} = entryParadox,
+                    resisted = owed - kept,
+                    parts = [];
+                if (kept > 0) parts.push(pkg.formatStatAdj(STAT_ID_PARADOX, kept));
+                if (resisted > 0) parts.push(i18n('paradox-resisted', resisted + ICON_PARADOX));
+                pkg.showFloatingText(parts.join(ICON_SEPARATOR), {bgColor:colorParadox, textColor:colorMegaDark}, anchor.x, anchor.y - level * SKILL_GAINS_FLOAT_OFFSET);
             }
         },
         
@@ -969,12 +1033,15 @@
                 const {isHQ, chronalNeeded, problem} = getTimeTravelInfo(this, destinationEventModel);
                 if (problem == null) {
                     const adjustments = (withHazards ? this.getTimeTravelHazards(chronalNeeded)?.rollAdjustments(this) : null) ?? [],
-                        logEntry = {type:isHQ ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:destinationEventModel};
+                        logEntry = {type:isHQ ? LOG_TYPE_RECALL : LOG_TYPE_DEPLOY, event:destinationEventModel},
+                        anchor = getFloatAnchor(btnView);
                     // Shown first, since arriving rebuilds the views, btnView included.
                     showAdjustments(btnView, adjustments);
                     
                     this[STAT_ID_CHRONAL].adjValue(-chronalNeeded);
                     this.setEvent_Hard(destinationEventModel.id, logEntry);
+                    // Above the hazards, if they showed.
+                    this.showEntryParadox(anchor, adjustments.length > 0 ? 1 : 0);
                     applyAdjustments(adjustments, logEntry);
                     pkg.app.selectEventBox(destinationEventModel);
                 } else {
@@ -1030,9 +1097,11 @@
                             // travel.
                             const travelTime = exitModel.getTravelTime();
                             if (travelTime !== 0) self.ageBy(travelTime);
-                            self.showSkillGains(anchor);
+                            const gainsShown = self.showSkillGains(anchor);
                             
                             self.setEvent(toEvent.id, logEntry);
+                            // Above the gains, or else the adjustments, if they showed.
+                            self.showEntryParadox(anchor, gainsShown ? 2 : (adjustments.length > 0 ? 1 : 0));
                             pkg.app.selectEventBox(toEvent);
                         });
                     }

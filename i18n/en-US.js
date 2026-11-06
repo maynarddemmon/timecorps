@@ -226,6 +226,7 @@ myt.I18N.setDictionary({
 "skill-train":"Train $0 +$1",
 "skill-train-tip":"$0 for $1 {{plural:$1|credit|credits}} and an action",
 "skill-gain":"+$0 $1",
+"paradox-resisted":"$0 resisted",
 
 // Grid Columns
 "col-id":"ID",

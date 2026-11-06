@@ -89,9 +89,10 @@ test('a failed injury check costs health but the exit is still taken; a passed o
     expect(await takeInjuryExit(page, FAIL_ROLL, 2)).toEqual({damage:7, event:'aftermath', logged:-7, queued:0});
 
     // Back again, and this time the check passes, so the damage die isn't rolled. The check
-    // was still made, so the adjustment is logged as nothing.
+    // was still made, so the adjustment is logged as nothing. Arriving again owes a point of
+    // paradox, whose resistance roll takes what's left.
     await page.evaluate(() => tc.model.getAgentModel('AL').setEvent('origin'));
-    expect(await takeInjuryExit(page, PASS_ROLL, 2)).toEqual({damage:0, event:'aftermath', logged:0, queued:1});
+    expect(await takeInjuryExit(page, PASS_ROLL, 2)).toEqual({damage:0, event:'aftermath', logged:0, queued:0});
     await page.evaluate(() => tc.rng.clearQueuedRolls());
 
     expect(problems.pageErrors).toEqual([]);
