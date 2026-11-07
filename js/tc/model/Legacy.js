@@ -13,7 +13,7 @@
     
     const {min:mathMin, max:mathMax} = Math,
         
-        {isPlainObject} = pkg,
+        {isPlainObject, hashToRange} = pkg,
         
         // Kept apart from the save, so it outlasts every game.
         STORAGE_KEY = 'tc.legacy',
