@@ -316,7 +316,10 @@
 					"costs":{"agent.action":null},
 					"set":{"operations.titanic_noCollision.hidden":"false"}
 				}
-			}
+			},
+			"exits":[
+				{"mode":"walk", "to":"syndicate_hq", "allowLoopback":true}
+			]
 		},
 		"time_corps_hq":{
 			"name":"❉ Time Corps Headquarters", "hub":true,
@@ -407,7 +410,10 @@
 					"costs":{"agent.action":null},
 					"set":{"operations.titanic_noCollision.hidden":"false"}
 				}
-			}
+			},
+			"exits":[
+				{"mode":"walk", "to":"time_corps_hq", "allowLoopback":true}
+			]
 		}
 	},
 	

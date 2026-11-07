@@ -1268,9 +1268,9 @@
             isTimeTravel: function() {return this.mode === 'jump' || this.mode === 'pulled';},
             
             /*  The time between leaving this exit's Event and arriving at the one it goes to,
-                which the agent lives through on the way. 0 for time travel. */
+                which the agent lives through on the way. 0 for time travel and loop backs. */
             getTravelTime: function() {
-                if (this.isTimeTravel()) return 0;
+                if (this.isTimeTravel() || this.isLoopback()) return 0;
                 const toEvent = this.getToEventModel();
                 return toEvent ? toEvent.getStart() - this.event.getEnd() : 0;
             },
@@ -1288,12 +1288,21 @@
             setToHidden: function(v) {this.toHidden = v === true;},
             isToHidden: function() {return this.toHidden === true;},
             
+            /*  An exit can lead back into its own Event, starting it over, e.g. to stay another 
+                month at HQ, only if it says "allowLoopback":true. */
+            setAllowLoopback: function(v) {this.allowLoopback = v === true;},
+            isLoopbackAllowed: function() {return this.allowLoopback === true;},
+            
+            /*  Whether the exit leads back into its own Event. */
+            isLoopback: function() {return this.to === this.event?.id;},
+            
             /*  Whether the exit can be offered, as far as where it leads goes: the Event is 
-                known, or the exit is allowed to lead somewhere unknown. Its own hidden is 
-                separate. */
+                known, or the exit is allowed to lead somewhere unknown, and if it leads back 
+                into its own Event, that's allowed. Its own hidden is separate. */
             isDestinationOffered: function() {
                 const toEventModel = this.getToEventModel();
-                return toEventModel != null && (toEventModel.isNotHidden() || this.isToHidden());
+                return toEventModel != null && (toEventModel.isNotHidden() || this.isToHidden()) && 
+                    (!this.isLoopback() || this.isLoopbackAllowed());
             },
             
             /*  Where the exit leads, for a button: the Event's name. */

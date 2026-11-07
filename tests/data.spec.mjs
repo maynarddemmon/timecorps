@@ -577,6 +577,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                     // It leads to an Event that may be hidden, so something must be able to reveal it.
                     else if (exit.toHidden && (events[exit.to]?.hidden === 'true' || events[exit.to]?.shown === 'false')) problems.push(where + ' is toHidden, but ' + exit.to + ' is always hidden');
                 }
+                // Leading back into its own Event, which starts it over, must be allowed.
+                if (exit.allowLoopback !== undefined && typeof exit.allowLoopback !== 'boolean') problems.push(where + ' allowLoopback is not true or false');
+                else if (exit.to === eventId && exit.allowLoopback !== true) problems.push(where + ' leads back into its own event without allowLoopback');
+                else if (exit.to !== eventId && exit.allowLoopback) problems.push(where + ' has allowLoopback, but leads to another event');
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');

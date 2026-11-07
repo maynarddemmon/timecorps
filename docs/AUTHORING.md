@@ -386,6 +386,7 @@ Exits are ways to leave an event for another without time travel, so they cost n
   ```json5
   "exits":[{"mode":"bike", "to":"origin_hospital", "toHidden":true, "set":{"events.origin_hospital.attestation":"1"}}]
   ```
+- **`allowLoopback`**: `true` to let the exit lead back into its own event (`"to"` is the event's own ID), starting it over: the agent lives through the rest of it, as for any exit, then arrives again with all its actions back. It's a revisit, so it costs paradox like any other, except at a hub. Use it to let an agent stay longer at HQ, e.g. `{"mode":"wait", "to":"time_corps_hq", "allowLoopback":true}`. Without it, an exit back into its own event isn't offered.
 - **`hidden`**: hides the exit.
 - **`adj`**: as for actions. Taking an exit always succeeds, so an adjustment without its own check uses `onSuccess`. Give it a check of its own for an exit that can go wrong.
 - **`set`**: as for actions, applied as a success when the exit is taken, before the agent arrives.

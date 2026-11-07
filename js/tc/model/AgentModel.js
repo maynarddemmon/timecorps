@@ -1064,8 +1064,11 @@
         doFollowExit: function(exitModel, btnView) {
             const self = this;
             if (self.isNotDead() && self.getEventModel() === exitModel.event) {
-                const toEvent = exitModel.getToEventModel();
-                if (toEvent) {
+                const toEvent = exitModel.getToEventModel(),
+                    isLoopback = exitModel.isLoopback();
+                if (isLoopback && !exitModel.isLoopbackAllowed()) {
+                    console.warn('Exit from', exitModel.event.id, 'leads back into it without allowLoopback');
+                } else if (toEvent) {
                     // Taking the exit always succeeds, but its adjustments may change things on 
                     // the way, e.g. hurt. The result is shown before the adjustments apply since 
                     // that can rebuild the views, btnView included. The first adjustment with its 
@@ -1107,7 +1110,8 @@
                             if (travelTime !== 0) self.ageBy(travelTime);
                             const gainsShown = self.showSkillGains(anchor);
                             
-                            self.setEvent(toEvent.id, logEntry);
+                            // A loop back arrives at the same Event, starting it over.
+                            self.setEvent(toEvent.id, logEntry, isLoopback);
                             // Above the gains, or else the adjustments, if they showed.
                             self.showEntryParadox(anchor, gainsShown ? 2 : (adjustments.length > 0 ? 1 : 0));
                             pkg.app.selectEventBox(toEvent);
