@@ -3,7 +3,13 @@
     
     // From init.json5's "legacy", once read. null until then, or if it's unusable, which
     // turns the whole thing off.
-    let cfg = null;
+    let cfg = null,
+        
+        // Losses in the game in progress, not yet in storage, as {devoured, died, haunted}. 
+        // They're stored when the game is saved, or abandoned for a new one, so reloading 
+        // the page back to an earlier save, or to a new game, doesn't keep them, and a loss 
+        // can't be had again and again for the advantages. See commit.
+        pending = null;
     
     const {min:mathMin, max:mathMax} = Math,
         
@@ -71,9 +77,11 @@
             return {agentId, amounts, hauntings:cleanHauntings};
         },
         
-        /*  What's accrued so far: {devoured, died, haunted:{eventId:phraseIdx}}. Empty if 
-            nothing is, or storage can't be read. */
-        readRecord = () => {
+        makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, haunted:{}}),
+        
+        /*  What's in storage: {devoured, died, haunted:{eventId:phraseIdx}}. Empty if nothing
+            is, or storage can't be read. */
+        readStoredRecord = () => {
             let record;
             try {
                 record = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -85,6 +93,16 @@
                 [LOSS_DIED]:Number.isInteger(record?.[LOSS_DIED]) ? record[LOSS_DIED] : 0,
                 haunted:isPlainObject(record?.haunted) ? record.haunted : {}
             };
+        },
+        
+        /*  What's accrued so far, stored or pending, as readStoredRecord gives it. */
+        readRecord = () => {
+            const record = readStoredRecord();
+            if (pending) {
+                for (const kind of LOSS_KINDS) record[kind] += pending[kind];
+                record.haunted = {...pending.haunted, ...record.haunted};
+            }
+            return record;
         },
         
         writeRecord = record => {
@@ -131,16 +149,24 @@
         isEnabled: () => !!cfg,
         
         /*  Records a player-controlled agent lost at an Event: LOSS_DEVOURED or LOSS_DIED. 
-            Only while a game is being played, not as one's set up or restored. */
+            Only while a game is being played, not as one's set up or restored. It's pending
+            until commit stores it, but counts as accrued from now on. */
         recordLoss: (agentModel, kind, eventId) => {
             if (!cfg || !pkg.isAppReady?.() || !agentModel.isPlayerControlled()) return;
             const record = readRecord();
-            record[kind]++;
+            pending ??= makeEmptyRecord();
+            pending[kind]++;
             const eventModel = pkg.model.getEventModel(eventId);
             if (eventModel?.isNotHub() && cfg.hauntings.length > 0 && record.haunted[eventId] === undefined) {
-                record.haunted[eventId] = pickHauntingIdx(eventId, record[LOSS_DEVOURED] + record[LOSS_DIED]);
+                pending.haunted[eventId] = pickHauntingIdx(eventId, record[LOSS_DEVOURED] + record[LOSS_DIED] + 1);
             }
-            writeRecord(record);
+        },
+        
+        /*  Stores the pending losses, as the game is saved or abandoned for a new one. */
+        commit: () => {
+            if (!pending) return;
+            writeRecord(readRecord());
+            pending = null;
         },
         
         /*  Gives the legacy agent what's accrued, as a new game starts. Skills stay in the 
@@ -187,8 +213,10 @@
             };
         },
         
-        /*  Forgets everything accrued. The game in progress keeps what it started with. */
+        /*  Forgets everything accrued, pending too. The game in progress keeps what it 
+            started with. */
         clear: () => {
+            pending = null;
             try {
                 localStorage.removeItem(STORAGE_KEY);
             } catch {

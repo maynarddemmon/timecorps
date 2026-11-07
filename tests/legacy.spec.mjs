@@ -1,9 +1,10 @@
 // The legacy: each of the player's agents lost, devoured by chronovores or dead of their 
 // wounds, gives init.json5's "legacy" agent skills at the start of every new game, and leaves 
 // the Event they fell at haunted, in every game. It's kept in its own storage, apart from any
-// save, until the player clears it.
+// save, until the player clears it. A loss is stored only once the game it happened in is saved
+// or abandoned for a new one.
 import {test, expect} from '@playwright/test';
-import {startGame, reloadGame, readTestData, dialogTitle, dismissAgentDossier} from './helpers.mjs';
+import {startGame, reloadGame, clickAndReload, readTestData, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
     
@@ -37,7 +38,24 @@ const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
         agent.paradox.setValue(agent.paradox.getMax());
     }, agentId),
     
-    hauntingOf = (page, eventId) => page.evaluate(eventId => tc.legacy.getHaunting(eventId), eventId);
+    hauntingOf = (page, eventId) => page.evaluate(eventId => tc.legacy.getHaunting(eventId), eventId),
+    
+    visibleButton = (page, name) => page.getByRole('button', {name, exact:true}).filter({visible:true}),
+    
+    // Abandons the game for a new one, as the ⌫ button and the end of a game do.
+    restartCampaign = page => clickAndReload(page, {
+        click:() => page.evaluate(() => setTimeout(() => tc.app.doRestartCampaign()))
+    }, {briefExpected:true}),
+    
+    // Saves the game with the ✇ button.
+    saveGame = async page => {
+        await visibleButton(page, '✇').click();
+        await page.getByRole('button', {name:/Confirm/}).filter({visible:true}).click();
+        await expect(dialogTitle(page, 'Save Succeeded')).toBeVisible();
+        await visibleButton(page, 'Acknowledge').click();
+    },
+    
+    storedDied = page => page.evaluate(() => JSON.parse(localStorage.getItem('tc.legacy'))?.died ?? 0);
     
 
 test('each of the player\'s agents lost gives the legacy agent skills in every new game', async ({page}) => {
@@ -56,9 +74,10 @@ test('each of the player\'s agents lost gives the legacy agent skills in every n
         return {...summary, agent:agentModel.id};
     })).toEqual({devoured:1, died:1, hauntedCount:1, agent:'AL', bonuses:[['stealth', 4], ['investigation', 1]]});
     
-    // The game in progress keeps what it started with. A new one starts Alpha ahead.
+    // The game in progress keeps what it started with. Abandoned, the next one starts Alpha 
+    // ahead.
     expect(await readAlpha(page)).toEqual(start);
-    await reloadGame(page, {briefExpected:true});
+    await restartCampaign(page);
     expect(await readAlpha(page)).toEqual({stealth:start.stealth + 4, investigation:start.investigation + 1});
     
     // Saved with the game, so restoring it doesn't add them again.
@@ -83,7 +102,7 @@ test('an Event an agent was lost at is haunted in every game, by a line under it
     expect(await hauntingOf(page, 'aftermath')).toBe('');
     
     // Still there in the next game, in italics after the description.
-    await reloadGame(page, {briefExpected:true});
+    await restartCampaign(page);
     expect(await hauntingOf(page, 'origin')).toBe(haunting);
     expect(await page.evaluate(haunting => {
         tc.app.selectEventBox('aftermath');
@@ -91,6 +110,33 @@ test('an Event an agent was lost at is haunted in every game, by a line under it
         return [...document.querySelectorAll('i')].some(el => el.textContent === haunting && el.offsetParent !== null);
     }, haunting)).toBe(true);
     
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a loss is stored only once its game is saved or abandoned, so reloading back to an earlier save forgets it', async ({page}) => {
+    await routeLegacy(page);
+    const problems = await startGame(page);
+    await saveGame(page);
+    
+    // Bravo's death counts for now, but isn't stored.
+    await kill(page, 'BR');
+    expect(await page.evaluate(() => tc.legacy.getSummary().died)).toBe(1);
+    expect(await storedDied(page)).toBe(0);
+    
+    // Reloaded back to the save, it never happened.
+    await reloadGame(page);
+    expect(await page.evaluate(() => [tc.model.getAgentModel('BR').isNotDead(), tc.legacy.getSummary().died])).toEqual([true, 0]);
+    
+    // Saved with the game, it's stored, and stays through a reload.
+    await kill(page, 'BR');
+    await visibleButton(page, 'Acknowledge').click();
+    await dismissAgentDossier(page, 'Bravo');
+    await saveGame(page);
+    expect(await storedDied(page)).toBe(1);
+    await reloadGame(page);
+    expect(await page.evaluate(() => [tc.model.getAgentModel('BR').isNotDead(), tc.legacy.getSummary().died])).toEqual([false, 1]);
+    
+    expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
 
@@ -144,7 +190,7 @@ test('a broken legacy is warned about, keeping what\'s usable', async ({page}) =
     
     // A skill that doesn't exist is warned about when it would be given.
     await kill(page, 'BR');
-    await reloadGame(page, {briefExpected:true});
+    await restartCampaign(page);
     expect(problems.warnings.slice(-1)).toEqual(['legacy names no skill nope (ignoring it)']);
     expect(problems.pageErrors).toEqual([]);
 });

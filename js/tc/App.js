@@ -136,6 +136,14 @@
         },
         
         // Save //
+        /*  Saves the game, and with it the legacy's pending losses, so they're stored only 
+            once the game they happened in is. Returns whether it saved. */
+        saveGame = () => {
+            const saved = persistenceMgr.save();
+            if (saved) pkg.legacy.commit();
+            return saved;
+        },
+        
         updateLastSaved = () => {
             const lastSavedDate = persistenceMgr.getLastSavedDate();
             if (lastSavedDate) {
@@ -325,7 +333,7 @@
                         () => {
                             let title,
                                 msg;
-                            if (persistenceMgr.save()) {
+                            if (saveGame()) {
                                 updateLastSaved();
                                 title = i18n('dlg-save-succeeded-title');
                                 msg = i18n('dlg-save-succeeded-msg');
@@ -490,8 +498,10 @@
             location.reload(); // reload the browser.
         },
         
-        /*  Clears the save first since a reload would otherwise restore it. */
+        /*  Clears the save first since a reload would otherwise restore it. The game is 
+            abandoned, so its losses count toward the legacy. */
         doRestartCampaign: () => {
+            pkg.legacy.commit();
             persistenceMgr.clear();
             appView.doReload();
         },
@@ -626,7 +636,7 @@
             if (readyToHandleEvents) {
                 let saveNote = '';
                 if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistenceMgr.hasBaseline()) {
-                    if (persistenceMgr.save()) {
+                    if (saveGame()) {
                         updateLastSaved();
                         saveNote = '<br><br><i>' + i18n('dlg-mission-complete-saved') + '</i>';
                     } else {
