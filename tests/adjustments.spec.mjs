@@ -248,18 +248,21 @@ test('a dead agent can\'t act or travel, and an agent with no chronal still coun
     await page.waitForTimeout(300);
     await expect(dialogTitle(page, 'Agent Roster Depleted')).toHaveCount(0);
 
-    // Nothing moves the dead.
+    // Dying on the way, Alpha goes no further than the origin. Put the body in the aftermath, 
+    // which has an exit, to show that nothing moves the dead.
     const moves = await page.evaluate(() => {
         const alpha = tc.model.getAgentModel('AL'),
+            diedAt = alpha.event,
             aftermath = tc.model.getEventModel('aftermath'),
-            exitModel = aftermath.getExitModels()[0],
-            before = alpha.event;
+            exitModel = aftermath.getExitModels()[0];
+        alpha.setEvent('aftermath');
+        const before = alpha.event;
         alpha.doRecallToHQ();
         alpha.doDeployToEvent(tc.model.getEventModel('origin'));
         alpha.doFollowExit(exitModel);
-        return {before, after:alpha.event, canAct:alpha.canAct(), canPay:alpha.canPayCostsFor(aftermath.getActionModels()._investigate)};
+        return {diedAt, before, after:alpha.event, canAct:alpha.canAct(), canPay:alpha.canPayCostsFor(aftermath.getActionModels()._investigate)};
     });
-    expect(moves).toEqual({before:'aftermath', after:'aftermath', canAct:false, canPay:false});
+    expect(moves).toEqual({diedAt:'origin', before:'aftermath', after:'aftermath', canAct:false, canPay:false});
 
     // The agent's row says so, with no actions or exits, and the header offers no travel.
     await page.evaluate(() => {
