@@ -163,23 +163,6 @@ myt.I18N.setDictionary({
 "damage-light-injury":"light injury",
 "damage-harmless":"harmless",
 
-// Exits by Travel Mode
-"travel-wait":"Wait til",
-"travel-waitFor":"Wait for",
-"travel-continue":"Continue to",
-"travel-jump":"Jump to",
-"travel-pulled":"Pulled to",
-"travel-enter":"Enter",
-"travel-board":"Board",
-"travel-walk":"Walk to",
-"travel-take":"Take",
-"travel-swim":"Swim to",
-"travel-bike":"Bike to",
-"travel-lifeboat":"Lifeboat to",
-"travel-survive":"Survive to",
-"travel-default":"To",
-"travel-loopback":"Loop back to",
-
 // Stats by Whose They Are
 "stat-scope-event":"Event $0",
 "stat-scope-timeline":"Timeline $0",

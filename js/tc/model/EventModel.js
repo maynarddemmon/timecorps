@@ -55,26 +55,6 @@
             return (key === 'startOf' ? refEventModel.getStart() : refEventModel.getEnd()) + durationToMillis(offset);
         },
         
-        getTravelModePhrase = mode => {
-            switch (mode) {
-                case 'wait':     return i18n('travel-wait');
-                case 'waitFor':  return i18n('travel-waitFor');
-                case 'continue': return i18n('travel-continue');
-                case 'jump':     return i18n('travel-jump');
-                case 'pulled':   return i18n('travel-pulled');
-                case 'enter':    return i18n('travel-enter');
-                case 'board':    return i18n('travel-board');
-                case 'walk':     return i18n('travel-walk');
-                case 'take':     return i18n('travel-take');
-                case 'swim':     return i18n('travel-swim');
-                case 'bike':     return i18n('travel-bike');
-                case 'lifeboat': return i18n('travel-lifeboat');
-                case 'survive':  return i18n('travel-survive');
-                case 'loopback': return i18n('travel-loopback');
-            }
-            return i18n('travel-default');
-        },
-        
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
         PREFIX_SKILL_DIFF = '_SkDff_',
         PREFIX_SKILL_TYPE = '_SkTyp_',
@@ -1314,7 +1294,7 @@
             
             // Methods /////////////////////////////////////////////////////////
             /*  How the exit is taken, as the start of a button label, e.g. "Walk to". */
-            getModePhrase: function() {return getTravelModePhrase(this.mode);}
+            getModePhrase: function() {return pkg.getExitModePhrase(this.mode);}
         }),
         
         HideAffectedByModel = new JSClass('HideAffectedByModel', BaseModel, {

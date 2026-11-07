@@ -18,6 +18,9 @@
         skillTracks = new Map(),
         defaultSkillTrack = null,
         
+        // The phrase an exit's button starts with, by its mode. See getExitModePhrase.
+        exitModes = new Map(),
+        
         commonEventActions = {};
     
     pkg.registerEventForHiddenAttrSetup = eventModel => eventsForHiddenAttrSetup.push(eventModel);
@@ -49,6 +52,7 @@
         DATA_KEY_TIME_TRAVEL_ADJ = 'timeTravelAdj',
         DATA_KEY_AGING_SKILL_GAINS = 'agingSkillGains',
         DATA_KEY_SKILL_TRACKS = 'skillTracks',
+        DATA_KEY_EXIT_MODES = 'exitModes',
         
         /*  The track for a skill no track is given for, when the data marks none the default:
             a credit for a point near 0, and one more for every 100 the skill is from 0. A 
@@ -681,6 +685,23 @@
                 console.warn(DATA_KEY_SKILL_TRACKS, 'must be an object of tracks by ID (ignoring it):', skillTracksCfg);
             }
             
+            // The phrase an exit's button starts with, by its mode, e.g. {"walk":"Walk to"}, 
+            // and "default" for any other. A later file's phrase replaces an earlier one for 
+            // the same mode.
+            const exitModesCfg = json[DATA_KEY_EXIT_MODES];
+            if (isPlainObject(exitModesCfg)) {
+                for (const mode in exitModesCfg) {
+                    const phrase = exitModesCfg[mode];
+                    if (typeof phrase === 'string' && phrase.trim() !== '') {
+                        exitModes.set(mode, phrase);
+                    } else {
+                        console.warn(DATA_KEY_EXIT_MODES, mode, 'must be a phrase, e.g. "Walk to" (ignoring it):', phrase);
+                    }
+                }
+            } else if (exitModesCfg !== undefined) {
+                console.warn(DATA_KEY_EXIT_MODES, 'must be an object of phrases by mode (ignoring it):', exitModesCfg);
+            }
+            
             // What carries from one game to the next. See pkg.legacy.
             pkg.legacy.readData(json);
             
@@ -826,6 +847,11 @@
     /*  The track for skills an agent's skillsByTrack leaves out: the one the data marks the 
         default, or else the built-in one. */
     pkg.getDefaultSkillTrack = () => defaultSkillTrack ?? BUILT_IN_SKILL_TRACK;
+    
+    /*  The phrase an exit's button starts with, e.g. "Walk to", from init.json5's 
+        "exitModes": the one for the exit's mode, or else the "default" one. "" if the data 
+        gives neither. */
+    pkg.getExitModePhrase = mode => exitModes.get(mode) ?? exitModes.get('default') ?? '';
     
     /*  The skill expression of a default skill check, by action type. If not found an attempt is
         made to return a simple skill check expression, otherwise a default expression

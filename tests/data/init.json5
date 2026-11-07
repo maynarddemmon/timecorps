@@ -9,6 +9,28 @@
 		"unaligned":{"label":"Unaligned", "defaultAgentRole":"Civilian", "description":"Answers to no one."}
 	},
 	
+	// The phrase an exit's button starts with, by the exit's "mode", before the name of
+	// where it goes. "default" is for an exit with no mode, or one not listed here.
+	// "jump" and "pulled" are time travel, whatever their phrase. A later file's phrase
+	// replaces an earlier one for the same mode.
+	"exitModes":{
+		"wait":"Wait til",
+		"waitFor":"Wait for",
+		"continue":"Continue to",
+		"jump":"Jump to",
+		"pulled":"Pulled to",
+		"enter":"Enter",
+		"board":"Board",
+		"walk":"Walk to",
+		"take":"Take",
+		"swim":"Swim to",
+		"bike":"Bike to",
+		"lifeboat":"Lifeboat to",
+		"survive":"Survive to",
+		"loopback":"Loop back to",
+		"default":"To"
+	},
+	
 	"skillChecks":{
 		"sure_thing":{
 			"name":"Sure Thing",

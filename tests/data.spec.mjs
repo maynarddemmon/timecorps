@@ -317,6 +317,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         isValidDifficulty = difficulty => difficulty === undefined || Number.isInteger(difficulty) || difficulty === 'no-roll',
         skillCfgs = Object.assign({}, ...scenarios.map(s => s.skills ?? {})),
         skillTracks = Object.assign({}, ...scenarios.map(s => s.skillTracks ?? {})),
+        exitModes = Object.assign({}, ...scenarios.map(s => s.exitModes ?? {})),
     
         // Returns why a skill expression doesn't compile, or null if it does. Compiled the same way 
         // as tc.checks.skill, with the same parameters.
@@ -570,6 +571,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             }
             for (const exit of event.exits ?? []) {
                 const where = eventId + ' exit to ' + exit.to;
+                // A mode not in exitModes would get the default phrase.
+                if (exit.mode !== undefined && typeof exitModes[exit.mode] !== 'string') problems.push(where + ' has a mode exitModes doesn\'t give a phrase for: ' + exit.mode);
                 if (exit.adj !== undefined) problems.push(...checkAdjustments(where, exit.adj, false, event));
                 checkSets(where, exit.set, event);
                 if (exit.toHidden !== undefined) {
@@ -703,6 +706,15 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (action?.group !== undefined && !Object.hasOwn(actionGroups, action.group)) problems.push(eventId + '.' + actionId + ' group names no action group: ' + action.group);
             }
         }
+        expect(problems).toEqual([]);
+    });
+    
+    test('exitModes gives a phrase for each mode, and a default', () => {
+        const problems = [];
+        for (const [mode, phrase] of Object.entries(exitModes)) {
+            if (!(typeof phrase === 'string' && phrase.trim() !== '')) problems.push('exit mode ' + mode + ' has no phrase');
+        }
+        if (typeof exitModes.default !== 'string') problems.push('exitModes has no default');
         expect(problems).toEqual([]);
     });
     
