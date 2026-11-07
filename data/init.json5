@@ -86,9 +86,11 @@
 		"agent.health":{"actionType":"time_travel", "difficulty":300, "onFailure":"-d(chronal)"},
 		// Premature aging: a die as big as the chronal cost, in months.
 		"agent.effectiveAge":{"actionType":"time_travel", "difficulty":150, "onFailure":"d(chronal)/12"},
-		// Time travel always risks the agent acquiring some paradox: one per chronal paid, less
-		// one for every 25 of a d1000 roll plus the agent's causal stability.
-		"agent.paradox":"Math.max(0, chronal - Math.floor((d(1001) - 1 + agent.skills.causalStability) / 33))"
+		// Time travel always risks the agent acquiring some paradox. Chronal use is the underlying
+		// risk. It is reduced by the agent's current paradox, their causalStability and a random
+		// factor. That value is then logarithmically adjusted to prevent large chronal values from
+		// being a guaranteed devour.
+		"agent.paradox":"Math.ceil(tc.logToBase(Math.max(1, (chronal + 1) - agent.paradox.value - (agent.skills.causalStability / 33) - (d(9,3) - 3)), 1.75))"
 	},
 	
 	// What carries from one game to the next. Each of the player's agents lost in any game, 
