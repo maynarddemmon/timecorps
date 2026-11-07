@@ -126,8 +126,9 @@
             return problem;
         },
         
-        export: function() {
-            downloadObjectAsJSON(prepareData(this), 'timecorps-save');
+        /*  Downloads the save, with extra keys added to the record, e.g. the legacy. */
+        export: function(extra) {
+            downloadObjectAsJSON({...prepareData(this), ...extra}, 'timecorps-save');
         },
         
         /*  Constraint binding is paused so restored constraints bind in one pass once

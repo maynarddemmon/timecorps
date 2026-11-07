@@ -557,6 +557,13 @@
 					"hidden":"event.values.watcher.value",
 					"set":{"watcher":{"onSuccess":"true", "onFailure":"event.paradox.value > 0"}},
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
+				},
+				"talk":{
+					"label":"Talk to Beniko",
+					"skillCheck":{"difficulty":"no-roll"},
+					"shown":"agents.BA.shown && agents.BA.event === 'lgv_announcement' && agents.ME.faction !== 'timecorps' && events.lgv_model.shown",
+					"costs":{"agent.action":null},
+					"prompt":"corps_offer"
 				}
 			},
 			"values":{
@@ -610,7 +617,7 @@
 			],
 			"exits":[{
 				"mode":"jump", "toHidden":true, "to":"lgv_watcher",
-				"shown":"event.values.watcher.value && event.paradox.value > 0",
+				"shown":"event.values.watcher.value",
 				"set":{
 					"events.lgv_watcher.attestation":"1",
 					"agents.AF.hidden":"false",

@@ -4,6 +4,7 @@
 // save, until the player clears it. A loss is stored only once the game it happened in is saved
 // or abandoned for a new one.
 import {test, expect} from '@playwright/test';
+import fs from 'node:fs';
 import {startGame, reloadGame, clickAndReload, readTestData, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
@@ -55,7 +56,25 @@ const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
         await visibleButton(page, 'Acknowledge').click();
     },
     
-    storedDied = page => page.evaluate(() => JSON.parse(localStorage.getItem('tc.legacy'))?.died ?? 0);
+    storedDied = page => page.evaluate(() => JSON.parse(localStorage.getItem('tc.legacy'))?.died ?? 0),
+    
+    // Exports the game with the ↧ button, returning the file's record.
+    exportGame = async page => {
+        const [download] = await Promise.all([page.waitForEvent('download'), visibleButton(page, '↧').click()]);
+        return JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+    },
+    
+    // Imports a record with the ↥ button, and reloads into it.
+    importGame = async (page, record) => {
+        await visibleButton(page, '↥').click();
+        const [chooser] = await Promise.all([
+            page.waitForEvent('filechooser'),
+            page.getByRole('button', {name:/Confirm/}).filter({visible:true}).click()
+        ]);
+        await chooser.setFiles({name:'timecorps-save.json', mimeType:'application/json', buffer:Buffer.from(JSON.stringify(record))});
+        await expect(dialogTitle(page, 'Import Succeeded')).toBeVisible();
+        await clickAndReload(page, visibleButton(page, 'Continue'));
+    };
     
 
 test('each of the player\'s agents lost gives the legacy agent skills in every new game', async ({page}) => {
@@ -135,6 +154,40 @@ test('a loss is stored only once its game is saved or abandoned, so reloading ba
     expect(await storedDied(page)).toBe(1);
     await reloadGame(page);
     expect(await page.evaluate(() => [tc.model.getAgentModel('BR').isNotDead(), tc.legacy.getSummary().died])).toEqual([false, 1]);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a save exports with the legacy, and importing it puts the legacy back, so its losses can\'t be had again', async ({page}) => {
+    await routeLegacy(page);
+    const problems = await startGame(page);
+    await saveGame(page);
+    
+    // A pending loss goes with the export, as the game exported has it.
+    await kill(page, 'DE');
+    await visibleButton(page, 'Acknowledge').click();
+    await dismissAgentDossier(page, 'Delta');
+    const exported = await exportGame(page);
+    expect(exported.legacy).toEqual({devoured:0, died:1, haunted:{}});
+    
+    // Import it, lose Bravo and save: 2 accrued.
+    await importGame(page, exported);
+    await kill(page, 'BR');
+    await visibleButton(page, 'Acknowledge').click();
+    await dismissAgentDossier(page, 'Bravo');
+    await saveGame(page);
+    expect(await storedDied(page)).toBe(2);
+    
+    // A save exported before the legacy went with it leaves the legacy alone.
+    const {legacy:_legacy, ...older} = exported;
+    await importGame(page, older);
+    expect(await storedDied(page)).toBe(2);
+    
+    // Importing it again takes the legacy back to the export's, and Bravo is alive again.
+    await importGame(page, exported);
+    expect(await storedDied(page)).toBe(1);
+    expect(await page.evaluate(() => [tc.model.getAgentModel('BR').isNotDead(), tc.legacy.getSummary().died])).toEqual([true, 1]);
     
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);

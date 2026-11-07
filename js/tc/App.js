@@ -164,6 +164,10 @@
                         if (problem) {
                             openAckMsgDialog(i18n('dlg-import-failed-title'), i18n('dlg-import-failed-msg', problem));
                         } else {
+                            // The legacy goes back to what it was when the save was exported,
+                            // so its losses can't be had again by importing it again. A save
+                            // exported before the legacy was saved with it leaves it alone.
+                            if (json.legacy !== undefined) pkg.legacy.importRecord(json.legacy);
                             updateLastSaved();
                             openAckMsgDialog(i18n('dlg-import-succeeded-title'), i18n('dlg-import-succeeded-msg'), appView.doReload, null, i18n('btn-continue'));
                         }
@@ -373,7 +377,7 @@
                 }
             }]);
             new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:i18n('tip-export')}, [{
-                doActivated: persistenceMgr.export.bind(persistenceMgr)
+                doActivated: () => {persistenceMgr.export({legacy:pkg.legacy.exportRecord()});}
             }]);
             
             new PlainText(topView, {text:ICON_SEPARATOR});

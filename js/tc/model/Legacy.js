@@ -79,8 +79,18 @@
         
         makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, haunted:{}}),
         
-        /*  What's in storage: {devoured, died, haunted:{eventId:phraseIdx}}. Empty if nothing
-            is, or storage can't be read. */
+        /*  A record as {devoured, died, haunted:{eventId:phraseIdx}}, with anything unusable 
+            in it taken as nothing accrued. */
+        toRecord = record => {
+            return {
+                [LOSS_DEVOURED]:Number.isInteger(record?.[LOSS_DEVOURED]) ? record[LOSS_DEVOURED] : 0,
+                [LOSS_DIED]:Number.isInteger(record?.[LOSS_DIED]) ? record[LOSS_DIED] : 0,
+                haunted:isPlainObject(record?.haunted) ? record.haunted : {}
+            };
+        },
+        
+        /*  What's in storage, as toRecord gives it. Empty if nothing is, or storage can't be 
+            read. */
         readStoredRecord = () => {
             let record;
             try {
@@ -88,11 +98,7 @@
             } catch {
                 // Treated as nothing accrued.
             }
-            return {
-                [LOSS_DEVOURED]:Number.isInteger(record?.[LOSS_DEVOURED]) ? record[LOSS_DEVOURED] : 0,
-                [LOSS_DIED]:Number.isInteger(record?.[LOSS_DIED]) ? record[LOSS_DIED] : 0,
-                haunted:isPlainObject(record?.haunted) ? record.haunted : {}
-            };
+            return toRecord(record);
         },
         
         /*  What's accrued so far, stored or pending, as readStoredRecord gives it. */
@@ -211,6 +217,18 @@
                 agentModel:cfg ? pkg.model.getAgentModel(cfg.agentId) : undefined,
                 bonuses:cfg ? getBonuses(record) : []
             };
+        },
+        
+        /*  What's accrued so far, stored or pending, for an exported save: 
+            {devoured, died, haunted:{eventId:phraseIdx}}. */
+        exportRecord: () => readRecord(),
+        
+        /*  Replaces everything accrued with an imported save's, from exportRecord, so 
+            importing a save takes the legacy back to what it was when that save was 
+            exported, and a loss can't be had again and again by importing the same save. */
+        importRecord: record => {
+            pending = null;
+            writeRecord(toRecord(record));
         },
         
         /*  Forgets everything accrued, pending too. The game in progress keeps what it 
