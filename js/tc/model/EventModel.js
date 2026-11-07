@@ -70,6 +70,7 @@
                 case 'bike':     return i18n('travel-bike');
                 case 'lifeboat': return i18n('travel-lifeboat');
                 case 'survive':  return i18n('travel-survive');
+                case 'loopback': return i18n('travel-loopback');
             }
             return i18n('travel-default');
         },

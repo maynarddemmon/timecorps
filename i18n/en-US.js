@@ -178,6 +178,7 @@ myt.I18N.setDictionary({
 "travel-lifeboat":"Lifeboat to",
 "travel-survive":"Survive to",
 "travel-default":"To",
+"travel-loopback":"Loop back to",
 
 // Stats by Whose They Are
 "stat-scope-event":"Event $0",

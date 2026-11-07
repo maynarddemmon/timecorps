@@ -318,7 +318,7 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"syndicate_hq", "allowLoopback":true}
+				{"mode":"loopback", "to":"syndicate_hq", "allowLoopback":true}
 			]
 		},
 		"time_corps_hq":{
@@ -412,7 +412,7 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"time_corps_hq", "allowLoopback":true}
+				{"mode":"loopback", "to":"time_corps_hq", "allowLoopback":true}
 			]
 		}
 	},
