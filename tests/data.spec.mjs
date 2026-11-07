@@ -771,10 +771,12 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             for (const [eventId, event] of Object.entries(scenario.events ?? {})) {
                 const start = event.start;
                 if (start !== null && typeof start === 'object') {
-                    const {startOf, endOf, ...offset} = start,
+                    const {startOf, endOf, now, ...offset} = start,
                         refId = startOf ?? endOf;
-                    if ((startOf === undefined) === (endOf === undefined)) {
-                        problems.push(eventId + ' start must have one of startOf or endOf');
+                    if ([startOf, endOf, now].filter(v => v !== undefined).length !== 1) {
+                        problems.push(eventId + ' start must have one of startOf, endOf or now');
+                    } else if (now !== undefined) {
+                        if (now !== 'date' && now !== 'datetime') problems.push(eventId + ' start now must be "date" or "datetime"');
                     } else if (!loaded.has(refId) || refId === eventId) {
                         problems.push(eventId + ' start names ' + refId + ', which isn\'t loaded before it');
                     }

@@ -25,24 +25,49 @@
         
         RELATIVE_START_OFFSET_KEYS = ['w', 'd', 'h', 'm', 's', 'ms'],
         
-        /*  Works out an Event's start given as {"startOf":<id>} or {"endOf":<id>} plus an 
-            optional offset in the units a duration takes, e.g. {"endOf":"collision", "m":5}.
-            The Event it names must already be loaded. A problem is warned about and the start
-            is 0, as for a date string that can't be read. */
+        RELATIVE_START_KEYS = ['startOf', 'endOf', 'now'],
+        
+        /*  Works out an Event's start given as {"startOf":<id>} or {"endOf":<id>}, or as 
+            {"now":"date"} (midnight at the start of the campaign's day) or {"now":"datetime"} 
+            (the moment the campaign started), plus an optional offset in the units a duration
+            takes, e.g. {"endOf":"collision", "m":5} or {"now":"date", "h":7}. An Event it 
+            names must already be loaded. A problem is warned about and the start is 0, as 
+            for a date string that can't be read. */
         readRelativeStart = (eventId, spec) => {
             const where = 'Event ' + eventId + ' start',
-                {startOf, endOf, ...offset} = spec,
-                key = startOf !== undefined ? 'startOf' : 'endOf',
-                refId = spec[key];
-            if ((startOf === undefined) === (endOf === undefined)) {
-                console.warn(where, 'must have one of "startOf" or "endOf" (using 0):', spec);
+                {now} = spec,
+                keys = RELATIVE_START_KEYS.filter(key => spec[key] !== undefined),
+                offset = {...spec};
+            for (const key of RELATIVE_START_KEYS) delete offset[key];
+            if (keys.length !== 1) {
+                console.warn(where, 'must have one of "startOf", "endOf" or "now" (using 0):', spec);
                 return 0;
             }
             
-            const refEventModel = typeof refId === 'string' && refId !== eventId ? pkg.model.getEventModel(refId) : null;
-            if (!refEventModel) {
-                console.warn(where, key, 'must name an Event loaded before this one (using 0):', refId);
-                return 0;
+            let base;
+            if (now !== undefined) {
+                // The timeline's times are wall clock times, kept as UTC, so the player's 
+                // local date and time are read off the campaign's start and kept as UTC. 
+                // Reading them off that moment, not today, keeps a daylight saving change 
+                // between starting and restoring from moving them.
+                const d = new Date(pkg.getCampaignStart());
+                if (now === 'datetime') {
+                    base = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+                } else if (now === 'date') {
+                    base = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+                } else {
+                    console.warn(where, 'now must be "date" or "datetime" (using 0):', now);
+                    return 0;
+                }
+            } else {
+                const key = keys[0],
+                    refId = spec[key],
+                    refEventModel = typeof refId === 'string' && refId !== eventId ? pkg.model.getEventModel(refId) : null;
+                if (!refEventModel) {
+                    console.warn(where, key, 'must name an Event loaded before this one (using 0):', refId);
+                    return 0;
+                }
+                base = key === 'startOf' ? refEventModel.getStart() : refEventModel.getEnd();
             }
             
             for (const offsetKey in offset) {
@@ -52,7 +77,7 @@
                 }
             }
             
-            return (key === 'startOf' ? refEventModel.getStart() : refEventModel.getEnd()) + durationToMillis(offset);
+            return base + durationToMillis(offset);
         },
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.

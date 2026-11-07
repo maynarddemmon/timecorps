@@ -1,6 +1,9 @@
 (pkg => {
     'use strict';
     
+    // When the campaign started, in millis. See getCampaignStart.
+    let campaignStart = null;
+    
     const M = myt,
         
         {
@@ -515,6 +518,12 @@
             ICON_DEATH:'☠',
             
             logToBase,
+            
+            /*  When the campaign started, in millis: what "now" in an Event's start means. 
+                It's saved with the game, so a restored game keeps its dates whatever day it 
+                is. The current time until it's set or first read. */
+            getCampaignStart: () => campaignStart ??= Date.now(),
+            setCampaignStart: millis => {campaignStart = millis;},
             
             /*  A number in [0, 1) that's always the same for the same value: myt's hash, mixed so that
                 similar strings, e.g. IDs that differ in one character, land far apart. */

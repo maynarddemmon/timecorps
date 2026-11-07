@@ -39,6 +39,7 @@
             return {
                 version:SAVE_FORMAT_VERSION,
                 savedAt:new Date().toISOString(),
+                campaignStart:pkg.getCampaignStart(),
                 data:persistanceManager.exportDiff()
             };
         },
@@ -56,7 +57,8 @@
         saved, where the baseline is the model's export taken right after a fresh campaign
         starts. A save is later applied on top of that same fresh campaign.
         
-        Saved record: {version, savedAt:<ISO string>, data:<diff of model.exportToObj()>} */
+        Saved record: {version, savedAt:<ISO string>, campaignStart:<millis>, 
+            data:<diff of model.exportToObj()>} */
     pkg.PersistenceManager = new JS.Class('PersistenceManager', {
         // Life Cycle //////////////////////////////////////////////////////////
         initialize: function(model, storageKey=DEFAULT_STORAGE_KEY) {
@@ -76,6 +78,13 @@
         },
         
         hasSave: function() {return readStorage(this.storageKey) != null;},
+        
+        /*  When the saved campaign started, in millis, or null if there's no save or it 
+            doesn't say, e.g. one made before this was saved. */
+        getSavedCampaignStart: function() {
+            const campaignStart = readStorage(this.storageKey)?.campaignStart;
+            return Number.isFinite(campaignStart) ? campaignStart : null;
+        },
         
         
         // Methods /////////////////////////////////////////////////////////////

@@ -295,6 +295,11 @@
             model = pkg.model = new pkg.Model(appView);
             persistenceMgr = new pkg.PersistenceManager(model);
             
+            // Before the data loads, so an Event's start given from "now" is the saved 
+            // campaign's, whatever day it is.
+            const savedCampaignStart = persistenceMgr.getSavedCampaignStart();
+            if (savedCampaignStart !== null) pkg.setCampaignStart(savedCampaignStart);
+            
             // Build UI
             appView.buildTopView(new WideView(appView, {bgColor:colorMedium, height:TOP_VIEW_HEIGHT}));
             appView.buildMiddleView(new WideView(appView, {layoutHint:1}));

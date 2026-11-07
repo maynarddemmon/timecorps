@@ -156,7 +156,7 @@
 	"events":{
 		"origin_alarm":{
 			"name":"The Alarm", "chronoLocked":"true",
-			"start":"2026-11-13T07:00:00", "duration":{"h":1},
+			"start":{"now":"date", "h":7}, "duration":{"h":1},
 			"location":"origin_home",
 			"shown":"true",
 			"actionLimit":2,
@@ -221,7 +221,7 @@
 				}
 			},
 			"description":[
-				"Friday the 13th of November, 2026. Your alarm goes off at seven, the way it does every weekday, and the city outside your window is grey and wet and entirely ordinary.",
+				"Your alarm goes off at seven, the way it does every day, and the city outside your window is grey and wet and entirely ordinary.",
 				"<br><br>You have an hour before the bus. Nothing about today is going to be any different from any other day."
 			]
 		},
@@ -329,7 +329,7 @@
 		
 		"origin_bikeRepair":{
 			"name":"Bike Repair", "chronoLocked":"true",
-			"start":{"endOf":"origin_back_home", "m":20}, "duration":{"h":2},
+			"start":{"endOf":"origin_back_home", "m":30}, "duration":{"h":2, "m":30},
 			"location":"origin_bikeshop",
 			"actionLimit":0,
 			"actions":{
