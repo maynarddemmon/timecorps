@@ -197,6 +197,10 @@
 			"name":"Strength",
 			"description":"Physical prowess and brawn."
 		},
+		"int":{
+			"name":"Intellect",
+			"description":"Raw intelligience, memory and reason."
+		},
 		"cha":{
 			"name":"Charisma",
 			"description":"Your force of personality."
@@ -230,6 +234,14 @@
 		"persuasion":{
 			"name":"Persuasion",
 			"description":"Through force of personality, persuade someone of an idea, concept or course of action."
+		},
+		"history":{
+			"name":"History",
+			"description":"Knowledge of history, at least as you remember it."
+		},
+		"logic":{
+			"name":"Logic",
+			"description":"Problem solving, mathematical reasoning and deduction."
 		}
 	},
 	
