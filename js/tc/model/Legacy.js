@@ -5,10 +5,10 @@
     // turns the whole thing off.
     let cfg = null,
         
-        // Losses in the game in progress, not yet in storage, as {devoured, died, haunted}. 
-        // They're stored when the game is saved, or abandoned for a new one, so reloading 
-        // the page back to an earlier save, or to a new game, doesn't keep them, and a loss 
-        // can't be had again and again for the advantages. See commit.
+        // Losses in the game in progress, and its restart, not yet in storage, as a record 
+        // (see toRecord). They're stored when the game is saved, or abandoned for a new one,
+        // so reloading the page back to an earlier save, or to a new game, doesn't keep 
+        // them, and a loss can't be had again and again for the advantages. See commit.
         pending = null;
     
     const {min:mathMin, max:mathMax} = Math,
@@ -25,68 +25,87 @@
         LOSS_DIED = 'died',
         LOSS_KINDS = [LOSS_DEVOURED, LOSS_DIED],
         
-        // Adjustment keys a loss can give the legacy agent.
+        // A game abandoned for a new one, however it was.
+        RESTARTED = 'restarted',
+        
+        // What's counted, each giving its own advantages.
+        KINDS = [...LOSS_KINDS, RESTARTED],
+        
+        // Adjustment keys each can give: a skill of the legacy agent's, or credits.
         SKILL_KEY_PREFIX = 'agent.skills.',
+        CREDITS_KEY = 'timeline.credits',
+        
+        /*  Reads a list of phrases, e.g. "hauntings", warning about any that aren't. */
+        readPhrases = (where, phrases) => {
+            if (!Array.isArray(phrases)) {
+                console.warn(where, 'must be an array of phrases (ignoring it):', phrases);
+                return [];
+            }
+            return phrases.filter(phrase => {
+                if (typeof phrase === 'string' && phrase.trim() !== '') return true;
+                console.warn(where, 'must be non-empty strings (ignoring it):', phrase);
+                return false;
+            });
+        },
         
         /*  Reads the legacy config, e.g. {"agent":"ME", "devoured":{"agent.skills.luck":1}, 
-            "hauntings":["…"]}, into {agentId, amounts:{devoured:[[skillId, amount], …], 
-            died:[…]}, hauntings:[…]}, warning about its problems. null if it has no agent. */
+            "restarted":{"timeline.credits":1}, "hauntings":["…"], "glitches":["…"]}, into 
+            {agentId, amounts:{devoured:{skills:[[skillId, amount], …], credits}, died:…, 
+            restarted:…}, hauntings:[…], glitches:[…]}, warning about its problems. null if it 
+            has no agent. */
         readCfg = json => {
             const where = DATA_KEY;
             if (!isPlainObject(json)) {
                 console.warn(where, 'must be an object, e.g. {"agent":"ME", "devoured":{"agent.skills.causalStability":3}} (ignoring it):', json);
                 return null;
             }
-            const {agent:agentId, hauntings=[], ...rest} = json,
+            const {agent:agentId, hauntings=[], glitches=[], ...rest} = json,
                 amounts = {};
             if (typeof agentId !== 'string' || agentId === '') {
                 console.warn(where, 'agent must name the agent the losses help (ignoring it all):', agentId);
                 return null;
             }
-            for (const kind of LOSS_KINDS) {
+            for (const kind of KINDS) {
                 const kindCfg = rest[kind] ?? {};
                 delete rest[kind];
-                amounts[kind] = [];
+                amounts[kind] = {skills:[], credits:0};
                 if (!isPlainObject(kindCfg)) {
-                    console.warn(where, kind, 'must be an object of amounts by skill, e.g. {"agent.skills.luck":1} (ignoring it):', kindCfg);
+                    console.warn(where, kind, 'must be an object of amounts by skill or credits, e.g. {"agent.skills.luck":1} (ignoring it):', kindCfg);
                     continue;
                 }
                 for (const key in kindCfg) {
                     const amount = kindCfg[key];
-                    if (!key.startsWith(SKILL_KEY_PREFIX)) {
-                        console.warn(where, kind, key, 'must be a skill, e.g. "agent.skills.luck" (ignoring it)');
+                    if (key !== CREDITS_KEY && !key.startsWith(SKILL_KEY_PREFIX)) {
+                        console.warn(where, kind, key, 'must be a skill, e.g. "agent.skills.luck", or "timeline.credits" (ignoring it)');
                     } else if (!Number.isFinite(amount)) {
                         console.warn(where, kind, key, 'must be a number (ignoring it):', amount);
+                    } else if (key === CREDITS_KEY) {
+                        amounts[kind].credits = amount;
                     } else {
-                        amounts[kind].push([key.slice(SKILL_KEY_PREFIX.length), amount]);
+                        amounts[kind].skills.push([key.slice(SKILL_KEY_PREFIX.length), amount]);
                     }
                 }
             }
             if (Object.keys(rest).length > 0) console.warn(where, 'has unknown keys', Object.keys(rest).join(', '), '(ignoring them)');
             
-            let cleanHauntings = [];
-            if (Array.isArray(hauntings)) {
-                cleanHauntings = hauntings.filter(phrase => {
-                    if (typeof phrase === 'string' && phrase.trim() !== '') return true;
-                    console.warn(where, 'hauntings must be non-empty strings (ignoring it):', phrase);
-                    return false;
-                });
-            } else {
-                console.warn(where, 'hauntings must be an array of phrases (ignoring it):', hauntings);
-            }
-            return {agentId, amounts, hauntings:cleanHauntings};
+            return {
+                agentId, 
+                amounts, 
+                hauntings:readPhrases(where + ' hauntings', hauntings), 
+                glitches:readPhrases(where + ' glitches', glitches)
+            };
         },
         
-        makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, haunted:{}}),
+        makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, [RESTARTED]:0, haunted:{}, glitched:{}}),
         
-        /*  A record as {devoured, died, haunted:{eventId:phraseIdx}}, with anything unusable 
-            in it taken as nothing accrued. */
+        /*  A record as {devoured, died, restarted, haunted:{eventId:phraseIdx}, 
+            glitched:{eventId:phraseIdx}}, with anything unusable in it taken as nothing 
+            accrued. */
         toRecord = record => {
-            return {
-                [LOSS_DEVOURED]:Number.isInteger(record?.[LOSS_DEVOURED]) ? record[LOSS_DEVOURED] : 0,
-                [LOSS_DIED]:Number.isInteger(record?.[LOSS_DIED]) ? record[LOSS_DIED] : 0,
-                haunted:isPlainObject(record?.haunted) ? record.haunted : {}
-            };
+            const result = makeEmptyRecord();
+            for (const kind of KINDS) if (Number.isInteger(record?.[kind])) result[kind] = record[kind];
+            for (const key of ['haunted', 'glitched']) if (isPlainObject(record?.[key])) result[key] = record[key];
+            return result;
         },
         
         /*  What's in storage, as toRecord gives it. Empty if nothing is, or storage can't be 
@@ -105,8 +124,9 @@
         readRecord = () => {
             const record = readStoredRecord();
             if (pending) {
-                for (const kind of LOSS_KINDS) record[kind] += pending[kind];
+                for (const kind of KINDS) record[kind] += pending[kind];
                 record.haunted = {...pending.haunted, ...record.haunted};
+                record.glitched = {...pending.glitched, ...record.glitched};
             }
             return record;
         },
@@ -119,23 +139,29 @@
             }
         },
         
-        /*  A phrase for an Event, the same each time for the same Event and losses so far, 
-            but varied between Events. No dice, so a loss never uses up a roll. */
-        pickHauntingIdx = (eventId, lossCount) => {
-            let hash = lossCount;
-            for (const char of eventId) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-            return hash % cfg.hauntings.length;
+        /*  A phrase from phrases for an Event, the same each time for the same Event and 
+            count so far, but varied between Events. No dice, so it never uses up a roll. */
+        pickPhraseIdx = (phrases, eventId, count) => hashToRange([eventId, count], 0, phrases.length - 1),
+        
+        /*  The phrase an Event got in record[recordKey], or ''. */
+        getPhrase = (phrases, recordKey, eventId) => {
+            if (!cfg || phrases.length === 0) return '';
+            const idx = readRecord()[recordKey][eventId];
+            return idx === undefined ? '' : phrases[idx % phrases.length];
         },
         
         /*  The total each skill gains from what's accrued, as [[skillId, amount], …], leaving
             out any that add up to nothing. */
         getBonuses = record => {
             const totals = new Map();
-            for (const kind of LOSS_KINDS) {
-                for (const [skillId, amount] of cfg.amounts[kind]) totals.set(skillId, (totals.get(skillId) ?? 0) + record[kind] * amount);
+            for (const kind of KINDS) {
+                for (const [skillId, amount] of cfg.amounts[kind].skills) totals.set(skillId, (totals.get(skillId) ?? 0) + record[kind] * amount);
             }
             return [...totals].filter(([, amount]) => amount !== 0);
-        };
+        },
+        
+        /*  The credits a new game starts with from what's accrued. */
+        getCreditsBonus = record => KINDS.reduce((total, kind) => total + record[kind] * cfg.amounts[kind].credits, 0);
     
     /*  The first roguelike thread: what carries from one game to the next. Each player-
         controlled agent lost, devoured by chronovores or dead of their wounds, gives the 
@@ -164,7 +190,25 @@
             pending[kind]++;
             const eventModel = pkg.model.getEventModel(eventId);
             if (eventModel?.isNotHub() && cfg.hauntings.length > 0 && record.haunted[eventId] === undefined) {
-                pending.haunted[eventId] = pickHauntingIdx(eventId, record[LOSS_DEVOURED] + record[LOSS_DIED] + 1);
+                pending.haunted[eventId] = pickPhraseIdx(cfg.hauntings, eventId, record[LOSS_DEVOURED] + record[LOSS_DIED] + 1);
+            }
+        },
+        
+        /*  Records the game being abandoned for a new one, however it was. If the legacy 
+            agent is still alive and not devoured, the Event they're at, unless a hub, is 
+            glitched: as though someone were taken out of it. Pending until commit, which 
+            should follow. */
+        recordRestart: () => {
+            if (!cfg) return;
+            const record = readRecord();
+            pending ??= makeEmptyRecord();
+            pending[RESTARTED]++;
+            const agentModel = pkg.model.getAgentModel(cfg.agentId),
+                eventModel = agentModel?.getEventModel();
+            if (agentModel?.isNotDead() && agentModel.isNotDevoured() && eventModel?.isNotHub() && 
+                cfg.glitches.length > 0 && record.glitched[eventModel.id] === undefined
+            ) {
+                pending.glitched[eventModel.id] = pickPhraseIdx(cfg.glitches, eventModel.id, record[RESTARTED] + 1);
             }
         },
         
@@ -175,16 +219,20 @@
             pending = null;
         },
         
-        /*  Gives the legacy agent what's accrued, as a new game starts. Skills stay in the 
-            skill range. */
+        /*  Gives what's accrued as a new game starts: credits, and the legacy agent skills, 
+            which stay in the skill range. */
         applyToNewGame: () => {
             if (!cfg) return;
+            const record = readRecord(),
+                credits = getCreditsBonus(record);
+            if (credits !== 0) pkg.model.setCredits(mathMax(0, pkg.model.getCredits() + credits));
+            
             const agentModel = pkg.model.getAgentModel(cfg.agentId);
             if (!agentModel) {
                 console.warn(DATA_KEY, 'agent', cfg.agentId, 'names no agent (giving no advantages)');
                 return;
             }
-            const bonuses = getBonuses(readRecord());
+            const bonuses = getBonuses(record);
             if (bonuses.length === 0) return;
             const skills = {...agentModel.getSkills()},
                 {MAX_SKILL_VALUE} = pkg.cfg;
@@ -200,27 +248,30 @@
         
         /*  The line under an Event's description if an agent was lost there, in any game, or
             ''. */
-        getHaunting: eventId => {
-            if (!cfg || cfg.hauntings.length === 0) return '';
-            const idx = readRecord().haunted[eventId];
-            return idx === undefined ? '' : cfg.hauntings[idx % cfg.hauntings.length];
-        },
+        getHaunting: eventId => cfg ? getPhrase(cfg.hauntings, 'haunted', eventId) : '',
         
-        /*  What's accrued, for showing: {devoured, died, hauntedCount, agentModel, bonuses:
-            [[skillId, amount], …]}. */
+        /*  The line under an Event's description if a game was abandoned with the legacy 
+            agent there, alive, in any game, or ''. */
+        getGlitch: eventId => cfg ? getPhrase(cfg.glitches, 'glitched', eventId) : '',
+        
+        /*  What's accrued, for showing: {devoured, died, restarted, hauntedCount, 
+            glitchedCount, agentModel, bonuses:[[skillId, amount], …], credits}. */
         getSummary: () => {
             const record = readRecord();
             return {
                 devoured:record[LOSS_DEVOURED],
                 died:record[LOSS_DIED],
+                restarted:record[RESTARTED],
                 hauntedCount:Object.keys(record.haunted).length,
+                glitchedCount:Object.keys(record.glitched).length,
                 agentModel:cfg ? pkg.model.getAgentModel(cfg.agentId) : undefined,
-                bonuses:cfg ? getBonuses(record) : []
+                bonuses:cfg ? getBonuses(record) : [],
+                credits:cfg ? getCreditsBonus(record) : 0
             };
         },
         
-        /*  What's accrued so far, stored or pending, for an exported save: 
-            {devoured, died, haunted:{eventId:phraseIdx}}. */
+        /*  What's accrued so far, stored or pending, for an exported save, as toRecord 
+            gives it. */
         exportRecord: () => readRecord(),
         
         /*  Replaces everything accrued with an imported save's, from exportRecord, so 

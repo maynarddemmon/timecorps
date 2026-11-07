@@ -96,11 +96,15 @@
 	// What carries from one game to the next. Each of the player's agents lost in any game, 
 	// devoured by chronovores or dead of their wounds, gives this agent these skills at the
 	// start of every new game, and leaves the Event they fell at haunted, in every game, by 
-	// one of these lines under its description. The ☠ button shows it all, and clears it.
+	// one of these hauntings under its description. Each game abandoned for a new one,
+	// however it was, adds these "restarted" credits to every new game, and if this agent
+	// was alive and not devoured, leaves the Event they were at glitched, by one of these
+	// glitches. The ☠ button shows it all, and clears it.
 	"legacy":{
 		"agent":"ME",
 		"devoured":{"agent.skills.causalStability":3},
 		"died":{"agent.skills.luck":1},
+		"restarted":{"timeline.credits":1},
 		"hauntings":[
 			"You feel as if you are being watched, but can’t identify the source.",
 			"A spectral presence seems always just out of sight.",
@@ -112,6 +116,18 @@
 			"A voice you almost recognize whispers a warning you can’t quite make out.",
 			"The shadows here pool in the shape of someone who isn’t there.",
 			"This moment feels worn thin, as if something tore through it once before."
+		],
+		"glitches":[
+			"You sense a subtle break in causality, as if someone or something was removed from reality.",
+			"Your mind seems to stutter for a second and then you feel like yourself again.",
+			"For a heartbeat the world around you repeats itself, exactly, and then carries on.",
+			"You reach for a thought that should be here and find only its outline.",
+			"You hear someone familiar start to say your name, then it stops, and you realize they aren’t even here.",
+			"A light flickers once, though nothing here could make it.",
+			"You have the uneasy feeling you’ve already left this place.",
+			"A word on the tip of your tongue dissolves before you can say it.",
+			"Everything is where it should be, and yet something is missing.",
+			"The seconds here don’t quite line up, like a film poorly spliced."
 		]
 	},
 	

@@ -104,8 +104,10 @@ JS.Packages(file => {
     
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
-        'JSON5','tc.Model','tc.PersistenceManager','tc.Agents','tc.Events','tc.Missions','tc.Spacer','tc.WideView','tc.Panel',
+        'JSON5','tc.Model','tc.legacy','tc.PersistenceManager','tc.Agents','tc.Events','tc.Missions',
+        'tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief','tc.SettingsDialog','tc.FloatingText'
+        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief',
+        'tc.SettingsDialog','tc.FloatingText'
     );
 });

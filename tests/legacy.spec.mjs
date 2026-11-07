@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import {startGame, reloadGame, clickAndReload, readTestData, dialogTitle, dismissAgentDossier} from './helpers.mjs';
 
 const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
+    GLITCHES = ['A stutter.', 'A skip.'],
     
     routeLegacy = (page, legacy) => page.route('**/tests/data/init.json5', route => {
         const json = readTestData('init.json5');
@@ -91,7 +92,7 @@ test('each of the player\'s agents lost gives the legacy agent skills in every n
     expect(await page.evaluate(() => {
         const {agentModel, ...summary} = tc.legacy.getSummary();
         return {...summary, agent:agentModel.id};
-    })).toEqual({devoured:1, died:1, hauntedCount:1, agent:'AL', bonuses:[['stealth', 4], ['investigation', 1]]});
+    })).toEqual({devoured:1, died:1, restarted:0, hauntedCount:1, glitchedCount:0, agent:'AL', bonuses:[['stealth', 4], ['investigation', 1]], credits:0});
     
     // The game in progress keeps what it started with. Abandoned, the next one starts Alpha 
     // ahead.
@@ -132,6 +133,42 @@ test('an Event an agent was lost at is haunted in every game, by a line under it
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('each restart adds credits to every new game, and leaves the Event the legacy agent was at glitched if they were alive', async ({page}) => {
+    await routeLegacy(page, {agent:'AL', died:{'agent.skills.stealth':1}, restarted:{'timeline.credits':2}, hauntings:HAUNTINGS, glitches:GLITCHES});
+    const problems = await startGame(page),
+        credits = await page.evaluate(() => tc.model.getCredits()),
+        glitchOf = eventId => page.evaluate(eventId => tc.legacy.getGlitch(eventId), eventId);
+    
+    // Alpha alive at origin: glitched.
+    await restartCampaign(page);
+    expect(await page.evaluate(() => tc.model.getCredits())).toBe(credits + 2);
+    const glitch = await glitchOf('origin');
+    expect(GLITCHES).toContain(glitch);
+    
+    // At HQ, a hub, nothing more is glitched; dead at the plan, neither. Each still adds credits.
+    await page.evaluate(() => tc.model.getAgentModel('AL').setEvent('time_corps_hq'));
+    await restartCampaign(page);
+    await page.evaluate(() => tc.model.getAgentModel('AL').setEvent('plan'));
+    await kill(page, 'AL');
+    await restartCampaign(page);
+    expect(await page.evaluate(() => [tc.model.getCredits(), tc.legacy.getSummary().restarted, tc.legacy.getSummary().glitchedCount]))
+        .toEqual([credits + 6, 3, 1]);
+    expect(await glitchOf('plan')).toBe('');
+    
+    // An Event both haunted and glitched shows both lines, the haunting first.
+    await kill(page, 'AL');
+    await restartCampaign(page);
+    const haunting = await hauntingOf(page, 'origin');
+    expect(await page.evaluate(() => {
+        tc.app.selectEventBox('aftermath');
+        tc.app.selectEventBox('origin');
+        return [...document.querySelectorAll('i')].filter(el => el.offsetParent !== null).map(el => el.textContent);
+    }).then(lines => lines.filter(line => line === haunting || line === glitch))).toEqual([haunting, glitch]);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('a loss is stored only once its game is saved or abandoned, so reloading back to an earlier save forgets it', async ({page}) => {
     await routeLegacy(page);
     const problems = await startGame(page);
@@ -169,7 +206,7 @@ test('a save exports with the legacy, and importing it puts the legacy back, so 
     await visibleButton(page, 'Acknowledge').click();
     await dismissAgentDossier(page, 'Delta');
     const exported = await exportGame(page);
-    expect(exported.legacy).toEqual({devoured:0, died:1, haunted:{}});
+    expect(exported.legacy).toEqual({devoured:0, died:1, restarted:0, haunted:{}, glitched:{}});
     
     // Import it, lose Bravo and save: 2 accrued.
     await importGame(page, exported);
@@ -210,7 +247,7 @@ test('the ☠ button shows what\'s accrued, and clears it', async ({page}) => {
     for (let i = 0; i < 2; i++) await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
     for (const name of ['Bravo', 'Charlie']) await dismissAgentDossier(page, name);
     await legacyBtn.click();
-    await expect(page.getByText('In past games 1 agent was devoured by chronovores and 1 died of their wounds, so Alpha starts each new game with +4 Stealth, +1 Investigation. 1 Event is haunted.', {exact:false})).toBeVisible();
+    await expect(page.getByText('In past games 1 agent was devoured by chronovores and 1 died of their wounds, and you started over 0 times. So Alpha starts each new game with +4 Stealth, +1 Investigation, and the game with 0 extra credits. 1 Event is haunted and 0 glitched.', {exact:false})).toBeVisible();
     await page.getByRole('button', {name:'Clear', exact:true}).filter({visible:true}).click();
     
     expect(await page.evaluate(() => [tc.legacy.getSummary().devoured, tc.legacy.getHaunting('boats')])).toEqual([0, '']);
@@ -236,7 +273,7 @@ test('a broken legacy is warned about, keeping what\'s usable', async ({page}) =
     const problems = await startGame(page);
     expect(problems.warnings).toEqual([
         'legacy died agent.skills.stealth must be a number (ignoring it): 1',
-        'legacy died agent.health must be a skill, e.g. "agent.skills.luck" (ignoring it)',
+        'legacy died agent.health must be a skill, e.g. "agent.skills.luck", or "timeline.credits" (ignoring it)',
         'legacy has unknown keys extra (ignoring them)',
         'legacy hauntings must be non-empty strings (ignoring it): '
     ]);

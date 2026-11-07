@@ -49,6 +49,7 @@
         {
             TabBtn, SquareBtn, WideView, wrapInStyledSpan,
             dialogUtil:{openConfirmMsgDialog, openAckMsgDialog, openWhenClear},
+            legacy,
             theme:{
                 layoutSpacing, spacing, padding, rowHeight,
                 colorUltraLight, colorLight, colorMedium, colorDarkMedium, colorUltraDark,
@@ -115,18 +116,18 @@
         // Legacy //
         /*  Shows what past games' losses have accrued, and offers to clear it. */
         openLegacyDialog = () => {
-            const {devoured, died, hauntedCount, agentModel, bonuses} = pkg.legacy.getSummary(),
+            const {devoured, died, restarted, hauntedCount, glitchedCount, agentModel, bonuses, credits} = legacy.getSummary(),
                 title = i18n('dlg-legacy-title');
-            if (devoured + died === 0) {
+            if (devoured + died + restarted === 0) {
                 openAckMsgDialog(title, i18n('dlg-legacy-none-msg', agentModel?.getName() ?? ''));
             } else {
                 const bonusesTxt = bonuses.map(([skillId, amount]) => i18n('skill-gain', pkg.cleanToFixed(amount), pkg.getSkillConfig(skillId)?.name ?? skillId)).join(', ');
                 openConfirmMsgDialog(
                     title,
-                    i18n('dlg-legacy-msg', devoured, died, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), hauntedCount),
+                    i18n('dlg-legacy-msg', devoured, died, restarted, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), pkg.cleanToFixed(credits), hauntedCount, glitchedCount),
                     () => {
-                        pkg.legacy.clear();
-                        // The selected Event's haunting goes with it.
+                        legacy.clear();
+                        // The selected Event's haunting and glitch go with it.
                         eventDetailsView.notifyEventSelectedChanged(timelineView.getSelectedEventBox());
                     },
                     null,
@@ -140,7 +141,7 @@
             once the game they happened in is. Returns whether it saved. */
         saveGame = () => {
             const saved = persistenceMgr.save();
-            if (saved) pkg.legacy.commit();
+            if (saved) legacy.commit();
             return saved;
         },
         
@@ -167,7 +168,7 @@
                             // The legacy goes back to what it was when the save was exported,
                             // so its losses can't be had again by importing it again. A save
                             // exported before the legacy was saved with it leaves it alone.
-                            if (json.legacy !== undefined) pkg.legacy.importRecord(json.legacy);
+                            if (json.legacy !== undefined) legacy.importRecord(json.legacy);
                             updateLastSaved();
                             openAckMsgDialog(i18n('dlg-import-succeeded-title'), i18n('dlg-import-succeeded-msg'), appView.doReload, null, i18n('btn-continue'));
                         }
@@ -228,7 +229,7 @@
                             // The baseline is the fresh campaign a save gets applied on top of.
                             persistenceMgr.captureBaseline();
                             const startCampaign = () => {
-                                legacyBtn.setVisible(pkg.legacy.isEnabled());
+                                legacyBtn.setVisible(legacy.isEnabled());
                                 if (persistenceMgr.hasSave()) {
                                     const restoreProblem = persistenceMgr.restore();
                                     readyToHandleEvents = true;
@@ -237,7 +238,7 @@
                                     readyToHandleEvents = true;
                                     // After the baseline, so what's picked and given is always saved.
                                     model.pickRandomSkillsByTrack();
-                                    pkg.legacy.applyToNewGame();
+                                    legacy.applyToNewGame();
                                     model.getInitialOperation()?.start();
                                 }
                                 ready = true;
@@ -377,7 +378,7 @@
                 }
             }]);
             new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_EXPORT, fontSize:fontSizeLarge, tooltip:i18n('tip-export')}, [{
-                doActivated: () => {persistenceMgr.export({legacy:pkg.legacy.exportRecord()});}
+                doActivated: () => {persistenceMgr.export({legacy:legacy.exportRecord()});}
             }]);
             
             new PlainText(topView, {text:ICON_SEPARATOR});
@@ -503,9 +504,10 @@
         },
         
         /*  Clears the save first since a reload would otherwise restore it. The game is 
-            abandoned, so its losses count toward the legacy. */
+            abandoned, so it and its losses count toward the legacy. */
         doRestartCampaign: () => {
-            pkg.legacy.commit();
+            legacy.recordRestart();
+            legacy.commit();
             persistenceMgr.clear();
             appView.doReload();
         },
