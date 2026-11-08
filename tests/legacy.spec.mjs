@@ -248,7 +248,27 @@ test('the ☠ button shows what\'s accrued, and clears it', async ({page}) => {
     for (const name of ['Bravo', 'Charlie']) await dismissAgentDossier(page, name);
     await legacyBtn.click();
     await expect(page.getByText('In past games 1 agent was devoured by chronovores and 1 died of their wounds, and you started over 0 times. So Alpha starts each new game with +4 Stealth, +1 Investigation, and the game with 0 extra credits. 1 Event is haunted and 0 glitched.', {exact:false})).toBeVisible();
-    await page.getByRole('button', {name:'Clear', exact:true}).filter({visible:true}).click();
+    
+    // Clearing can't be undone, so Clear waits for RESET to be typed, exactly.
+    const clearBtn = page.getByRole('button', {name:'Clear', exact:true}).filter({visible:true}),
+        field = page.getByRole('textbox').filter({visible:true});
+    await expect(clearBtn).toHaveClass(/disabled/);
+    await field.fill('reset');
+    await expect(clearBtn).toHaveClass(/disabled/);
+    await field.press('Enter');
+    await clearBtn.click();
+    await expect(dialogTitle(page, 'Accrued Advantages')).toBeVisible();
+    
+    // Cancelled, nothing's cleared.
+    await page.getByRole('button', {name:/Cancel/}).filter({visible:true}).click();
+    expect(await page.evaluate(() => tc.legacy.getSummary().devoured)).toBe(1);
+    
+    // The field starts empty each time.
+    await legacyBtn.click();
+    await expect(field).toHaveValue('');
+    await field.fill('RESET');
+    await expect(clearBtn).not.toHaveClass(/disabled/);
+    await clearBtn.click();
     
     expect(await page.evaluate(() => [tc.legacy.getSummary().devoured, tc.legacy.getHaunting('boats')])).toEqual([0, '']);
     const before = await readAlpha(page);

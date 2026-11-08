@@ -4,6 +4,7 @@
     let confirmMsgDialog,
         ackMsgDialog,
         textInputDialog,
+        typedConfirmMsgDialog,
         imageSelectorDialog;
     
     const {I18N:{get:i18n}} = myt,
@@ -291,9 +292,10 @@
             include: [MsgDialog]
         }),
         
-        /*  A message with a text field below it, and a button that confirms the text, 
-            trimmed. The button can't be used while the field is blank. */
-        TextInputDialog = pkg.TextInputDialog = new JSClass('TextInputDialog', AckMsgDialog, {
+        /*  A text field below a dialog's message, for a dialog whose confirming button, 
+            getOkBtn, can only be used while isTextAcceptable, by default while the field 
+            isn't blank. Enter in the field confirms. */
+        TextInputMixin = new JSModule('TextInputMixin', {
             initNode: function(parent, attrs) {
                 const self = this;
                 self.callSuper(parent, attrs);
@@ -314,7 +316,7 @@
                             }
                         }
                         this.callSuper(v);
-                        if (this.inited) self._updateAckBtn();
+                        if (this.inited) self._updateOkBtn();
                     }
                 }]);
                 input.getIDS().padding = padding/2 + 'px';
@@ -327,8 +329,11 @@
             
             getText: function() {return (this.getInputTxt().value ?? '').trim();},
             
-            /*  inputCfg is {value, maxLength, allowedChars, placeholder}, each optional. */
-            show: function(title, msg, confirmFunc, cancelFunc, inputCfg) {
+            isTextAcceptable: function() {return this.getText() !== '';},
+            
+            /*  Sets up the field once the message shows, from inputCfg: {value, maxLength, 
+                allowedChars, placeholder}, each optional. */
+            showInput: function(inputCfg) {
                 const {value='', maxLength, allowedChars, placeholder=''} = inputCfg ?? {},
                     inputTxt = this.getInputTxt();
                 inputTxt.setMaxLength(maxLength);
@@ -336,18 +341,16 @@
                 inputTxt.setPlaceholder(placeholder);
                 inputTxt.setText(value);
                 
-                this.callSuper(title, msg, confirmFunc, cancelFunc);
-                
                 const panelView = this.getPanelView();
                 inputTxt.setWidth(panelView.width - 2*padding);
                 inputTxt.setY(this.getMsgTxt().height);
                 panelView.setHeight(panelView.height + inputTxt.height + padding);
-                this._updateAckBtn();
+                this._updateOkBtn();
                 inputTxt.focus();
             },
             
             doConfirm: function() {
-                if (this.getText() !== '') this.callSuper();
+                if (this.isTextAcceptable()) this.callSuper();
             },
             
             /** @private */
@@ -356,8 +359,39 @@
             },
             
             /** @private */
-            _updateAckBtn: function() {
-                this.getFooterView().ackBtn.setDisabled(this.getText() === '');
+            _updateOkBtn: function() {
+                this.getOkBtn().setDisabled(!this.isTextAcceptable());
+            }
+        }),
+        
+        /*  A message with a text field below it, and a button that confirms the text, 
+            trimmed. The button can't be used while the field is blank. */
+        TextInputDialog = pkg.TextInputDialog = new JSClass('TextInputDialog', AckMsgDialog, {
+            include: [TextInputMixin],
+            
+            getOkBtn: function() {return this.getFooterView().ackBtn;},
+            
+            /*  inputCfg is {value, maxLength, allowedChars, placeholder}, each optional. */
+            show: function(title, msg, confirmFunc, cancelFunc, inputCfg) {
+                this.callSuper(title, msg, confirmFunc, cancelFunc);
+                this.showInput(inputCfg);
+            }
+        }),
+        
+        /*  A confirm dialog for something that can't be undone, whose confirm button can 
+            only be used once the player has typed requiredText into the field below the 
+            message, exactly. */
+        TypedConfirmMsgDialog = pkg.TypedConfirmMsgDialog = new JSClass('TypedConfirmMsgDialog', ConfirmMsgDialog, {
+            include: [TextInputMixin],
+            
+            getOkBtn: function() {return this.getFooterView().confirmBtn;},
+            
+            isTextAcceptable: function() {return this.getText() === this._requiredText;},
+            
+            show: function(title, msg, confirmFunc, cancelFunc, requiredText) {
+                this._requiredText = requiredText;
+                this.callSuper(title, msg, confirmFunc, cancelFunc);
+                this.showInput();
             }
         }),
         
@@ -509,6 +543,17 @@
             textInputDialog.show(title, msg, () => confirmFunc(textInputDialog.getText()), null, inputCfg);
             textInputDialog.getFooterView().ackBtn.setText(btnLabel ?? DEFAULT_ACK_LABEL);
             return textInputDialog;
+        }),
+        
+        /*  Like openConfirmMsgDialog, but confirming needs requiredText typed first, e.g. 
+            "RESET", for something that can't be undone. */
+        openTypedConfirmMsgDialog: (title, msg, requiredText, confirmFunc, confirmLabel=DEFAULT_CONFIRM_LABEL) => openWhenClear(() => {
+            typedConfirmMsgDialog ??= new TypedConfirmMsgDialog(pkg.app);
+            typedConfirmMsgDialog.show(title, msg, confirmFunc, null, requiredText);
+            const footer = typedConfirmMsgDialog.getFooterView();
+            footer.confirmBtn.setText(confirmLabel ?? DEFAULT_CONFIRM_LABEL);
+            footer.cancelBtn.setText(DEFAULT_CANCEL_LABEL);
+            return typedConfirmMsgDialog;
         }),
         
         /*  confirmFunc is called with the image showing, as given in the list. See 

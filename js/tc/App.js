@@ -48,7 +48,7 @@
         
         {
             TabBtn, SquareBtn, WideView, wrapInStyledSpan,
-            dialogUtil:{openConfirmMsgDialog, openAckMsgDialog, openWhenClear},
+            dialogUtil:{openConfirmMsgDialog, openTypedConfirmMsgDialog, openAckMsgDialog, openWhenClear},
             legacy,
             theme:{
                 layoutSpacing, spacing, padding, rowHeight,
@@ -121,16 +121,18 @@
             if (devoured + died + restarted === 0) {
                 openAckMsgDialog(title, i18n('dlg-legacy-none-msg', agentModel?.getName() ?? ''));
             } else {
-                const bonusesTxt = bonuses.map(([skillId, amount]) => i18n('skill-gain', pkg.cleanToFixed(amount), pkg.getSkillConfig(skillId)?.name ?? skillId)).join(', ');
-                openConfirmMsgDialog(
+                const bonusesTxt = bonuses.map(([skillId, amount]) => i18n('skill-gain', pkg.cleanToFixed(amount), pkg.getSkillConfig(skillId)?.name ?? skillId)).join(', '),
+                    // It can't be undone, so the player types this to clear it.
+                    resetWord = i18n('legacy-reset-word');
+                openTypedConfirmMsgDialog(
                     title,
-                    i18n('dlg-legacy-msg', devoured, died, restarted, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), pkg.cleanToFixed(credits), hauntedCount, glitchedCount),
+                    i18n('dlg-legacy-msg', devoured, died, restarted, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), pkg.cleanToFixed(credits), hauntedCount, glitchedCount, resetWord),
+                    resetWord,
                     () => {
                         legacy.clear();
                         // The selected Event's haunting and glitch go with it.
                         eventDetailsView.notifyEventSelectedChanged(timelineView.getSelectedEventBox());
                     },
-                    null,
                     i18n('btn-legacy-clear')
                 );
             }
