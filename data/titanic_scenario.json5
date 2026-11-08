@@ -4,12 +4,13 @@
 			"name":"Titanic - Avoid the Iceberg",
 			"image":true,
 			// Offered from either faction's HQ job board, which reveals it.
-			"description":[
-				{
-					"text":"Too few lifeboats means a massive loss of life is imminent.",
-					"hidden":"events.casualties.attestation.value < 20 || !events.casualties.values.massLossOfLife.value"
-				}
-			],
+			"description":[{
+				"text":"Too few lifeboats means a massive loss of life is imminent.",
+				"hidden":"events.casualties.attestation.value < 20 || !events.casualties.values.massLossOfLife.value"
+			},{
+				"text":"You carry with you a key given to you by a handler at HQ before you left.",
+				"shown":"operations.titanic_noCollision.objectives.plant.shown"
+			}],
 			"onSetup":{
 				"initialEventSelection":"collision",
 				"set":{
@@ -28,12 +29,26 @@
 					],
 					"success":"!events.collision.values.struck.value"
 				},
+				"picked":{
+					"name":"Locker Open",
+					"shown":"agents.ME.faction === 'syndicate'",
+					"description":"The lookouts must find the locker already unlocked so they can get the binoculars.",
+					"success":"events.missing_binoculars.values.pickTheLocker.value"
+				},
+				"plant":{
+					"name":"Key Planted",
+					"shown":"agents.ME.faction === 'timecorps'",
+					"description":"The lookouts must find a locker key exactly where they expect it to be. The fact that it’s a facsimile is of no consequence to history.",
+					"success":"events.missing_binoculars.values.plantKey.value"
+				},
 				"paradox":{
-					"name":"No Paradox",
+					"name":"Paradox in the Wireless Room",
+					"shown":"agents.ME.faction === 'timecorps' || agents.ME.faction === 'syndicate'",
 					"description":[
-						"This timeline must remain perfectly during the original loss of life."
+						{"text":"The wireless room must remain free from paradox.", "shown":"agents.ME.faction === 'timecorps'"},
+						{"text":"The wireless room must be soaked in paradox.", "shown":"agents.ME.faction === 'syndicate'"}
 					],
-					"success":"events.collision.paradox.value === 0 && events.casualties.paradox.value === 0 && events.californian_nearby.paradox.value === 0"
+					"success":"agents.ME.faction === 'timecorps' ? events.ice_warnings.paradox.value === 0 : events.ice_warnings.paradox.value > 0"
 				}
 			},
 			"onSuccess":{
@@ -437,7 +452,8 @@
 					// Every change of the value after the first costs the agent a paradox. Adjustments are
 					// worked out before the set, so they see the flipCount before this change.
 					"adj":{
-						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
+						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"},
+						"event.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"event.attestation.value === 0 || event.values.relayToBridge.value"
 				},
@@ -446,7 +462,8 @@
 					"skillCheck":{"actionType":"cha"},
 					"set":{"relayToBridge":"false"},
 					"adj":{
-						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
+						"agent.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"},
+						"event.paradox":{"onSuccess":"event.values.relayToBridge.flipCount >= 1 ? 1 : 0"}
 					},
 					"hidden":"event.attestation.value === 0 || !event.values.relayToBridge.value"
 				}

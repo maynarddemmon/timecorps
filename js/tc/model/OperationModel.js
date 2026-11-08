@@ -8,7 +8,7 @@
         {debounce, BaseModel} = myt,
         
         {
-            ConstrainableAttrSupport, Describable, Hideable, setConstrainedValue,
+            ConstrainableAttrSupport, Describable, DescribableHideable, setConstrainedValue,
             cfg:{STANDARD_DEBOUNCE_MILLIS},
             readPromptIds, openPrompts,
             SCOPE_OPERATION
@@ -73,8 +73,24 @@
             include: [ConstrainableToParentOperation, Describable]
         }),
         
+        /*  Something an Operation needs for success. It can be hidden, e.g. 
+            "shown":"agents.ME.faction === 'syndicate'" for one faction's, and while hidden 
+            it isn't shown and doesn't count toward success. */
         ObjectiveModel = new JSClass('ObjectiveModel', BaseModel, {
-            include: [ConstrainableToParentOperation, Describable],
+            include: [ConstrainableToParentOperation, DescribableHideable],
+            
+            init: function(attrs) {
+                this.initHidden(false);
+                this.callSuper(attrs);
+            },
+            
+            /*  Hiding one that isn't met can complete the Operation. */
+            doHiddenChanged: function(_hidden) {
+                if (!this.inited) return;
+                const operation = this.operation;
+                operation.notifyCollectionOfUpdate();
+                operation.determineSuccessfulCompletion();
+            },
             
             setName: function(v) {this.set('name', v, true);},
             getName: function() {return this.name;},
@@ -143,7 +159,7 @@
         on. While revealed and not yet completed it's active: it completes once all its
         Objectives are met, whether or not it's the current Operation. */
     pkg.OperationModel = new JSClass('OperationModel', BaseModel, {
-        include: [ConstrainableAttrSupport, Hideable, Describable, pkg.MediaSupport],
+        include: [ConstrainableAttrSupport, DescribableHideable, pkg.MediaSupport],
         
         // Life Cycle //////////////////////////////////////////////////////
         init: function(attrs) {
@@ -249,11 +265,17 @@
             return Object.values(this.getObjectiveModels());
         },
         
+        /*  The Objectives that count: those not hidden. */
+        getShownObjectiveModels: function() {
+            return this.getObjectiveModelsAsList().filter(objectiveModel => objectiveModel.isNotHidden());
+        },
+        
         // Progress
+        /*  Counts only the Objectives not hidden. */
         getProgress: function() {
             let success = 0,
                 fail = 0;
-            for (const objectiveModel of this.getObjectiveModelsAsList()) {
+            for (const objectiveModel of this.getShownObjectiveModels()) {
                 if (objectiveModel.isSuccess()) {
                     success++;
                 } else {
@@ -263,16 +285,17 @@
             return {success, fail, total:success + fail, completed:fail === 0};
         },
         
-        /*  Whether any Objective's success expression reads anything from the Event. */
+        /*  Whether any Objective not hidden has a success expression that reads anything 
+            from the Event. */
         dependsOnEvent: function(eventModel) {
-            return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.dependsOnEvent(eventModel));
+            return this.getShownObjectiveModels().some(objectiveModel => objectiveModel.dependsOnEvent(eventModel));
         },
         
         /*  Whether any Objective is entangled with the Event, i.e. its success expression
             reads a part of the Event the player knows about. The timeline marks these
             Events. */
         isEntangledWith: function(eventModel) {
-            return this.getObjectiveModelsAsList().some(objectiveModel => objectiveModel.isEntangledWith(eventModel));
+            return this.getShownObjectiveModels().some(objectiveModel => objectiveModel.isEntangledWith(eventModel));
         },
         
         

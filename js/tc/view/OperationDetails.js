@@ -190,7 +190,7 @@
                 // Agent Information //
                 const objectivesRow = self.objectivesRow;
                 objectivesRow.clearContent();
-                for (const objectiveModel of Object.values(operationModel.getObjectiveModels())) {
+                for (const objectiveModel of operationModel.getShownObjectiveModels()) {
                     new ObjectiveRow(objectivesRow, {objectiveModel});
                 }
                 
