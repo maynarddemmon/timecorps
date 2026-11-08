@@ -5,11 +5,15 @@
     
     const JSClass = JS.Class,
         
-        {PI, min:mathMin, max:mathMax, floor:mathFloor, sin:mathSin, random:mathRandom} = Math,
+        {PI, min:mathMin, max:mathMax, floor:mathFloor, abs:mathAbs, sin:mathSin, random:mathRandom} = Math,
         TWO_PI = 2*PI,
         
         M = myt,
-        {I18N:{get:i18n}, Text, View, PaddedPlainText, PlainText, Selectable, debounce} = M,
+        {
+            I18N:{get:i18n}, 
+            Text, View, PaddedPlainText, PlainText, Selectable, debounce,
+            global:{keys:globalKeys}
+        } = M,
         
         {
             SquareBtn, Btn, MiniStatBar, settings, SETTING_SHOW_VISITED_BORDERS, SETTING_SHOW_AGENT_HISTORY,
@@ -117,12 +121,50 @@
             for (const attrName in attrs) animateAttr(target, attrName, attrs[attrName]);
         },
         
+        // Click to Scroll //
+        getShownEventBoxes = timeline => Object.values(timeline.boxesByEventId).filter(eventBox => eventBox.visible),
+        
+        /*  How far y is from the span a to b, 0 if within it. */
+        distanceToSpan = (v, a, b) => v < a ? a - v : (v > b ? v - b : 0),
+        
+        /*  The shown EventBox in the Location column at x nearest y, or undefined. */
+        findClosestEventBoxInColumn = (timeline, x, y) => {
+            const col = mathFloor(x / COL_EXTENT);
+            let closest, closestDist = Infinity;
+            for (const eventBox of getShownEventBoxes(timeline)) {
+                if (mathFloor(eventBox.x / COL_EXTENT) !== col) continue;
+                const dist = distanceToSpan(y, eventBox.y, eventBox.y + eventBox.height);
+                if (dist < closestDist) {
+                    closest = eventBox;
+                    closestDist = dist;
+                }
+            }
+            return closest;
+        },
+        
+        /*  The shown EventBox nearest x in the Tick row nearest y, or undefined. A box's row 
+            is the one it starts in, whose Tick it hangs from, so a box spanning later rows 
+            doesn't count for them, and a click in a Gap row goes to the nearer row beside it. */
+        findClosestEventBoxInRow = (timeline, x, y) => {
+            let closest, closestDy = Infinity, closestDx = Infinity;
+            for (const eventBox of getShownEventBoxes(timeline)) {
+                const dy = mathAbs(y - (eventBox.y + TL_EVENT_BOX_HEIGHT / 2)),
+                    dx = distanceToSpan(x, eventBox.x, eventBox.x + eventBox.width);
+                if (dy < closestDy || (dy === closestDy && dx < closestDx)) {
+                    closest = eventBox;
+                    closestDy = dy;
+                    closestDx = dx;
+                }
+            }
+            return closest;
+        },
+        
         SCROLL_TO_DEBOUNCE_MILLIS = 100,
-        scrollToBoundingBox = debounce((timeline, boundingBox, smoothly=true) => {
+        scrollToBoundingBox = debounce((timeline, boundingBox, smoothly=true, lock) => {
             const flowContainer = timeline.flowContainer;
             timeline.scrollCaptureView.scrollXYTo(
-                boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
-                boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
+                lock === 'x' ? timeline.scrollCaptureView.getIDE().scrollLeft : boundingBox.x - (flowContainer.width - boundingBox.width) / 2, 
+                lock === 'y' ? timeline.scrollCaptureView.getIDE().scrollTop : boundingBox.y - (flowContainer.height - boundingBox.height) / 2, 
                 true, smoothly
             );
         }, SCROLL_TO_DEBOUNCE_MILLIS),
@@ -1141,10 +1183,37 @@
                 rowHeaders = self.rowHeaders = new View(rowHeadersContainer, {textColor:colorUltraDark}),
                 
                 flowContainer = self.flowContainer = new View(stickyView, {x:TL_ROW_HEADER_WIDTH, y:TL_COL_HEADER_HEIGHT, overflow:'hidden'}),
-                flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}),
+                flowLayer = self.flowLayer = new M.SplineFlow(flowContainer, {defaultStyle:DEFAULT_STYLE}, [{
+                    /*  A click on empty space scrolls to the nearest Event: in the Location
+                        column clicked, or with shift, in the Tick or Gap row clicked. Holding
+                        down the meta key selects the event instead. */
+                    _handleClick: event => {
+                        // Clicks on boxes and tokens are theirs.
+                        const domEvent = event.value,
+                            target = domEvent.target;
+                        if (target !== flowLayer.getIDE() && !flowSVG.contains(target)) return;
+                        
+                        const {clientX, clientY} = domEvent,
+                            rect = flowLayer.getIDE().getBoundingClientRect(),
+                            clickX = clientX - rect.left,
+                            clickY = clientY - rect.top,
+                            isShiftKeyDown = globalKeys.isShiftKeyDown(),
+                            eventBox = isShiftKeyDown ? 
+                                findClosestEventBoxInRow(self, clickX, clickY) : 
+                                findClosestEventBoxInColumn(self, clickX, clickY);
+                        if (eventBox) {
+                            if (globalKeys.isMetaKeyDown()) {
+                                self.doSelectEvent(eventBox.model);
+                            } else {
+                                self.scrollToEventBox(eventBox, true, isShiftKeyDown ? 'y' : 'x');
+                            }
+                        }
+                    }
+                }]),
                 flowSVG = flowLayer.getSVG();
             flowSVG.style.zIndex = Z_IDX_FLOW;
             flowSVG.style.position = 'absolute';
+            flowLayer.attachToDom(flowLayer, '_handleClick', 'click');
             
             stickyView.getIDS().position = 'sticky';
             scrollCaptureView.addDomClass('hideScrollbar');
@@ -1308,9 +1377,9 @@
         },
         
         // Scrolling //
-        scrollToEventBox: function(thingy, smoothly=true) {
+        scrollToEventBox: function(thingy, smoothly=true, lock) {
             const eventBox = thingy?.isA?.(EventBox) ? thingy : this.getEventBox(thingy);
-            if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly);
+            if (eventBox?.visible) scrollToBoundingBox(this, eventBox, smoothly, lock);
         },
         
         /*  Redraws the Location's column header, e.g. for a new image. */

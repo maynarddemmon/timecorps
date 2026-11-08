@@ -414,3 +414,54 @@ test('a selected box is light with dark text, and its neighbors and the rest are
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('clicking the timeline scrolls to the nearest Event in the Location clicked, or with shift, in the row, or with meta selects it', async ({page}) => {
+    const problems = await startGame(page);
+    await reveal(page, CHAIN);
+    
+    // Clicks the flow layer where a box's middle is, moved by dx, dy, recording what's 
+    // scrolled to, and which way the scroll is held still. Boxes are in Location columns, 
+    // left to right, and time rows, top down.
+    const clickFrom = (eventId, dx, dy) => page.evaluate(([eventId, dx, dy]) => {
+        const timeline = tc.app.getTimelineView(),
+            box = timeline.getEventBox(eventId),
+            el = timeline.flowLayer.getIDE(),
+            rect = el.getBoundingClientRect(),
+            clientX = rect.left + box.x + box.width / 2 + dx,
+            clientY = rect.top + box.y + box.height / 2 + dy;
+        globalThis.scrolledTo = [];
+        timeline.scrollToEventBox = (eventBox, _smoothly, lock) => globalThis.scrolledTo.push(eventBox.model.id + ' ' + lock);
+        el.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX, clientY}));
+        return globalThis.scrolledTo;
+    }, [eventId, dx, dy]),
+        
+        // Where boxes are, to click between them.
+        boxes = await page.evaluate(() => Object.fromEntries(['plan', 'relay', 'origin'].map(id => {
+            const box = tc.app.getTimelineView().getEventBox(id);
+            return [id, {x:box.x, y:box.y}];
+        })));
+    
+    // In plan's row, but relay's and origin's columns, which are empty there. Scrolling 
+    // to a box in the column clicked holds the scroll still across, and to one in the row 
+    // clicked, up and down.
+    const toRelayCol = boxes.relay.x - boxes.plan.x,
+        toOriginCol = boxes.origin.x - boxes.plan.x;
+    expect(boxes.relay.y).toBeGreaterThan(boxes.plan.y);
+    expect(await clickFrom('plan', toRelayCol, 0)).toEqual(['relay x']);
+    expect(await clickFrom('plan', toOriginCol, 0)).toEqual(['origin x']);
+    await page.keyboard.down('Shift');
+    expect(await clickFrom('plan', toRelayCol, 0)).toEqual(['plan y']);
+    expect(await clickFrom('plan', toOriginCol, 0)).toEqual(['plan y']);
+    await page.keyboard.up('Shift');
+    
+    // With meta, the nearest is selected instead.
+    const selectedId = () => page.evaluate(() => tc.app.getTimelineView().getSelectedEventId());
+    expect(await selectedId()).not.toBe('relay');
+    await page.keyboard.down('Meta');
+    await clickFrom('plan', toRelayCol, 0);
+    await page.keyboard.up('Meta');
+    expect(await selectedId()).toBe('relay');
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
