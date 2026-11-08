@@ -238,7 +238,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
-	"chronal":{"value":0, "max":5},  // Optional. Its stray chronal: an amount, or any of min, value and max.
+	"chronal":{"value":0, "max":5},  // Optional. Its stray chronal: an amount, or {value, max}, the value 0 if left out.
 	"image":"../location/x.jpg",     // Optional. Shown instead of img/event/<id>.jpg. See Images.
 	"brief":true,                    // Optional. There's data/event/<id>.txt for its Event Brief.
 	"description":[…],

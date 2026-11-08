@@ -11,7 +11,7 @@
         BaseModel = M.BaseModel,
         
         {
-            NotifyingNumericStatModel, setConstrainedValue, getConstrainedValueCfg,
+            NotifyingNumericStatModel, setStatFromData, setConstrainedValue, getConstrainedValueCfg,
             timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, 
             STAT_ID_EFFECTIVE_AGE, STAT_ID_SCORE, STAT_ID_CREDITS,
@@ -1536,53 +1536,16 @@
             setActionLimit: function(actionLimit) {this.set('actionLimit', actionLimit, true);},
             getActionLimit: function() {return this.actionLimit;},
             
-            setParadox: function(v) { // Used by instantiation only.
-                if (this.inited) {
-                    console.warn('EventModel.setParadox after init', this);
-                } else {
-                    this[STAT_ID_PARADOX].setValue(v);
-                }
-            },
+            // Starting stats, from the data: an amount, or {value, max} where the value 
+            // defaults to 0.
+            setParadox:     function(v) {setStatFromData(this, STAT_ID_PARADOX, v, true);},
+            setHistoricity: function(v) {setStatFromData(this, STAT_ID_HISTORICITY, v, true);},
+            setAttestation: function(v) {setStatFromData(this, STAT_ID_ATTESTATION, v, true);},
             
-            setHistoricity: function(v) { // Used by instantiation only.
-                if (this.inited) {
-                    console.warn('EventModel.setHistoricity after init', this);
-                } else {
-                    this[STAT_ID_HISTORICITY].setValue(v);
-                }
-            },
-            
-            setAttestation: function(v) { // Used by instantiation only.
-                if (this.inited) {
-                    console.warn('EventModel.setAttestation after init', this);
-                } else {
-                    this[STAT_ID_ATTESTATION].setValue(v);
-                }
-            },
-            
-            /*  The stray chronal it holds: an amount, or {min, value, max}, each optional, 
-                e.g. {"value":25, "max":100} for an HQ's pool. By default 0 of at most 
+            /*  The stray chronal it holds: an amount, or {value, max} where the value defaults 
+                to 0, e.g. {"value":25, "max":100} for an HQ's pool. By default 0 of at most 
                 DEFAULT_EVENT_CHRONAL_MAX. */
-            setChronal: function(v) { // Used by instantiation only.
-                const stat = this[STAT_ID_CHRONAL];
-                if (this.inited) {
-                    console.warn('EventModel.setChronal after init', this);
-                } else if (pkg.isPlainObject(v)) {
-                    const {min, value, max, ...rest} = v,
-                        bad = Object.keys(rest);
-                    if (bad.length > 0) console.warn('Event', this.id, 'chronal has keys other than min, value and max (ignoring them):', bad.join(', '));
-                    for (const [key, amount] of [['min', min], ['max', max], ['value', value]]) {
-                        if (amount === undefined) continue;
-                        if (Number.isFinite(amount) && amount >= 0) {
-                            stat['set' + key[0].toUpperCase() + key.slice(1)](amount);
-                        } else {
-                            console.warn('Event', this.id, 'chronal', key, 'must be a number of at least 0 (ignoring it):', amount);
-                        }
-                    }
-                } else {
-                    stat.setValue(v);
-                }
-            },
+            setChronal: function(v) {setStatFromData(this, STAT_ID_CHRONAL, v, true);},
             
             // Location
             setLocation: function(location) { // An ID string.

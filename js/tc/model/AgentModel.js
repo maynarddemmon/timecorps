@@ -10,7 +10,7 @@
         {I18N:{get:i18n, concatenate}} = M,
         
         {
-            NotifyingNumericStatModel, getConstrainedValueCfg, setConstrainedValue,
+            NotifyingNumericStatModel, setStatFromData, getConstrainedValueCfg, setConstrainedValue,
             cfg:{
                 EVENT_ID_THE_VOID, FACTION_ID_UNALIGNED,
                 AGENT_DEFAULT_CHRONAL, AGENT_CHRONAL_LIMIT, 
@@ -258,23 +258,6 @@
             }
         },
         
-        // Stat Attrs
-        /*  Used by instantiation only. Takes a value, or {value, max} where the value defaults
-            to the max. */
-        setStat = (agentModel, attrName, v, defaultsToMin) => {
-            if (agentModel.inited) {
-                console.warn('AgentModel set ' + attrName + ' after init', agentModel);
-            } else {
-                const stat = agentModel[attrName];
-                if (typeof v === 'number') {
-                    stat.setValue(v);
-                } else if (v) {
-                    if (v.max != null) stat.setMax(v.max);
-                    stat.setValue(v.value ?? (defaultsToMin ? stat.getMin() : stat.getMax()));
-                }
-            }
-        },
-        
         /*  True if an action or exit could, on average, change a stat with this ID, whoever
             has it: the agent, the Event or the timeline. That's by an adjustment, or for an action
             by a cost. A broken amount (NaN) doesn't count. */
@@ -434,9 +417,9 @@
         setRoleExpr: function(v, isActual) {setExprAttr(this, 'role', v, isActual);},
         
         // Stat Attrs
-        setParadox: function(v) {setStat(this, STAT_ID_PARADOX, v, true);},
-        setChronal: function(v) {setStat(this, STAT_ID_CHRONAL, v, false);},
-        setHealth:  function(v) {setStat(this, STAT_ID_HEALTH, v, false);},
+        setParadox: function(v) {setStatFromData(this, STAT_ID_PARADOX, v, true);},
+        setChronal: function(v) {setStatFromData(this, STAT_ID_CHRONAL, v, false);},
+        setHealth:  function(v) {setStatFromData(this, STAT_ID_HEALTH, v, false);},
         
         hasParadoxChangeRiskFor: function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_PARADOX);},
         hasChronalChangeRiskFor: function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_CHRONAL);},

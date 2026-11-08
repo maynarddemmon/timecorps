@@ -5,7 +5,7 @@
 import {test, expect} from '@playwright/test';
 import {startGame, readTestData, reloadGame} from './helpers.mjs';
 
-const routeChronal = async (page, {withProblems=false} = {}) => {
+const routeChronal = async page => {
     // The HQ is shown, so it can be selected.
     await page.route('**/tests/data/init.json5', route => {
         const json = readTestData('init.json5');
@@ -17,7 +17,7 @@ const routeChronal = async (page, {withProblems=false} = {}) => {
             events = json.events;
         events.plan.chronal = 3;
         events.relay.chronal = {value:2, max:10};
-        if (withProblems) events.signal.chronal = {value:-1, max:4, mood:1};
+        events.signal.chronal = {max:4};
         events.aftermath.chronoLocked = 'true';
         events.origin.actions.tithe = {
             label:'Tithe', skillCheck:{difficulty:'no-roll'}, costs:{'agent.action':null},
@@ -41,16 +41,13 @@ const readChronal = (page, eventIds) => page.evaluate(eventIds => Object.fromEnt
         return bar.visible ? bar.getIDE().textContent.replace(/\s+/g, ' ').trim() : null;
     });
 
-test('an Event holds 0 of at most 5 stray chronal unless its data says otherwise, as an amount or {min, value, max}', async ({page}) => {
-    await routeChronal(page, {withProblems:true});
+test('an Event holds 0 of at most 5 stray chronal unless its data says otherwise, as an amount or {value, max}, whose value defaults to 0', async ({page}) => {
+    await routeChronal(page);
     const problems = await startGame(page);
     expect(await readChronal(page, ['origin', 'plan', 'relay', 'signal', 'time_corps_hq'])).toEqual({
         origin:[0, 0, 5], plan:[0, 3, 5], relay:[0, 2, 10], signal:[0, 0, 4], time_corps_hq:[0, 25, 100]
     });
-    expect(problems.warnings).toEqual([
-        'Event signal chronal has keys other than min, value and max (ignoring them): mood',
-        'Event signal chronal value must be a number of at least 0 (ignoring it): -1'
-    ]);
+    expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
 

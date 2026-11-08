@@ -277,4 +277,20 @@
     pkg.NotifyingNumericStatModel = new JS.Class('NotifyingNumericStatModel', NumericStatModel, {
         include: [NotifyingStatModelMixin]
     });
+    
+    /*  Sets a model's stat from its data, during instantiation only. Takes a value, or 
+        {value, max} where the value defaults to the max, or with defaultsToMin, the min. */
+    pkg.setStatFromData = (model, attrName, v, defaultsToMin) => {
+        if (model.inited) {
+            console.warn('set ' + attrName + ' after init', model);
+        } else {
+            const stat = model[attrName];
+            if (v !== null && typeof v === 'object') {
+                if (v.max != null) stat.setMax(v.max);
+                stat.setValue(v.value ?? (defaultsToMin ? stat.getMin() : stat.getMax()));
+            } else if (v != null) {
+                stat.setValue(v);
+            }
+        }
+    };
 })(tc);
