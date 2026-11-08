@@ -181,7 +181,7 @@ The timeline also has a score and credits, read as plain numbers:
 	
 	"locations":{"_nexus":{…}, "_nowhere":{…}},
 	"events":{"the_void":{…}, "time_corps_hq":{…}},
-	"defaultEventActions":{"_investigate":{…}, "_rest":{…}}
+	"defaultEventActions":{"_investigate":{…}, "_rest":{…}, "_gatherChronal":{…}, "_releaseChronal":{…}}
 }
 ```
 
@@ -502,7 +502,7 @@ The tooltip lists costs, e.g. "Costs: 2 Actions, 100 Score", leaving out the usu
 
 ## Default actions
 
-`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` adjustment) and Rest is `_rest` (a check with an `agent.health` adjustment).
+`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` adjustment) and Rest is `_rest` (a check with an `agent.health` adjustment). Gather Chronal (`_gatherChronal`) moves 1 of the event's [stray chronal](#stats) to the agent, and Release Chronal (`_releaseChronal`) 1 of the agent's to the event, neither taking an action; both are hidden where the event is chrono locked, and Gather also while the event holds none. The HQs override them as their Reload Chronal +3, from the pool, and Restock Chronal +1, bought with credits rather than given from the agent's own.
 
 An event changes one by giving an action with the same ID. It's merged over the default key by key, so it only needs what differs. Use `null` to leave a default out, or one of its adjustments:
 

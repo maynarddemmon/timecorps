@@ -8,8 +8,9 @@
 	// of its own, after an agent's other actions (a positive order) or before them (a negative one).
 	"actionGroups":{
 		"chronal_pool":{"label":"Chronal Pool", "order":1},
-		"treatments":{"label":"Treatments", "order":2},
-		"jobs":{"label":"Open Jobs", "order":3}
+		"chronal":{"label":"Chronal", "order":2},
+		"treatments":{"label":"Treatments", "order":3},
+		"jobs":{"label":"Open Jobs", "order":4}
 	},
 	
 	// The sides an Agent can be on. Every Agent is in one: "unaligned" unless its data gives a
@@ -319,21 +320,18 @@
 				
 				// Agents can reload their chronal from the shared HQ pool.
 				"_reloadChronal":{
-					"label":"Reload Chronal +3",
+					"label":"Reload Chronal +5",
+					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
 					"available":"event.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
-					// time. The cost and the adj are the same amount: up to 3, as much as the pool
+					// time. The cost and the adj are the same amount: up to 5, as much as the pool
 					// has and the agent has room for.
 					"costs":{
 						"agent.action":null,
-						"event.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
+						"event.chronal":"Math.min(5, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 					},
-					"adj":{
-						"agent.chronal":{
-							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
-						}
-					}
+					"adj":{"agent.chronal":{"onSuccess":"Math.min(5, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"}}
 				},
 				
 				// Agents can reduce their effective age.
@@ -415,21 +413,18 @@
 				
 				// Agents can reload their chronal from the shared HQ pool.
 				"_reloadChronal":{
-					"label":"Reload Chronal +3",
+					"label":"Reload Chronal +5",
+					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
 					"available":"event.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
-					// time. The cost and the adj are the same amount: up to 3, as much as the pool
+					// time. The cost and the adj are the same amount: up to 5, as much as the pool
 					// has and the agent has room for.
 					"costs":{
 						"agent.action":null,
-						"event.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
+						"event.chronal":"Math.min(5, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 					},
-					"adj":{
-						"agent.chronal":{
-							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
-						}
-					}
+					"adj":{"agent.chronal":{"onSuccess":"Math.min(5, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"}}
 				},
 				
 				// Agents can reduce their effective age.
@@ -511,6 +506,36 @@
 					"onSuccess":"d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
 				}
 			}
+		},
+		
+		// Stray chronal: an agent can gather what an Event holds into their own, or release 
+		// theirs into it, a little at a time and taking no action, anywhere that isn't chrono 
+		// locked. Gather is hidden while the Event holds none.
+		"_gatherChronal":{
+			"label":"Gather Chronal",
+			"group":"chronal",
+			"skillCheck":{"difficulty":"no-roll"},
+			"hidden":"event.chronoLocked",
+			"available":"agent.chronal.value < agent.chronal.max",
+			"costs":{
+				"agent.action":null,
+				"event.chronal":"1"
+			},
+			"adj":{"agent.chronal":{"onSuccess":"1"}}
+		},
+		"_releaseChronal":{
+			"label":"Release Chronal",
+			"group":"chronal",
+			"skillCheck":{"difficulty":"no-roll"},
+			// Hidden is the same for everyone at the Event, so the agent's own chronal is for
+			// available.
+			"hidden":"event.chronoLocked",
+			"available":"agent.chronal.value > agent.chronal.min && event.chronal.value < event.chronal.max",
+			"costs":{
+				"agent.action":null,
+				"agent.chronal":"1"
+			},
+			"adj":{"event.chronal":{"onSuccess":"1"}}
 		}
 	}
 }
