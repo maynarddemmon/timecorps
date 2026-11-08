@@ -62,6 +62,11 @@
         
         I18N_CLOSE_BTN = pkg.ICON_CANCEL + ' ' + i18n('btn-close'),
         
+        // The project's home, linked from the header's GitHub mark. The mark is part of the
+        // app, not the game's data, so it isn't under IMAGE_BASE_DIR.
+        GITHUB_URL = 'https://github.com/maynarddemmon/timecorps',
+        GITHUB_MARK_URL = './img/github-mark.svg',
+        
         // The value of eventBriefShowCount when each Event's brief was last shown, by Event ID.
         eventBriefShownAt = new Map(),
         
@@ -397,6 +402,20 @@
             new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_HELP, fontSize:fontSizeMedium, tooltip:i18n('tip-help')}, [{
                 doActivated: () => {appView.openHelp();}
             }]);
+            
+            new PlainText(topView, {text:ICON_SEPARATOR});
+            
+            // GitHub's mark, dark, linking to the project in a new tab.
+            const githubBtn = new SquareBtn(topView, {buttonType:'underline', text:'', tooltip:i18n('tip-github')}, [{
+                    doActivated: () => {window.open(GITHUB_URL, '_blank', 'noopener');}
+                }]),
+                githubMarkSize = 20,
+                githubMark = new View(githubBtn, {
+                    width:githubMarkSize, height:githubMarkSize, align:'center', valign:'middle',
+                    imageUrl:GITHUB_MARK_URL, imageSize:'contain'
+                }, [M.ImageSupport]);
+            githubMark.getIDS().pointerEvents = 'none';
+            githubBtn.getIDE().setAttribute('aria-label', i18n('tip-github'));
             
             new ResizeLayout(topView, {inset:padding, spacing:spacing, outset:padding});
             new M.ConstantLayout(topView, {targetAttrName:'valign', targetValue:'middle'});

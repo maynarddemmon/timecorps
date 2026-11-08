@@ -41,6 +41,7 @@ myt.I18N.setDictionary({
 "tip-settings":"Settings",
 "tip-legacy":"Accrued advantages",
 "tip-help":"Help",
+"tip-github":"Time Corps on GitHub",
 
 // Campaign Dialogs
 "dlg-save-title":"Save Campaign",
