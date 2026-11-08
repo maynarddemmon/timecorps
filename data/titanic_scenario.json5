@@ -84,7 +84,8 @@
 				"nextOperation":"titanic_rescued",
 				"adj":{
 					"timeline.chronal":"15",
-					"timeline.score":"5000"
+					// The Syndicate's objectives are the harder one, so it pays more.
+					"timeline.score":"agents.ME.faction === 'syndicate' ? 7500 : 5000"
 				}
 			}
 		},
@@ -612,13 +613,13 @@
 					"label":"Plant Key",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"true"},
-					"hidden":"event.values.plantKey.value"
+					"shown":"agents.ME.faction === 'timecorps' && !event.values.plantKey.value"
 				},
 				"unplant":{
 					"label":"Remove Key",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"false"},
-					"hidden":"!event.values.plantKey.value"
+					"shown":"agents.ME.faction === 'timecorps' && event.values.plantKey.value"
 				},
 				"pickTheLocker":{
 					"label":"Pick the Locker",
