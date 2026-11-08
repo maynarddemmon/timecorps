@@ -8,7 +8,8 @@ const readStats = page => page.evaluate(() => {
     return {
         originHistoricity:m.getEventModel('origin').historicity.value,
         aftermathHistoricity:m.getEventModel('aftermath').historicity.value,
-        chronal:m.chronal.value, score:m.getScore()
+        // Alpha's, the Corps', HQ pool, which the mission's "agents.AL.hq.chronal" adds to.
+        chronal:m.getEventModel('time_corps_hq').chronal.value, score:m.getScore()
     };
 });
 

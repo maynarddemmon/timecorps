@@ -387,16 +387,16 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
     const ADJUSTMENT_STAT_IDS = {
         agent:['health', 'chronal', 'paradox', 'effectiveAge'],
         agents:['health', 'chronal', 'paradox', 'effectiveAge'],
-        event:['paradox', 'historicity', 'attestation'],
-        events:['paradox', 'historicity', 'attestation'],
-        timeline:['paradox', 'chronal', 'score', 'credits']
+        event:['paradox', 'historicity', 'attestation', 'chronal'],
+        events:['paradox', 'historicity', 'attestation', 'chronal'],
+        timeline:['paradox', 'score', 'credits']
     };
 
     /*  What an action can cost. Mirrors tc.COSTS. */
     const COST_KEYS = [
         'agent.action', 'agent.health', 'agent.chronal', 'agent.paradox',
-        'event.attestation', 'event.historicity', 'event.paradox',
-        'timeline.chronal', 'timeline.paradox', 'timeline.score', 'timeline.credits'
+        'event.attestation', 'event.historicity', 'event.paradox', 'event.chronal',
+        'timeline.paradox', 'timeline.score', 'timeline.credits'
     ];
 
     test('every investigate, action skill check, action cost, action scratch set and action and exit adjustment is valid, including the default event actions', () => {
@@ -439,6 +439,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (scope === 'agents') {
                     if (!agents[statId]) return 'names no agent';
                     if (rest.length === 1 && ADJUSTMENT_STAT_IDS.agents.includes(rest[0])) return null;
+                    // A stat of their Faction's HQ, e.g. "agents.ME.hq.chronal".
+                    if (rest.length === 2 && rest[0] === 'hq') return ADJUSTMENT_STAT_IDS.events.includes(rest[1]) ? null : 'is not a stat of an HQ';
                     if (rest.length === 2 && rest[0] === 'skills') return Object.hasOwn(skillCfgs, rest[1]) ? null : 'is not a skill';
                     // Any other attribute can be set. The game warns at load if it has no setter.
                     if (rest.length === 1 && isSet) return null;
@@ -458,6 +460,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 }
                 if (scope === 'scratch' && rest.length === 0) return Object.hasOwn(scratch, statId) ? null : 'is not declared';
                 if (scope === 'agent' && statId === 'skills' && rest.length === 1) return Object.hasOwn(skillCfgs, rest[0]) ? null : 'is not a skill';
+                if (scope === 'agent' && statId === 'hq' && rest.length === 1) return ADJUSTMENT_STAT_IDS.events.includes(rest[0]) ? null : 'is not a stat of an HQ';
                 if (rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scope) && ADJUSTMENT_STAT_IDS[scope].includes(statId)) return null;
                 if (rest.length === 0 && isSet && (scope === 'agent' || scope === 'event')) return null;
                 return 'is not a stat, skill, Value or scratch entry';

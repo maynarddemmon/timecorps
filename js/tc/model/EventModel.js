@@ -17,11 +17,14 @@
             STAT_ID_EFFECTIVE_AGE, STAT_ID_SCORE, STAT_ID_CREDITS,
             cfg:{
                 EVENT_ID_THE_VOID,
-                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION
+                EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION, DEFAULT_EVENT_CHRONAL_MAX
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
             SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS
         } = pkg,
+        
+        // An agent's Faction's HQ, for changing its stats, e.g. "agents.ME.hq.chronal".
+        SCOPE_HQ = 'hq',
         
         RELATIVE_START_OFFSET_KEYS = ['w', 'd', 'h', 'm', 's', 'ms'],
         
@@ -180,9 +183,9 @@
         ADJUSTMENT_STAT_IDS = pkg.ADJUSTMENT_STAT_IDS = {
             [SCOPE_AGENT]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_EFFECTIVE_AGE],
             [SCOPE_AGENTS]:[STAT_ID_HEALTH, STAT_ID_CHRONAL, STAT_ID_PARADOX, STAT_ID_EFFECTIVE_AGE],
-            [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
-            [SCOPE_EVENTS]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
-            [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_SCORE, STAT_ID_CREDITS]
+            [SCOPE_EVENT]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_CHRONAL],
+            [SCOPE_EVENTS]:[STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_CHRONAL],
+            [SCOPE_TIMELINE]:[STAT_ID_PARADOX, STAT_ID_SCORE, STAT_ID_CREDITS]
         },
         
         /*  What a parsed key changes, as something stat-like: {value, getAllowedAdj(adj), 
@@ -245,6 +248,11 @@
                             return agentModel?.[parsed.statId];
                         case SCOPE_EVENT:
                         case SCOPE_EVENTS: return eventModel?.[parsed.statId];
+                        case SCOPE_HQ: {
+                            const hqEventModel = agentModel?.getHQEventModel();
+                            if (!hqEventModel) console.warn('Agent', agentModel?.id, 'has no HQ to change');
+                            return hqEventModel?.[parsed.statId];
+                        }
                         case SCOPE_TIMELINE:
                             switch (parsed.statId) {
                                 case STAT_ID_SCORE: return atLeastZero(() => rootModel.getScore(), adj => rootModel.adjScore(adj));
@@ -312,6 +320,8 @@
                     ("agent.faction") or any agent's ("agents.ME.faction"). Set only.
                 {kind:'value', eventId, statId:'values.<id>', valueId} - a Value of any Event,
                     e.g. "events.collision.values.struck".
+                {kind:'stat', scopeName:'hq', agentId, statId} - a stat of the HQ of an agent's
+                    Faction, theirs ("agent.hq.chronal") or any agent's ("agents.ME.hq.chronal").
                 {kind:'attr', scopeName, agentId, eventId, statId:attrName, attrName} - any 
                     other attribute with a setter of an agent or Event, theirs or any by ID, 
                     e.g. "agents.AF.hidden" or "event.chronoLocked". Set only.
@@ -350,6 +360,11 @@
                 parsedKey = {kind:'stat', scopeName, agentId:statId, statId:rest[0]};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) {
                 parsedKey = {kind:'stat', scopeName, eventId:statId, statId:rest[0]};
+            } else if (
+                (scopeName === SCOPE_AGENT && statId === SCOPE_HQ && rest.length === 1 && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[0])) ||
+                (scopeName === SCOPE_AGENTS && rest.length === 2 && rest[0] === SCOPE_HQ && ADJUSTMENT_STAT_IDS[SCOPE_EVENTS].includes(rest[1]))
+            ) {
+                parsedKey = {kind:'stat', scopeName:SCOPE_HQ, agentId:scopeName === SCOPE_AGENTS ? statId : undefined, statId:rest.at(-1)};
             } else if (scopeName === SCOPE_EVENTS && rest.length === 2 && rest[0] === 'values') {
                 parsedKey = {kind:'value', eventId:statId, statId:'values.' + rest[1], valueId:rest[1]};
             } else if (scopeName !== SCOPE_EVENTS && scopeName !== SCOPE_AGENTS && rest.length === 0 && Object.hasOwn(ADJUSTMENT_STAT_IDS, scopeName) && ADJUSTMENT_STAT_IDS[scopeName].includes(statId)) {
@@ -670,6 +685,7 @@
                     case SCOPE_EVENT: return i18n('stat-scope-event', name);
                     case SCOPE_AGENTS: return i18n('stat-scope-named', pkg.model.getAgentModel(this.parsedKey.agentId)?.getName() ?? this.parsedKey.agentId, name);
                     case SCOPE_EVENTS: return i18n('stat-scope-named', pkg.model.getEventModel(this.parsedKey.eventId)?.name ?? this.parsedKey.eventId, name);
+                    case SCOPE_HQ: return i18n('stat-scope-hq', name);
                     default: return i18n('stat-scope-timeline', name);
                 }
             },
@@ -819,7 +835,7 @@
             [SCOPE_EVENT + '.' + STAT_ID_ATTESTATION]:makeStatCost(SCOPE_EVENT, STAT_ID_ATTESTATION),
             [SCOPE_EVENT + '.' + STAT_ID_HISTORICITY]:makeStatCost(SCOPE_EVENT, STAT_ID_HISTORICITY),
             [SCOPE_EVENT + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_EVENT, STAT_ID_PARADOX, 1),
-            [SCOPE_TIMELINE + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_TIMELINE, STAT_ID_CHRONAL),
+            [SCOPE_EVENT + '.' + STAT_ID_CHRONAL]:makeStatCost(SCOPE_EVENT, STAT_ID_CHRONAL),
             [SCOPE_TIMELINE + '.' + STAT_ID_PARADOX]:makeStatCost(SCOPE_TIMELINE, STAT_ID_PARADOX, 1),
             // The player's score. It can't be spent below 0.
             [SCOPE_TIMELINE + '.score']:{
@@ -972,7 +988,7 @@
             return retval;
         },
         
-        EVENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION],
+        EVENT_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_CHRONAL],
         
         updateEndAttr = eventModel => {
             const {start, duration} = eventModel;
@@ -1357,6 +1373,8 @@
                         return retval;
                     }
                 }]);
+                // Stray chronal, which an HQ keeps as its pool.
+                self[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:DEFAULT_EVENT_CHRONAL_MAX});
                 self[STAT_ID_PARADOX] =     new NotifyingNumericStatModel({notifyTargets:self, id:STAT_ID_PARADOX,     absMin:0, min:0, value:0, max:EVENT_PARADOX_LIMIT}, [{
                     adjValue: function(adj, cfg) {
                         const retval = this.callSuper(adj, cfg);
@@ -1539,6 +1557,30 @@
                     console.warn('EventModel.setAttestation after init', this);
                 } else {
                     this[STAT_ID_ATTESTATION].setValue(v);
+                }
+            },
+            
+            /*  The stray chronal it holds: an amount, or {min, value, max}, each optional, 
+                e.g. {"value":25, "max":100} for an HQ's pool. By default 0 of at most 
+                DEFAULT_EVENT_CHRONAL_MAX. */
+            setChronal: function(v) { // Used by instantiation only.
+                const stat = this[STAT_ID_CHRONAL];
+                if (this.inited) {
+                    console.warn('EventModel.setChronal after init', this);
+                } else if (pkg.isPlainObject(v)) {
+                    const {min, value, max, ...rest} = v,
+                        bad = Object.keys(rest);
+                    if (bad.length > 0) console.warn('Event', this.id, 'chronal has keys other than min, value and max (ignoring them):', bad.join(', '));
+                    for (const [key, amount] of [['min', min], ['max', max], ['value', value]]) {
+                        if (amount === undefined) continue;
+                        if (Number.isFinite(amount) && amount >= 0) {
+                            stat['set' + key[0].toUpperCase() + key.slice(1)](amount);
+                        } else {
+                            console.warn('Event', this.id, 'chronal', key, 'must be a number of at least 0 (ignoring it):', amount);
+                        }
+                    }
+                } else {
+                    stat.setValue(v);
                 }
             },
             

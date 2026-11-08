@@ -316,9 +316,10 @@
             // Time & Place, Status Bars
             self.eventFacts = new pkg.EventFacts(detailsContainer);
             
+            // The stray chronal it holds, which at an HQ is the pool agents reload from.
             self.chronalBar = new pkg.ChronalBar(detailsContainer, {
                 x:spacing, percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
-                labelTemplate:i18n('bar-hq-pool-label'), visible:false
+                visible:false
             }, [SizeToParent, pkg.BigStatBar]);
             
             new View(detailsContainer, {height:2}); // Spacer.
@@ -394,7 +395,14 @@
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                self.chronalBar.setVisible(eventModel.isHQ());
+                // Shown where chronal can be held and moved: at an HQ, and at any Event that 
+                // isn't chrono locked and can hold some, or does.
+                const chronalBar = self.chronalBar,
+                    chronalStat = eventModel[STAT_ID_CHRONAL],
+                    isHQ = eventModel.isHQ();
+                chronalBar.setVisible(isHQ || (chronalStat.max > 0 && eventModel.isNotChronoLocked()) || chronalStat.value > 0);
+                chronalBar.setLabelTemplate(i18n(isHQ ? 'bar-hq-pool-label' : 'bar-event-chronal-label'));
+                chronalBar.updateForStat(chronalStat);
                 
                 self.theVoidBtn.setDisabled(eventModel.isTheVoid());
                 self.theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
@@ -490,7 +498,6 @@
         
         setup: function(model) {
             rootModel = model;
-            this.chronalBar.watchStatModel(rootModel[STAT_ID_CHRONAL]);
         }
     });
 })(tc);

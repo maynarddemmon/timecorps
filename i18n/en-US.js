@@ -169,6 +169,7 @@ myt.I18N.setDictionary({
 "stat-scope-event":"Event $0",
 "stat-scope-timeline":"Timeline $0",
 "stat-scope-named":"$0 $1",
+"stat-scope-hq":"HQ $0",
 "cost-actions":"{{plural:$0|Action|Actions}}",
 "cost-credits":"{{plural:$0|Credit|Credits}}",
 
@@ -251,6 +252,7 @@ myt.I18N.setDictionary({
 "tip-select-next-event":"Select the next Event you viewed.",
 "tip-no-last-event":"No last Event to select.",
 "tip-no-next-event":"No next Event to select.",
+"bar-event-chronal-label":"Stray {label}: {value} / {max}",
 "bar-hq-pool-label":"HQ {label} Pool: {value} / {max}",
 "event-none-selected":"Select a historical event in the timeline to see more about it here.",
 "event-agent-activity":"Agent Activity",

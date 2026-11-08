@@ -121,10 +121,10 @@ Every stat has a value and a range, and changes stay within it.
 | `event.historicity` | 0–100 | How fixed the event is in history. Usually set by a mission's setup (`set`) |
 | `event.attestation` | 0–100 | How much the Corps knows about the event. Raised by investigating. Knowing more reveals more |
 | `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (15) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
+| `event.chronal` | 0–`max`, max `DEFAULT_EVENT_CHRONAL_MAX` (5) unless the event says | Stray chronal the event holds, 0 to start. An HQ's is the pool its agents reload from, e.g. `"chronal":{"value":25, "max":100}` |
 | `agent.health` | 0–`max`, max up to 150 | Default 100. 0 is death |
 | `agent.chronal` | 0–100 | Spent to time travel. Default starting value 75 |
 | `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (10) | Raised by revisiting an event. Reaching the limit devours the agent |
-| `timeline.chronal` | 0–100 | HQ's reserve, used to reload agents. Starts at 25 |
 | `timeline.paradox` | 0–limit | The limit is 20 plus 0.25 per known event that isn't a hub. Reaching it destabilizes the timeline |
 
 Read them in expressions as `.value`, `.max` and `.min`. The limits are in `cfg` in `js/tc/tc.js`.
@@ -191,7 +191,7 @@ The timeline also has a score and credits, read as plain numbers:
 - **`exitModes`**: the phrase an [exit](#exits)'s button starts with, by its `mode`, before the name of where it goes, e.g. `"walk":"Walk to"` for "Walk to ❉ Time Corps Headquarters". `default` is for an exit with no mode, or one not listed; without it, the button is just the name. A new mode is just a new entry here. `jump` and `pulled` are time travel whatever their phrase, which the code decides. A later file's phrase replaces an earlier one for the same mode. The data tests flag an exit whose mode isn't listed.
 - **`skills`**: every skill an agent can have, by ID, with a `name` and a `description` (the dossier's tooltip), and optionally `"trainable":false` for one that can't be bought at HQ, such as luck, which only grows with experience. The code names a few skills (`chronogation`, `investigation`, `stealth`, `disguise`, `deception`), so those must be here.
 - **`skillChecks`**: named skill checks that actions refer to by `actionType`. Each has a `name` (shown in tooltips), a `check` (the skill part of the expression) and an optional `difficulty`. See [Skill checks](#skill-checks).
-- **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload. The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
+- **`the_void`** and **`time_corps_hq`** are special events, always hidden from the timeline. HQ is where agents start and reload, from its pool of chronal (its `chronal`, kept apart for each faction's HQ). The Void is where devoured agents go. Their locations, `_nexus` and `_nowhere`, are never shown.
 - **`defaultEventActions`**: see [Default actions](#default-actions).
 - <a id="experience"></a>**`agingSkillGains`**: optional. Experience: for every `monthsPerGain` (default 1) of an agent's lived age, a skill picked by `weights`, whole numbers by skill ID, gains a point, within ±1000. Only the [lived age](#ages) counts: the effective age, which treatments and time travel change, never does. A gain floats above whatever caused it, e.g. "+1 Luck", just over the action's or exit's own result. Unknown skills and bad weights are warned about and left out. A later file's replaces an earlier one's.
 - <a id="time-travel-hazards"></a>**`timeTravelAdj`**: optional. What can happen to an agent who pays chronal to deploy, be recalled or loop back. Exits never risk it, even `jump` and `pulled` ones, since they're the story's: give one its own `adj` instead, e.g. `"adj":{"agent.health":"-d(4)"}`. [Adjustments](#adjustments-adj), as for an action, keyed by what they change, e.g. `agent.health` or `agent.effectiveAge`. There's no action check to follow, so give each a check of its own, and amounts can use `chronal`, the chronal the time travel cost, e.g. `"-d(chronal)"`, or `"d(chronal)/12"` for that many months of aging. They're rolled as the agent leaves and applied once they arrive, so `event` is where they arrive. The time travel buttons show the health risk as ♥ and their tooltips describe each, and the result floats above the button, as for an action. A move the data makes, with `set` on `agent.event`, risks nothing. A later file's replaces an earlier one's.
@@ -238,6 +238,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 	"hidden":"…",                    // Optional. See below.
 	"historicity":0,                 // Optional starting stats. Rarely needed.
 	"attestation":0,
+	"chronal":{"value":0, "max":5},  // Optional. Its stray chronal: an amount, or any of min, value and max.
 	"image":"../location/x.jpg",     // Optional. Shown instead of img/event/<id>.jpg. See Images.
 	"brief":true,                    // Optional. There's data/event/<id>.txt for its Event Brief.
 	"description":[…],
@@ -340,7 +341,7 @@ Actions are what agents do at an event: a check, then changes to values and stat
   - Whether a [mission](#operations-missions) is hidden, keyed `"operations.<id>.hidden"` or `"operations.<id>.shown"`, e.g. `"set":{"operations.titanic_noCollision.hidden":"false"}` reveals it and offers its Mission Brief, as its own `hidden` becoming false would. It replaces that `hidden`, and a live expression is saved until it reveals the mission. Once revealed, a mission stays revealed, so a set changes nothing, e.g. for a job board checked again. Nothing else of a mission can be set.
 - **`hidden`**: hides the button. The usual way to make an action one-time is to hide it once its value is set, with a twin action to undo it.
 - **`available`**: a [check expression](#check-expressions) for whether a particular agent can take the action. When it's false the button is shown disabled for that agent, and the action can't be taken. `hidden` is the same for everyone at the event, so use `available` for anything about the agent, e.g. Rest's `"agent.health.value < agent.health.max"`. It's worked out whenever Event Details is redrawn, which happens when the event or one of its agents changes.
-- **`group`**: the ID of an [action group](#action-groups) to show the action with, on a line of its own, e.g. HQ's Restock Chronal, which refills the shared pool rather than doing anything for the agent who takes it. Leave it out to show the action with the rest.
+- **`group`**: the ID of an [action group](#action-groups) to show the action with, on a line of its own, e.g. HQ's Restock Chronal, which refills its pool rather than doing anything for the agent who takes it. Leave it out to show the action with the rest.
 - **`adj`**: changes to stats. See [Adjustments](#adjustments-adj).
 - **`costs`**: what the agent pays to take the action. One action unless it says otherwise. See [Costs](#costs).
 - **`prompt`**: the ID of a [prompt](#prompts) to open when the check passes, after everything else the action does, or an array of IDs to open one after another.
@@ -422,9 +423,10 @@ Adjustments change stats as the result of an action or exit. They go in its `adj
 | Scope | Stats | Whose |
 |---|---|---|
 | `agent` | `health`, `chronal`, `paradox`, `effectiveAge` | The agent taking the action or exit. `effectiveAge` is in years; see [Ages](#ages) |
-| `event` | `attestation`, `historicity`, `paradox` | The event the action or exit belongs to |
-| `timeline` | `paradox`, `chronal`, `score`, `credits` | The timeline. Score and credits can't go below 0 |
-| `events.<id>` | `attestation`, `historicity`, `paradox` | Any event, by its ID, e.g. `"events.collision.historicity"` |
+| `event` | `attestation`, `historicity`, `paradox`, `chronal` | The event the action or exit belongs to |
+| `timeline` | `paradox`, `score`, `credits` | The timeline. Score and credits can't go below 0 |
+| `events.<id>` | `attestation`, `historicity`, `paradox`, `chronal` | Any event, by its ID, e.g. `"events.collision.historicity"` |
+| `agent.hq`, `agents.<id>.hq` | `attestation`, `historicity`, `paradox`, `chronal` | The HQ of an agent's faction, theirs or any agent's, e.g. `"agents.ME.hq.chronal"` for the player's HQ pool, whichever faction they're in |
 | `agents.<id>` | `health`, `chronal`, `paradox`, `effectiveAge` | Any agent, by their ID, e.g. `"agents.ME.chronal"` |
 
 A key can also name a Value of any event, as `"events.<id>.values.<value>"`, e.g. `"events.aftermath.values.lost"`, or a skill of any agent, as `"agents.<id>.skills.<skill>"`, e.g. `"agents.ME.skills.chronogation"`. So an action can change another event, and an exit can change the event it leads to, e.g. `"adj":{"events.aftermath.attestation":"5"}`. A `set` (not an `adj`) can also move an agent to an event, keyed `"agent.event"` for the agent taking the action, or `"agents.<id>.event"` for any agent. Its expression is worked out once to an event ID, so a fixed one needs quotes: `"set":{"agents.BA.event":"'lgv_announcement'"}`. The move is a deploy (from HQ) or a jump, with all its rules: the chronal is paid and any paradox for a revisit is gained, and if the agent can't go, e.g. for want of chronal, they stay put, with a warning. Use it in a mission's `onSetup` to put agents where the mission starts. A `set` can also put an agent in a faction, keyed `"agent.faction"` or `"agents.<id>.faction"`, with the faction's ID in quotes, e.g. `"set":{"agents.ME.faction":"'timecorps'"}`.
@@ -484,7 +486,7 @@ Costs are what an agent pays to take an action or an exit. An action costs one o
 | `agent.paradox` | Adds to the agent's paradox | That stays below its limit |
 | `event.attestation`, `event.historicity` | The event's stat | It has that much |
 | `event.paradox` | Adds to the event's paradox | That stays below its limit |
-| `timeline.chronal` | HQ's chronal | It has that much |
+| `event.chronal` | The event's stray chronal, e.g. an HQ's pool | It has that much |
 | `timeline.paradox` | Adds to the timeline's paradox | That stays below its limit |
 | `timeline.score` | The player's score | The score is at least that |
 | `timeline.credits` | The Corps' credits | There are at least that many |
@@ -612,8 +614,9 @@ Each scenario file holds its own missions, under `operations`. The mission the c
 			"onSuccess":{
 				"debrief":[…],                 // Phrases, shown when the mission is completed.
 				"nextOperation":"titanic_rescued",
-				// The rewards: score, HQ chronal, and credits on top of those the score earns.
-				"adj":{"timeline.score":"5000", "timeline.chronal":"15", "timeline.credits":"10"},
+				// The rewards: score, the player's HQ's chronal, and credits on top of those the 
+				// score earns.
+				"adj":{"timeline.score":"5000", "agents.ME.hq.chronal":"15", "timeline.credits":"10"},
 				"revealAgents":["GO", "PI"],
 				"awardAgents":["GO"],
 				"prompt":"recruit"             // Optional. Opens before Mission Complete.

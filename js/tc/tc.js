@@ -241,9 +241,9 @@
                 // The default actions allowed by an Agent per visit within an Event.
                 DEFAULT_ACTION_LIMIT:5,
                 
-                // This is the HQ chronal used to resupply Agents.
-                HQ_STARTING_CHRONAL:25,
-                HQ_CHRONAL_LIMIT:100,
+                // The stray chronal an Event can hold unless its data says otherwise, e.g. 
+                // "chronal":{"value":25, "max":100} for an HQ's pool.
+                DEFAULT_EVENT_CHRONAL_MAX:5,
                 
                 // The amount of paradox the Timeline begins the game with.
                 TIMELINE_STARTING_PARADOX:0,

@@ -83,7 +83,7 @@
 				],
 				"nextOperation":"titanic_rescued",
 				"adj":{
-					"timeline.chronal":"15",
+					"agents.ME.hq.chronal":"15",
 					// The Syndicate's objectives are the harder one, so it pays more.
 					"timeline.score":"agents.ME.faction === 'syndicate' ? 7500 : 5000"
 				}
@@ -132,7 +132,7 @@
 				],
 				"nextOperation":"lusitania_nosink",
 				"adj":{
-					"timeline.chronal":"25",
+					"agents.ME.hq.chronal":"25",
 					"timeline.score":"8000"
 				},
 				"awardAgents":["GO"],

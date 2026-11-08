@@ -34,14 +34,13 @@
             isPlainObject,
             cfg:{
                 EVENT_ID_THE_VOID,
-                HQ_STARTING_CHRONAL, HQ_CHRONAL_LIMIT,
                 TIMELINE_STARTING_PARADOX, TIMELINE_PARADOX_LIMIT, TIMELINE_PARADOX_LIMIT_PER_EVENT,
                 SCORE_TO_CREDITS_EARN_AMOUNT,
                 DEFAULT_SKILL_DIFFICULTY, DEFAULT_SKILL_EXPR,
                 DEFAULT_DESCENDANT_ATTESTATION_FOR_REVEAL, DEFAULT_PRECURSOR_ATTESTATION_FOR_REVEAL
             },
             SCOPE_AGENTS, SCOPE_LOCATIONS, SCOPE_FACTIONS, SCOPE_PROMPTS, SCOPE_EVENTS, SCOPE_EVENT, SCOPE_OPERATIONS, SCOPE_SKILLS, SCOPE_SCRATCH,
-            STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_SCORE, STAT_ID_CREDITS
+            STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_SCORE, STAT_ID_CREDITS
         } = pkg,
         
         CHECK_SKILL_EXPR_PREFIX = pkg.SCOPE_AGENT + '.' + SCOPE_SKILLS + '.',
@@ -211,16 +210,12 @@
         }),
         
         PERSISTED_COLLECTION_SCOPES = [SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS],
-        TIMELINE_STAT_IDS = [STAT_ID_PARADOX, STAT_ID_CHRONAL];
+        TIMELINE_STAT_IDS = [STAT_ID_PARADOX];
     
     pkg.Model = new JSClass('Model', myt.Node, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             model = this;
-            
-            model[STAT_ID_CHRONAL] = new NotifyingNumericStatModel({
-                notifyTargets:model, id:STAT_ID_CHRONAL, absMin:0, min:0, value:0, max:HQ_CHRONAL_LIMIT
-            });
             
             // Entries the data declares, e.g. "wireless_clearBacklogEarlier_flipCount", read and
             // set as "scratch.<name>". Setting one fires an event of its name, so constraints
@@ -582,7 +577,6 @@
         },
         
         reset: isInit => {
-            model[STAT_ID_CHRONAL].setValue(HQ_STARTING_CHRONAL);
             model[STAT_ID_PARADOX].setValue(TIMELINE_STARTING_PARADOX);
             model.updateTimelineParadoxMax();
             // The peak and credits first, so setting the score earns nothing.

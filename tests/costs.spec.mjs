@@ -18,7 +18,7 @@ const NO_ROLL = {difficulty:'no-roll'},
             spend:{label:'Spend', skillCheck:NO_ROLL, costs:{
                 'agent.action':'0', 'agent.chronal':'10', 'agent.health':'10', 'agent.paradox':'1', 'event.attestation':'5'
             }},
-            bad:{label:'Bad', skillCheck:NO_ROLL, costs:{'agent.mood':'1', 'timeline.chronal':5}},
+            bad:{label:'Bad', skillCheck:NO_ROLL, costs:{'agent.mood':'1', 'event.chronal':5}},
             broken:{label:'Broken', skillCheck:NO_ROLL, costs:{'timeline.score':'nope'}},
             negative:{label:'Negative', skillCheck:NO_ROLL, costs:{'timeline.score':'-5'}}
         });
@@ -78,7 +78,7 @@ test('an action costs one action unless its costs say otherwise, merged over tha
     // (The broken and negative amounts also warn, once the buttons show them.)
     expect(problems.warnings.filter(warning => warning.includes(' action bad '))).toEqual([
         expect.stringMatching(/^Event origin action bad cost agent\.mood must be one of agent\.action, /),
-        expect.stringMatching(/^Event origin action bad cost timeline\.chronal must be a non-empty string/)
+        expect.stringMatching(/^Event origin action bad cost event\.chronal must be a non-empty string/)
     ]);
     expect(problems.pageErrors).toEqual([]);
 });

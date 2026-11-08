@@ -102,6 +102,8 @@
 			"duration":{"d":30},
 			"location":"_nexus",
 			"hidden":"true",
+			// The pool agents reload their chronal from.
+			"chronal":{"value":25, "max":100},
 			"actionLimit":30,
 			"actions":{"_investigate":null}
 		}

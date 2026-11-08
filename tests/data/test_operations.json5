@@ -73,7 +73,7 @@
 				],
 				"nextOperation":"second",
 				"adj":{
-					"timeline.chronal":"15",
+					"agents.AL.hq.chronal":"15",
 					"timeline.score":"5000"
 				}
 			}
@@ -104,7 +104,7 @@
 				"debrief":["The second mission is complete."],
 				"nextOperation":"third",
 				"adj":{
-					"timeline.chronal":"25",
+					"agents.AL.hq.chronal":"25",
 					"timeline.score":"8000"
 				},
 				"awardAgents":["DE"],
@@ -129,7 +129,7 @@
 			"onSuccess":{
 				"debrief":["The third mission is complete. This concludes the current campaign."],
 				"adj":{
-					"timeline.chronal":"30",
+					"agents.AL.hq.chronal":"30",
 					"timeline.score":"13000"
 				}
 			}

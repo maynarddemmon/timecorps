@@ -283,6 +283,8 @@
 			"name":"❉ Syndicate Warehouse", "hub":true,
 			"hidden":"scratch.syndicate_hq_hidden",
 			"start":"2151-04-19T00:00:00", "duration":{"d":30}, "location":"_nexus",
+			// The pool agents reload their chronal from, restocked with credits.
+			"chronal":{"value":25, "max":100},
 			"description":[
 				"A freight warehouse on the edge of the Nexus years, 2151, twenty-three years before the Corps’ own. Pallet racks screen a jump array built from stolen and salvaged parts, and the chronal tanks are filled from somewhere off every grid.",
 				"<br><br>There is no duty officer and no Command, only whoever is on shift and whoever is paying. Syndicate operatives rest, train and reload here, and are recalled here when a job goes wrong."
@@ -307,29 +309,29 @@
 					"label":"Restock Chronal +1",
 					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
-					"available":"timeline.chronal.value < timeline.chronal.max",
+					"available":"event.chronal.value < event.chronal.max",
 					"costs":{
 						"agent.action":null,
 						"timeline.credits":"1"
 					},
-					"adj":{"timeline.chronal":{"onSuccess":"1"}}
+					"adj":{"event.chronal":{"onSuccess":"1"}}
 				},
 				
 				// Agents can reload their chronal from the shared HQ pool.
 				"_reloadChronal":{
 					"label":"Reload Chronal +3",
 					"skillCheck":{"difficulty":"no-roll"},
-					"available":"timeline.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
+					"available":"event.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
 					// time. The cost and the adj are the same amount: up to 3, as much as the pool
 					// has and the agent has room for.
 					"costs":{
 						"agent.action":null,
-						"timeline.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+						"event.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 					},
 					"adj":{
 						"agent.chronal":{
-							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 						}
 					}
 				},
@@ -377,6 +379,8 @@
 			"name":"❉ Time Corps Headquarters", "hub":true,
 			"hidden":"scratch.time_corps_hq_hidden",
 			"start":"2174-10-14T00:00:00", "duration":{"d":30}, "location":"_nexus",
+			// The pool agents reload their chronal from, restocked with credits.
+			"chronal":{"value":25, "max":100},
 			"description":[
 				"Time Corps Headquarters, at the Nexus, in the Corps’ own year: 2174. Launch halls, the recall array, the archives where every mission’s findings are filed, and the HQ Chronal Pool that every Corps agent draws on.",
 				"<br><br>A duty officer is on watch around the clock, logging each departure twice: once in the Corps’ year, and once in the year the agent is going to. Agents are recalled here to heal, train and reload their chronal before the next jump."
@@ -401,29 +405,29 @@
 					"label":"Restock Chronal +1",
 					"group":"chronal_pool",
 					"skillCheck":{"difficulty":"no-roll"},
-					"available":"timeline.chronal.value < timeline.chronal.max",
+					"available":"event.chronal.value < event.chronal.max",
 					"costs":{
 						"agent.action":null,
 						"timeline.credits":"1"
 					},
-					"adj":{"timeline.chronal":{"onSuccess":"1"}}
+					"adj":{"event.chronal":{"onSuccess":"1"}}
 				},
 				
 				// Agents can reload their chronal from the shared HQ pool.
 				"_reloadChronal":{
 					"label":"Reload Chronal +3",
 					"skillCheck":{"difficulty":"no-roll"},
-					"available":"timeline.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
+					"available":"event.chronal.value > 0 && agent.chronal.value < agent.chronal.max",
 					// Takes no action, and the small amount lets the pool be shared out a little at a
 					// time. The cost and the adj are the same amount: up to 3, as much as the pool
 					// has and the agent has room for.
 					"costs":{
 						"agent.action":null,
-						"timeline.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+						"event.chronal":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 					},
 					"adj":{
 						"agent.chronal":{
-							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, timeline.chronal.value - timeline.chronal.min)"
+							"onSuccess":"Math.min(3, agent.chronal.max - agent.chronal.value, event.chronal.value - event.chronal.min)"
 						}
 					}
 				},
