@@ -18,7 +18,7 @@
 					"events.casualties.historicity":"65"
 				},
 				"adj":{
-					"agents.ME.skills.chronogation":"agents.ME.faction === 'timecorps' ? 100 : 0"
+					"player.skills.chronogation":"player.faction === 'timecorps' ? 100 : 0"
 				}
 			},
 			"objectives":{
@@ -31,24 +31,24 @@
 				},
 				"picked":{
 					"name":"Locker Open",
-					"shown":"agents.ME.faction === 'syndicate'",
+					"shown":"player.faction === 'syndicate'",
 					"description":"The lookouts must find the locker already unlocked so they can get the binoculars.",
 					"success":"events.missing_binoculars.values.pickTheLocker.value"
 				},
 				"plant":{
 					"name":"Key Planted",
-					"shown":"agents.ME.faction === 'timecorps'",
+					"shown":"player.faction === 'timecorps'",
 					"description":"The lookouts must find a locker key exactly where they expect it to be. The fact that it’s a facsimile is of no consequence to history.",
 					"success":"events.missing_binoculars.values.plantKey.value"
 				},
 				"paradox":{
 					"name":"Paradox in the Wireless Room",
-					"shown":"agents.ME.faction === 'timecorps' || agents.ME.faction === 'syndicate'",
+					"shown":"player.faction === 'timecorps' || player.faction === 'syndicate'",
 					"description":[
-						{"text":"The wireless room must remain free from paradox.", "shown":"agents.ME.faction === 'timecorps'"},
-						{"text":"The wireless room must be soaked in paradox.", "shown":"agents.ME.faction === 'syndicate'"}
+						{"text":"The wireless room must remain free from paradox.", "shown":"player.faction === 'timecorps'"},
+						{"text":"The wireless room must be soaked in paradox.", "shown":"player.faction === 'syndicate'"}
 					],
-					"success":"agents.ME.faction === 'timecorps' ? events.ice_warnings.paradox.value === 0 : events.ice_warnings.paradox.value > 0"
+					"success":"player.faction === 'timecorps' ? events.ice_warnings.paradox.value === 0 : events.ice_warnings.paradox.value > 0"
 				}
 			},
 			"onSuccess":{
@@ -83,9 +83,9 @@
 				],
 				"nextOperation":"titanic_rescued",
 				"adj":{
-					"agents.ME.hq.chronal":"15",
+					"player.hq.chronal":"15",
 					// The Syndicate's objectives are the harder one, so it pays more.
-					"timeline.score":"agents.ME.faction === 'syndicate' ? 7500 : 5000"
+					"timeline.score":"player.faction === 'syndicate' ? 7500 : 5000"
 				}
 			}
 		},
@@ -132,7 +132,7 @@
 				],
 				"nextOperation":"lusitania_nosink",
 				"adj":{
-					"agents.ME.hq.chronal":"25",
+					"player.hq.chronal":"25",
 					"timeline.score":"8000"
 				},
 				"awardAgents":["GO"],
@@ -613,13 +613,13 @@
 					"label":"Plant Key",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"true"},
-					"shown":"agents.ME.faction === 'timecorps' && !event.values.plantKey.value"
+					"shown":"player.faction === 'timecorps' && !event.values.plantKey.value"
 				},
 				"unplant":{
 					"label":"Remove Key",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"plantKey":"false"},
-					"shown":"agents.ME.faction === 'timecorps' && event.values.plantKey.value"
+					"shown":"player.faction === 'timecorps' && event.values.plantKey.value"
 				},
 				"pickTheLocker":{
 					"label":"Pick the Locker",

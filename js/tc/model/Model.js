@@ -385,6 +385,9 @@
             faction are the player's to direct. Undefined if the data names none. */
         getPlayerAgentModel: () => model.playerAgentId ? model.getAgentModel(model.playerAgentId) : undefined,
         
+        /*  The player agent's ID, which "player" in expressions and keys names, or undefined. */
+        getPlayerAgentId: () => model.playerAgentId,
+        
         /*  Warns if "playerAgent" names no Agent. */
         validatePlayerAgent: () => {
             const playerAgentId = model.playerAgentId;
@@ -706,6 +709,10 @@
                 console.warn(DATA_KEY_EXIT_MODES, 'must be an object of phrases by mode (ignoring it):', exitModesCfg);
             }
             
+            // The player agent, read first, since "player" in set and adj keys names it.
+            const playerAgentId = json.playerAgent;
+            if (playerAgentId !== undefined && pkg.checkId('playerAgent', playerAgentId)) model.playerAgentId = playerAgentId;
+            
             // What carries from one game to the next. See pkg.legacy.
             pkg.legacy.readData(json);
             
@@ -740,9 +747,6 @@
             
             const initialOperation = json.initialOperation;
             if (initialOperation !== undefined) model.setInitialOperation(initialOperation);
-            
-            const playerAgentId = json.playerAgent;
-            if (playerAgentId !== undefined && pkg.checkId('playerAgent', playerAgentId)) model.playerAgentId = playerAgentId;
         },
         
         getScenarioIds: () => scenarioIds,

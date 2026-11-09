@@ -439,8 +439,9 @@
         isPlayerControlled: function() {
             if (!this.playerControlled) return false;
             
-            // Check that factions match.
-            return this.isSameFaction(pkg.model.getPlayerAgentModel?.());
+            // Check that factions match. Without a player agent there's no faction to match.
+            const playerAgentModel = pkg.model.getPlayerAgentModel?.();
+            return !playerAgentModel || this.isSameFaction(playerAgentModel);
         },
         
         setBorn: function(born) {this.set('born', born, true);},

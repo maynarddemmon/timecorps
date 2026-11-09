@@ -10,7 +10,7 @@
             SCOPE_TIMELINE, SCOPE_SCRATCH,
             SCOPE_EVENTS, SCOPE_AGENTS, SCOPE_OPERATIONS,
             SCOPE_EVENT,  SCOPE_AGENT,  SCOPE_OPERATION,
-            SCOPE_FACTIONS,
+            SCOPE_FACTIONS, SCOPE_PLAYER,
         } = pkg,
         
         /*  Scopes that name a collection. The next path segment is a model ID, e.g.
@@ -31,7 +31,7 @@
             any given expression. */
         SELF_SCOPE_NAMES = [SCOPE_EVENT, SCOPE_AGENT, SCOPE_OPERATION],
         
-        ALL_SCOPE_NAMES = [SCOPE_TIMELINE, SCOPE_SCRATCH, ...COLLECTION_SCOPE_NAMES, ...SELF_SCOPE_NAMES],
+        ALL_SCOPE_NAMES = [SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_PLAYER, ...COLLECTION_SCOPE_NAMES, ...SELF_SCOPE_NAMES],
         ALL_SCOPE_NAMES_SET = new Set(ALL_SCOPE_NAMES),
         FUNC_PARAMS = ALL_SCOPE_NAMES.join(','),
         
@@ -151,6 +151,14 @@
                         resolveRoot = {[SCOPE_TIMELINE]:pkg.model};
                     } else if (scopeName === SCOPE_SCRATCH) {
                         resolveRoot = {[SCOPE_SCRATCH]:pkg.model[SCOPE_SCRATCH]};
+                    } else if (scopeName === SCOPE_PLAYER) {
+                        // The player agent, e.g. "player.faction".
+                        resolveRoot = pkg.model.getPlayerAgentModel();
+                        if (!resolveRoot) {
+                            console.warn('Scope "player" names the player agent, but there\'s no playerAgent:', funcName, resolveTarget);
+                            return;
+                        }
+                        path.shift();
                     } else if (COLLECTION_SCOPE_NAMES.includes(scopeName)) {
                         resolveRoot = getCollectionScope(scopeName);
                         path.shift();
@@ -205,6 +213,7 @@
                 funcParams = ALL_SCOPE_NAMES.map(name => {
                     if (name === SCOPE_TIMELINE) return pkg.model;
                     if (name === SCOPE_SCRATCH) return pkg.model[SCOPE_SCRATCH];
+                    if (name === SCOPE_PLAYER) return pkg.model.getPlayerAgentModel();
                     if (COLLECTION_SCOPE_NAMES.includes(name)) return getCollectionScope(name);
                     return name === selfScopeName ? resolveTarget : undefined;
                 });

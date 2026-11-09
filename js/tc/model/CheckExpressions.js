@@ -8,7 +8,7 @@
         
         {
             SCOPE_SKILLS, SCOPE_AGENT, SCOPE_EVENT, SCOPE_TIMELINE, SCOPE_SCRATCH, SCOPE_EVENTS, 
-            SCOPE_AGENTS, SCOPE_FACTIONS, SCOPE_OPERATIONS,
+            SCOPE_AGENTS, SCOPE_FACTIONS, SCOPE_OPERATIONS, SCOPE_PLAYER,
             rng:{roll},
             cfg:{MAX_SKILL_EASE, MIN_SKILL_EASE, CHECK_EXPR_SHOW_DIE_ROLL, DIE_SIZE},
             theme:{colorSuccess, colorError, colorMegaDark},
@@ -119,6 +119,7 @@
                         SCOPE_SCRATCH,
                         SCOPE_FACTIONS,
                         SCOPE_OPERATIONS,
+                        SCOPE_PLAYER,
                         PARAM_DIFFICULTY,
                         'd', // The die roll param.
                         'margin', // The margin of success param.
@@ -142,6 +143,7 @@
                         rootModel[SCOPE_SCRATCH],                              // SCOPE_SCRATCH
                         rootModel.getFactionModels(),                          // SCOPE_FACTIONS
                         rootModel.getOperationModels(),                        // SCOPE_OPERATIONS
+                        getAgentView(rootModel.getPlayerAgentModel()),         // SCOPE_PLAYER
                         difficulty,                                            // PARAM_DIFFICULTY
                         die,                                                   // 'd'
                         margin,                                                // 'margin'

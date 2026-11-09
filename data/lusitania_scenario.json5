@@ -46,7 +46,7 @@
 					"<br><br>This concludes the current campaign."
 				],
 				"adj":{
-					"agents.ME.hq.chronal":"30",
+					"player.hq.chronal":"30",
 					"timeline.score":"13000"
 				}
 			}

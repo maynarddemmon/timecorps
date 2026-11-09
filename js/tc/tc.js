@@ -456,6 +456,7 @@
             SCOPE_OPERATION:'operation',
             SCOPE_AGENTS:'agents',
             SCOPE_AGENT,
+            SCOPE_PLAYER:'player', // The player agent, init.json5's "playerAgent".
             SCOPE_EVENTS:'events',
             SCOPE_EVENT:'event',
             

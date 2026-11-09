@@ -34,6 +34,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         scratch = Object.assign({}, ...[...scenarios, agentsJson].map(s => s.scratch ?? {})),
         factions = Object.assign({}, ...scenarios.map(s => s.factions ?? {})),
         prompts = Object.assign({}, ...[...scenarios, agentsJson].map(s => s.prompts ?? {})),
+        playerAgentId = scenarios.map(s => s.playerAgent).filter(id => id !== undefined).at(-1),
+        
+        // "player.<…>" in a key is short for "agents.<the player agent>.<…>".
+        expandPlayerKey = key => key.startsWith('player.') ? 'agents.' + playerAgentId + key.slice('player'.length) : key,
     
         // Every string anywhere inside a JSON value.
         collectStrings = (value, accum=[]) => {
@@ -425,7 +429,8 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             // The problem with a set or adj key, or null. event is the action's or exit's own 
             // Event, or null for an Operation, which has no agent or Event of its own.
             checkChangeKey = (key, event, isSet=false) => {
-                const [scope, statId, ...rest] = key.split('.');
+                if (key.startsWith('player.') && !playerAgentId) return 'names the player agent, but there\'s no playerAgent';
+                const [scope, statId, ...rest] = expandPlayerKey(key).split('.');
                 if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation or prompt has neither';
                 if ((scope === 'agent' && statId === 'event' && rest.length === 0) || (scope === 'agents' && rest.length === 1 && rest[0] === 'event')) {
                     if (!isSet) return 'is where an agent is, which can only be set';
@@ -469,7 +474,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             // A set of where an agent is, or the Faction they're in, should give the ID as a 
             // quoted string, e.g. "'origin'" or "'timecorps'". Returns the problem, or null.
             checkEventDestination = (key, value) => {
-                const match = typeof value === 'string' ? /^agents?\.(?:[^.]+\.)?(event|faction)$/.exec(key) : null;
+                const match = typeof value === 'string' ? /^agents?\.(?:[^.]+\.)?(event|faction)$/.exec(expandPlayerKey(key)) : null;
                 if (!match) return null;
                 const [ids, what] = match[1] === 'event' ? [events, 'Event'] : [factions, 'Faction'],
                     quoted = /^'([^']*)'$/.exec(value.trim());

@@ -20,7 +20,7 @@
                 EVENT_PARADOX_LIMIT, DEFAULT_ACTION_LIMIT, SCORE_PER_ATTESTATION, DEFAULT_EVENT_CHRONAL_MAX
             },
             ICON_SEPARATOR, ICON_NIL, getStatName,
-            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS
+            SCOPE_AGENT, SCOPE_AGENTS, SCOPE_EVENT, SCOPE_EVENTS, SCOPE_TIMELINE, SCOPE_SKILLS, SCOPE_SCRATCH, SCOPE_OPERATIONS, SCOPE_PLAYER
         } = pkg,
         
         // An agent's Faction's HQ, for changing its stats, e.g. "agents.ME.hq.chronal".
@@ -300,6 +300,16 @@
             the entry can't be used. */
         readChangeEntry = (where, key, cfg, {keepString=false, readRest, isSet=false}={}) => {
             const warn = msg => console.warn(where + ' ' + msg + ':', cfg);
+            
+            // "player.<…>" is short for "agents.<the player agent>.<…>".
+            if (typeof key === 'string' && key.startsWith(SCOPE_PLAYER + '.')) {
+                const playerAgentId = pkg.model.getPlayerAgentId();
+                if (!playerAgentId) {
+                    warn('names the player agent, but there\'s no playerAgent (ignoring it)');
+                    return null;
+                }
+                key = SCOPE_AGENTS + '.' + playerAgentId + key.slice(SCOPE_PLAYER.length);
+            }
             
             /*  Parse change key. What a set or adj key names, or why it names nothing:
                 {kind:'stat', scopeName, statId} - e.g. "agent.health". See ADJUSTMENT_STAT_IDS.
