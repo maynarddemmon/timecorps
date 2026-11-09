@@ -408,6 +408,10 @@
                 return mathMax(TC.cfg.MIN_RECALL_CHRONAL, cost);
             },
             
+            /*  The stray chronal time travel leaves in the Event it leaves: log2 of the chronal 
+                used, rounded down, so 1 leaves none, 2 or 3 leave 1, 4 to 7 leave 2. */
+            getChronalResidue: chronalUsed => chronalUsed >= 2 ? mathFloor(Math.log2(chronalUsed)) : 0,
+            
             getMinChronogationToLoopbackAtEvent: eventModel => {
                 // Gets a spread of difficulties where the shorter the duration of the Event the
                 // more difficult it is to loop back to it. The idea is the short duration requires

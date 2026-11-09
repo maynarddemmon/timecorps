@@ -121,7 +121,7 @@ Every stat has a value and a range, and changes stay within it.
 | `event.historicity` | 0–100 | How fixed the event is in history. Usually set by a mission's setup (`set`) |
 | `event.attestation` | 0–100 | How much the Corps knows about the event. Raised by investigating. Knowing more reveals more |
 | `event.paradox` | 0–`EVENT_PARADOX_LIMIT` (15) | Raised when agents revisit. Any change also changes `timeline.paradox`. Reaching the limit floods the event (see below) |
-| `event.chronal` | 0–`max`, max `DEFAULT_EVENT_CHRONAL_MAX` (5) unless the event says | Stray chronal the event holds, 0 to start. An HQ's is the pool its agents reload from, e.g. `"chronal":{"value":25, "max":100}` |
+| `event.chronal` | 0–`max`, max `DEFAULT_EVENT_CHRONAL_MAX` (5) unless the event says | Stray chronal the event holds, 0 to start. Time travel out of an event (not a hub) leaves log2 of the chronal it used, rounded down, there as residue, up to its max. An HQ's is the pool its agents reload from, e.g. `"chronal":{"value":25, "max":100}` |
 | `agent.health` | 0–`max`, max up to 150 | Default 100. 0 is death |
 | `agent.chronal` | 0–100 | Spent to time travel. Default starting value 75 |
 | `agent.paradox` | 0–`AGENT_PARADOX_LIMIT` (10) | Raised by revisiting an event. Reaching the limit devours the agent |
@@ -503,7 +503,7 @@ The tooltip lists costs, e.g. "Costs: 2 Actions, 100 Score", leaving out the usu
 
 ## Default actions
 
-`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` adjustment) and Rest is `_rest` (a check with an `agent.health` adjustment). Gather Chronal (`_gatherChronal`) moves 1 of the event's [stray chronal](#stats) to the agent, and Release Chronal (`_releaseChronal`) 1 of the agent's to the event, neither taking an action; both are hidden where the event is chrono locked, and Release (by `hiddenFor`) from an agent with none to release. The HQs also have their own Reload and Restock, from and to the pool.
+`defaultEventActions` in `init.json5` are actions every event offers, before its own. They're ordinary actions: Investigate is `_investigate` (a check with an `event.attestation` adjustment) and Rest is `_rest` (a check with an `agent.health` adjustment). Gather Chronal (`_gatherChronal`) moves 1 of the event's [stray chronal](#stats) to the agent, and Release Chronal (`_releaseChronal`) 1 of the agent's to the event, neither taking an action; both are hidden where the event is chrono locked, and (by `hiddenFor`) from an agent whose Chronogation is −500 or less, whose Chronofex can't yet do it. The HQs also have their own Reload and Restock, from and to the pool.
 
 An event changes one by giving an action with the same ID. It's merged over the default key by key, so it only needs what differs. Use `null` to leave a default out, or one of its adjustments:
 

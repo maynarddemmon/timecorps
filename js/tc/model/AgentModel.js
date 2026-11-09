@@ -1009,9 +1009,10 @@
         },
         
         /*  Time travels the Agent to an Event, if they can (see getTimeTravelInfo), paying the 
-            chronal. To HQ it's a recall. Unless withHazards is false, as for a move the data 
-            makes, what time travel can do to them is rolled, shown above btnView, if given, and
-            applied once they arrive. */
+            chronal, some of which is left as residue in the Event they leave, unless it's a 
+            hub, up to what it can hold. To HQ it's a recall. Unless withHazards is false, as 
+            for a move the data makes, what time travel can do to them is rolled, shown above 
+            btnView, if given, and applied once they arrive. */
         doDeployToEvent: function(destinationEventModel, btnView, withHazards=true) {
             if (destinationEventModel) {
                 const {isHQ, chronalNeeded, problem} = getTimeTravelInfo(this, destinationEventModel);
@@ -1023,6 +1024,8 @@
                     showAdjustments(btnView, adjustments);
                     
                     this[STAT_ID_CHRONAL].adjValue(-chronalNeeded);
+                    const leftEventModel = this.getEventModel();
+                    if (leftEventModel?.isNotHub()) leftEventModel[STAT_ID_CHRONAL].adjValue(pkg.getChronalResidue(chronalNeeded));
                     this.setEvent_Hard(destinationEventModel.id, logEntry);
                     // Above the hazards, if they showed.
                     this.showEntryParadox(anchor, adjustments.length > 0 ? 1 : 0);
