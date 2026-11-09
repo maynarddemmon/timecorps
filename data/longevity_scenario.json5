@@ -108,7 +108,7 @@
 			"name":"Spring Returns - The Vote",
 			"description":"Beijing, 22 September 2087. Seven votes to four, the Commission decides to tell the world. It wasn’t supposed to.",
 			"onSetup":{
-				"initialAgentSelection":"ME",
+				"initialAgentSelection":"player",
 				"initialEventSelection":"lgv_commission",
 				// Beniko tops up Your chronal from her own, and unlocks the Chronofex.
 				"set":{

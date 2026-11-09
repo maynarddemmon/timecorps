@@ -17,6 +17,8 @@ const routePlayer = (page, playerAgent) => {
             origin.actions ??= {};
             origin.actions.recruit = {
                 label:'Recruit', skillCheck:{difficulty:'no-roll'},
+                // Once done, Alpha has no HQ for its flags to name.
+                hidden:'event.actions.recruit.doneCount > 0',
                 // A check expression.
                 available:"player.faction !== 'unaligned'",
                 // Keys, set and adj, with check expressions for amounts.
@@ -65,4 +67,22 @@ test('player without a playerAgent is warned about, and the keys ignored', async
     const problems = await startGame(page);
     expect(problems.warnings.some(w => w.includes('names the player agent, but there\'s no playerAgent (ignoring it)'))).toBe(true);
     expect(problems.warnings.some(w => w.includes('Scope "player" names the player agent, but there\'s no playerAgent'))).toBe(true);
+});
+
+test('"player" names the player agent in a mission\'s agent IDs', async ({page}) => {
+    // The first mission reveals, awards and selects Alpha, the player agent here, by ID.
+    await routePlayer(page, 'AL');
+    await page.route('**/tests/data/test_operations.json5', route => {
+        const json = readTestData('test_operations.json5'),
+            first = json.operations.first;
+        first.onSetup = {...first.onSetup, revealAgents:'player', awardAgents:['player'], initialAgentSelection:'player'};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await expect.poll(() => page.evaluate(() => {
+        const alpha = tc.model.getAgentModel('AL');
+        return [alpha.isNotHidden(), alpha.playerControlled, tc.app.getTeamView().getSelectedAgentId()];
+    })).toEqual([true, true, 'AL']);
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
 });

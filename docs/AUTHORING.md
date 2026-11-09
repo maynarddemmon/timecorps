@@ -574,7 +574,7 @@ HQ and The Void leave out `_investigate` this way.
 }
 ```
 
-- **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
+- **Hidden and player control.** Agents start hidden and not under the player's control. A mission reveals them (`revealAgents`) and puts them under the player's control (`awardAgents`). In these and `initialAgentSelection`, `"player"` names the player agent ([`playerAgent`](#initjson5)). An agent can instead reveal itself with a `hidden` expression, e.g. once an event is known about. A revealed agent who isn't player controlled is a civilian.
 - **`role`** shows in the Agents grid and the dossier. `roleExpr` overrides it while it works out to a non-empty string, and without either, the agent's faction's `defaultAgentRole` is used, so it follows a change of faction.
 - **`nameExpr`.** A [constraint expression](#constraint-expressions) for the agent's name. While it works out to a non-empty string, trimmed, that's the name. Otherwise `name` is. The Origin Story's `avatar_name` prompt sets `scratch.avatar_name`, which You's `nameExpr` reads.
 - **Player controlled.** `playerControlled` marks an agent the player directs; the rest are NPCs. It's the player's only while in the faction of init.json5's [`playerAgent`](#initjson5). Missions give the player agents with `awardAgents`.
@@ -601,7 +601,7 @@ Each scenario file holds its own missions, under `operations`. The mission the c
 			// Optional. Reveals the mission when it's false, e.g. once another is completed.
 			"hidden":"!operations.titanic_intro.successGranted",
 			"onSetup":{
-				"revealAgents":"VQ",           // An ID or an array of them.
+				"revealAgents":"VQ",           // An ID or an array of them. "player" is the player agent.
 				"awardAgents":"VQ",
 				"initialAgentSelection":"VQ",
 				"initialEventSelection":"collision",

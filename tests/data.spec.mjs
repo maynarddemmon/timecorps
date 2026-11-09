@@ -145,8 +145,10 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         
             const setup = operation.onSetup ?? {},
                 onSuccess = operation.onSuccess ?? {};
-            for (const agentId of [setup.awardAgents, setup.revealAgents, onSuccess.awardAgents, onSuccess.revealAgents].flat()) {
-                if (agentId && !agents[agentId]) problems.push(operationId + ': unknown agent ' + agentId);
+            // "player" names the player agent.
+            for (const agentId of [setup.awardAgents, setup.revealAgents, setup.initialAgentSelection, onSuccess.awardAgents, onSuccess.revealAgents].flat()) {
+                if (agentId === 'player' && !playerAgentId) problems.push(operationId + ': names the player agent, but there\'s no playerAgent');
+                if (agentId && !agents[agentId === 'player' ? playerAgentId : agentId]) problems.push(operationId + ': unknown agent ' + agentId);
             }
             for (const [where, cfg] of [['onSetup', setup], ['onSuccess', onSuccess]]) {
                 for (const oldKey of ['historicityAdjustments', 'awardScore', 'awardCredits', 'awardHQChronal']) {

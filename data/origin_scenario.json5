@@ -46,9 +46,9 @@
 			"name":"A Day Like Any Other",
 			"description":[],
 			"onSetup":{
-				"awardAgents":"ME",
-				"revealAgents":"ME",
-				"initialAgentSelection":"ME",
+				"awardAgents":"player",
+				"revealAgents":"player",
+				"initialAgentSelection":"player",
 				"initialEventSelection":"origin_alarm",
 				"set":{
 					"events.origin_alarm.historicity":"5"

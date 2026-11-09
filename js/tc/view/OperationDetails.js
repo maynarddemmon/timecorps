@@ -154,7 +154,7 @@
             if (operationModel && !operationModel.isAvailable()) {
                 const app = pkg.app,
                     initialEventId = operationModel.getInitialEventSelection(),
-                    initialAgentId = operationModel.getInitialAgentSelection();
+                    initialAgentId = pkg.model.resolveAgentId(operationModel.getInitialAgentSelection());
                 if (initialEventId) app.selectEventBox(initialEventId);
                 if (initialAgentId) app.selectAgentRow(initialAgentId);
             }

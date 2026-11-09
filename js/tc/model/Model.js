@@ -388,6 +388,9 @@
         /*  The player agent's ID, which "player" in expressions and keys names, or undefined. */
         getPlayerAgentId: () => model.playerAgentId,
         
+        /*  An Agent ID from the data, where "player" names the player agent. */
+        resolveAgentId: agentId => agentId === pkg.SCOPE_PLAYER ? model.playerAgentId : agentId,
+        
         /*  Warns if "playerAgent" names no Agent. */
         validatePlayerAgent: () => {
             const playerAgentId = model.playerAgentId;
@@ -405,7 +408,7 @@
         revealAgents: agentIds => {
             if (agentIds) {
                 for (const agentId of agentIds) {
-                    const agentModel = model.getAgentModel(agentId);
+                    const agentModel = model.getAgentModel(model.resolveAgentId(agentId));
                     if (agentModel) {
                         agentModel.setHidden(false);
                     } else {
@@ -419,7 +422,7 @@
         awardAgents: agentIds => {
             if (agentIds) {
                 for (const agentId of agentIds) {
-                    const agentModel = model.getAgentModel(agentId);
+                    const agentModel = model.getAgentModel(model.resolveAgentId(agentId));
                     if (agentModel) {
                         agentModel.setPlayerControlled(true);
                     } else {
