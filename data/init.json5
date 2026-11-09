@@ -100,9 +100,12 @@
 	// one of these hauntings under its description. Each game abandoned for a new one,
 	// however it was, adds these "restarted" credits to every new game, and if this agent
 	// was alive and not devoured, leaves the Event they were at glitched, by one of these
-	// glitches. The ☠ button shows it all, and clears it.
+	// glitches. Each game abandoned also leaves a pocket of chronal at every Event it left
+	// with paradox, other than hubs and chrono locked ones, 1 for each paradoxPerChronal 
+	// paradox, rounded up, for later games to gather. The ☠ button shows it all, and clears it.
 	"legacy":{
 		"agent":"ME",
+		"paradoxPerChronal":0.333,
 		"devoured":{"agent.skills.causalStability":3},
 		"died":{"agent.skills.luck":1},
 		"restarted":{"timeline.credits":1},

@@ -54,7 +54,7 @@ myt.I18N.setDictionary({
 "dlg-restart-msg":"Are you sure you want to start over with a new campaign? Any currently saved progress will be discarded.",
 "dlg-legacy-title":"Accrued Advantages",
 "dlg-legacy-none-msg":"Nothing has accrued yet. Each agent of yours devoured by chronovores, or dead of their wounds, starts $0 a little stronger in every new game, and leaves the Event where they fell haunted. Each time you start over, every new game starts with a little more to spend, and if $0 was still alive, the Event they were at is left glitched.",
-"dlg-legacy-msg":"In past games $0 {{plural:$0|agent was|agents were}} devoured by chronovores and $1 died of their wounds, and you started over $2 {{plural:$2|time|times}}. So $3 starts each new game with $4, and the game with $5 extra {{plural:$5|credit|credits}}. $6 {{plural:$6|Event is|Events are}} haunted and $7 glitched.<br><br>To clear them, type $8 below. It can’t be undone, though the game in progress keeps what it started with.",
+"dlg-legacy-msg":"In past games $0 {{plural:$0|agent was|agents were}} devoured by chronovores and $1 died of their wounds, and you started over $2 {{plural:$2|time|times}}. So $3 starts each new game with $4, and the game with $5 extra {{plural:$5|credit|credits}}. $6 {{plural:$6|Event is|Events are}} haunted, $7 glitched, and $8 {{plural:$8|holds a pocket|hold pockets}} of stray chronal.<br><br>To clear them, type $9 below. It can’t be undone, though the game in progress keeps what it started with.",
 "legacy-reset-word":"RESET",
 "dlg-legacy-no-bonuses":"nothing extra",
 "btn-legacy-clear":"Clear",

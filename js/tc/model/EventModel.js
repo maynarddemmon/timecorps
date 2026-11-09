@@ -1683,8 +1683,11 @@
                 }
             },
             
-            notifyStatChanged: function(_statModel) {
-                if (this.inited) this.notifyCollectionOfUpdate();
+            notifyStatChanged: function(statModel) {
+                if (this.inited) {
+                    if (statModel === this[STAT_ID_CHRONAL]) pkg.legacy.notifyEventChronalChanged(this);
+                    this.notifyCollectionOfUpdate();
+                }
             },
             
             getPrecursors: function(noSelf=true) {

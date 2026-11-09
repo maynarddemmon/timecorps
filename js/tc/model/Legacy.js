@@ -11,7 +11,7 @@
         // them, and a loss can't be had again and again for the advantages. See commit.
         pending = null;
     
-    const {min:mathMin, max:mathMax} = Math,
+    const {min:mathMin, max:mathMax, ceil:mathCeil} = Math,
         
         {isPlainObject, hashToRange} = pkg,
         
@@ -49,17 +49,18 @@
         },
         
         /*  Reads the legacy config, e.g. {"agent":"ME", "devoured":{"agent.skills.luck":1}, 
-            "restarted":{"timeline.credits":1}, "hauntings":["…"], "glitches":["…"]}, into 
-            {agentId, amounts:{devoured:{skills:[[skillId, amount], …], credits}, died:…, 
-            restarted:…}, hauntings:[…], glitches:[…]}, warning about its problems. null if it 
-            has no agent. */
+            "restarted":{"timeline.credits":1}, "hauntings":["…"], "glitches":["…"], 
+            "paradoxPerChronal":3}, into {agentId, amounts:{devoured:{skills:[[skillId, 
+            amount], …], credits}, died:…, restarted:…}, hauntings:[…], glitches:[…], 
+            paradoxPerChronal}, warning about its problems. paradoxPerChronal is null without 
+            one, which leaves no pockets. null if it has no agent. */
         readCfg = json => {
             const where = DATA_KEY;
             if (!isPlainObject(json)) {
                 console.warn(where, 'must be an object, e.g. {"agent":"ME", "devoured":{"agent.skills.causalStability":3}} (ignoring it):', json);
                 return null;
             }
-            const {agent:agentId, hauntings=[], glitches=[], ...rest} = json,
+            const {agent:agentId, hauntings=[], glitches=[], paradoxPerChronal=null, ...rest} = json,
                 amounts = {};
             if (typeof agentId !== 'string' || agentId === '') {
                 console.warn(where, 'agent must name the agent the losses help (ignoring it all):', agentId);
@@ -88,24 +89,40 @@
             }
             if (Object.keys(rest).length > 0) console.warn(where, 'has unknown keys', Object.keys(rest).join(', '), '(ignoring them)');
             
+            const pocketsOn = paradoxPerChronal === null || (Number.isFinite(paradoxPerChronal) && paradoxPerChronal > 0);
+            if (!pocketsOn) console.warn(where, 'paradoxPerChronal must be a positive number, e.g. 3 (leaving no pockets):', paradoxPerChronal);
+            
             return {
                 agentId, 
                 amounts, 
                 hauntings:readPhrases(where + ' hauntings', hauntings), 
-                glitches:readPhrases(where + ' glitches', glitches)
+                glitches:readPhrases(where + ' glitches', glitches),
+                paradoxPerChronal:pocketsOn ? paradoxPerChronal : null
             };
         },
         
-        makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, [RESTARTED]:0, haunted:{}, glitched:{}}),
+        makeEmptyRecord = () => ({[LOSS_DEVOURED]:0, [LOSS_DIED]:0, [RESTARTED]:0, haunted:{}, glitched:{}, pockets:{}}),
         
         /*  A record as {devoured, died, restarted, haunted:{eventId:phraseIdx}, 
-            glitched:{eventId:phraseIdx}}, with anything unusable in it taken as nothing 
-            accrued. */
+            glitched:{eventId:phraseIdx}, pockets:{eventId:chronal}}, with anything unusable 
+            in it taken as nothing accrued. */
         toRecord = record => {
             const result = makeEmptyRecord();
             for (const kind of KINDS) if (Number.isInteger(record?.[kind])) result[kind] = record[kind];
             for (const key of ['haunted', 'glitched']) if (isPlainObject(record?.[key])) result[key] = record[key];
+            if (isPlainObject(record?.pockets)) {
+                for (const [eventId, chronal] of Object.entries(record.pockets)) {
+                    if (Number.isInteger(chronal) && chronal > 0) result.pockets[eventId] = chronal;
+                }
+            }
             return result;
+        },
+        
+        /*  Changes the pending pocket at an Event by an amount: more chronal, or less as it's 
+            harvested. */
+        adjPendingPocket = (eventId, amount) => {
+            pending ??= makeEmptyRecord();
+            pending.pockets[eventId] = (pending.pockets[eventId] ?? 0) + amount;
         },
         
         /*  What's in storage, as toRecord gives it. Empty if nothing is, or storage can't be 
@@ -127,6 +144,14 @@
                 for (const kind of KINDS) record[kind] += pending[kind];
                 record.haunted = {...pending.haunted, ...record.haunted};
                 record.glitched = {...pending.glitched, ...record.glitched};
+                for (const [eventId, amount] of Object.entries(pending.pockets)) {
+                    const chronal = (record.pockets[eventId] ?? 0) + amount;
+                    if (chronal > 0) {
+                        record.pockets[eventId] = chronal;
+                    } else {
+                        delete record.pockets[eventId];
+                    }
+                }
             }
             return record;
         },
@@ -167,9 +192,11 @@
         controlled agent lost, devoured by chronovores or dead of their wounds, gives the 
         legacy agent (init.json5's "legacy" "agent", e.g. ME) a little more of some skills at
         the start of every new game, and leaves the Event they were lost at haunted, with a 
-        line under its description, in every game. It's kept in its own storage key, apart 
-        from any save, until the player clears it. Without a "legacy" in the data, none of
-        it happens. */
+        line under its description, in every game. Each game abandoned leaves a pocket of 
+        chronal at every Event it left with paradox, other than hubs and chrono locked ones,
+        which every new game starts holding until it's harvested. It's kept in its own 
+        storage key, apart from any save, until the player clears it. Without a "legacy" in
+        the data, none of it happens. */
     pkg.legacy = {
         /*  Reads init.json5's "legacy". A later file's replaces an earlier's. */
         readData: json => {
@@ -196,8 +223,10 @@
         
         /*  Records the game being abandoned for a new one, however it was. If the legacy 
             agent is still alive and not devoured, the Event they're at, unless a hub, is 
-            glitched: as though someone were taken out of it. Pending until commit, which 
-            should follow. */
+            glitched: as though someone were taken out of it. Every Event left with paradox,
+            unless a hub or chrono locked, gets a pocket of chronal, paradoxPerChronal 
+            paradox to 1 rounded up, on top of any pocket it still holds. Pending until 
+            commit, which should follow. */
         recordRestart: () => {
             if (!cfg) return;
             const record = readRecord();
@@ -210,6 +239,27 @@
             ) {
                 pending.glitched[eventModel.id] = pickPhraseIdx(cfg.glitches, eventModel.id, record[RESTARTED] + 1);
             }
+            
+            const {paradoxPerChronal} = cfg;
+            if (paradoxPerChronal) {
+                for (const eventModel of pkg.model.getEventModelsAsList()) {
+                    const paradox = eventModel.paradox.value;
+                    if (paradox > 0 && eventModel.isNotHub() && eventModel.isNotChronoLocked()) {
+                        adjPendingPocket(eventModel.id, mathCeil(paradox / paradoxPerChronal));
+                    }
+                }
+            }
+        },
+        
+        /*  Notes an Event's chronal changing. A pocket can be no more than the Event holds, so
+            when it holds less, the difference was harvested, and leaves the pocket, pending 
+            until commit. Chronal released into an Event and gathered back doesn't touch it. 
+            Only while a game is being played, not as one's set up or restored. */
+        notifyEventChronalChanged: eventModel => {
+            if (!cfg || !pkg.isAppReady?.()) return;
+            const pocket = readRecord().pockets[eventModel.id],
+                held = eventModel.chronal.value;
+            if (pocket > held) adjPendingPocket(eventModel.id, held - pocket);
         },
         
         /*  Stores the pending losses, as the game is saved or abandoned for a new one. */
@@ -219,13 +269,24 @@
             pending = null;
         },
         
-        /*  Gives what's accrued as a new game starts: credits, and the legacy agent skills, 
-            which stay in the skill range. */
+        /*  Gives what's accrued as a new game starts: credits, the pockets, each Event's max 
+            raised to hold it all if need be, and the legacy agent skills, which stay in the 
+            skill range. */
         applyToNewGame: () => {
             if (!cfg) return;
             const record = readRecord(),
                 credits = getCreditsBonus(record);
             if (credits !== 0) pkg.model.setCredits(mathMax(0, pkg.model.getCredits() + credits));
+            
+            for (const [eventId, pocket] of Object.entries(record.pockets)) {
+                // An Event no longer in the data just keeps its pocket.
+                const chronal = pkg.model.getEventModel(eventId)?.chronal;
+                if (chronal) {
+                    const value = chronal.value + pocket;
+                    if (value > chronal.getMax()) chronal.setMax(value);
+                    chronal.setValue(value);
+                }
+            }
             
             const agentModel = pkg.model.getAgentModel(cfg.agentId);
             if (!agentModel) {
@@ -255,15 +316,18 @@
         getGlitch: eventId => cfg ? getPhrase(cfg.glitches, 'glitched', eventId) : '',
         
         /*  What's accrued, for showing: {devoured, died, restarted, hauntedCount, 
-            glitchedCount, agentModel, bonuses:[[skillId, amount], …], credits}. */
+            glitchedCount, pocketCount, agentModel, bonuses:[[skillId, amount],
+            …], credits}. */
         getSummary: () => {
-            const record = readRecord();
+            const record = readRecord(),
+                pockets = Object.values(record.pockets);
             return {
                 devoured:record[LOSS_DEVOURED],
                 died:record[LOSS_DIED],
                 restarted:record[RESTARTED],
                 hauntedCount:Object.keys(record.haunted).length,
                 glitchedCount:Object.keys(record.glitched).length,
+                pocketCount:pockets.length,
                 agentModel:cfg ? pkg.model.getAgentModel(cfg.agentId) : undefined,
                 bonuses:cfg ? getBonuses(record) : [],
                 credits:cfg ? getCreditsBonus(record) : 0
@@ -292,6 +356,9 @@
                 // Nothing to clear then.
             }
         },
+        
+        /*  The chronal pocket left at an Event by past games, still to be harvested, or 0. */
+        getPocket: eventId => readRecord().pockets[eventId] ?? 0,
         
         LOSS_DEVOURED,
         LOSS_DIED

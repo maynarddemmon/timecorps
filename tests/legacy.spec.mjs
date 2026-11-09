@@ -92,7 +92,7 @@ test('each of the player\'s agents lost gives the legacy agent skills in every n
     expect(await page.evaluate(() => {
         const {agentModel, ...summary} = tc.legacy.getSummary();
         return {...summary, agent:agentModel.id};
-    })).toEqual({devoured:1, died:1, restarted:0, hauntedCount:1, glitchedCount:0, agent:'AL', bonuses:[['stealth', 4], ['investigation', 1]], credits:0});
+    })).toEqual({devoured:1, died:1, restarted:0, hauntedCount:1, glitchedCount:0, pocketCount:0, agent:'AL', bonuses:[['stealth', 4], ['investigation', 1]], credits:0});
     
     // The game in progress keeps what it started with. Abandoned, the next one starts Alpha 
     // ahead.
@@ -206,7 +206,7 @@ test('a save exports with the legacy, and importing it puts the legacy back, so 
     await visibleButton(page, 'Acknowledge').click();
     await dismissAgentDossier(page, 'Delta');
     const exported = await exportGame(page);
-    expect(exported.legacy).toEqual({devoured:0, died:1, restarted:0, haunted:{}, glitched:{}});
+    expect(exported.legacy).toEqual({devoured:0, died:1, restarted:0, haunted:{}, glitched:{}, pockets:{}});
     
     // Import it, lose Bravo and save: 2 accrued.
     await importGame(page, exported);
@@ -247,7 +247,7 @@ test('the ☠ button shows what\'s accrued, and clears it', async ({page}) => {
     for (let i = 0; i < 2; i++) await page.getByRole('button', {name:'Acknowledge', exact:true}).filter({visible:true}).click();
     for (const name of ['Bravo', 'Charlie']) await dismissAgentDossier(page, name);
     await legacyBtn.click();
-    await expect(page.getByText('In past games 1 agent was devoured by chronovores and 1 died of their wounds, and you started over 0 times. So Alpha starts each new game with +4 Stealth, +1 Investigation, and the game with 0 extra credits. 1 Event is haunted and 0 glitched.', {exact:false})).toBeVisible();
+    await expect(page.getByText('In past games 1 agent was devoured by chronovores and 1 died of their wounds, and you started over 0 times. So Alpha starts each new game with +4 Stealth, +1 Investigation, and the game with 0 extra credits. 1 Event is haunted, 0 glitched, and 0 hold pockets of stray chronal.To clear them, type RESET below.', {exact:false})).toBeVisible();
     
     // Clearing can't be undone, so Clear waits for RESET to be typed, exactly.
     const clearBtn = page.getByRole('button', {name:'Clear', exact:true}).filter({visible:true}),
@@ -303,4 +303,81 @@ test('a broken legacy is warned about, keeping what\'s usable', async ({page}) =
     await restartCampaign(page);
     expect(problems.warnings.slice(-1)).toEqual(['legacy names no skill nope (ignoring it)']);
     expect(problems.pageErrors).toEqual([]);
+});
+
+test('each restart leaves pockets of chronal where there was paradox, which later games hold until harvested', async ({page}) => {
+    await routeLegacy(page, {agent:'AL', paradoxPerChronal:3});
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.relay.chronoLocked = 'true';
+        json.events.plan.paradox = {value:0, max:15};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page),
+        setParadox = (eventId, paradox) => page.evaluate(([eventId, paradox]) => tc.model.getEventModel(eventId).paradox.setValue(paradox), [eventId, paradox]),
+        setChronal = (eventId, chronal) => page.evaluate(([eventId, chronal]) => tc.model.getEventModel(eventId).chronal.setValue(chronal), [eventId, chronal]),
+        readChronal = eventId => page.evaluate(eventId => {
+            const {value, max} = tc.model.getEventModel(eventId).chronal;
+            return {value, max, pocket:tc.legacy.getPocket(eventId)};
+        }, eventId),
+        storedPockets = () => page.evaluate(() => JSON.parse(localStorage.getItem('tc.legacy'))?.pockets),
+        // Paradox spreads, so what each Event is left with is read back as the game ends.
+        expectedPockets = () => page.evaluate(() => Object.fromEntries(tc.model.getEventModelsAsList()
+            .filter(e => e.paradox.value > 0 && e.isNotHub() && e.isNotChronoLocked())
+            .map(e => [e.id, Math.ceil(e.paradox.value / 3)])));
+    
+    // 3 paradox to 1 chronal, rounded up. Not at a chrono locked Event, or a hub.
+    await setParadox('plan', 12);
+    await setParadox('supply', 1);
+    await setParadox('relay', 4);
+    await setParadox('time_corps_hq', 4);
+    const firstPockets = await expectedPockets();
+    expect(firstPockets).toMatchObject({plan:4, supply:1});
+    await restartCampaign(page);
+    expect(await storedPockets()).toEqual(firstPockets);
+    expect(await readChronal('plan')).toEqual({value:4, max:5, pocket:4});
+    expect(await readChronal('supply')).toEqual({value:1, max:5, pocket:1});
+    expect(await page.evaluate(() => [tc.model.getEventModel('relay').chronal.value, tc.legacy.getPocket('relay'), tc.legacy.getPocket('time_corps_hq')])).toEqual([0, 0, 0]);
+    expect(await page.evaluate(() => tc.legacy.getSummary().pocketCount)).toBe(Object.keys(firstPockets).length);
+    
+    // Chronal released into the Event and gathered back doesn't touch the pocket; gathering
+    // below it harvests it. That's pending until the game is saved.
+    await setChronal('plan', 5);
+    await setChronal('plan', 4);
+    expect(await readChronal('plan')).toEqual({value:4, max:5, pocket:4});
+    await setChronal('plan', 1);
+    expect(await readChronal('plan')).toEqual({value:1, max:5, pocket:1});
+    await setChronal('supply', 0);
+    expect(await page.evaluate(() => tc.legacy.getPocket('supply'))).toBe(0);
+    expect(await storedPockets()).toEqual(firstPockets);
+    await saveGame(page);
+    const {supply:_supply, ...harvested} = firstPockets;
+    expect(await storedPockets()).toEqual({...harvested, plan:1});
+    
+    // Released back after harvesting, it's the agent's chronal, not the pocket's.
+    await setChronal('plan', 3);
+    expect(await readChronal('plan')).toEqual({value:3, max:5, pocket:1});
+    
+    // What's left adds to the next game's, and the Event's max rises to hold it.
+    await setParadox('plan', 15);
+    await restartCampaign(page);
+    expect(await readChronal('plan')).toEqual({value:6, max:6, pocket:6});
+    
+    // The raised max, and what's held, outlast a reload of a save.
+    await setChronal('plan', 2);
+    await saveGame(page);
+    await reloadGame(page);
+    expect(await readChronal('plan')).toEqual({value:2, max:6, pocket:2});
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('without paradoxPerChronal no pockets are left', async ({page}) => {
+    await routeLegacy(page, {agent:'AL'});
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.model.getEventModel('plan').paradox.setValue(12));
+    await restartCampaign(page);
+    expect(await page.evaluate(() => [tc.model.getEventModel('plan').chronal.value, tc.legacy.getSummary().pocketCount])).toEqual([0, 0]);
+    expect(problems.warnings).toEqual([]);
 });

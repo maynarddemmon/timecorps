@@ -121,7 +121,7 @@
         // Legacy //
         /*  Shows what past games' losses have accrued, and offers to clear it. */
         openLegacyDialog = () => {
-            const {devoured, died, restarted, hauntedCount, glitchedCount, agentModel, bonuses, credits} = legacy.getSummary(),
+            const {devoured, died, restarted, hauntedCount, glitchedCount, pocketCount, agentModel, bonuses, credits} = legacy.getSummary(),
                 title = i18n('dlg-legacy-title');
             if (devoured + died + restarted === 0) {
                 openAckMsgDialog(title, i18n('dlg-legacy-none-msg', agentModel?.getName() ?? ''));
@@ -131,7 +131,18 @@
                     resetWord = i18n('legacy-reset-word');
                 openTypedConfirmMsgDialog(
                     title,
-                    i18n('dlg-legacy-msg', devoured, died, restarted, agentModel?.getName() ?? '', bonusesTxt || i18n('dlg-legacy-no-bonuses'), pkg.cleanToFixed(credits), hauntedCount, glitchedCount, resetWord),
+                    i18n('dlg-legacy-msg', 
+                        devoured, 
+                        died, 
+                        restarted, 
+                        agentModel?.getName() ?? '', 
+                        bonusesTxt || i18n('dlg-legacy-no-bonuses'), 
+                        pkg.cleanToFixed(credits), 
+                        hauntedCount, 
+                        glitchedCount, 
+                        pocketCount, 
+                        resetWord
+                    ),
                     resetWord,
                     () => {
                         legacy.clear();
