@@ -12,8 +12,8 @@ const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
     
     routeLegacy = (page, legacy) => page.route('**/tests/data/init.json5', route => {
         const json = readTestData('init.json5');
+        json.playerAgent = 'AL';
         json.legacy = legacy ?? {
-            agent:'AL',
             devoured:{'agent.skills.stealth':3},
             died:{'agent.skills.investigation':1, 'agent.skills.stealth':1},
             hauntings:HAUNTINGS
@@ -26,17 +26,19 @@ const HAUNTINGS = ['A chill.', 'A whisper.', 'A shadow.'],
         return {stealth:alpha.getSkill('stealth'), investigation:alpha.getSkill('investigation')};
     }),
     
-    // Kills an agent where they are, as one of the player's or not.
+    // Kills an agent where they are, as one of the player's (in Alpha's faction) or not.
     kill = (page, agentId, playerControlled=true) => page.evaluate(([agentId, playerControlled]) => {
         const agent = tc.model.getAgentModel(agentId);
         agent.setPlayerControlled(playerControlled);
+        if (playerControlled) agent.setFaction('timecorps');
         agent.health.setValue(0);
     }, [agentId, playerControlled]),
     
-    // Gets an agent devoured, as one of the player's.
+    // Gets an agent devoured, as one of the player's (in Alpha's faction).
     devour = (page, agentId) => page.evaluate(agentId => {
         const agent = tc.model.getAgentModel(agentId);
         agent.setPlayerControlled(true);
+        agent.setFaction('timecorps');
         agent.paradox.setValue(agent.paradox.getMax());
     }, agentId),
     
@@ -134,7 +136,7 @@ test('an Event an agent was lost at is haunted in every game, by a line under it
 });
 
 test('each restart adds credits to every new game, and leaves the Event the legacy agent was at glitched if they were alive', async ({page}) => {
-    await routeLegacy(page, {agent:'AL', died:{'agent.skills.stealth':1}, restarted:{'timeline.credits':2}, hauntings:HAUNTINGS, glitches:GLITCHES});
+    await routeLegacy(page, {died:{'agent.skills.stealth':1}, restarted:{'timeline.credits':2}, hauntings:HAUNTINGS, glitches:GLITCHES});
     const problems = await startGame(page),
         credits = await page.evaluate(() => tc.model.getCredits()),
         glitchOf = eventId => page.evaluate(eventId => tc.legacy.getGlitch(eventId), eventId);
@@ -292,6 +294,7 @@ test('a broken legacy is warned about, keeping what\'s usable', async ({page}) =
     });
     const problems = await startGame(page);
     expect(problems.warnings).toEqual([
+        'legacy agent is now init.json5\'s "playerAgent" (ignoring it): AL',
         'legacy died agent.skills.stealth must be a number (ignoring it): 1',
         'legacy died agent.health must be a skill, e.g. "agent.skills.luck", or "timeline.credits" (ignoring it)',
         'legacy has unknown keys extra (ignoring them)',
@@ -306,7 +309,7 @@ test('a broken legacy is warned about, keeping what\'s usable', async ({page}) =
 });
 
 test('each restart leaves pockets of chronal where there was paradox, which later games hold until harvested', async ({page}) => {
-    await routeLegacy(page, {agent:'AL', paradoxPerChronal:3});
+    await routeLegacy(page, {paradoxPerChronal:3});
     await page.route('**/tests/data/test_scenario.json5', route => {
         const json = readTestData('test_scenario.json5');
         json.events.relay.chronoLocked = 'true';
@@ -374,7 +377,7 @@ test('each restart leaves pockets of chronal where there was paradox, which late
 });
 
 test('without paradoxPerChronal no pockets are left', async ({page}) => {
-    await routeLegacy(page, {agent:'AL'});
+    await routeLegacy(page, {});
     const problems = await startGame(page);
     await page.evaluate(() => tc.model.getEventModel('plan').paradox.setValue(12));
     await restartCampaign(page);

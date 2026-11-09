@@ -380,6 +380,16 @@
         // Agents:Accessors & Methods //////////////////////////////////////////
         getAgentModel: id => model[SCOPE_AGENTS].getById(id),
         getAgentModels: () => model[SCOPE_AGENTS].getAll(),
+        
+        /*  The player's own Agent, init.json5's "playerAgent", e.g. You. Only Agents in its 
+            faction are the player's to direct. Undefined if the data names none. */
+        getPlayerAgentModel: () => model.playerAgentId ? model.getAgentModel(model.playerAgentId) : undefined,
+        
+        /*  Warns if "playerAgent" names no Agent. */
+        validatePlayerAgent: () => {
+            const playerAgentId = model.playerAgentId;
+            if (playerAgentId && !model.getAgentModel(playerAgentId)) console.warn('playerAgent names no Agent:', playerAgentId, '(so no Agent is held back by faction)');
+        },
         getAgentModelsAsList: filterFunc => model[SCOPE_AGENTS].getAsList(filterFunc),
         getAgentModelsForEvent: eventId => model[SCOPE_AGENTS].getAsSortedList(
             (a, b) => b.getArrivalOrder() - a.getArrivalOrder(),
@@ -730,6 +740,9 @@
             
             const initialOperation = json.initialOperation;
             if (initialOperation !== undefined) model.setInitialOperation(initialOperation);
+            
+            const playerAgentId = json.playerAgent;
+            if (playerAgentId !== undefined && pkg.checkId('playerAgent', playerAgentId)) model.playerAgentId = playerAgentId;
         },
         
         getScenarioIds: () => scenarioIds,

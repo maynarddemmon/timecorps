@@ -233,6 +233,7 @@
                         
                         const eventsValid = model.validateAllEventDependencies() & model.validateNoLocationOverlaps();
                         model.validateFactionHQs();
+                        model.validatePlayerAgent();
                         model.validateActionGroups();
                         model.validateSkillTracks();
                         if (eventsValid) {

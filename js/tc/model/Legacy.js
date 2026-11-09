@@ -31,7 +31,7 @@
         // What's counted, each giving its own advantages.
         KINDS = [...LOSS_KINDS, RESTARTED],
         
-        // Adjustment keys each can give: a skill of the legacy agent's, or credits.
+        // Adjustment keys each can give: a skill of the player agent's, or credits.
         SKILL_KEY_PREFIX = 'agent.skills.',
         CREDITS_KEY = 'timeline.credits',
         
@@ -48,24 +48,22 @@
             });
         },
         
-        /*  Reads the legacy config, e.g. {"agent":"ME", "devoured":{"agent.skills.luck":1}, 
+        /*  Reads the legacy config, e.g. {"devoured":{"agent.skills.luck":1}, 
             "restarted":{"timeline.credits":1}, "hauntings":["…"], "glitches":["…"], 
-            "paradoxPerChronal":3}, into {agentId, amounts:{devoured:{skills:[[skillId, 
-            amount], …], credits}, died:…, restarted:…}, hauntings:[…], glitches:[…], 
-            paradoxPerChronal}, warning about its problems. paradoxPerChronal is null without 
-            one, which leaves no pockets. null if it has no agent. */
+            "paradoxPerChronal":3}, into {amounts:{devoured:{skills:[[skillId, amount], …], 
+            credits}, died:…, restarted:…}, hauntings:[…], glitches:[…], paradoxPerChronal}, 
+            warning about its problems. paradoxPerChronal is null without one, which leaves no
+            pockets. The skills go to the player agent (init.json5's "playerAgent"). null if
+            it isn't an object. */
         readCfg = json => {
             const where = DATA_KEY;
             if (!isPlainObject(json)) {
-                console.warn(where, 'must be an object, e.g. {"agent":"ME", "devoured":{"agent.skills.causalStability":3}} (ignoring it):', json);
+                console.warn(where, 'must be an object, e.g. {"devoured":{"agent.skills.causalStability":3}} (ignoring it):', json);
                 return null;
             }
             const {agent:agentId, hauntings=[], glitches=[], paradoxPerChronal=null, ...rest} = json,
                 amounts = {};
-            if (typeof agentId !== 'string' || agentId === '') {
-                console.warn(where, 'agent must name the agent the losses help (ignoring it all):', agentId);
-                return null;
-            }
+            if (agentId !== undefined) console.warn(where, 'agent is now init.json5\'s "playerAgent" (ignoring it):', agentId);
             for (const kind of KINDS) {
                 const kindCfg = rest[kind] ?? {};
                 delete rest[kind];
@@ -93,7 +91,6 @@
             if (!pocketsOn) console.warn(where, 'paradoxPerChronal must be a positive number, e.g. 3 (leaving no pockets):', paradoxPerChronal);
             
             return {
-                agentId, 
                 amounts, 
                 hauntings:readPhrases(where + ' hauntings', hauntings), 
                 glitches:readPhrases(where + ' glitches', glitches),
@@ -190,7 +187,7 @@
     
     /*  The first roguelike thread: what carries from one game to the next. Each player-
         controlled agent lost, devoured by chronovores or dead of their wounds, gives the 
-        legacy agent (init.json5's "legacy" "agent", e.g. ME) a little more of some skills at
+        player agent (init.json5's "playerAgent", e.g. ME) a little more of some skills at
         the start of every new game, and leaves the Event they were lost at haunted, with a 
         line under its description, in every game. Each game abandoned leaves a pocket of 
         chronal at every Event it left with paradox, other than hubs and chrono locked ones,
@@ -221,7 +218,7 @@
             }
         },
         
-        /*  Records the game being abandoned for a new one, however it was. If the legacy 
+        /*  Records the game being abandoned for a new one, however it was. If the player 
             agent is still alive and not devoured, the Event they're at, unless a hub, is 
             glitched: as though someone were taken out of it. Every Event left with paradox,
             unless a hub or chrono locked, gets a pocket of chronal, paradoxPerChronal 
@@ -232,7 +229,7 @@
             const record = readRecord();
             pending ??= makeEmptyRecord();
             pending[RESTARTED]++;
-            const agentModel = pkg.model.getAgentModel(cfg.agentId),
+            const agentModel = pkg.model.getPlayerAgentModel(),
                 eventModel = agentModel?.getEventModel();
             if (agentModel?.isNotDead() && agentModel.isNotDevoured() && eventModel?.isNotHub() && 
                 cfg.glitches.length > 0 && record.glitched[eventModel.id] === undefined
@@ -270,7 +267,7 @@
         },
         
         /*  Gives what's accrued as a new game starts: credits, the pockets, each Event's max 
-            raised to hold it all if need be, and the legacy agent skills, which stay in the 
+            raised to hold it all if need be, and the player agent skills, which stay in the 
             skill range. */
         applyToNewGame: () => {
             if (!cfg) return;
@@ -288,13 +285,13 @@
                 }
             }
             
-            const agentModel = pkg.model.getAgentModel(cfg.agentId);
-            if (!agentModel) {
-                console.warn(DATA_KEY, 'agent', cfg.agentId, 'names no agent (giving no advantages)');
-                return;
-            }
             const bonuses = getBonuses(record);
             if (bonuses.length === 0) return;
+            const agentModel = pkg.model.getPlayerAgentModel();
+            if (!agentModel) {
+                console.warn(DATA_KEY, 'has skills to give, but there\'s no playerAgent to give them to');
+                return;
+            }
             const skills = {...agentModel.getSkills()},
                 {MAX_SKILL_VALUE} = pkg.cfg;
             for (const [skillId, amount] of bonuses) {
@@ -328,7 +325,7 @@
                 hauntedCount:Object.keys(record.haunted).length,
                 glitchedCount:Object.keys(record.glitched).length,
                 pocketCount:pockets.length,
-                agentModel:cfg ? pkg.model.getAgentModel(cfg.agentId) : undefined,
+                agentModel:cfg ? pkg.model.getPlayerAgentModel() : undefined,
                 bonuses:cfg ? getBonuses(record) : [],
                 credits:cfg ? getCreditsBonus(record) : 0
             };

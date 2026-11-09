@@ -426,7 +426,9 @@
         hasHealthChangeRiskFor:  function(ownerModel) {return hasStatChangeFor(this, ownerModel, STAT_ID_HEALTH);},
         
         /*  Player controlled Agents are directed by the player. Visible Agents that are not player 
-            controlled are NPCs. */
+            controlled are NPCs. One marked player controlled is the player's only while in the 
+            player agent's faction (see Model.getPlayerAgentModel), so an Agent of another 
+            faction can't be directed, trained, or lost to the Legacy. */
         setPlayerControlled: function(value) {
             value = !!value;
             if (this.playerControlled !== value) {
@@ -434,7 +436,12 @@
                 if (this.inited) this.notifyCollectionOfUpdate();
             }
         },
-        isPlayerControlled: function() {return this.playerControlled;},
+        isPlayerControlled: function() {
+            if (!this.playerControlled) return false;
+            
+            // Check that factions match.
+            return this.isSameFaction(pkg.model.getPlayerAgentModel?.());
+        },
         
         setBorn: function(born) {this.set('born', born, true);},
         
@@ -644,7 +651,16 @@
             }
             if (this.faction !== factionId) {
                 this.set('faction', factionId, true);
-                if (this.inited) this.notifyCollectionOfUpdate();
+                if (this.inited) {
+                    this.notifyCollectionOfUpdate();
+                    
+                    // Which Agents are the player's follows the player agent's faction.
+                    if (pkg.model.getPlayerAgentModel() === this) {
+                        for (const agentModel of pkg.model.getAgentModelsAsList()) {
+                            if (agentModel !== this) agentModel.notifyCollectionOfUpdate();
+                        }
+                    }
+                }
             }
         },
         getFaction: function() {return this.faction;},
@@ -653,6 +669,10 @@
             const id = typeof idOrModel === 'string' ? idOrModel : idOrModel?.id;
             return id === this.getFaction();
         },
+        isSameFaction: function(agentModel) {
+            return agentModel === this || agentModel?.getFaction() === this.getFaction();
+        },
+        
         
         /** @overrides MediaSupport */
         getMediaFolder: () => 'agent',

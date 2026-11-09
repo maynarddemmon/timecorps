@@ -3,6 +3,9 @@
 	"scenarios":["origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario"],
 	
 	"initialOperation":"origin_story",
+	// The player's own agent. Agents of other factions aren't the player's to direct, even
+	// if marked playerControlled.
+	"playerAgent":"ME",
 	
 	// Groups of actions. An action joins one with its "group", and each group is shown on a line
 	// of its own, after an agent's other actions (a positive order) or before them (a negative one).
@@ -95,16 +98,15 @@
 	},
 	
 	// What carries from one game to the next. Each of the player's agents lost in any game, 
-	// devoured by chronovores or dead of their wounds, gives this agent these skills at the
-	// start of every new game, and leaves the Event they fell at haunted, in every game, by 
+	// devoured by chronovores or dead of their wounds, gives the playerAgent these skills at
+	// the start of every new game, and leaves the Event they fell at haunted, in every game, by 
 	// one of these hauntings under its description. Each game abandoned for a new one,
-	// however it was, adds these "restarted" credits to every new game, and if this agent
-	// was alive and not devoured, leaves the Event they were at glitched, by one of these
+	// however it was, adds these "restarted" credits to every new game, and if the 
+	// playerAgent was alive and not devoured, leaves the Event they were at glitched, by one of these
 	// glitches. Each game abandoned also leaves a pocket of chronal at every Event it left
 	// with paradox, other than hubs and chrono locked ones, 1 for each paradoxPerChronal 
 	// paradox, rounded up, for later games to gather. The ☠ button shows it all, and clears it.
 	"legacy":{
-		"agent":"ME",
 		"paradoxPerChronal":0.333,
 		"devoured":{"agent.skills.causalStability":3},
 		"died":{"agent.skills.luck":1},
@@ -503,10 +505,11 @@
 				"check":"Math.round(2500 * (agent.health.value / agent.health.max)) - 1250"
 			},
 			"adj":{
-				// A successful rest heals a d(4) per hour of the Event, up to 8 hours. With no
+				// A successful rest heals a d(4) per hour of the Event, up to 4 hours. With no
 				// check of its own the adj follows Rest's check, so a failed rest does nothing.
 				"agent.health":{
-					"onSuccess":"d(4, Math.min(8, event.duration / (1000 * 60 * 60)))"
+					"onSuccess":"d(4, Math.min(4, event.duration / (1000 * 60 * 60)))",
+					"onFailure":"1"
 				}
 			}
 		},
