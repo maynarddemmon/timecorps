@@ -1074,9 +1074,10 @@
                 this.doneCount = 0;
                 
                 // Applied after the other attrs so any warnings can name the action and its Event.
-                const {skillCheck, available, set, prompt, group} = attrs;
+                const {skillCheck, available, hiddenFor, set, prompt, group} = attrs;
                 delete attrs.skillCheck;
                 delete attrs.available;
+                delete attrs.hiddenFor;
                 delete attrs.set;
                 delete attrs.prompt;
                 delete attrs.group;
@@ -1085,6 +1086,7 @@
                 
                 this.setSkillCheck(skillCheck);
                 this.setAvailable(available);
+                this.setHiddenFor(hiddenFor);
                 this.setSet(set);
                 this.setPrompt(prompt);
                 this.setGroup(group);
@@ -1110,21 +1112,38 @@
                 "agent.health.value < agent.health.max". Unlike hidden, which is the same for
                 everyone at the Event, it's a check expression worked out per agent, so the
                 button can be disabled for one agent and not another. null for none. */
-            setAvailable: function(expr) {
-                if (expr == null || (typeof expr === 'string' && expr.trim() !== '')) {
-                    this.available = expr ?? null;
-                } else {
-                    console.warn('Event ' + this.event?.id + ' action ' + this.id + ': available must be a non-empty string (ignoring it):', expr);
-                    this.available = null;
-                }
-            },
+            setAvailable: function(expr) {this._setCheckExpr('available', expr);},
             getAvailable: function() {return this.available ?? null;},
+            
+            /*  An optional condition on the agent for hiding the action from them, e.g.
+                "agent.chronal.value <= agent.chronal.min". Like available, it's a check 
+                expression worked out per agent when Event Details is redrawn, so unlike hidden 
+                it isn't kept up to date by itself. null for none. */
+            setHiddenFor: function(expr) {this._setCheckExpr('hiddenFor', expr);},
+            getHiddenFor: function() {return this.hiddenFor ?? null;},
             
             /*  Whether the agent can take the action, by its available condition. Doesn't
                 look at whether the agent can pay its costs. */
             isAvailableFor: function(agentModel) {
                 const expr = this.getAvailable();
                 return expr == null || pkg.checks.isTrue(expr, {agent:agentModel, event:this.event});
+            },
+            
+            /*  Whether the action is hidden from the agent: if it's hidden, or by its hiddenFor
+                condition. */
+            isHiddenFor: function(agentModel) {
+                if (this.isHidden()) return true;
+                const expr = this.getHiddenFor();
+                return expr != null && pkg.checks.isTrue(expr, {agent:agentModel, event:this.event});
+            },
+            
+            _setCheckExpr: function(attrName, expr) {
+                if (expr == null || (typeof expr === 'string' && expr.trim() !== '')) {
+                    this[attrName] = expr ?? null;
+                } else {
+                    console.warn('Event ' + this.event?.id + ' action ' + this.id + ': ' + attrName + ' must be a non-empty string (ignoring it):', expr);
+                    this[attrName] = null;
+                }
             },
             
             setSkillCheck: function(cfg) {

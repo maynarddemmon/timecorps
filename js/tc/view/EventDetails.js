@@ -179,7 +179,7 @@
                             line = linesByGroupId[actionGroup.id];
                             if (!line) lines.push(line = linesByGroupId[actionGroup.id] = {order:actionGroup.order, label:actionGroup.label, actionModels:[]});
                         }
-                        if (actionModel.isNotHidden()) line.actionModels.push(actionModel);
+                        if (!actionModel.isHiddenFor(agentModel)) line.actionModels.push(actionModel);
                     }
                     
                     // The sort is stable, so a group with an order of 0 comes after the ungrouped line.

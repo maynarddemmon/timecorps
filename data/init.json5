@@ -510,12 +510,13 @@
 		
 		// Stray chronal: an agent can gather what an Event holds into their own, or release 
 		// theirs into it, a little at a time and taking no action, anywhere that isn't chrono 
-		// locked. Gather is hidden while the Event holds none.
+		// locked.
 		"_gatherChronal":{
 			"label":"Gather Chronal",
 			"group":"chronal",
-			"skillCheck":{"difficulty":"no-roll"},
+			"skillCheck":{"actionType":"chronogation", "difficulty":50},
 			"hidden":"event.chronoLocked",
+			"hiddenFor":"agent.skills.chronogation <= -500",
 			"available":"agent.chronal.value < agent.chronal.max",
 			"costs":{
 				"agent.action":null,
@@ -526,10 +527,9 @@
 		"_releaseChronal":{
 			"label":"Release Chronal",
 			"group":"chronal",
-			"skillCheck":{"difficulty":"no-roll"},
-			// Hidden is the same for everyone at the Event, so the agent's own chronal is for
-			// available.
+			"skillCheck":{"actionType":"chronogation", "difficulty":50},
 			"hidden":"event.chronoLocked",
+			"hiddenFor":"agent.skills.chronogation <= -500",
 			"available":"agent.chronal.value > agent.chronal.min && event.chronal.value < event.chronal.max",
 			"costs":{
 				"agent.action":null,
