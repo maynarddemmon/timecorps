@@ -38,7 +38,7 @@
                 colorParadox, colorParadoxDark, colorParadoxLight,
                 fontSizeLarge
             },
-            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
+            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
         
         BOX_TOP_OFFSET = TL_EVENT_BOX_Y_MARGIN + TL_TICK_LINE_HEIGHT,
@@ -581,7 +581,7 @@
         },
         
         updateEventBox = eventBox => {
-            const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar} = eventBox,
+            const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar, _chronalBar} = eventBox,
                 notHidden = model.isNotHidden();
             eventBox.eventId = model.id;
             
@@ -589,6 +589,7 @@
             _historicityBar.updateForStat(model[STAT_ID_HISTORICITY]);
             _attestationBar.updateForStat(model[STAT_ID_ATTESTATION]);
             _paradoxBar.updateForStat(model[STAT_ID_PARADOX]);
+            _chronalBar.updateForStat(model[STAT_ID_CHRONAL]);
             
             eventBox._media.setMedia(...model.getMediaUrls());
             
@@ -697,9 +698,10 @@
                 self._historicityBar = new pkg.HistoricityBar(self, {x:spacing, y:16, width:barWidth}, [MiniStatBar]);
                 self._attestationBar = new pkg.AttestationBar(self, {x:spacing, y:20, width:barWidth}, [MiniStatBar]);
                 self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:24, width:barWidth}, [MiniStatBar]);
+                self._chronalBar = new pkg.ChronalBar(self, {x:spacing, y:28, width:barWidth}, [MiniStatBar]);
                 
                 self._media = new pkg.MediaView(self, {
-                    y:31, width, height:width*0.40625, roundedCorners:0, visible:false
+                    y:35, width, height:width*0.40625, roundedCorners:0, visible:false
                 }, [{
                     doMediaReady: function() {this.setVisible(true);},
                     doMediaFailed: function() {this.setVisible(false);}
@@ -828,7 +830,7 @@
                 self.setOutline(outline);
                 self.setTextColor(textColor);
                 
-                for (const sv of [self._historicityBar, self._attestationBar, self._paradoxBar]) {
+                for (const sv of [self._historicityBar, self._attestationBar, self._paradoxBar, self._chronalBar]) {
                     sv?.setBgColor(barBgColor);
                 }
             },

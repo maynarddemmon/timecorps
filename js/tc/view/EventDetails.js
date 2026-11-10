@@ -339,6 +339,16 @@
             
             // Description
             row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:2});
+            self.descriptionMedia = new pkg.MediaView(row, {
+                percentOfParentWidth:100, roundedCorners:0
+            }, [SizeToParent, {
+                setWidth: function(v) {
+                    this.callSuper(v);
+                    this.setHeight(this.width*0.40625);
+                },
+                doMediaReady: function() {this.setVisible(true);},
+                doMediaFailed: function() {this.setVisible(false);}
+            }]);
             self.descriptionTxt = new PaddedText(row, {padding, whiteSpace:'normal'});
             
             new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:1});
@@ -411,6 +421,7 @@
                 
                 self.eventFacts.update(eventModel);
                 
+                self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
                 const descriptionTxt = self.descriptionTxt,
                     description = eventModel.getDescription(),
                     // An agent was lost here, or a game abandoned with the legacy agent here,

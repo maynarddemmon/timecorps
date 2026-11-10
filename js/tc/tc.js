@@ -279,11 +279,11 @@
                 TL_COL_WIDTH:120,
                 TL_COL_HEADER_HEIGHT:52,
                 TL_COL_SPACING:1,
-                TL_EVENT_BOX_HEIGHT:80,
+                TL_EVENT_BOX_HEIGHT:84,
                 TL_EVENT_BOX_Y_MARGIN:4,
                 TL_EVENT_BOX_X_MARGIN:4,
                 TL_TICK_LINE_HEIGHT:1,
-                TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET:32, // A few pixels below the progess bars in an EventBox.
+                TL_AGENT_TOKEN_FIRST_ROW_Y_OFFSET:36, // A few pixels below the progess bars in an EventBox.
                 
                 TL_AGENT_TOKEN_SIZE:0, // Set programatically below
                 TL_AGENTS_PER_ROW:0, // Set programmatically below
