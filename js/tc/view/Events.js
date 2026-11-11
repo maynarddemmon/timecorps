@@ -20,12 +20,12 @@
             theme:{padding, spacing, btnHeight},
             cfg:{STANDARD_DEBOUNCE_MILLIS},
             SCOPE_EVENTS,
-            I18N_HISTORICITY, I18N_ATTESTATION, I18N_PARADOX,
-            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX
+            I18N_HISTORICITY, I18N_ATTESTATION, I18N_PARADOX, I18N_CHRONAL,
+            STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX, STAT_ID_CHRONAL
         } = pkg,
         halfSpacing = spacing/2,
         
-        STAT_COL_IDS = [STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX],
+        STAT_COL_IDS = [STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_PARADOX, STAT_ID_CHRONAL],
         
         // The agents at an Event, as the timeline shows them: known agents, latest arrival first.
         getAgentsAt = eventModel => rootModel?.getAgentModelsForEvent(eventModel.id) ?? [],
@@ -40,6 +40,7 @@
         EventHistoricityBar = new JSClass('EventHistoricityBar', pkg.HistoricityBar, {include: [EventBar]}),
         EventAttestationBar = new JSClass('EventAttestationBar', pkg.AttestationBar, {include: [EventBar]}),
         EventParadoxBar = new JSClass('EventParadoxBar', pkg.ParadoxBar, {include: [EventBar]}),
+        EventChronalBar = new JSClass('EventChronalBar', pkg.ChronalBar, {include: [EventBar]}),
         
         /*  A marker for each agent at the Event. Clicking one selects the agent, and double
             clicking opens their dossier. */
@@ -89,6 +90,7 @@
                     case STAT_ID_HISTORICITY:
                     case STAT_ID_ATTESTATION:
                     case STAT_ID_PARADOX:
+                    case STAT_ID_CHRONAL:
                         cell.updateForStat(eventModel[colId]);
                         break;
                     default:
@@ -102,6 +104,7 @@
                     case STAT_ID_HISTORICITY: return EventHistoricityBar;
                     case STAT_ID_ATTESTATION: return EventAttestationBar;
                     case STAT_ID_PARADOX: return EventParadoxBar;
+                    case STAT_ID_CHRONAL: return EventChronalBar;
                     default: return this.callSuper(colId);
                 }
             },
@@ -140,6 +143,7 @@
                     new GridColHdr(gridHeader, {columnId:STAT_ID_HISTORICITY, text:I18N_HISTORICITY, ...barAttrs});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_ATTESTATION, text:I18N_ATTESTATION, ...barAttrs});
                     new GridColHdr(gridHeader, {columnId:STAT_ID_PARADOX,     text:I18N_PARADOX,     ...barAttrs});
+                    new GridColHdr(gridHeader, {columnId:STAT_ID_CHRONAL,     text:I18N_CHRONAL,     ...barAttrs});
                 },
                 doRowModelSelected: model => {
                     if (!isFollowing) self.fireEvent('selectionChanged', model);
@@ -165,6 +169,7 @@
                         case STAT_ID_HISTORICITY:
                         case STAT_ID_ATTESTATION:
                         case STAT_ID_PARADOX:
+                        case STAT_ID_CHRONAL:
                             return byNumber(eventModel => eventModel[sortColumnId].getValue());
                         default:
                             return this.callSuper(sortColumnId, ascending, tieBreakerSortFunc);

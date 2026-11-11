@@ -14,7 +14,8 @@ const grid = page => page.locator('.myt-Events'),
                 id:row.model.id,
                 name:row.getRef('name').text,
                 agents:row.getRef('agents').getSubviews().filter(sv => sv.model).map(sv => sv.model.id),
-                attestation:row.getRef('attestation').value
+                attestation:row.getRef('attestation').value,
+                chronal:row.getRef('chronal').value
             }));
     }),
     // The known Events, in the grid's order.
@@ -42,10 +43,32 @@ test('the events tab lists the known Events by start, with the agents at them, a
     await page.evaluate(() => {
         const m = tc.model;
         m.getEventModel('aftermath').attestation.setValue(30);
+        m.getEventModel('aftermath').chronal.setValue(3);
         m.getAgentModel('AL').doFollowExit(m.getEventModel('origin').getExitModels().find(exit => exit.to === 'aftermath'));
     });
-    await expect.poll(async () => (await readRows(page)).find(row => row.id === 'aftermath')).toMatchObject({agents:['AL'], attestation:30});
+    await expect.poll(async () => (await readRows(page)).find(row => row.id === 'aftermath')).toMatchObject({agents:['AL'], attestation:30, chronal:3});
     expect((await readRows(page)).find(row => row.id === 'origin').agents).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('the events tab has a chronal column, sortable like the others', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {
+        const m = tc.model;
+        m.getEventModel('aftermath').attestation.setValue(30);
+        m.getEventModel('aftermath').chronal.setValue(2);
+        m.getEventModel('finale').chronal.setValue(4);
+    });
+    await showTab(page, 'Events');
+    await expect.poll(async () => (await readRows(page)).length).toBe(4);
+    
+    // Sorted by chronal, one way and then the other.
+    const header = grid(page).getByText(await page.evaluate(() => tc.I18N_CHRONAL), {exact:true}),
+        chronals = async () => (await readRows(page)).map(row => row.chronal);
+    await header.click();
+    await expect.poll(chronals).toEqual([0, 0, 2, 4]);
+    await header.click();
+    await expect.poll(chronals).toEqual([4, 2, 0, 0]);
     expect(problems.pageErrors).toEqual([]);
 });
 
