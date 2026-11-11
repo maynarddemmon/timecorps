@@ -227,7 +227,10 @@
 			},
 			"description":[
 				"Your alarm goes off at seven, the way it does every day, and the city outside your window is grey and wet and entirely ordinary.",
-				"<br><br>You have an hour before the bus. Nothing about today is going to be any different from any other day."
+				"<br><br>You have an hour before the bus. Nothing about today is going to be any different from any other day.",
+				{"text":"Three miles along the river before breakfast, the way you do most mornings.", "shown":"scratch.backstory_run"},
+				{"text":"An hour on the guitar, working at a passage you’ve never quite got.", "shown":"scratch.backstory_guitar"},
+				{"text":"Coffee and the news, every word of it, with opinions.", "shown":"scratch.backstory_news"}
 			]
 		},
 		
@@ -271,7 +274,8 @@
 		},
 		
 		"origin_back_home":{
-			"name":"Your Apartment", "title":"", "chronoLocked":"true", "image":"../location/origin_home.jpg",
+			"name":"Your Apartment", "title":"", "chronoLocked":"true",
+			"imageExpr":"'origin_back_home_' + event.values.bike_broken.value + '.jpg'",
 			"start":{"endOf":"origin_bus_stop", "m":3}, "duration":{"m":15},
 			"location":"origin_home",
 			"actionLimit":1,
