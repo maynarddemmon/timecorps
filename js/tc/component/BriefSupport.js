@@ -1,9 +1,7 @@
 (pkg => {
     'use strict';
     
-    const {I18N:{get:i18n}} = myt,
-        
-        M = myt,
+    const {I18N:{get:i18n}, SpacedLayout, SizeToParent} = myt,
         
         {
             WideView, DetailRow,
@@ -26,7 +24,8 @@
                 there's no photo, for dialogs that put other views beside the photo.
         
         A brief can also put a summary of the model between the photo and the field notes 
-        with setBriefSummaryView, and add rows of its own below the report with addProfileRow.
+        with setBriefSummaryView, and add rows of its own below the report with addProfileRow
+        (text) or addProfileContainerRow (views).
         
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
@@ -70,7 +69,7 @@
             if (photoWidth > 0) {
                 photoAttrs.width = photoWidth;
             } else {
-                photoMixins.unshift(M.SizeToParent);
+                photoMixins.unshift(SizeToParent);
                 photoAttrs.percentOfParentWidth = 100;
                 photoAttrs.percentOfParentWidthOffset = -padding;
             }
@@ -99,7 +98,7 @@
             profileViewValue.setFontFamily(fontFamilyMono);
             profileViewValue.setFontSize(fontSizeMedium);
             
-            new M.SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
+            new SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
             
             self._placeContent();
             
@@ -129,6 +128,25 @@
             valueView.setFontFamily(fontFamilyMono);
             valueView.setFontSize(fontSizeMedium);
             return row;
+        },
+        
+        /*  Adds a labeled row below the field notes, report and any rows already added, for 
+            views rather than text. Returns the view to add them to: they're stacked top down
+            and it grows to fit them, and the row with it. */
+        addProfileContainerRow: function(label) {
+            const row = new DetailRow(this._profileContainer, {labelWidth:this._profileLabelWidth, label}),
+                valueView = row.getValueView(),
+                labelHeight = row.height;
+            valueView.setVisible(false);
+            
+            const content = new WideView(row, {x:valueView.x, percentOfParentWidthOffset:-valueView.x}, [{
+                setHeight: function(v) {
+                    this.callSuper(v);
+                    row.setHeight(Math.max(labelHeight, this.height));
+                }
+            }]);
+            new SpacedLayout(content, {axis:'y', inset:padding / 2, spacing:padding, outset:padding / 2, collapseParent:true});
+            return content;
         },
         
         /*  Puts the view below the photo, or the photo's space, with the field notes and 

@@ -172,6 +172,14 @@
             return idx === undefined ? '' : phrases[idx % phrases.length];
         },
         
+        /*  The line under an Event's description if an agent was lost there, in any game, or
+            ''. */
+        getHaunting = eventId => cfg ? getPhrase(cfg.hauntings, 'haunted', eventId) : '',
+        
+        /*  The line under an Event's description if a game was abandoned with the legacy 
+            agent there, alive, in any game, or ''. */
+        getGlitch = eventId => cfg ? getPhrase(cfg.glitches, 'glitched', eventId) : '',
+        
         /*  The total each skill gains from what's accrued, as [[skillId, amount], …], leaving
             out any that add up to nothing. */
         getBonuses = record => {
@@ -304,13 +312,8 @@
             agentModel.setSkills(skills);
         },
         
-        /*  The line under an Event's description if an agent was lost there, in any game, or
-            ''. */
-        getHaunting: eventId => cfg ? getPhrase(cfg.hauntings, 'haunted', eventId) : '',
-        
-        /*  The line under an Event's description if a game was abandoned with the legacy 
-            agent there, alive, in any game, or ''. */
-        getGlitch: eventId => cfg ? getPhrase(cfg.glitches, 'glitched', eventId) : '',
+        getHaunting,
+        getGlitch,
         
         /*  What's accrued, for showing: {devoured, died, restarted, hauntedCount, 
             glitchedCount, pocketCount, agentModel, bonuses:[[skillId, amount],
@@ -358,6 +361,11 @@
         getPocket: eventId => readRecord().pockets[eventId] ?? 0,
         
         LOSS_DEVOURED,
-        LOSS_DIED
+        LOSS_DIED,
+        
+        getLegacyDescriptionForEventId: eventId => {
+            const legacyLines = [getHaunting(eventId), getGlitch(eventId)].filter(Boolean);
+            return (legacyLines.length > 0 ? '<br><br>' : '') + legacyLines.map(line => '<i>' + line + '</i>').join('<br><br>');
+        }
     };
 })(tc);

@@ -94,7 +94,9 @@ JS.Packages(file => {
         'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow','tc.TallView',
         'tc.ChronalBar','tc.ParadoxBar','tc.HealthBar','tc.SkillBar'
     );
-    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires(
+        'tc.ModalDialog','tc.BriefSupport','tc.WideView','tc.UnderlineBtn','tc.MediaView','tc.legacy'
+    );
     file(VIEW_ROOT + 'FactionBrief.js').provides('tc.FactionBrief').requires('tc.ModalDialog','tc.BriefSupport');
     file(VIEW_ROOT + 'EventBrief.js').provides('tc.EventBrief').requires(
         'tc.ModalDialog','tc.BriefSupport','tc.EventFacts'

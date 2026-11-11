@@ -423,11 +423,8 @@
                 
                 self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
                 const descriptionTxt = self.descriptionTxt,
-                    description = eventModel.getDescription(),
-                    // An agent was lost here, or a game abandoned with the legacy agent here,
-                    // in this game or an earlier one.
-                    legacyLines = [pkg.legacy.getHaunting(eventModel.id), pkg.legacy.getGlitch(eventModel.id)].filter(Boolean);
-                descriptionTxt.setText((description || i18n('event-no-description')) + legacyLines.map(line => '<br><br><i>' + line + '</i>').join(''));
+                    description = eventModel.getDescription();
+                descriptionTxt.setText((description || i18n('event-no-description')) + pkg.legacy.getLegacyDescriptionForEventId(eventModel.id));
                 descriptionTxt.setFontStyle(description ? null : 'italic');
                 
                 const causatorsRow = self.causatorsRow;

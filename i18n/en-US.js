@@ -89,11 +89,13 @@ myt.I18N.setDictionary({
 "brief-title":"$0 : $1",
 "brief-report":"Report",
 "brief-field-notes":"Field Notes",
+"brief-chronology":"Chronology",
 
 // Dialog Controls
 "tip-previous":"Previous",
 "tip-next":"Next",
 "tip-open-area-brief":"Open the area brief",
+"tip-chronology-event":"Open the event brief. Shift click to select the event on the timeline.",
 
 // Stats
 "stat-verbose-template":"Current Value: {value}{ICON_SEPARATOR}Max Value: {max}",
