@@ -255,7 +255,7 @@ myt.I18N.setDictionary({
 "tip-no-last-event":"No last Event to select.",
 "tip-no-next-event":"No next Event to select.",
 "bar-event-chronal-label":"Stray {label}: {value} / {max}",
-"bar-hq-pool-label":"HQ {label} Pool: {value} / {max}",
+"bar-pool-label":"{label} Pool: {value} / {max}",
 "event-none-selected":"Select a historical event in the timeline to see more about it here.",
 "event-agent-activity":"Agent Activity",
 "event-causators":"Causators",

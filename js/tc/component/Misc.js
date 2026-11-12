@@ -111,6 +111,16 @@
             }
         });
     
+    pkg.InlineMixin = new JSModule('InlineMixin', {
+        initNode: function(parent, attrs) {
+            this.callSuper(parent, attrs);
+            
+            const ids = this.getIDS();
+            ids.position = 'relative';
+            ids.display = 'inline';
+        }
+    });
+    
     pkg.Spacer = new JSClass('Spacer', View, {
         initNode: function(parent, attrs) {
             attrs.layoutHint ??= 1;

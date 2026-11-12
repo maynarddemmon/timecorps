@@ -2,21 +2,24 @@
     'use strict';
     
     const M = myt,
-        {I18N:{get:i18n}, PaddedPlainText, WrappingLayout, SpacedLayout, global:{keys:globalKeys}} = M,
+        {I18N:{get:i18n}} = M,
         
         {
-            WideView, UnderlineBtn, MediaView, TextForFlow,
+            WideView, InlineMixin,
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
-            theme:{padding, fontSizeMedium, fontFamilyMono},
-            ICON_SEPARATOR
+            theme:{padding, fontSizeMedium}
         } = pkg,
         
         resolveUrl = path => new URL(path, document.baseURI).href,
         
         /*  The known Events at a Location, earliest first. */
-        getChronology = locationModel => pkg.model.getEventModelsAsList(
-            eventModel => eventModel.getLocation() === locationModel.id && eventModel.isNotHidden()
-        ).sort((a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id)),
+        CHRONOLOGY_SORT_FUNC = (a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id),
+        getChronology = locationModel => {
+            const locationId = locationModel.id;
+            return pkg.model.getEventModelsAsList(
+                eventModel => eventModel.getLocation() === locationId && eventModel.isNotHidden()
+            ).sort(CHRONOLOGY_SORT_FUNC);
+        },
         
         /*  An Event in an Area Brief's chronology: its name and when it happens, laid out like
             the location line in Event Details, then its picture and description. The name
@@ -30,25 +33,24 @@
                 
                 self.callSuper(parent, attrs);
                 
-                const line = new WideView(self);
-                self._nameBtn = new UnderlineBtn(line, {
+                const line = new WideView(self, {height:18});
+                self._nameBtn = new pkg.UnderlineBtn(line, {
                     fontSize:fontSizeMedium, tooltip:i18n('tip-chronology-event')
-                }, [{doActivated: () => {
+                }, [InlineMixin, {doActivated: () => {
                     const eventModel = self.eventModel;
-                    if (globalKeys.isShiftKeyDown()) {
+                    if (M.global.keys.isShiftKeyDown()) {
                         pkg.app.selectEventBox(eventModel, true);
                         brief.hide();
                     } else {
                         pkg.app.openEventBrief(eventModel, true);
                     }
                 }}]);
-                self._whenTxt = new PaddedPlainText(line, {fontSize:fontSizeMedium});
-                new WrappingLayout(line, {collapseParent:true});
+                self._whenTxt = new M.PaddedPlainText(line, {fontSize:fontSizeMedium}, [InlineMixin]);
                 
                 // Hidden unless the Event has a picture. As wide as the text, at the timeline's
                 // proportions.
-                self._media = new MediaView(self, {
-                    percentOfParentWidth:100, roundedCorners:0, visible:false
+                self._media = new pkg.MediaView(self, {
+                    percentOfParentWidth:100, visible:false
                 }, [M.SizeToParent, {
                     setWidth: function(v) {
                         this.callSuper(v);
@@ -58,12 +60,12 @@
                     doMediaFailed: function() {this.setVisible(false);}
                 }]);
                 
-                self._descriptionTxt = new TextForFlow(self, {
+                self._descriptionTxt = new pkg.TextForFlow(self, {
                     whiteSpace:'normal', percentOfParentWidth:100,
                     fontSize:fontSizeMedium
                 }, [M.SizeToParent]);
                 
-                new SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
+                new M.SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
             },
             
             update: function(eventModel) {
@@ -73,11 +75,10 @@
                     description = eventModel.getDescription() || '';
                 self.eventModel = eventModel;
                 
-                whenTxt.setText(ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
+                whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
                 
                 // As tall as the text beside it, as in EventFacts.
                 nameBtn.setText(eventModel.getName());
-                nameBtn.sizeViewToDom();
                 nameBtn.setHeight(whenTxt.height);
                 
                 // Given the media it already has, it doesn't reload.
@@ -124,22 +125,27 @@
         /** @overrides BriefSupport */
         setBriefModel: function(model) {
             this.callSuper(model);
-            this.updateChronology();
+            this._updateChronology();
         },
         
         
         // Methods /////////////////////////////////////////////////////////////
         /*  Called when an Event changes, which may be one in the chronology, or one that
-            joins or leaves it. */
+            joins or leaves it. It's called for every Event change, so the update is debounced,
+            but each change is checked: a debounced call only sees the last change's Event, 
+            which may be at another location. */
         notifyEventModelChanged: function(eventModel) {
             const locationModel = this.briefModel;
-            if (this.visible && locationModel && eventModel.getLocation() === locationModel.id) this.updateChronology();
+            if (this.visible && locationModel && eventModel.getLocation() === locationModel.id) this._updateChronologyDebounced();
         },
+        
+        /** @private */
+        _updateChronologyDebounced: M.debounce(function() {this._updateChronology();}, 250),
         
         /*  Shows the known Events at the Location. The entries are kept, and only updated,
             while the same Events are known, so their pictures don't reload. The row is
             hidden when there are none. */
-        updateChronology: function() {
+        _updateChronology: function() {
             const self = this,
                 locationModel = self.briefModel,
                 chronologyView = self._chronologyView,

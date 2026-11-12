@@ -22,9 +22,7 @@
                 colorUltraLight, colorLight, colorMegaDark,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ,
-            ICON_THE_VOID,
-            STAT_ID_CHRONAL
+            ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ, ICON_THE_VOID
         } = pkg,
         
         // Agent Row
@@ -316,12 +314,6 @@
             // Time & Place, Status Bars
             self.eventFacts = new pkg.EventFacts(detailsContainer);
             
-            // The stray chronal it holds, which at an HQ is the pool agents reload from.
-            self.chronalBar = new pkg.ChronalBar(detailsContainer, {
-                x:spacing, percentOfParentWidth:100, percentOfParentWidthOffset:-2*spacing,
-                visible:false
-            }, [SizeToParent, pkg.BigStatBar]);
-            
             new View(detailsContainer, {height:2}); // Spacer.
             
             // Agents
@@ -373,13 +365,15 @@
         // Methods /////////////////////////////////////////////////////////////
         notifyEventSelectedChanged: function(eventBox) {
             this.eventModel = eventBox?.model ?? null;
-            this.updateForEventModel();
+            this._updateForEventModel();
         },
         
         /*  The HQ and The Void buttons show once those Events are revealed, so a change to
             either updates them too. */
         notifyEventModelChanged: function(eventModel) {
-            if (eventModel && (this.eventModel === eventModel || eventModel.isHQ() || eventModel.isTheVoid())) this.updateForEventModel();
+            if (eventModel && (this.eventModel === eventModel || eventModel.isHQ() || eventModel.isTheVoid())) {
+                this._updateForEventModel();
+            }
         },
         
         notifyAgentSelectedChanged: function(agentModel) {
@@ -395,39 +389,31 @@
             histNextBtn.setTooltip(nextBtnTooltip);
         },
         
-        updateForEventModel: debounce(function() {
+        _updateForEventModel: debounce(function() {
             const self = this,
-                {eventModel, detailsContainer} = self,
+                eventModel = self.eventModel,
                 hasModel = eventModel != null;
             
             self.noSelectionTxt.setVisible(!hasModel);
-            detailsContainer.setVisible(hasModel);
+            self.detailsContainer.setVisible(hasModel);
             self.scrollToBtn.setDisabled(!hasModel || eventModel.isHidden());
             
             if (hasModel) {
-                // Shown where chronal can be held and moved: at an HQ, and at any Event that 
-                // isn't chrono locked and can hold some, or does.
-                const chronalBar = self.chronalBar,
-                    chronalStat = eventModel[STAT_ID_CHRONAL],
-                    isHQ = eventModel.isHQ();
-                chronalBar.setVisible(isHQ || (chronalStat.max > 0 && eventModel.isNotChronoLocked()) || chronalStat.value > 0);
-                chronalBar.setLabelTemplate(i18n(isHQ ? 'bar-hq-pool-label' : 'bar-event-chronal-label'));
-                chronalBar.updateForStat(chronalStat);
-                
-                self.theVoidBtn.setDisabled(eventModel.isTheVoid());
-                self.theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
-                
                 Layout.incrementGlobalLock();
+                
+                const {theVoidBtn, descriptionTxt, causatorsRow, agentsRow} = self;
+                theVoidBtn.setDisabled(eventModel.isTheVoid());
+                theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
                 
                 self.eventFacts.update(eventModel);
                 
+                // Description
                 self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
-                const descriptionTxt = self.descriptionTxt,
-                    description = eventModel.getDescription();
+                const description = eventModel.getDescription();
                 descriptionTxt.setText((description || i18n('event-no-description')) + pkg.legacy.getLegacyDescriptionForEventId(eventModel.id));
                 descriptionTxt.setFontStyle(description ? null : 'italic');
                 
-                const causatorsRow = self.causatorsRow;
+                // Causators
                 causatorsRow.getContentView().destroyAllSubviews();
                 let addedCount = 0;
                 for (const valueModel of Object.values(eventModel.getValueModels())) {
@@ -442,7 +428,7 @@
                     });
                 }
                 
-                const agentsRow = self.agentsRow;
+                // Agents
                 agentsRow.getContentView().destroyAllSubviews();
                 addedCount = 0;
                 for (const agentModel of eventModel.getAgentModels()) {

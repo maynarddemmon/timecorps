@@ -37,7 +37,7 @@ const readChronal = (page, eventIds) => page.evaluate(eventIds => Object.fromEnt
     // null if it isn't shown. The bar catches up after the selection, so poll it.
     selectEvent = (page, eventId) => page.evaluate(eventId => tc.app.selectEventBox(eventId), eventId),
     readBar = page => page.evaluate(() => {
-        const bar = tc.app.getEventDetailsView().chronalBar;
+        const bar = tc.app.getEventDetailsView().eventFacts._chronalBar;
         return bar.visible ? bar.getIDE().textContent.replace(/\s+/g, ' ').trim() : null;
     });
 
@@ -68,7 +68,7 @@ test('an action can add to its Event\'s and its agent\'s HQ\'s chronal, which is
     // An HQ's is its pool. Any other Event's shows where it can be moved, so not where it's
     // chrono locked, unless it holds some.
     await selectEvent(page, 'time_corps_hq');
-    await expect.poll(() => readBar(page)).toMatch(/^HQ .* Pool: 30 \/ 100$/);
+    await expect.poll(() => readBar(page)).toMatch(/^.* Pool: 30 \/ 100$/);
     await selectEvent(page, 'origin');
     await expect.poll(() => readBar(page)).toMatch(/^Stray .*: 1 \/ 5$/);
     await selectEvent(page, 'aftermath');

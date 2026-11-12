@@ -8,12 +8,13 @@ const areaBrief = page => page.locator('.myt-AreaBrief'),
 
     openDeckBrief = page => page.evaluate(() => {tc.app.openAreaBrief(tc.model.getEventModel('origin').getLocationModel());}),
 
-    // Each entry's name, and when it happens.
+    // Each entry's name, and when it happens, from its first line: "<name> · <when>".
     readEntries = page => page.evaluate(() => [...document.querySelectorAll('.myt-AreaBrief .myt-ChronologyEntry')]
         .filter(el => el.offsetParent !== null)
         .map(el => {
-            const [name, when] = el.innerText.split('\n').map(line => line.trim()).filter(Boolean);
-            return {name, when};
+            const line = el.innerText.split('\n')[0],
+                idx = line.indexOf(tc.ICON_SEPARATOR.trim());
+            return {name:line.slice(0, idx).trim(), when:line.slice(idx).trim()};
         })),
 
     entryName = (page, name) => areaBrief(page).locator('.myt-ChronologyEntry').getByText(name, {exact:true});
@@ -31,8 +32,12 @@ test('the chronology lists the known Events at the location, earliest first, and
     expect(origin.when).toBe(originWhen.trim());
     await expect(areaBrief(page).getByText('Chronology', {exact:true})).toBeVisible();
 
-    // Revealing Lever adds it in time order, while it's open.
-    await page.evaluate(() => tc.model.getEventModel('lever').attestation.setValue(50));
+    // Revealing Lever adds it in time order, while it's open, even when an Event somewhere 
+    // else changes right after.
+    await page.evaluate(() => {
+        tc.model.getEventModel('lever').attestation.setValue(50);
+        tc.model.getEventModel('relay').attestation.setValue(5);
+    });
     await expect.poll(async () => (await readEntries(page)).map(entry => entry.name)).toEqual(['Lever', 'Origin', 'Aftermath']);
 
     // Each has its description.
