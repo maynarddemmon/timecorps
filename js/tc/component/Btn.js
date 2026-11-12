@@ -4,11 +4,10 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {PaddedText} = M,
         
-        {spacing, padding, btnHeight, colorBtnLight, colorAction} = pkg.theme,
+        {theme:{padding, btnHeight, colorBtnLight}} = pkg,
         
-        Btn = pkg.Btn = new JSClass('Btn', PaddedText, {
+        Btn = pkg.Btn = new JSClass('Btn', M.PaddedText, {
             include: [M.Button],
             
             
@@ -59,7 +58,16 @@
                 attrs.textColor ??= colorBtnLight;
                 attrs.paddingLeft ??= 0;
                 attrs.paddingRight ??= 0;
-                
+                this.callSuper(parent, attrs);
+            }
+        }),
+        
+        InlineUnderlineBtn = pkg.InlineUnderlineBtn = new JSClass('InlineUnderlineBtn', UnderlineBtn, {
+            include: [pkg.InlineTextHeightMixin],
+            
+            initNode: function(parent, attrs) {
+                attrs.paddingTop ??= 0;
+                attrs.paddingBottom ??= 0;
                 this.callSuper(parent, attrs);
             }
         }),
@@ -85,14 +93,6 @@
                 }
             }
         });
-    
-    pkg.UnderlineActionBtn = new JSClass('UnderlineActionBtn', UnderlineBtn, {
-        initNode: function(parent, attrs) {
-            attrs.textColor ??= colorAction;
-            this.callSuper(parent, attrs);
-            this.addDomClass('action');
-        }
-    });
     
     pkg.AgentBtn = new JSClass('AgentBtn', M.View, {
         initNode: function(parent, attrs) {
@@ -162,14 +162,11 @@
         
         Attributes:
             navEventModel:EventModel - The Event to select. */
-    const EventNavBtn = new JSClass('EventNavBtn', UnderlineBtn, {
+    const EventNavBtn = new JSClass('EventNavBtn', InlineUnderlineBtn, {
         include: [EventNavHover],
         
         initNode: function(parent, attrs) {
             attrs.text ??= attrs.navEventModel.name + ' ' + pkg.ICON_NAV_FORWARD;
-            attrs.paddingTop ??= 0;
-            attrs.paddingBottom ??= 0;
-            attrs.height ??= 15;
             this.callSuper(parent, attrs);
         },
         
@@ -177,12 +174,13 @@
     });
     
     pkg.EventLinkFlow = new JSClass('EventLinkFlow', pkg.WideView, {
+        include: [M.SizeHeightToDom],
+        
         initNode: function(parent, attrs) {
             // Inset by padding on the right, wherever it starts on the left.
             attrs.x ??= padding;
             attrs.percentOfParentWidthOffset ??= -attrs.x - padding;
             this.callSuper(parent, attrs);
-            new M.WrappingLayout(this, {spacing, lineSpacing:0, collapseParent:true});
         },
         
         /*  Shows the label and a nav button for each Event. Hides itself if there are none. */
@@ -191,9 +189,9 @@
                 hasModels = models.length > 0;
             self.destroyAllSubviews();
             if (hasModels) {
-                new PaddedText(self, {text:label});
+                new pkg.InlinePlainText(self, {text:label});
                 models.forEach((model, idx) => {
-                    if (idx > 0) new PaddedText(self, {text:pkg.ICON_SEPARATOR});
+                    if (idx > 0) new pkg.InlineSeparator(self);
                     new EventNavBtn(self, {
                         navEventModel:extractEventFunc ? extractEventFunc(model) : model, 
                         text:textFunc?.(model)
@@ -201,6 +199,7 @@
                 });
             }
             self.setVisible(hasModels);
+            self.sizeViewToDom();
         }
     });
 })(tc);

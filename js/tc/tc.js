@@ -30,10 +30,11 @@
         ),
         
         // Util //
-        wrapInStyledSpan = (txt, color, fontFamily) => {
+        wrapInStyledSpan = (txt, color, fontFamily, fontSize) => {
             let css = '';
             if (color) css += 'color:' + color + ';';
             if (fontFamily) css += 'font-family:' + fontFamily + ';';
+            if (fontSize) css += 'font-size:' + fontSize + ';';
             return '<span style="' + css + '">' + txt + '</span>';
         },
         
@@ -146,9 +147,6 @@
                 fontSizeHuge:'24px',
                 
                 fontFamilyMono:'SpaceMono',
-                
-                fontFamilyHandwritten:'RockSalt',
-                fontSizeHandwritten:'13px',
                 
                 colorMegaDark:'#310',
                 colorUltraDark:'#420',

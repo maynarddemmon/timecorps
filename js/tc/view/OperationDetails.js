@@ -8,7 +8,7 @@
         {PaddedText, PaddedPlainText, SizeToParent, Layout, SpacedLayout} = myt,
         
         {
-            UnderlineBtn, WideView, MiniPanel, GrandWidthMixin,
+            UnderlineBtn, WideView, MiniPanel, GrandWidthMixin, InlinePlainText,
             theme:{
                 spacing, padding,
                 colorUltraLight, colorMegaDark, colorSuccess, colorError,
@@ -72,7 +72,7 @@
                 const self = this,
                     objectiveModel = self.objectiveModel;
                 self.nameTxt.setText(objectiveModel.getName());
-                self.descriptionTxt.setText(objectiveModel.getDescription());
+                self.descriptionTxt.setText(objectiveModel.getFullDescription());
                 self.successView.setSuccess(objectiveModel.isSuccess());
                 
                 const precursorsFlow = self.precursorsFlow,
@@ -82,9 +82,10 @@
                     knownLen = knownPrecursors.length;
                 precursorsFlow.update(label, knownPrecursors, getPrecursorText, precursorModel => precursorModel.eventModel);
                 if (precursors.length > knownLen) {
-                    new PaddedText(precursorsFlow, {text:knownLen === 0 ? label : ICON_SEPARATOR});
-                    new PaddedText(precursorsFlow, {text:i18n('objective-unknown'), fontStyle:'italic'});
+                    new InlinePlainText(precursorsFlow, {text:knownLen === 0 ? label : ICON_SEPARATOR});
+                    new InlinePlainText(precursorsFlow, {text:i18n('objective-unknown'), fontStyle:'italic'});
                     precursorsFlow.setVisible(true);
+                    precursorsFlow.sizeViewToDom();
                 }
             }
         });

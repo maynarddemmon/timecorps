@@ -9,21 +9,21 @@ JS.Packages(file => {
     file(TC_ROOT + 'timeUtil.js').provides('tc.timeUtil').requires('tc');
     
     // Component //
+    file(COMPONENT_ROOT + 'Misc.js').provides(
+        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue',
+        'tc.CompactField','tc.CompactFieldRow','tc.TallView','tc.InlineMixin'
+    ).requires('tc');
     file(COMPONENT_ROOT + 'AgentMarker.js').provides(
         'tc.SimpleAgentMarker','tc.SimpleAgentGridMarker'
     ).requires('tc');
     file(COMPONENT_ROOT + 'Btn.js').provides(
         'tc.Btn','tc.AgentBtn','tc.SquareBtn','tc.UnderlineBtn','tc.EventNavHover','tc.EventLinkFlow'
-    ).requires('tc.SimpleAgentMarker','tc.WideView');
+    ).requires('tc.SimpleAgentMarker','tc.WideView','tc.InlineMixin');
     file(COMPONENT_ROOT + 'Grid.js').provides('tc.InfiniteGridWrapper').requires('tc.Btn');
     file(COMPONENT_ROOT + 'ProgressBars.js').provides(
         'tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar','tc.ChronalBar',
         'tc.HealthBar','tc.SkillBar','tc.MiniStatBar','tc.BigStatBar'
     ).requires('tc.UnderlineBtn');
-    file(COMPONENT_ROOT + 'Misc.js').provides(
-        'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue',
-        'tc.CompactField','tc.CompactFieldRow','tc.TallView'
-    ).requires('tc');
     file(COMPONENT_ROOT + 'MediaView.js').provides('tc.MediaView').requires('tc');
     file(COMPONENT_ROOT + 'EventFacts.js').provides('tc.EventFacts').requires(
         'tc.WideView','tc.UnderlineBtn','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
@@ -85,7 +85,7 @@ JS.Packages(file => {
     );
     file(VIEW_ROOT + 'EventDetails.js').provides('tc.EventDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.AgentBtn',
-        'tc.SimpleAgentMarker','tc.EventFacts','tc.EventLinkFlow'
+        'tc.SimpleAgentMarker','tc.EventFacts','tc.EventLinkFlow','tc.InlineMixin'
     );
     file(VIEW_ROOT + 'OperationDetails.js').provides('tc.OperationDetails').requires(
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventLinkFlow'

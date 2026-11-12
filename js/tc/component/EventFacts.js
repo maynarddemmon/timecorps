@@ -1,10 +1,9 @@
 (pkg => {
     'use strict';
     
-    const M = myt,
-        {I18N:{get:i18n}} = M,
+    const {I18N:{get:i18n}} = myt,
         
-        {WideView, InlineMixin, theme:{spacing, fontSizeMedium}} = pkg;
+        {WideView, theme:{spacing, fontSizeMedium}} = pkg;
     
     /*  An Event's place, time and stats, laid out the same in Event Details and the Event 
         Brief: a line with the Event's location, which opens its Area Brief, and when the 
@@ -22,20 +21,20 @@
                 barBgColor = attrs.barBgColor;
             delete attrs.barBgColor;
             
-            attrs.height ??= 36;
+            attrs.height ??= 37;
             
             self.callSuper(parent, attrs);
             
             const whereWhen = new WideView(self, {x:spacing, percentOfParentWidthOffset:-2*spacing});
-            self._whereBtn = new pkg.UnderlineBtn(whereWhen, {
+            self._whereBtn = new pkg.InlineUnderlineBtn(whereWhen, {
                 fontSize:fontSizeMedium, tooltip:i18n('tip-open-area-brief')
-            }, [InlineMixin, {doActivated: () => {
+            }, [{doActivated: () => {
                 const locationModel = self.eventModel?.getLocationModel();
                 if (locationModel) pkg.app.openAreaBrief(locationModel);
             }}]);
-            self._whenTxt = new M.PaddedPlainText(whereWhen, {fontSize:fontSizeMedium}, [InlineMixin]);
+            self._whenTxt = new pkg.InlinePlainText(whereWhen, {fontSize:fontSizeMedium});
             
-            const row = new pkg.Row(self, {y:18, height:18, inset:spacing}),
+            const row = new pkg.Row(self, {y:19, height:18, inset:spacing}),
                 barAttrs = {y:12, layoutHint:3};
             if (barBgColor) barAttrs.bgColor = barBgColor;
             self._historicityBar = new pkg.HistoricityBar(row, {...barAttrs});

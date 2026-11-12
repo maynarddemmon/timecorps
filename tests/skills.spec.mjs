@@ -77,7 +77,7 @@ test('a skill point costs a credit and an action, and can only be bought at HQ, 
     expect(out.maxPrice).toEqual({points:1, credits:10});
     expect(out.toMax).toEqual({problem:null, bought:true, skill:1000, credits:4});
     expect(out.atMax).toEqual({problem:'At its maximum', bought:false, skill:1000, credits:4});
-    expect(out.civilian).toEqual({problem:'Not taking direction from you', bought:false, skill:50, credits:4});
+    expect(out.civilian).toEqual({problem:'Not taking direction from you.', bought:false, skill:50, credits:4});
     expect(out.dead).toEqual({problem:'Deceased', bought:false, skill:50, credits:4});
     expect(problems.pageErrors).toEqual([]);
 });

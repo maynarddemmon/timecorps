@@ -24,7 +24,10 @@ const noRoll = (label, group) => ({label, group, skillCheck:{difficulty:'no-roll
     readLines = page => page.evaluate(() => {
         tc.app.selectEventBox('origin');
         const agentRow = [...document.querySelectorAll('.myt-EventDetails .myt-AgentRow')].find(row => row.textContent.includes('Alpha'));
-        return [...agentRow.querySelectorAll('.myt-AgentRowFlow')].map(line => line.textContent.replace(/\u00A0/g, ' ').trim());
+        // The lines flow as text, each ended by a line break, in the view that holds the 
+        // action buttons.
+        const linesView = agentRow.querySelector('.action').parentElement;
+        return linesView.innerText.replace(/\u00A0/g, ' ').split('\n').map(line => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
     });
 
 test('grouped actions go on lines of their own, led by their labels, in order around the ungrouped ones', async ({page}) => {

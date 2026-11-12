@@ -22,7 +22,7 @@ const routePlayerAgent = (page, playerAgent) => page.route('**/tests/data/init.j
 
     controlled = page => page.evaluate(() => ['AL', 'BR'].filter(id => tc.model.getAgentModel(id).isPlayerControlled())),
 
-    bravoRowNote = page => page.getByText('Not taking direction from you', {exact:true}).filter({visible:true});
+    bravoRowNote = page => page.getByText('Not taking direction from you.', {exact:true}).filter({visible:true});
 
 test('an agent marked playerControlled is the player\'s only in the player agent\'s faction', async ({page}) => {
     await routePlayerAgent(page, 'AL');
@@ -47,7 +47,7 @@ test('an agent marked playerControlled is the player\'s only in the player agent
     await expect(bravoRowNote(page)).toHaveCount(1);
 
     // Nor can Bravo be trained.
-    expect(await page.evaluate(() => tc.model.getAgentModel('BR').getSkillPurchaseProblem('stealth'))).toBe('Not taking direction from you');
+    expect(await page.evaluate(() => tc.model.getAgentModel('BR').getSkillPurchaseProblem('stealth'))).toBe('Not taking direction from you.');
 
     // Bravo dying isn't the player's loss.
     await page.evaluate(() => tc.model.getAgentModel('BR').health.setValue(0));

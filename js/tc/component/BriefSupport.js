@@ -8,7 +8,7 @@
             theme:{
                 layoutSpacing, padding, cornerRadius,
                 colorUltraLight, colorMegaDark,
-                fontSizeMedium, fontSizeHandwritten, fontFamilyMono, fontFamilyHandwritten
+                fontSizeMedium, fontFamilyMono
             }
         } = pkg;
     
@@ -90,8 +90,8 @@
             fieldNotesValueView.setWhiteSpace('normal');
             fieldNotesValueView.setPaddingTop(0);
             fieldNotesValueView.setLineHeight('1.75em');
-            fieldNotesValueView.setFontFamily(fontFamilyHandwritten);
-            fieldNotesValueView.setFontSize(fontSizeHandwritten);
+            fieldNotesValueView.setFontFamily(fontFamilyMono);
+            fieldNotesValueView.setFontSize(fontSizeMedium);
             
             profileViewValue.setWhiteSpace('pre-wrap');
             profileViewValue.setPaddingTop(1);
@@ -214,7 +214,7 @@
         /*  The dynamic part of the brief: the visible Describable phrases, which change
             as the timeline changes. The row is hidden when nothing is visible. */
         updateFieldNotes: function() {
-            const fieldNotes = this.briefModel?.getDescription() ?? '',
+            const fieldNotes = this.briefModel?.getFullDescription() ?? '',
                 fieldNotesView = this._fieldNotesView;
             fieldNotesView.setVisible(fieldNotes !== '');
             fieldNotesView.setValue(fieldNotes);

@@ -356,7 +356,7 @@
             this._debrief?.destroy();
             this._debrief = debrief == null ? null : new DebriefModel({operation:this, description:debrief});
         },
-        getDebrief: function() {return this._debrief?.getDescription() ?? '';},
+        getDebrief: function() {return this._debrief?.getFullDescription() ?? '';},
         
         setOnSuccess: function(onSuccessCfg) {
             if (onSuccessCfg) {

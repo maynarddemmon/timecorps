@@ -1,11 +1,13 @@
 import {test, expect} from '@playwright/test';
 import {startGame, readTestData} from './helpers.mjs';
 
-const expandedRows = page => page.evaluate(() => {
-        const details = tc.app.getEventDetailsView();
-        return {agents:details.agentsRow.expanded, causators:details.causatorsRow.expanded};
+const visibleText = (page, text) => page.getByText(text, {exact:true}).filter({visible:true}),
+    
+    // Whether Occupants and the Historical Account are expanded, the latter by its header.
+    expandedRows = async page => ({
+        agents:await page.evaluate(() => tc.app.getEventDetailsView().agentsRow.expanded),
+        account:await visibleText(page, EXPANDED + 'Historical Account').count() === 1
     }),
-    visibleText = (page, text) => page.getByText(text, {exact:true}).filter({visible:true}),
     
     // The header label shows a minus sign when expanded and a plus when collapsed.
     EXPANDED = '⊟ ',
@@ -14,13 +16,13 @@ const expandedRows = page => page.evaluate(() => {
 test('clicking a section header collapses and expands it, and the icon follows', async ({page}) => {
     const problems = await startGame(page);
     
-    await visibleText(page, EXPANDED + 'Causators').click();
-    expect(await expandedRows(page)).toEqual({agents:true, causators:false});
-    await expect(visibleText(page, COLLAPSED + 'Causators')).toBeVisible();
+    await visibleText(page, EXPANDED + 'Historical Account').click();
+    await expect(visibleText(page, COLLAPSED + 'Historical Account')).toBeVisible();
+    expect(await expandedRows(page)).toEqual({agents:true, account:false});
     
-    await visibleText(page, COLLAPSED + 'Causators').click();
-    expect(await expandedRows(page)).toEqual({agents:true, causators:true});
-    await expect(visibleText(page, EXPANDED + 'Causators')).toBeVisible();
+    await visibleText(page, COLLAPSED + 'Historical Account').click();
+    await expect(visibleText(page, EXPANDED + 'Historical Account')).toBeVisible();
+    expect(await expandedRows(page)).toEqual({agents:true, account:true});
     
     expect(problems.pageErrors).toEqual([]);
 });
@@ -31,19 +33,19 @@ test('the whole header toggles, with a pointer cursor', async ({page}) => {
     // The header is the label's parent. A locator click (unlike page.mouse) waits for the
     // header to be visible and stable, which matters since Event Details stays hidden until
     // the initial event selection lands, and checks the click point actually hits it.
-    const header = visibleText(page, EXPANDED + 'Causators').locator('..');
+    const header = visibleText(page, EXPANDED + 'Historical Account').locator('..');
     await expect(header).toBeVisible();
     expect(await header.evaluate(elem => getComputedStyle(elem).cursor)).toBe('pointer');
     
     // Click the empty space at the right end of the header, away from the label.
     const box = await header.boundingBox();
     await header.click({position:{x:box.width - 20, y:box.height / 2}});
-    await expect.poll(() => expandedRows(page)).toEqual({agents:true, causators:false});
+    await expect.poll(() => expandedRows(page)).toEqual({agents:true, account:false});
     
     expect(problems.pageErrors).toEqual([]);
 });
 
-/*  The Deploy/Recall buttons live in the Agent Activity header, so their clicks bubble to the 
+/*  The Deploy/Recall buttons live in the Occupants header, so their clicks bubble to the 
     header's toggle. They must not collapse the section. */
 test('a button in a section header does not collapse the section', async ({page}) => {
     const problems = await startGame(page);
@@ -51,7 +53,7 @@ test('a button in a section header does not collapse the section', async ({page}
     await page.evaluate(() => tc.app.selectEventBox('aftermath'));
     await page.getByRole('button', {name:/Jump to/}).filter({visible:true}).click();
     await expect.poll(() => page.evaluate(() => tc.model.getAgentModel('AL').event)).toBe('aftermath');
-    expect(await expandedRows(page)).toEqual({agents:true, causators:true});
+    expect(await expandedRows(page)).toEqual({agents:true, account:true});
     
     expect(problems.pageErrors).toEqual([]);
 });

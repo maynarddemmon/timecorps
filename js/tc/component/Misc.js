@@ -4,13 +4,17 @@
     const {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
-        {View, Text, PaddedText, PlainText, PaddedPlainText, SpacedLayout, ResizeLayout, SizeToParent} = M,
+        {
+            View, Text, PaddedText, PlainText, PaddedPlainText, 
+            SpacedLayout, ResizeLayout, SizeToParent
+        } = M,
         
         {
             theme:{
                 spacing, padding, layoutSpacing, rowHeight,
                 colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, colorBtn,
-                fontSizeMicro, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, fontFamilyMono
+                fontSizeMicro, fontSizeSmall, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, 
+                fontFamilyMono
             },
             ICON_NIL
         } = pkg,
@@ -109,16 +113,35 @@
                 attrs.whiteSpace ??= 'normal';
                 this.callSuper(parent, attrs);
             }
-        });
-    
-    pkg.InlineMixin = new JSModule('InlineMixin', {
-        initNode: function(parent, attrs) {
-            this.callSuper(parent, attrs);
+        }),
+        
+        InlineMixin = pkg.InlineMixin = new JSModule('InlineMixin', {
+            initNode: function(parent, attrs) {
+                this.callSuper(parent, attrs);
+                
+                const ids = this.getIDS();
+                ids.position = 'relative';
+                ids.display = 'inline';
+            }
+        }),
+        
+        InlineTextHeightMixin = pkg.InlineTextHeightMixin = new JSModule('InlineTextHeightMixin', {
+            include: [InlineMixin],
             
-            const ids = this.getIDS();
-            ids.position = 'relative';
-            ids.display = 'inline';
-        }
+            initNode: function(parent, attrs) {
+                const parsedHeight = parseInt(attrs.fontSize ?? fontSizeSmall) + 5;
+                attrs.height ??= parsedHeight;
+                attrs.lineHeight = parsedHeight + 'px';
+                this.callSuper(parent, attrs);
+            }
+        }),
+        
+        InlinePlainText = pkg.InlinePlainText = new JSClass('InlinePlainText', PlainText, {
+            include: [InlineTextHeightMixin]
+        });
+        
+    pkg.InlineText = new JSClass('InlineText', Text, {
+        include: [InlineTextHeightMixin]
     });
     
     pkg.Spacer = new JSClass('Spacer', View, {
@@ -140,6 +163,13 @@
         _updateHeight: function(_event) {
             const contentView = this.getContentView();
             this.setHeight(contentView.y + contentView.height);
+        }
+    });
+    
+    pkg.InlineSeparator = new JSClass('InlineSeparator', InlinePlainText, {
+        initNode: function(parent, attrs) {
+            attrs.text ??= pkg.ICON_SEPARATOR;
+            this.callSuper(parent, attrs);
         }
     });
     
@@ -300,13 +330,6 @@
         setLabel: function(v) {this._label.setText(v);},
         setValue: function(v) {this.getValueView().setText(v || ICON_NIL);},
         getValueView: function() {return this._value;}
-    });
-    
-    pkg.NoValueText = new JSClass('NoValueText', TextForFlow, {
-        initNode: function(parent, attrs) {
-            attrs.text ??= ICON_NIL;
-            this.callSuper(parent, attrs);
-        }
     });
     
     pkg.CompactField = new JSClass('CompactField', View, {

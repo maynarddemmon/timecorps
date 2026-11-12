@@ -1544,6 +1544,31 @@
             // Description
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
             
+            getFullDescriptionAsParts: function() {
+                const parts = [],
+                    description = this.getDescription(),
+                    legacy = pkg.legacy.getLegacyDescriptionPartsForEventId(this.id);
+                if (description) parts.push({type:'description', value:description});
+                for (const valueModel of Object.values(this.getValueModels())) {
+                    if (valueModel.isNotHidden()) {
+                        const valueDesc = valueModel.getDescription();
+                        if (valueDesc) parts.push({type:'causator', value:valueDesc, model:valueModel});
+                    }
+                }
+                if (legacy) {
+                    for (const legacyPart of legacy) {
+                        parts.push({type:'legacy', value:legacyPart});
+                    }
+                }
+                if (parts.length === 0) parts.push({type:'empty', value:i18n('event-no-description')});
+                return parts;
+            },
+            
+            getFullDescription: function() {
+                const parts = this.getFullDescriptionAsParts();
+                return parts.map(part => part.value).join('<br><br>');
+            },
+            
             // Visited by Agent Status
             setBeenVisited: function(v) {this.set('_beenVisited', v, true);},
             hasBeenVisited: function() {return this._beenVisited;},

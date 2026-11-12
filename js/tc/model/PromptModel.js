@@ -177,7 +177,7 @@
                 };
             openWhenClear(() => {
                 const title = this.getTitle(),
-                    msg = this.getDescription(),
+                    msg = this.getFullDescription(),
                     type = this.getType();
                 if (type === PROMPT_TYPE_CONFIRM) {
                     openConfirmMsgDialog(title, msg, click(confirm), click(cancel), confirm?.label, cancel?.label);

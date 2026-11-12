@@ -20,7 +20,7 @@
                 PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE, DIE_SIZE
             },
             timeUtil:{MILLIS_PER_YEAR},
-            theme:{colorAction, fontFamilyMono, colorSuccess, colorMegaDark, colorParadox},
+            theme:{colorSuccess, colorMegaDark, colorParadox},
             checks:{skill, getEasePhrase, toDamagePhrase, showFloatingTextForSkillCheck},
             ICON_HQ, ICON_SEPARATOR, ICON_HEALTH, ICON_APPROX, ICON_PARADOX,
             STAT_ID_PARADOX, STAT_ID_CHRONAL, STAT_ID_HEALTH, STAT_ID_EFFECTIVE_AGE,
@@ -575,9 +575,6 @@
             return mathMax(0, this.getEventActionLimit() - this.getActionExecCount());
         },
         canAct: function() {return this.getActionsRemaining() > 0;},
-        getActionsPhrase: function() {
-            return i18n('agent-actions', pkg.wrapInStyledSpan(this.getActionsRemaining(), colorAction, fontFamilyMono));
-        },
         
         // Event //
         setEvent_Hard: function(event, logEntry) {

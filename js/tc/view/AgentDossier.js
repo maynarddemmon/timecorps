@@ -49,9 +49,9 @@
                 vitalsContainer = new WideView(vitals);
             
             let row = new WideView(vitalsContainer, {height:18});
-            self._chronalView = new pkg.ChronalBar(row, {y:12, bgColor:colorDark, layoutHint:1});
-            self._paradoxView = new pkg.ParadoxBar(row, {y:12, bgColor:colorDark, layoutHint:1});
             self._healthView = new pkg.HealthBar(row, {y:12, bgColor:colorDark, layoutHint:1});
+            self._paradoxView = new pkg.ParadoxBar(row, {y:12, bgColor:colorDark, layoutHint:1});
+            self._chronalView = new pkg.ChronalBar(row, {y:12, bgColor:colorDark, layoutHint:1});
             new ResizeLayout(row, {inset:spacing, spacing, outset:spacing});
             
             row = new CompactFieldRow(vitalsContainer);

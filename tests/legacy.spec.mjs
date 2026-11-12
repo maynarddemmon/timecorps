@@ -129,7 +129,7 @@ test('an Event an agent was lost at is haunted in every game, by a line under it
     expect(await page.evaluate(haunting => {
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
-        return [...document.querySelectorAll('i')].some(el => el.textContent === haunting && el.offsetParent !== null);
+        return [...document.querySelectorAll('.myt-EventDetails *')].some(el => el.textContent === haunting && el.style.fontStyle === 'italic' && el.offsetParent !== null);
     }, haunting)).toBe(true);
     
     expect(problems.pageErrors).toEqual([]);
@@ -164,7 +164,7 @@ test('each restart adds credits to every new game, and leaves the Event the lega
     expect(await page.evaluate(() => {
         tc.app.selectEventBox('aftermath');
         tc.app.selectEventBox('origin');
-        return [...document.querySelectorAll('i')].filter(el => el.offsetParent !== null).map(el => el.textContent);
+        return [...document.querySelectorAll('.myt-EventDetails *')].filter(el => el.style.fontStyle === 'italic' && el.offsetParent !== null).map(el => el.textContent);
     }).then(lines => lines.filter(line => line === haunting || line === glitch))).toEqual([haunting, glitch]);
     
     expect(problems.warnings).toEqual([]);

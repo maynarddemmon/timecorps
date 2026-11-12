@@ -363,9 +363,6 @@
         LOSS_DEVOURED,
         LOSS_DIED,
         
-        getLegacyDescriptionForEventId: eventId => {
-            const legacyLines = [getHaunting(eventId), getGlitch(eventId)].filter(Boolean);
-            return (legacyLines.length > 0 ? '<br><br>' : '') + legacyLines.map(line => '<i>' + line + '</i>').join('<br><br>');
-        }
+        getLegacyDescriptionPartsForEventId: eventId => [getHaunting(eventId), getGlitch(eventId)].filter(Boolean)
     };
 })(tc);

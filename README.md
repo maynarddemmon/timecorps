@@ -116,7 +116,7 @@ Actions and exits can have `effects`: changes to a stat of the agent taking them
 
 ## License & Credits
 
-- Fonts: [Advent Pro](https://github.com/googlefonts/Advent) and Space Mono (SIL Open Font License), and Rock Salt (Apache License 2.0). See `fonts/` for the license texts.
+- Fonts: [Advent Pro](https://github.com/googlefonts/Advent) and Space Mono (SIL Open Font License). See `fonts/` for the license texts.
 - Photographs generated with Midjourney.
 
 MIT. See [LICENSE](LICENSE).

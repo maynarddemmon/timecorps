@@ -195,7 +195,7 @@
 		},
 		"atlantic_u20":{
 			"name":"U-20",
-			"color":"#0339",
+			"color":"#0369",
 			"order":5,
 			"description":[
 				{
@@ -209,7 +209,7 @@
 		},
 		"atlantic_kinsale":{
 			"name":"Old Head of Kinsale",
-			"color":"#0339",
+			"color":"#3309",
 			"order":6,
 			"description":[
 				{

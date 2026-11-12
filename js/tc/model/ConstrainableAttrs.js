@@ -139,6 +139,10 @@
                 return this.getVisibleDescriptionPhrases().map(phrase => phrase.getText()).join(joiner);
             },
             
+            getFullDescription: function(joiner=' ') {
+                return this.getDescription(joiner);
+            },
+            
             getDescriptionPhrases: function() {return this._descPhrases ?? [];},
             getVisibleDescriptionPhrases: function() {
                 return this.getDescriptionPhrases().filter(phrase => phrase.isNotHidden());

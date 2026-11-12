@@ -2,12 +2,12 @@
     'use strict';
     
     const M = myt,
-        {I18N:{get:i18n}} = M,
+        {I18N:{get:i18n}, SizeToParent} = M,
         
         {
-            WideView, InlineMixin,
+            WideView,
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
-            theme:{padding, fontSizeMedium}
+            theme:{padding, fontSizeMedium, fontFamilyMono}
         } = pkg,
         
         resolveUrl = path => new URL(path, document.baseURI).href,
@@ -34,9 +34,9 @@
                 self.callSuper(parent, attrs);
                 
                 const line = new WideView(self, {height:18});
-                self._nameBtn = new pkg.UnderlineBtn(line, {
+                self._nameBtn = new pkg.InlineUnderlineBtn(line, {
                     fontSize:fontSizeMedium, tooltip:i18n('tip-chronology-event')
-                }, [InlineMixin, {doActivated: () => {
+                }, [{doActivated: () => {
                     const eventModel = self.eventModel;
                     if (M.global.keys.isShiftKeyDown()) {
                         pkg.app.selectEventBox(eventModel, true);
@@ -45,13 +45,13 @@
                         pkg.app.openEventBrief(eventModel, true);
                     }
                 }}]);
-                self._whenTxt = new M.PaddedPlainText(line, {fontSize:fontSizeMedium}, [InlineMixin]);
+                self._whenTxt = new pkg.InlinePlainText(line, {fontSize:fontSizeMedium});
                 
                 // Hidden unless the Event has a picture. As wide as the text, at the timeline's
                 // proportions.
                 self._media = new pkg.MediaView(self, {
                     percentOfParentWidth:100, visible:false
-                }, [M.SizeToParent, {
+                }, [SizeToParent, {
                     setWidth: function(v) {
                         this.callSuper(v);
                         this.setHeight(this.width*0.40625);
@@ -62,8 +62,8 @@
                 
                 self._descriptionTxt = new pkg.TextForFlow(self, {
                     whiteSpace:'normal', percentOfParentWidth:100,
-                    fontSize:fontSizeMedium
-                }, [M.SizeToParent]);
+                    fontSize:fontSizeMedium, fontFamily:fontFamilyMono
+                }, [SizeToParent]);
                 
                 new M.SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
             },
@@ -71,8 +71,7 @@
             update: function(eventModel) {
                 const self = this,
                     nameBtn = self._nameBtn,
-                    whenTxt = self._whenTxt,
-                    description = eventModel.getDescription() || '';
+                    whenTxt = self._whenTxt;
                 self.eventModel = eventModel;
                 
                 whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
@@ -90,7 +89,7 @@
                     self._media.setMedia(...mediaURLs);
                 }
                 
-                self._descriptionTxt.setText(description + pkg.legacy.getLegacyDescriptionForEventId(eventModel.id));
+                self._descriptionTxt.setText(eventModel.getFullDescription());
             }
         });
     

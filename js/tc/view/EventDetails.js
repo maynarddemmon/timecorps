@@ -3,30 +3,38 @@
     
     let rootModel;
     
-    const {I18N:{get:i18n}} = myt,
+    const JSClass = JS.Class,
         
-        JSClass = JS.Class,
+        mathMax = Math.max,
         
         {
-            View, PaddedText, PaddedPlainText, SizeToParent, 
-            Layout, SpacedLayout, ResizeLayout, WrappingLayout,
+            I18N:{get:i18n},
+            View, PaddedText, PaddedPlainText, SizeToParent,
+            Layout, SpacedLayout, ResizeLayout, SizeHeightToDom,
             debounce
         } = myt,
         
         {
-            UnderlineBtn, UnderlineActionBtn, EventNavHover, AgentBtn, EventLinkFlow,
-            SquareBtn, WideView, StatusAgentMarkerMedium,
-            ContainerRow, TextForFlow,
+            UnderlineBtn, EventNavHover, AgentBtn, EventLinkFlow, 
+            InlineSeparator, InlinePlainText, InlineText, InlineUnderlineBtn,
+            SquareBtn, WideView, StatusAgentMarkerMedium, ContainerRow, wrapInStyledSpan,
             theme:{
                 spacing, padding, btnHeight,
-                colorUltraLight, colorLight, colorMegaDark,
+                colorUltraLight, colorLight, colorMedium, colorMegaDark, colorAction,
                 fontSizeMedium, fontSizeLarge
             },
-            ICON_EVENT, ICON_SEPARATOR, ICON_VIEW, ICON_HQ, ICON_THE_VOID
+            ICON_SEPARATOR
         } = pkg,
         
         // Agent Row
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
+        
+        ORDER_SORT_FUNC = (a, b) => a.order - b.order,
+        EXIT_MODELS_SORT_FUNC = (a, b) => {
+            const aTravelTime = a.getTravelTime(),
+                bTravelTime = b.getTravelTime();
+            return aTravelTime === bTravelTime ? a.to.localeCompare(b.to) : aTravelTime - bTravelTime;
+        },
         
         getActionBtnInfo = (agentModel, actionModel) => {
             const easePhrase = agentModel.getSkillEasePhrase(
@@ -82,18 +90,16 @@
             }
         }),
         
-        AgentRowFlow = new JSClass('AgentRowFlow', WideView, {
+        UnderlineActionBtn = new JSClass('UnderlineActionBtn', InlineUnderlineBtn, {
             initNode: function(parent, attrs) {
-                attrs.x ??= MARKER_EXTENT;
-                attrs.percentOfParentWidthOffset ??= -attrs.x;
-                
+                attrs.textColor ??= colorAction;
                 this.callSuper(parent, attrs);
-                
-                new WrappingLayout(this, {spacing, lineSpacing:-5, collapseParent:true});
-            },
-            clearContent: function() {
-                this.destroyAllSubviews();
+                this.addDomClass('action');
             }
+        }),
+        
+        UnderlineExitBtn = new JSClass('UnderlineExitBtn', InlineUnderlineBtn, {
+            include: [AgentExitBtn, EventNavHover]
         }),
         
         AgentRow = new JSClass('AgentRow', WideView, {
@@ -106,161 +112,189 @@
                 
                 self.callSuper(parent, attrs);
                 
-                self.markerView = new StatusAgentMarkerMedium(self, {x:spacing, y:spacing, ignoreLayout:true});
-                self.vitaeBtn = new UnderlineBtn(self, {x:MARKER_EXTENT, y:spacing, fontSize:fontSizeLarge, ignoreLayout:true}, [{
+                self.markerView = new StatusAgentMarkerMedium(self, {x:spacing, y:spacing});
+                self.nameBtn = new UnderlineBtn(self, {x:MARKER_EXTENT, y:spacing, fontSize:fontSizeLarge}, [{
                     doActivated: () => self.agentModel.selectRow()
                 }]);
-                self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, ignoreLayout:true, visible:false}, [{
+                self.recallBtn = new UnderlineBtn(self, {align:'right', alignOffset:2*spacing, y:spacing, visible:false}, [{
                     doActivated: () => {
                         self.agentModel.selectRow();
                         self.agentModel.doRecallToHQ(self.recallBtn);
                     }
                 }]);
-                
-                // A line for the ungrouped actions and one for each action group. See update.
-                const actionLinesView = self.actionLinesView = new WideView(self, {
-                    x:MARKER_EXTENT, percentOfParentWidthOffset:-MARKER_EXTENT
-                });
-                new SpacedLayout(actionLinesView, {axis:'y', spacing:-5, collapseParent:true});
-                self.exitView = new AgentRowFlow(self);
-                
-                new SpacedLayout(self, {axis:'y', inset:26, spacing:-5, outset:spacing, collapseParent:true});
+                self.linesView = new WideView(self, {x:MARKER_EXTENT, y:23, percentOfParentWidthOffset:-MARKER_EXTENT}, [SizeHeightToDom]);
                 
                 self.update();
             },
-            setHeight: function(v) {
-                const markerView = this.markerView;
-                this.callSuper(Math.max(v, markerView.height + 2*markerView.y));
+            setWidth: function(v) {
+                this.callSuper(v);
+                if (this.inited) this.updateHeight();
+            },
+            updateHeight: function() {
+                const self = this,
+                    {linesView, markerView} = self;
+                linesView.sizeViewToDom();
+                self.setHeight(mathMax(markerView.y + markerView.height, linesView.y + linesView.height) + spacing);
             },
             update: function() {
                 const self = this,
-                    {agentModel, eventModel, markerView, vitaeBtn, recallBtn, actionLinesView, exitView} = self,
-                    addActionLine = () => new AgentRowFlow(actionLinesView, {x:0});
+                    {agentModel, eventModel, markerView, nameBtn, recallBtn, linesView} = self;
                 
                 markerView.setModel(agentModel);
-                vitaeBtn.setText(agentModel.name);
+                nameBtn.setText(agentModel.name);
                 
+                let noControlMsg;
                 if (!agentModel.isPlayerControlled()) {
-                    recallBtn.setVisible(false);
-                    new TextForFlow(addActionLine(), {paddingTop:3, text:i18n('problem-not-player-controlled')});
-                    return;
+                    noControlMsg = i18n('problem-not-player-controlled');
+                } else if (agentModel.isDead()) {
+                    // The dead can't act, travel or be resupplied.
+                    noControlMsg = i18n('problem-deceased');
                 }
                 
-                // The dead can't act, travel or be resupplied.
-                if (agentModel.isDead()) {
+                if (noControlMsg) {
                     recallBtn.setVisible(false);
-                    new TextForFlow(addActionLine(), {paddingTop:3, text:i18n('problem-deceased')});
-                    return;
-                }
-                
-                // A recall to the HQ of the Agent's Faction, if it has one and isn't this Event.
-                const hqEventModel = agentModel.getHQEventModel();
-                if (hqEventModel && hqEventModel !== eventModel) {
-                    agentModel.updateBtnForTimeTravel(recallBtn, hqEventModel);
+                    new InlinePlainText(linesView, {text:noControlMsg});
                 } else {
-                    recallBtn.setVisible(false);
-                }
-                
-                // Update Actions: a line led by the actions the agent has left, with the ungrouped
-                // actions, and a line for each action group with visible actions, led by its 
-                // label. The lines go in order, the ungrouped one's being 0, so a group with a 
-                // negative order comes before it and one with a positive order after.
-                const actionModels = Object.values(eventModel.getActionModels());
-                if (actionModels.length > 0) {
-                    const ungroupedLine = {order:0, label:agentModel.getActionsPhrase(), actionModels:[]},
-                        lines = [ungroupedLine],
-                        linesByGroupId = {};
-                    for (const actionModel of actionModels) {
-                        const actionGroup = rootModel.getActionGroup(actionModel.getGroup());
-                        let line = ungroupedLine;
-                        if (actionGroup) {
-                            line = linesByGroupId[actionGroup.id];
-                            if (!line) lines.push(line = linesByGroupId[actionGroup.id] = {order:actionGroup.order, label:actionGroup.label, actionModels:[]});
-                        }
-                        if (!actionModel.isHiddenFor(agentModel)) line.actionModels.push(actionModel);
+                    // A recall to the HQ of the Agent's Faction, if it has one and isn't this Event.
+                    const hqEventModel = agentModel.getHQEventModel();
+                    if (hqEventModel && hqEventModel !== eventModel) {
+                        agentModel.updateBtnForTimeTravel(recallBtn, hqEventModel);
+                    } else {
+                        recallBtn.setVisible(false);
                     }
                     
-                    // The sort is stable, so a group with an order of 0 comes after the ungrouped line.
-                    lines.sort((a, b) => a.order - b.order);
-                    for (const line of lines) {
-                        if (line === ungroupedLine || line.actionModels.length > 0) {
-                            const lineView = addActionLine();
-                            new TextForFlow(lineView, {paddingTop:3, text:line.label});
-                            for (const actionModel of line.actionModels) {
-                                new TextForFlow(lineView, {text:ICON_SEPARATOR});
-                                new UnderlineActionBtn(lineView, getActionBtnInfo(agentModel, actionModel), [{
-                                    doActivated: function() {
-                                        agentModel.selectRow();
-                                        agentModel.doAction(actionModel, this);
-                                    }
-                                }]);
+                    // Update Actions: a line led by the actions the agent has left, with the 
+                    // ungrouped actions, and a line for each action group with visible actions, 
+                    // led by its label. The lines go in order, the ungrouped one's being 0, so a 
+                    // group with a negative order comes before it and one with a positive order 
+                    // after.
+                    const actionModels = Object.values(eventModel.getActionModels());
+                    if (actionModels.length > 0) {
+                        const ungroupedLine = {
+                                order:0, 
+                                label:i18n('agent-actions', wrapInStyledSpan(agentModel.getActionsRemaining(), colorAction)), 
+                                actionModels:[]
+                            },
+                            lines = [ungroupedLine],
+                            linesByGroupId = {};
+                        for (const actionModel of actionModels) {
+                            const actionGroup = rootModel.getActionGroup(actionModel.getGroup());
+                            let line;
+                            if (actionGroup) {
+                                line = linesByGroupId[actionGroup.id];
+                                if (!line) {
+                                    lines.push(line = linesByGroupId[actionGroup.id] = {
+                                        order:actionGroup.order,
+                                        label:actionGroup.label,
+                                        actionModels:[]
+                                    });
+                                }
+                            } else {
+                                line = ungroupedLine;
+                            }
+                            if (!actionModel.isHiddenFor(agentModel)) line.actionModels.push(actionModel);
+                        }
+                        
+                        // The sort is stable, so a group with an order of 0 comes after the 
+                        // ungrouped line.
+                        lines.sort(ORDER_SORT_FUNC);
+                        for (const line of lines) {
+                            if (line === ungroupedLine || line.actionModels.length > 0) {
+                                new InlineText(linesView, {text:line.label});
+                                for (const actionModel of line.actionModels) {
+                                    new InlineSeparator(linesView);
+                                    new UnderlineActionBtn(linesView, getActionBtnInfo(agentModel, actionModel), [{
+                                        doActivated: function() {
+                                            agentModel.selectRow();
+                                            agentModel.doAction(actionModel, this);
+                                        }
+                                    }]);
+                                }
+                                new View(linesView, {tagName:'br'}, [pkg.InlineMixin]);
                             }
                         }
                     }
-                }
-                
-                // Update Exits
-                new TextForFlow(exitView, {text:i18n('event-exits') + '\u00A0'});
-                
-                // Sorted by travel time, then destination. A copy, since the agent log saves
-                // exits by their index in the Event's own list.
-                const exitModels = [...eventModel.getExitModels()].sort((a, b) => {
-                    const aTravelTime = a.getTravelTime(),
-                        bTravelTime = b.getTravelTime();
-                    return aTravelTime === bTravelTime ? a.to.localeCompare(b.to) : aTravelTime - bTravelTime;
-                });
-                
-                let addedCount = 0;
-                for (const exitModel of exitModels) {
-                    if (exitModel.isNotHidden() && exitModel.isDestinationOffered()) {
-                        const toEventModel = exitModel.getToEventModel();
-                        if (addedCount > 0) new TextForFlow(exitView, {text:ICON_SEPARATOR});
-                        // An unknown destination isn't shown on hover.
-                        const btn = new UnderlineBtn(exitView, {navEventModel:toEventModel.isNotHidden() ? toEventModel : null}, [AgentExitBtn, EventNavHover]);
-                        btn.configure(agentModel, exitModel, true);
-                        addedCount++;
+                    
+                    // Update Exits
+                    const exitLabelView = new InlinePlainText(linesView, {text:i18n('event-exits') + '\u00A0', visible:false}),
+                        // Sorted by travel time, then destination. A copy, since the agent log saves
+                        // exits by their index in the Event's own list.
+                        exitModels = [...eventModel.getExitModels()].sort(EXIT_MODELS_SORT_FUNC);
+                    let addedCount = 0;
+                    for (const exitModel of exitModels) {
+                        if (exitModel.isNotHidden() && exitModel.isDestinationOffered()) {
+                            const toEventModel = exitModel.getToEventModel();
+                            if (addedCount > 0) new InlineSeparator(linesView);
+                            // An unknown destination isn't shown on hover.
+                            const btn = new UnderlineExitBtn(linesView, {navEventModel:toEventModel.isNotHidden() ? toEventModel : null});
+                            btn.configure(agentModel, exitModel, true);
+                            addedCount++;
+                        }
                     }
+                    exitLabelView.setVisible(addedCount > 0);
                 }
                 
-                exitView.setVisible(addedCount > 0);
+                self.updateHeight();
             }
         }),
         
-        CausatorRow = new JSClass('CausatorRow', WideView, {
+        DescPart = new JSClass('DescPart', View, {
             initNode: function(parent, attrs) {
-                const self = this;
+                const self = this,
+                    part = self.part = attrs.part,
+                    type = part.type,
+                    model = part.model,
+                    isCausator = type === 'causator',
+                    isLegacy = type === 'legacy';
+                delete attrs.part;
                 
-                self.quickSet(['valueModel'], attrs);
-                
+                attrs.width ??= parent.width;
                 attrs.bgColor ??= colorMegaDark;
+                attrs.textColor ??= isCausator ? colorLight : 'inherit';
                 
                 self.callSuper(parent, attrs);
                 
-                const txtAttrs = {paddingLeft:padding, paddingRight:padding, whiteSpace:'normal'};
-                self.nameTxt = new PaddedText(self, {...txtAttrs, fontSize:fontSizeMedium});
-                self.descriptionTxt = new PaddedText(self, {...txtAttrs});
-                self.precursorsFlow = new EventLinkFlow(self);
-                self.descendantsFlow = new EventLinkFlow(self);
-                new SpacedLayout(self, {axis:'y', inset:padding, outset:padding, collapseParent:true});
+                if (isCausator) {
+                    self._nameTxt = new PaddedText(self, {
+                        paddingLeft:padding, paddingRight:padding,
+                        textColor:colorMedium,
+                        whiteSpace:'normal', fontSize:fontSizeLarge,
+                        text:model.getName()
+                    });
+                }
                 
-                self.update();
+                self._txt = new PaddedText(self, {
+                    width:self.width,
+                    paddingLeft:padding, paddingRight:padding,
+                    fontSize:fontSizeMedium, whiteSpace:'normal',
+                    fontStyle:isLegacy ? 'italic' : null,
+                    text:part.value
+                });
+                
+                if (isCausator) {
+                    // Only show links the player is allowed to know about.
+                    const eventModel = model.event,
+                        precursorsFlow = self._precursorFlow = new EventLinkFlow(self),
+                        descendantsFlow = self._descendantFlow = new EventLinkFlow(self);
+                    precursorsFlow.update(
+                        i18n('event-precursors') + '\u00A0',
+                        [...model.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
+                    );
+                    descendantsFlow.update(
+                        i18n('event-descendants') + '\u00A0',
+                        [...model.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
+                    );
+                }
+                
+                new SpacedLayout(self, {axis:'y', inset:padding, spacing:padding/2, outset:padding, collapseParent:true});
             },
-            update: function() {
-                const self = this,
-                    valueModel = self.valueModel,
-                    eventModel = valueModel.event;
-                self.nameTxt.setText(valueModel.getName());
-                self.descriptionTxt.setText(valueModel.getDescription());
-                
-                // Only show links the player is allowed to know about.
-                self.precursorsFlow.update(
-                    i18n('event-precursors') + '\u00A0',
-                    [...valueModel.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
-                );
-                self.descendantsFlow.update(
-                    i18n('event-descendants') + '\u00A0',
-                    [...valueModel.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
-                );
+            setWidth: function(v) {
+                const self = this;
+                self.callSuper(v);
+                if (self.inited) {
+                    const w = self.width;
+                    for (const sv of [self._nameTxt, self._txt, self._precursorFlow, self._descendantFlow]) sv?.setWidth(w);
+                }
             }
         });
     
@@ -276,10 +310,10 @@
                 timelineView = pkg.app.getTimelineView();
             
             self.hqBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_HQ, tooltip:i18n('tip-select-hq')
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:pkg.ICON_HQ, tooltip:i18n('tip-select-hq')
             }, [{doActivated: () => {pkg.app.selectEventBox(self.selectedAgentModel.getHQEventModel());}}]);
             self.theVoidBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:ICON_THE_VOID, tooltip:i18n('tip-select-the-void')
+                y:1, buttonType:'plain', visible:false, textColor:colorLight, text:pkg.ICON_THE_VOID, tooltip:i18n('tip-select-the-void')
             }, [{doActivated: () => {pkg.app.selectEventBox(rootModel.getTheVoidEventModel());}}]);
             
             new View(header, {width:padding}); // Spacer
@@ -290,7 +324,7 @@
                 tooltip:i18n('tip-select-last-event')
             }, [{doActivated: function() {timelineView.navigateHistory(-1);}}]);
             self.scrollToBtn = new SquareBtn(header, {
-                y:1, buttonType:'plain', textColor:colorLight, text:ICON_VIEW, disabled:true
+                y:1, buttonType:'plain', textColor:colorLight, text:pkg.ICON_VIEW, disabled:true
             }, [{doActivated: () => {timelineView.scrollToEventBox(self.eventModel);}}]);
             self.histNextBtn = new SquareBtn(header, {
                 y:1, buttonType:'plain', textColor:colorLight, disabled:true,
@@ -321,16 +355,13 @@
             const headerView = row.getHeaderView();
             new View(headerView, {layoutHint:1}); // Spacer
             self.followExitBtn = new AgentBtn(headerView, {y:1}, [AgentExitBtn]);
-            self.agentsRowBtnSeparator = new TextForFlow(headerView, {text:ICON_SEPARATOR});
+            self.agentsRowBtnSeparator = new PaddedPlainText(headerView, {paddingTop:5, text:ICON_SEPARATOR});
             self.deployAgentBtn = new AgentBtn(headerView, {y:1}, [{
                 doActivated: () => {self.selectedAgentModel.doDeployToEvent(self.eventModel, self.deployAgentBtn);}
             }]);
             
-            // Causators
-            self.causatorsRow = new ContainerRow(detailsContainer, {label:i18n('event-causators')});
-            
             // Description
-            row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:2});
+            row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:3});
             self.descriptionMedia = new pkg.MediaView(row, {
                 percentOfParentWidth:100, roundedCorners:0
             }, [SizeToParent, {
@@ -341,7 +372,17 @@
                 doMediaReady: function() {this.setVisible(true);},
                 doMediaFailed: function() {this.setVisible(false);}
             }]);
-            self.descriptionTxt = new PaddedText(row, {padding, whiteSpace:'normal'});
+            
+            const descContainer = self._descriptionContainer = new WideView(row, {}, [{
+                setWidth: function(v) {
+                    this.callSuper(v);
+                    if (this.inited) {
+                        const width = this.width;
+                        for (const sv of this.getSubviews()) sv.setWidth(width);
+                    }
+                }
+            }]);
+            new SpacedLayout(descContainer, {axis:'y', spacing:1, collapseParent:true});
             
             new ResizeLayout(detailsContainer, {axis:'y', inset:spacing, spacing:1});
             
@@ -401,36 +442,15 @@
             if (hasModel) {
                 Layout.incrementGlobalLock();
                 
-                const {theVoidBtn, descriptionTxt, causatorsRow, agentsRow} = self;
+                const {theVoidBtn, agentsRow} = self;
                 theVoidBtn.setDisabled(eventModel.isTheVoid());
                 theVoidBtn.setVisible(!rootModel.getTheVoidEventModel().isHidden());
                 
                 self.eventFacts.update(eventModel);
                 
-                // Description
-                self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
-                const description = eventModel.getDescription();
-                descriptionTxt.setText((description || i18n('event-no-description')) + pkg.legacy.getLegacyDescriptionForEventId(eventModel.id));
-                descriptionTxt.setFontStyle(description ? null : 'italic');
-                
-                // Causators
-                causatorsRow.getContentView().destroyAllSubviews();
-                let addedCount = 0;
-                for (const valueModel of Object.values(eventModel.getValueModels())) {
-                    if (valueModel.isNotHidden()) {
-                        new CausatorRow(causatorsRow, {valueModel});
-                        addedCount++;
-                    }
-                }
-                if (addedCount === 0) {
-                    new PaddedPlainText(causatorsRow, {
-                        padding, whiteSpace:'normal', fontStyle:'italic', text:i18n('event-no-causators')
-                    });
-                }
-                
                 // Agents
                 agentsRow.getContentView().destroyAllSubviews();
-                addedCount = 0;
+                let addedCount = 0;
                 for (const agentModel of eventModel.getAgentModels()) {
                     new AgentRow(agentsRow, {agentModel, eventModel});
                     addedCount++;
@@ -440,6 +460,12 @@
                         padding, whiteSpace:'normal', fontStyle:'italic', text:i18n('event-no-agents')
                     });
                 }
+                
+                // Description
+                self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
+                const descContainer = self._descriptionContainer;
+                descContainer.destroyAllSubviews();
+                for (const part of eventModel.getFullDescriptionAsParts()) new DescPart(descContainer, {part})
                 
                 Layout.decrementGlobalLock();
             }
@@ -480,7 +506,7 @@
         updateTitle: function() {
             const eventName = this.eventModel?.name ?? i18n('txt-none');
             this.setTitle(
-                ICON_EVENT + ' ' + pkg.wrapInStyledSpan(eventName, colorUltraLight),
+                pkg.ICON_EVENT + ' ' + wrapInStyledSpan(eventName, colorUltraLight),
                 i18n('tip-open-event-brief-for', eventName)
             );
         },
@@ -490,7 +516,7 @@
             if (this.eventModel) pkg.app.openEventBrief(this.eventModel);
         },
         
-        setup: function(model) {
+        setup: model => {
             rootModel = model;
         }
     });
