@@ -1,19 +1,87 @@
 (pkg => {
     'use strict';
     
-    const {I18N:{get:i18n}, SpacedLayout, SizeToParent} = myt,
+    const JSClass = JS.Class,
+        
+        M = myt,
+        {I18N:{get:i18n}, SpacedLayout, SizeToParent} = M,
         
         {
-            WideView, DetailRow,
+            WideView,
             theme:{
                 layoutSpacing, padding, cornerRadius,
-                colorUltraLight, colorMegaDark,
+                colorUltraLight, colorMedium, colorMegaDark,
                 fontSizeMedium, fontFamilyMono
-            }
-        } = pkg;
+            },
+            ICON_NIL
+        } = pkg,
+        
+        /*  A labeled row in a brief's profile for views rather than text. Returns the row and
+            the view to add them to: they're stacked top down, given its width, and it grows to
+            fit them, and the row with it. */
+        makeContainerRow = (profileContainer, labelWidth, label, spacing) => {
+            const row = new DetailRow(profileContainer, {labelWidth, label}),
+                valueView = row.getValueView(),
+                labelHeight = row.height;
+            valueView.setVisible(false);
+            
+            const content = new WideView(row, {x:valueView.x, percentOfParentWidthOffset:-valueView.x}, [{
+                setHeight: function(v) {
+                    this.callSuper(v);
+                    row.setHeight(Math.max(labelHeight, this.height));
+                },
+                setWidth: function(v) {
+                    this.callSuper(v);
+                    if (this.inited) {
+                        const width = this.width;
+                        for (const subview of this.getSubviews()) subview.setWidth(width);
+                    }
+                }
+            }]);
+            new SpacedLayout(content, {axis:'y', spacing, collapseParent:true});
+            return {row, content};
+        },
+        
+        DetailRow = new JSClass('DetailRow', WideView, {
+            initNode: function(parent, attrs) {
+                const self = this,
+                    label = attrs.label,
+                    labelWidth = attrs.labelWidth ?? 75,
+                    vertical = attrs.vertical ?? false;
+                delete attrs.label;
+                delete attrs.labelWidth;
+                delete attrs.vertical;
+                
+                self.callSuper(parent, attrs);
+                
+                const labelView = self._label = new M.PlainText(self, {
+                    width:labelWidth, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:vertical ? 'left' : 'right',
+                    text:label
+                });
+                
+                const valueX = vertical ? 0 : labelWidth + padding;
+                self._value = new M.PaddedText(self, {
+                    x:valueX,
+                    y:vertical ? labelView.y + labelView.height : 0,
+                    percentOfParentWidth:100, percentOfParentWidthOffset:-valueX,
+                    text:ICON_NIL, whiteSpace:'normal', fontSize:fontSizeMedium
+                }, [SizeToParent, {
+                    sizeViewToDom: function() {
+                        this.callSuper();
+                        const yExtent = this.y + this.height;
+                        if (self.height !== yExtent) self.setHeight(yExtent);
+                    }
+                }]);
+            },
+            setLabel: function(v) {this._label.setText(v);},
+            setValue: function(v) {this.getValueView().setText(v || ICON_NIL);},
+            getValueView: function() {return this._value;}
+        });
     
-    /*  For dialogs that brief the player on a model: an optional photo, handwritten field 
-        notes from the model's Describable phrases, and a typed report loaded from a text file.
+    
+    /*  For dialogs that brief the player on a model: an optional photo, field notes from the 
+        model's description, as blocks (see Describable.getFullDescriptionAsParts and 
+        DescPart), and a typed report loaded from a text file.
         Mix into a ModalDialog. The dialog is only as tall as its content, up to the 
         window's height, past which the field notes and report scroll.
         
@@ -82,23 +150,15 @@
                     overflow:'autoy'
                 }),
                 profileContainer = new WideView(profile, {percentOfParentWidthOffset:-labelWidth/1.5}),
-                fieldNotesView = self._fieldNotesView = new DetailRow(profileContainer, {labelWidth, label:i18n('brief-field-notes')}),
+                fieldNotes = makeContainerRow(profileContainer, labelWidth, i18n('brief-field-notes'), 1),
                 profileView = self._profileView = new DetailRow(profileContainer, {labelWidth, label:self.getBriefReportLabel()}),
-                profileViewValue = profileView.getValueView(),
-                fieldNotesValueView = fieldNotesView.getValueView();
-            
-            fieldNotesValueView.setWhiteSpace('normal');
-            fieldNotesValueView.setPaddingTop(0);
-            fieldNotesValueView.setLineHeight('1.75em');
-            fieldNotesValueView.setFontFamily(fontFamilyMono);
-            fieldNotesValueView.setFontSize(fontSizeMedium);
+                profileViewValue = profileView.getValueView();
+            self._fieldNotesView = fieldNotes.row;
+            self._fieldNotesContent = fieldNotes.content;
             
             profileViewValue.setWhiteSpace('pre-wrap');
-            profileViewValue.setPaddingTop(1);
-            profileViewValue.setFontFamily(fontFamilyMono);
-            profileViewValue.setFontSize(fontSizeMedium);
             
-            new SpacedLayout(profileContainer, {axis:'y', inset:padding, outset:2*padding, collapseParent:true});
+            new SpacedLayout(profileContainer, {axis:'y', inset:padding, spacing:padding, outset:2*padding, collapseParent:true});
             
             self._placeContent();
             
@@ -121,32 +181,14 @@
         /*  Adds a labeled row below the field notes, report and any rows already added, with
             text styled like the report's but wrapping as ordinary text. Returns the DetailRow. */
         addProfileRow: function(label) {
-            const row = new DetailRow(this._profileContainer, {labelWidth:this._profileLabelWidth, label}),
-                valueView = row.getValueView();
-            valueView.setWhiteSpace('normal');
-            valueView.setPaddingTop(1);
-            valueView.setFontFamily(fontFamilyMono);
-            valueView.setFontSize(fontSizeMedium);
-            return row;
+            return new DetailRow(this._profileContainer, {labelWidth:this._profileLabelWidth, label});
         },
         
         /*  Adds a labeled row below the field notes, report and any rows already added, for 
             views rather than text. Returns the view to add them to: they're stacked top down
             and it grows to fit them, and the row with it. */
         addProfileContainerRow: function(label) {
-            const row = new DetailRow(this._profileContainer, {labelWidth:this._profileLabelWidth, label}),
-                valueView = row.getValueView(),
-                labelHeight = row.height;
-            valueView.setVisible(false);
-            
-            const content = new WideView(row, {x:valueView.x, percentOfParentWidthOffset:-valueView.x}, [{
-                setHeight: function(v) {
-                    this.callSuper(v);
-                    row.setHeight(Math.max(labelHeight, this.height));
-                }
-            }]);
-            new SpacedLayout(content, {axis:'y', inset:padding/2, spacing:padding/2, collapseParent:true});
-            return content;
+            return makeContainerRow(this._profileContainer, this._profileLabelWidth, label, padding/2).content;
         },
         
         /*  Puts the view below the photo, or the photo's space, with the field notes and 
@@ -211,13 +253,39 @@
             if (profile && profileContainer) this.setContentHeightToFit(profile.y + profileContainer.height + padding / 2);
         },
         
-        /*  The dynamic part of the brief: the visible Describable phrases, which change
-            as the timeline changes. The row is hidden when nothing is visible. */
+        /*  The dynamic part of the brief: the model's description as blocks, which change as 
+            the timeline changes. The row is hidden when there's nothing to show. */
         updateFieldNotes: function() {
-            const fieldNotes = this.briefModel?.getFullDescription() ?? '',
-                fieldNotesView = this._fieldNotesView;
-            fieldNotesView.setVisible(fieldNotes !== '');
-            fieldNotesView.setValue(fieldNotes);
+            const self = this,
+                parts = (self.briefModel?.getFullDescriptionAsParts() ?? []).filter(part => part.value),
+                content = self._fieldNotesContent;
+            content.destroyAllSubviews();
+            
+            const len = parts.length;
+            for (let i = 0; i < len; i++) {
+                const part = parts[i];
+                new pkg.DescPart(content, {
+                    part, 
+                    inset:i === 0 ? 0 : padding, 
+                    padding:0, 
+                    outset:i === len - 1 ? 0 : padding,
+                    causatorCallback:btn => self._doCausatorLinkActivated(btn)
+                });
+            }
+            self._fieldNotesView.setVisible(len > 0);
+        },
+        
+        /*  A causator's link to another Event opens that Event's brief, over this one. With 
+            shift, it closes this brief and selects the Event, as a link elsewhere does. 
+            Returns true when the Event shouldn't be selected. 
+            @private */
+        _doCausatorLinkActivated: function(btn) {
+            if (M.global.keys.isShiftKeyDown()) {
+                this.hide();
+            } else {
+                pkg.app.openEventBrief(btn.navEventModel, true);
+                return true;
+            }
         },
         
         /*  The field notes, and the photo, which an imageExpr can change. Given the media it 

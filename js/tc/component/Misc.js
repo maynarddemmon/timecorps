@@ -15,8 +15,7 @@
                 colorUltraLight, colorMedium, colorDarkMedium, colorDark, colorUltraDark, colorBtn,
                 fontSizeMicro, fontSizeSmall, fontSizeMedium, fontSizeLarge, fontSizeVeryLarge, 
                 fontFamilyMono
-            },
-            ICON_NIL
+            }
         } = pkg,
         
         WideView = pkg.WideView = new JSClass('WideView', View, {
@@ -63,11 +62,6 @@
             getContentView: function() {return this._contentView;}
         }),
         
-        
-        // Details Row Classes
-        LABEL_WIDTH = 75,
-        ROW_PADDING_TOP = 3,
-        
         GrandWidthMixin = pkg.GrandWidthMixin = new JSModule('GrandWidthMixin', {
             initNode: function(parent, attrs) {
                 // Compensate for parents x position
@@ -106,14 +100,6 @@
             },
             setLabel: function(v) {this._label.setText(v);}
         }),
-        TextForFlow = pkg.TextForFlow = new JSClass('TextForFlow', PaddedText, {
-            initNode: function(parent, attrs) {
-                attrs.paddingTop ??= 5;
-                attrs.paddingBottom ??= 5;
-                attrs.whiteSpace ??= 'normal';
-                this.callSuper(parent, attrs);
-            }
-        }),
         
         InlineMixin = pkg.InlineMixin = new JSModule('InlineMixin', {
             initNode: function(parent, attrs) {
@@ -139,7 +125,7 @@
         InlinePlainText = pkg.InlinePlainText = new JSClass('InlinePlainText', PlainText, {
             include: [InlineTextHeightMixin]
         });
-        
+    
     pkg.InlineText = new JSClass('InlineText', Text, {
         include: [InlineTextHeightMixin]
     });
@@ -296,40 +282,6 @@
         _updateHeaderLabel: function() {
             this.getHeaderView().setLabel((this.expanded ? pkg.ICON_EXPANDED : pkg.ICON_COLLAPSED) + ' ' + this.label);
         }
-    });
-    
-    pkg.DetailRow = new JSClass('DetailRow', WideView, {
-        initNode: function(parent, attrs) {
-            const self = this,
-                label = attrs.label,
-                labelWidth = attrs.labelWidth ?? LABEL_WIDTH,
-                vertical = attrs.vertical ?? false;
-            delete attrs.label;
-            delete attrs.labelWidth;
-            delete attrs.vertical;
-            
-            self.callSuper(parent, attrs);
-            
-            const labelView = self._label = new PaddedPlainText(self, {
-                width:labelWidth, textColor:colorMedium, fontSize:fontSizeMedium, textAlign:vertical ? 'left' : 'right',
-                paddingTop:ROW_PADDING_TOP, text:label
-            });
-            
-            const valueX = vertical ? 0 : labelWidth + padding;
-            self._value = new TextForFlow(self, {
-                x:valueX, y:vertical ? labelView.y + labelView.height : 0,
-                percentOfParentWidth:100, percentOfParentWidthOffset:-valueX, text:ICON_NIL
-            }, [SizeToParent, {
-                sizeViewToDom: function() {
-                    this.callSuper();
-                    const yExtent = this.y + this.height;
-                    if (self.height !== yExtent) self.setHeight(yExtent);
-                }
-            }]);
-        },
-        setLabel: function(v) {this._label.setText(v);},
-        setValue: function(v) {this.getValueView().setText(v || ICON_NIL);},
-        getValueView: function() {return this._value;}
     });
     
     pkg.CompactField = new JSClass('CompactField', View, {

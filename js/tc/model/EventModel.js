@@ -1544,6 +1544,12 @@
             // Description
             doDescriptionChanged: function() {this.notifyCollectionOfUpdate();},
             
+            /** @overrides Describable */
+            getEmptyDescription: () => i18n('event-no-description'),
+            
+            /*  The description, then each known causator's, then any legacy lines: an agent 
+                was lost here, or a game abandoned with the player agent here.
+                @overrides Describable */
             getFullDescriptionAsParts: function() {
                 const parts = [],
                     description = this.getDescription(),
@@ -1560,13 +1566,8 @@
                         parts.push({type:'legacy', value:legacyPart});
                     }
                 }
-                if (parts.length === 0) parts.push({type:'empty', value:i18n('event-no-description')});
+                if (parts.length === 0) parts.push({type:'empty', value:this.getEmptyDescription()});
                 return parts;
-            },
-            
-            getFullDescription: function() {
-                const parts = this.getFullDescriptionAsParts();
-                return parts.map(part => part.value).join('<p>');
             },
             
             // Visited by Agent Status

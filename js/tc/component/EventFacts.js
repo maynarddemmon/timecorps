@@ -84,6 +84,8 @@
     pkg.DescPart = new JSClass('DescPart', M.View, {
         initNode: function(parent, attrs) {
             const self = this,
+                inset = attrs.inset ?? padding,
+                outset = attrs.outset ?? padding,
                 hPad = attrs.padding ?? padding,
                 part = self.part = attrs.part,
                 type = part.type,
@@ -92,6 +94,8 @@
                 isLegacy = type === 'legacy',
                 causatorCallback = attrs.causatorCallback;
             delete attrs.part;
+            delete attrs.inset;
+            delete attrs.outset;
             delete attrs.padding;
             delete attrs.causatorCallback;
             
@@ -137,7 +141,7 @@
                 );
             }
             
-            new M.SpacedLayout(self, {axis:'y', inset:padding, spacing:padding/2, outset:padding, collapseParent:true});
+            new M.SpacedLayout(self, {axis:'y', inset, spacing:padding/2, outset, collapseParent:true});
         },
         setWidth: function(v) {
             const self = this;

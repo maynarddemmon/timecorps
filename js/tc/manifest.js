@@ -28,7 +28,7 @@ JS.Packages(file => {
     file(COMPONENT_ROOT + 'EventFacts.js').provides('tc.EventFacts').requires(
         'tc.WideView','tc.UnderlineBtn','tc.HistoricityBar','tc.AttestationBar','tc.ParadoxBar'
     );
-    file(COMPONENT_ROOT + 'BriefSupport.js').provides('tc.BriefSupport').requires('tc.WideView','tc.MediaView');
+    file(COMPONENT_ROOT + 'BriefSupport.js').provides('tc.BriefSupport').requires('tc.WideView','tc.MediaView','tc.EventFacts');
     file(COMPONENT_ROOT + 'FloatingText.js').provides('tc.FloatingText').requires('tc');
     file(COMPONENT_ROOT + 'Dialogs.js').provides(
         'tc.dialogUtil','tc.ModalDialog'

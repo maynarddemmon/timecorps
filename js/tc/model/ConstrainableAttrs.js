@@ -139,8 +139,21 @@
                 return this.getVisibleDescriptionPhrases().map(phrase => phrase.getText()).join(joiner);
             },
             
-            getFullDescription: function(joiner=' ') {
-                return this.getDescription(joiner);
+            /*  What to show when there's nothing to describe. Empty by default; a model class
+                can give one of its own. */
+            getEmptyDescription: () => '',
+            
+            /*  The description as parts, each {type, value} and maybe a model, shown as blocks
+                of their own: by default just the description, or the empty description when 
+                nothing is visible. A model class can add parts of its own. */
+            getFullDescriptionAsParts: function() {
+                const description = this.getDescription();
+                return [description ? {type:'description', value:description} : {type:'empty', value:this.getEmptyDescription()}];
+            },
+            
+            /*  The parts as a single String, a paragraph each. */
+            getFullDescription: function() {
+                return this.getFullDescriptionAsParts().map(part => part.value).join('<p>');
             },
             
             getDescriptionPhrases: function() {return this._descPhrases ?? [];},

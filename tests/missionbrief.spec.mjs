@@ -16,7 +16,7 @@ const brief = page => page.locator('.myt-MissionBrief'),
             photoVisible:dialog._photo.visible,
             fieldNotesVisible:dialog._fieldNotesView.visible,
             // A hidden row still holds a placeholder, so only a showing row's text counts.
-            fieldNotes:dialog._fieldNotesView.visible ? dialog._fieldNotesView.getValueView().text : ''
+            fieldNotes:dialog._fieldNotesView.visible ? dialog._fieldNotesContent.getSubviews().map(part => part.part.value).join('<p>') : ''
         };
     });
 

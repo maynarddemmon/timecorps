@@ -15,7 +15,8 @@ const eventBriefTitle = page => briefTitle(page, 'event'),
             event:brief.getBriefModel()?.id,
             photoVisible:brief.getPhoto().visible,
             photoUrl:brief.getPhoto().getImageView().imageUrl ?? null,
-            fieldNotes:fieldNotes.visible ? fieldNotes.getValueView().text : null,
+            // Each block's text, as getFullDescription joins them.
+            fieldNotes:fieldNotes.visible ? brief._fieldNotesContent.getSubviews().map(part => part.part.value).join('<p>') : null,
             report:report.visible ? report.getValueView().text : null,
             where:facts._whereBtn.text,
             attestation:facts._attestationBar.value
@@ -214,4 +215,59 @@ test('an event\'s image can be a path from the event folder, e.g. to a location\
     
     expect(problems.pageErrors).toEqual([]);
     expect(problems.warnings).toEqual([]);
+});
+
+test('the field notes show each causator as a block of its own, whose links open the linked Event\'s brief', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {
+        tc.model.getEventModel('lever').attestation.setValue(50);
+        tc.app.openEventBrief(tc.model.getEventModel('origin'));
+    });
+    const brief = page.locator('.myt-EventBrief'),
+        struck = brief.locator('.myt-DescPart').filter({hasText:'Struck'}),
+        leverLink = struck.getByText(/^Lever /);
+    
+    // The causator's name, its description and the Event it's affected by.
+    await expect(struck).toContainText('Something is struck.');
+    await expect(struck).toContainText('Affected By:');
+    await expect(leverLink).toBeVisible();
+    
+    // The link opens Lever's brief in its place.
+    await leverLink.click();
+    await expect.poll(() => briefState(page)).toMatchObject({event:'lever'});
+    await expect(eventBriefTitle(page)).toHaveText(/ : Lever$/);
+    
+    // With shift, a link closes the brief and selects the Event.
+    await page.evaluate(() => tc.app.openEventBrief(tc.model.getEventModel('origin'), true));
+    await expect.poll(() => briefState(page)).toMatchObject({event:'origin'});
+    await page.keyboard.down('Shift');
+    await leverLink.click();
+    await page.keyboard.up('Shift');
+    await expect(brief).toBeHidden();
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventId())).toBe('lever');
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an Event with nothing known says so in its field notes', async ({page}) => {
+    // Boats with no description, and its causator not known. (A known causator with no 
+    // description of its own shows its value.)
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5'),
+            boats = json.events.boats;
+        delete boats.description;
+        boats.values.enough.hidden = 'true';
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await page.evaluate(() => {
+        const boats = tc.model.getEventModel('boats');
+        boats.attestation.setValue(50);
+        // Forced, since revealing Boats can queue other dialogs ahead of it.
+        tc.app.openEventBrief(boats, true);
+    });
+    await expect(page.locator('.myt-EventBrief')).toBeVisible();
+    await expect.poll(() => briefState(page)).toMatchObject({event:'boats', fieldNotes:'The historical record is silent.'});
+    expect(problems.pageErrors).toEqual([]);
 });

@@ -5,7 +5,7 @@ import {startGame, readTestData, dialogTitle, reloadGame, dismissAgentDossier, s
 
 const fieldNotes = page => page.evaluate(() => {
     const brief = document.querySelector('.myt-FactionBrief').model;
-    return brief.visible ? brief._fieldNotesView.getValueView().text : null;
+    return brief.visible ? brief._fieldNotesContent.getSubviews().map(part => part.part.value).join('<p>') : null;
 });
 
 test('agents are in the faction the data gives them, or unaligned', async ({page}) => {
