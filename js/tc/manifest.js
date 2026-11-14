@@ -11,7 +11,7 @@ JS.Packages(file => {
     // Component //
     file(COMPONENT_ROOT + 'Misc.js').provides(
         'tc.Spacer','tc.WideView','tc.Panel','tc.MiniPanel','tc.LabeledValue',
-        'tc.CompactField','tc.CompactFieldRow','tc.TallView','tc.InlineMixin'
+        'tc.CompactField','tc.TallView','tc.InlineMixin'
     ).requires('tc');
     file(COMPONENT_ROOT + 'AgentMarker.js').provides(
         'tc.SimpleAgentMarker','tc.SimpleAgentGridMarker'
@@ -91,7 +91,7 @@ JS.Packages(file => {
         'tc.timeUtil','tc.WideView','tc.Panel','tc.MiniPanel','tc.UnderlineBtn','tc.EventLinkFlow'
     );
     file(VIEW_ROOT + 'AgentDossier.js').provides('tc.AgentDossier').requires(
-        'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.CompactFieldRow','tc.TallView',
+        'tc.ModalDialog','tc.BriefSupport','tc.CompactField','tc.TallView',
         'tc.ChronalBar','tc.ParadoxBar','tc.HealthBar','tc.SkillBar'
     );
     file(VIEW_ROOT + 'AreaBrief.js').provides('tc.AreaBrief').requires(

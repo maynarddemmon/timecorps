@@ -11,7 +11,7 @@
             theme:{
                 layoutSpacing, padding, cornerRadius,
                 colorUltraLight, colorMedium, colorMegaDark,
-                fontSizeMedium, fontFamilyMono
+                fontSizeMedium
             },
             ICON_NIL
         } = pkg,

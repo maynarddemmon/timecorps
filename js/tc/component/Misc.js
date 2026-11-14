@@ -4,10 +4,7 @@
     const {Class:JSClass, Module:JSModule} = JS,
         
         M = myt,
-        {
-            View, Text, PaddedText, PlainText, PaddedPlainText, 
-            SpacedLayout, ResizeLayout, SizeToParent
-        } = M,
+        {View, Text, PlainText, ResizeLayout, SizeToParent} = M,
         
         {
             theme:{
@@ -71,6 +68,7 @@
                 this.callSuper(parent, attrs);
             }
         }),
+        
         Row = pkg.Row = new JSClass('Row', WideView, {
             include: [GrandWidthMixin],
             
@@ -85,20 +83,6 @@
                 
                 new ResizeLayout(this, {inset:inset, spacing:spacing, outset:inset});
             }
-        }),
-        DividerRow = pkg.DividerRow = new JSClass('DividerRow', Row, {
-            initNode: function(parent, attrs) {
-                const self = this,
-                    label = attrs.label;
-                delete attrs.label;
-                
-                attrs.bgColor ??= colorDark;
-                
-                self.callSuper(parent, attrs);
-                
-                self._label = new PlainText(self, {y:4, fontSize:fontSizeMedium, text:label});
-            },
-            setLabel: function(v) {this._label.setText(v);}
         }),
         
         InlineMixin = pkg.InlineMixin = new JSModule('InlineMixin', {
@@ -159,7 +143,7 @@
         }
     });
     
-    pkg.LabeledValue = new JSClass('LabeledValue', PaddedText, {
+    pkg.LabeledValue = new JSClass('LabeledValue', M.PaddedText, {
         initNode: function(parent, attrs) {
             attrs.paddingLeft ??= padding;
             attrs.paddingRight ??= spacing;
@@ -223,12 +207,15 @@
             
             self.callSuper(parent, attrs);
             
-            const header = self._headerView = new DividerRow(self, {inset:padding}, [M.Button, {
-                    doActivated: function() {self.setExpanded(!self.expanded);}
+            const header = self._headerView = new Row(self, {inset:padding, bgColor:colorDark}, [M.Button, {
+                    doActivated: () => {self.setExpanded(!self.expanded);}
                 }]),
                 wrapper = self._wrapperView = new WideView(self, {y:header.height, overflow:'autoy'}),
                 content = self._contentView = new WideView(wrapper);
-            new SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
+            
+            self._label = new PlainText(header, {y:4, fontSize:fontSizeMedium});
+            
+            new M.SpacedLayout(content, {axis:'y', spacing:1, outset:1, collapseParent:true});
             
             wrapper.addDomClass('hideScrollbar');
             wrapper.getIDS().overscrollBehavior = 'none';
@@ -280,7 +267,7 @@
         
         /** @private */
         _updateHeaderLabel: function() {
-            this.getHeaderView().setLabel((this.expanded ? pkg.ICON_EXPANDED : pkg.ICON_COLLAPSED) + ' ' + this.label);
+            this._label.setText((this.expanded ? pkg.ICON_EXPANDED : pkg.ICON_COLLAPSED) + ' ' + this.label);
         }
     });
     
@@ -322,15 +309,6 @@
         
         setLabel: function(v) {this._lv.setText(v);},
         setValue: function(v) {this._vv.setText(v);}
-    });
-    
-    pkg.CompactFieldRow = new JSClass('CompactFieldRow', WideView, {
-        initNode: function(parent, attrs) {
-            this.callSuper(parent, attrs);
-            
-            new ResizeLayout(this, {inset:spacing, spacing, outset:spacing});
-            new M.SizeToChildren(this, {axis:'y'});
-        }
     });
     
     pkg.TallView = new JSClass('TallView', View, {

@@ -1,12 +1,13 @@
 (pkg => {
     'use strict';
     
-    const {I18N:{get:i18n}} = myt,
+    const JSClass = JS.Class,
         
-        {PlainText, SpacedLayout, ResizeLayout, SizeToParent} = myt,
+        M = myt,
+        {I18N:{get:i18n}, PlainText, SpacedLayout, ResizeLayout, SizeToParent} = M,
         
         {
-            WideView, TallView, CompactField, CompactFieldRow,
+            WideView, TallView, CompactField,
             SkillBar,
             timeUtil:{format},
             theme:{
@@ -20,9 +21,18 @@
         
         HALF_PADDING = padding / 2,
         
-        PHOTO_SIZE = 256;
-    
-    pkg.AgentDossier = new JS.Class('AgentDossier', pkg.AckDialog, {
+        PHOTO_SIZE = 256,
+        
+        CompactFieldRow = new JSClass('CompactFieldRow', WideView, {
+            initNode: function(parent, attrs) {
+                this.callSuper(parent, attrs);
+                
+                new ResizeLayout(this, {inset:spacing, spacing, outset:spacing});
+                new M.SizeToChildren(this, {axis:'y'});
+            }
+        });
+        
+    pkg.AgentDossier = new JSClass('AgentDossier', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         
         
