@@ -52,16 +52,11 @@
         update: function(eventModel) {
             const self = this,
                 locationModel = eventModel.getLocationModel(),
-                whereBtn = self._whereBtn,
-                whenTxt = self._whenTxt;
+                whereBtn = self._whereBtn;
             self.eventModel = eventModel;
             
-            whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
-            
-            // As tall as the text beside it, since a button centers its text, which would 
-            // otherwise sit lower.
+            self._whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
             whereBtn.setText(locationModel?.name ?? pkg.ICON_NIL);
-            whereBtn.setHeight(whenTxt.height);
             whereBtn.setDisabled(!locationModel);
             
             self._historicityBar.updateForStat(eventModel[pkg.STAT_ID_HISTORICITY]);

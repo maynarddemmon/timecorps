@@ -522,6 +522,8 @@
             
             logToBase,
             
+            resolveUrl: path => new URL(path, document.baseURI).href,
+            
             /*  When the campaign started, in millis: what "now" in an Event's start means. 
                 It's saved with the game, so a restored game keeps its dates whatever day it 
                 is. The current time until it's set or first read. */

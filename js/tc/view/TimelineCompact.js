@@ -592,7 +592,6 @@
             _chronalBar.updateForStat(model[STAT_ID_CHRONAL]);
             
             eventBox._media.setMedia(...model.getMediaUrls());
-            
             eventBox.setTooltip(_label.text);
             eventBox.setVisible(notHidden);
             eventBox.updateEntangled();
@@ -699,13 +698,7 @@
                 self._attestationBar = new pkg.AttestationBar(self, {x:spacing, y:20, width:barWidth}, [MiniStatBar]);
                 self._paradoxBar = new pkg.ParadoxBar(self, {x:spacing, y:24, width:barWidth}, [MiniStatBar]);
                 self._chronalBar = new pkg.ChronalBar(self, {x:spacing, y:28, width:barWidth}, [MiniStatBar]);
-                
-                self._media = new pkg.MediaView(self, {
-                    y:35, width, height:width*0.40625, roundedCorners:0, visible:false
-                }, [{
-                    doMediaReady: function() {this.setVisible(true);},
-                    doMediaFailed: function() {this.setVisible(false);}
-                }]);
+                self._media = new pkg.StandardMediaView(self, {y:35, roundedCorners:0});
                 
                 updateEventBox(self);
                 

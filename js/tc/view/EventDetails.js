@@ -9,7 +9,7 @@
         
         {
             I18N:{get:i18n},
-            View, PaddedText, PaddedPlainText, SizeToParent,
+            View, PaddedText, PaddedPlainText,
             Layout, SpacedLayout, ResizeLayout, SizeHeightToDom,
             debounce
         } = myt,
@@ -362,17 +362,7 @@
             
             // Description
             row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:3});
-            self.descriptionMedia = new pkg.MediaView(row, {
-                percentOfParentWidth:100, roundedCorners:0
-            }, [SizeToParent, {
-                setWidth: function(v) {
-                    this.callSuper(v);
-                    this.setHeight(this.width*0.40625);
-                },
-                doMediaReady: function() {this.setVisible(true);},
-                doMediaFailed: function() {this.setVisible(false);}
-            }]);
-            
+            self.descriptionMedia = new pkg.StandardMediaView(row, {roundedCorners:0});
             const descContainer = self._descriptionContainer = new WideView(row, {}, [{
                 setWidth: function(v) {
                     this.callSuper(v);

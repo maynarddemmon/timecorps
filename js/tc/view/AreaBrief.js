@@ -1,16 +1,16 @@
 (pkg => {
     'use strict';
     
-    const M = myt,
-        {I18N:{get:i18n}, SizeToParent} = M,
+    const JSClass = JS.Class,
+        
+        M = myt,
+        {I18N:{get:i18n}} = M,
         
         {
-            WideView,
+            WideView, resolveUrl,
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
             theme:{padding, fontSizeMedium, fontFamilyMono}
         } = pkg,
-        
-        resolveUrl = path => new URL(path, document.baseURI).href,
         
         /*  The known Events at a Location, earliest first. */
         CHRONOLOGY_SORT_FUNC = (a, b) => a.getStart() - b.getStart() || a.id.localeCompare(b.id),
@@ -25,7 +25,7 @@
             the location line in Event Details, then its picture and description. The name
             opens the Event's brief, or with shift, selects the Event and closes the Area
             Brief. Call update whenever the Event changes. */
-        ChronologyEntry = new JS.Class('ChronologyEntry', WideView, {
+        ChronologyEntry = new JSClass('ChronologyEntry', WideView, {
             initNode: function(parent, attrs) {
                 const self = this,
                     brief = self.brief = attrs.brief;
@@ -49,36 +49,21 @@
                 
                 // Hidden unless the Event has a picture. As wide as the text, at the timeline's
                 // proportions.
-                self._media = new pkg.MediaView(self, {
-                    percentOfParentWidth:100, visible:false
-                }, [SizeToParent, {
-                    setWidth: function(v) {
-                        this.callSuper(v);
-                        this.setHeight(this.width*0.40625);
-                    },
-                    doMediaReady: function() {this.setVisible(true);},
-                    doMediaFailed: function() {this.setVisible(false);}
-                }]);
-                
+                self._media = new pkg.StandardMediaView(self);
                 self._descriptionTxt = new pkg.TextForFlow(self, {
                     whiteSpace:'normal', percentOfParentWidth:100,
                     fontSize:fontSizeMedium, fontFamily:fontFamilyMono
-                }, [SizeToParent]);
+                }, [M.SizeToParent]);
                 
                 new M.SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
             },
             
             update: function(eventModel) {
-                const self = this,
-                    nameBtn = self._nameBtn,
-                    whenTxt = self._whenTxt;
+                const self = this;
                 self.eventModel = eventModel;
                 
-                whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
-                
-                // As tall as the text beside it, as in EventFacts.
-                nameBtn.setText(eventModel.getName());
-                nameBtn.setHeight(whenTxt.height);
+                self._whenTxt.setText(pkg.ICON_SEPARATOR + eventModel.formatAsTemporalExtent());
+                self._nameBtn.setText(eventModel.getName());
                 
                 // Given the media it already has, it doesn't reload.
                 const mediaURLs = eventModel.getMediaUrls(),
@@ -96,7 +81,7 @@
     /*  Briefs the player on a Location: its photo, field notes, the report in
         location/<id>.txt under cfg.DATA_BASE_DIR, and a chronology of the known Events there,
         earliest first. */
-    pkg.AreaBrief = new JS.Class('AreaBrief', pkg.AckDialog, {
+    pkg.AreaBrief = new JSClass('AreaBrief', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         
         
