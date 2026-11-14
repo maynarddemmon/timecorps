@@ -31,7 +31,7 @@
                 new M.SizeToChildren(this, {axis:'y'});
             }
         });
-        
+    
     pkg.AgentDossier = new JSClass('AgentDossier', pkg.AckDialog, {
         include: [pkg.BriefSupport],
         

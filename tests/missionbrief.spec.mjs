@@ -136,3 +136,50 @@ test('a completed mission\'s brief shows its debrief after the briefing', async 
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('the brief shows the mission\'s objectives as the Mission panel does, and keeps them current', async ({page}) => {
+    const problems = await startGame(page, {dismissBrief:false});
+    await expect(brief(page)).toBeVisible();
+    
+    const objectives = brief(page).locator('.myt-ObjectiveRow'),
+        // Whether each objective is met, by its icon.
+        readMet = () => page.evaluate(() => {
+            const dialog = tc.app.getSubviews().find(sv => sv.isA(tc.MissionBrief));
+            return dialog._objectivesView.getSubviews().map(row => row.successView.text === tc.ICON_CHECKED);
+        });
+    await expect(brief(page).getByText('Objectives', {exact:true})).toBeVisible();
+    await expect(objectives).toHaveCount(1);
+    await expect(objectives).toContainText('Not Struck');
+    await expect(objectives).toContainText('Origin must not be struck.');
+    await expect(objectives.getByText(/^Origin: Struck /)).toBeVisible();
+    // Origin starts out struck, so it isn't met.
+    expect(await readMet()).toEqual([false]);
+    
+    // Unstriking Origin, with the brief open, meets it.
+    await setCausator(page, 'origin', 'struck', false);
+    await expect.poll(readMet).toEqual([true]);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('an objective\'s link opens its Event\'s brief, and with shift selects it and closes the Mission Brief', async ({page}) => {
+    const problems = await startGame(page, {dismissBrief:false});
+    const link = brief(page).locator('.myt-ObjectiveRow').getByText(/^Origin: Struck /),
+        eventBrief = page.locator('.myt-EventBrief');
+    
+    await link.click();
+    await expect(eventBrief).toBeVisible();
+    await expect(eventBrief).toContainText('Origin');
+    await page.keyboard.press('Escape');
+    await expect(eventBrief).toBeHidden();
+    await expect(brief(page)).toBeVisible();
+    
+    await page.keyboard.down('Shift');
+    await link.click();
+    await page.keyboard.up('Shift');
+    await expect(brief(page)).toBeHidden();
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventId())).toBe('origin');
+    
+    expect(problems.pageErrors).toEqual([]);
+});

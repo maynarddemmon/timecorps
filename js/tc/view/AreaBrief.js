@@ -112,7 +112,7 @@
             
             self.callSuper(parent, attrs);
             
-            self._chronologyView = self.addProfileContainerRow(i18n('brief-chronology'));
+            self._chronologyView = self.addContainerRow(i18n('brief-chronology'));
             self._chronologyEntries = [];
         },
         

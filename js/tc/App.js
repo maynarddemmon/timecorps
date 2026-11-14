@@ -630,6 +630,7 @@
                     opsView.notifyEventModelChanged(instanceModel);
                     eventBrief?.notifyBriefModelChanged(instanceModel);
                     areaBrief?.notifyEventModelChanged(instanceModel);
+                    missionBrief?.notifyEventModelChanged(instanceModel);
                     break;
                 case SCOPE_OPERATIONS:
                     opsView.notifyOperationModelChanged(instanceModel);

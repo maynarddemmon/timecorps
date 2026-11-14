@@ -101,7 +101,7 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'EventBrief.js').provides('tc.EventBrief').requires(
         'tc.ModalDialog','tc.BriefSupport','tc.EventFacts'
     );
-    file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport');
+    file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport','tc.OperationDetails');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
     // Include Everything

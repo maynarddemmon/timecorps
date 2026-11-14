@@ -93,7 +93,7 @@
         
         A brief can also put a summary of the model between the photo and the field notes 
         with setBriefSummaryView, and add rows of its own below the report with addProfileRow
-        (text) or addProfileContainerRow (views).
+        (text) or addContainerRow (views).
         
         Hooks:
             getBriefTitle(model) - Required. The dialog title for the model.
@@ -187,7 +187,7 @@
         /*  Adds a labeled row below the field notes, report and any rows already added, for 
             views rather than text. Returns the view to add them to: they're stacked top down
             and it grows to fit them, and the row with it. */
-        addProfileContainerRow: function(label) {
+        addContainerRow: function(label) {
             return makeContainerRow(this._profileContainer, this._profileLabelWidth, label, padding/2).content;
         },
         

@@ -201,6 +201,7 @@ myt.I18N.setDictionary({
 "brief-profile":"Profile",
 "brief-briefing":"Briefing",
 "brief-debrief":"Debrief",
+"brief-objectives":"Objectives",
 
 // Agent Dossier
 "dossier-id":"ID",

@@ -62,7 +62,7 @@
 	"operations":{
 		"spring_witness":{
 			"name":"Spring Returns - Witness",
-			"description":"Shanghai, 12 November 2087. The day the world learns it no longer has to grow old.",
+			"description":"The day the world learns it no longer has to grow old.",
 			"onSetup":{
 				"initialEventSelection":"lgv_announcement",
 				"adj":{
@@ -106,7 +106,7 @@
 		// commissioners keeps the treatment secret; then she joins You and makes her offer.
 		"spring_vote":{
 			"name":"Spring Returns - The Vote",
-			"description":"Beijing, 22 September 2087. Seven votes to four, the Commission decides to tell the world. It wasn’t supposed to.",
+			"description":"Seven votes to four, the Commission decides to tell the world. It wasn’t supposed to.",
 			"onSetup":{
 				"initialAgentSelection":"player",
 				"initialEventSelection":"lgv_commission",

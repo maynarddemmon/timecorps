@@ -10,7 +10,7 @@
             WideView, InlinePlainText,
             theme:{
                 spacing, padding,
-                colorUltraLight, colorMegaDark, colorSuccess, colorError,
+                colorUltraLight, colorLight, colorMedium, colorMegaDark, colorSuccess, colorError,
                 fontSizeMedium, fontSizeLarge
             }
         } = pkg,
@@ -26,13 +26,20 @@
         ICON_V_INSET = 12,
         ICON_X_INSET = 14,
         
-        ObjectiveRow = new JSClass('ObjectiveRow', WideView, {
+        /*  An Objective: whether it's met, its name and description, and the parts of Events it
+            depends on, as links. A link selects its Event, unless precursorCallback, given the
+            link's button, returns true (see EventLinkFlow.doBtnActivated). Used by the 
+            Mission panel and the Mission Brief. */
+        ObjectiveRow = pkg.ObjectiveRow = new JSClass('ObjectiveRow', WideView, {
             initNode: function(parent, attrs) {
-                const self = this;
+                const self = this,
+                    precursorCallback = attrs.precursorCallback;
+                delete attrs.precursorCallback;
                 
                 self.quickSet(['objectiveModel'], attrs);
                 
                 attrs.bgColor ??= colorMegaDark;
+                attrs.textColor ??= colorLight;
                 
                 self.callSuper(parent, attrs);
                 
@@ -60,18 +67,19 @@
                     }]),
                     xPos = successView.x + successView.width + ICON_X_INSET + 4,
                     txtAttrs = {x:xPos, paddingRight:padding, whiteSpace:'normal'};
-                self.nameTxt = new PaddedText(self, {...txtAttrs, fontSize:fontSizeMedium});
-                self.descriptionTxt = new PaddedText(self, {...txtAttrs});
-                self.precursorsFlow = new pkg.EventLinkFlow(self, {x:xPos});
-                new SpacedLayout(self, {axis:'y', inset:padding, outset:padding, collapseParent:true});
+                
+                self._nameTxt = new PaddedText(self, {...txtAttrs, textColor:colorMedium, fontSize:fontSizeLarge});
+                self._descTxt = new PaddedText(self, {...txtAttrs, fontSize:fontSizeMedium});
+                self.precursorsFlow = new pkg.EventLinkFlow(self, {x:xPos}, precursorCallback ? [{doBtnActivated:precursorCallback}] : undefined);
+                new SpacedLayout(self, {axis:'y', inset:padding, spacing:padding/2, outset:padding, collapseParent:true});
                 
                 self.update();
             },
             update: function() {
                 const self = this,
                     objectiveModel = self.objectiveModel;
-                self.nameTxt.setText(objectiveModel.getName());
-                self.descriptionTxt.setText(objectiveModel.getFullDescription());
+                self._nameTxt.setText(objectiveModel.getName());
+                self._descTxt.setText(objectiveModel.getFullDescription());
                 self.successView.setSuccess(objectiveModel.isSuccess());
                 
                 const precursorsFlow = self.precursorsFlow,

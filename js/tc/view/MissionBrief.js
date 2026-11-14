@@ -4,13 +4,14 @@
     const {I18N:{get:i18n}} = myt,
         
         {
-        cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
-        theme:{padding},
-        OPERATION_STATE_COMPLETED
-    } = pkg;
+            cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
+            theme:{padding},
+            OPERATION_STATE_COMPLETED
+        } = pkg;
     
     /*  Briefs the player on an Operation: an optional photo, the Operation's Describable 
-        phrases as field notes, and the briefing in mission/<id>.txt under cfg.DATA_BASE_DIR. 
+        phrases as field notes, the briefing in mission/<id>.txt under cfg.DATA_BASE_DIR, and
+        the Objectives, as the Mission panel shows them. 
         It opens when a mission is set up or revealed, and from the Mission panel's title. It's 
         acknowledged like an ack dialog, and takes its turn with them. While the mission is 
         available, the button accepts it instead, which starts it, and closing the brief 
@@ -22,14 +23,19 @@
         
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
+            const self = this;
             attrs.cancelable ??= true;
             attrs.tallWidth ??= 5*(TL_COL_WIDTH + padding) + padding;
             attrs.photoHeight ??= 5*TL_COL_HEADER_HEIGHT;
             
-            this.callSuper(parent, attrs);
+            self.callSuper(parent, attrs);
             
-            this._ackLabel = this.getDefaultBtn().text;
-            this._debriefView = this.addProfileRow(i18n('brief-debrief'));
+            self._ackLabel = self.getDefaultBtn().text;
+            const objectivesView = self._objectivesView = self.addContainerRow(i18n('brief-objectives'));
+            self._debriefView = self.addProfileRow(i18n('brief-debrief'));
+            
+            // Tighten up the layout since divider lines are not visible in the briefs.
+            objectivesView.getFirstLayout().callSetters({inset:-10, spacing:-5, outset:-10});
         },
         
         
@@ -45,15 +51,37 @@
         
         
         // Methods /////////////////////////////////////////////////////////////
-        /*  The debrief is dynamic like the field notes, so it's updated along with them. Only 
-            a completed mission has one to show, the same as the Mission Complete dialog showed.
+        /*  An Objective's precursors show only what the player knows about, so they're 
+            redone when one of their Events changes, e.g. is revealed, as in the Mission panel. */
+        notifyEventModelChanged: function(eventModel) {
+            if (this.visible && this.getBriefModel()?.dependsOnEvent(eventModel)) this.updateFieldNotes();
+        },
+        
+        /*  The Objectives and the debrief are dynamic like the field notes, so they're updated
+            along with them. Only a completed mission has a debrief to show, the same as the 
+            Mission Complete dialog showed.
             @overrides BriefSupport */
         updateFieldNotes: function() {
             this.callSuper();
             
-            const operationModel = this.getBriefModel(),
-                debriefView = this._debriefView,
+            const self = this,
+                operationModel = self.getBriefModel(),
+                objectiveModels = operationModel?.getShownObjectiveModels() ?? [],
+                objectivesView = self._objectivesView,
+                debriefView = self._debriefView,
                 isCompleted = operationModel?.getState() === OPERATION_STATE_COMPLETED;
+            
+            objectivesView.destroyAllSubviews();
+            for (const objectiveModel of objectiveModels) {
+                // A link opens its Event's brief, as the field notes' links do.
+                new pkg.ObjectiveRow(objectivesView, {
+                    objectiveModel, 
+                    bgColor:'transparent', 
+                    precursorCallback:btn => self._doCausatorLinkActivated(btn)
+                });
+            }
+            objectivesView.parent.setVisible(objectiveModels.length > 0);
+            
             debriefView.setVisible(isCompleted);
             if (isCompleted) debriefView.setValue(operationModel.getDebrief() || i18n('dlg-mission-complete-msg'));
         },
