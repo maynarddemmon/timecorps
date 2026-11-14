@@ -263,7 +263,7 @@ Every location needs `img/location/<id>.jpg` and `data/location/<id>.txt`.
 ```json5
 "description":[
 	"At Berth 44 in Southampton, White Star reshuffles her senior officers.",
-	{"text":"<br><br>Blair goes ashore with the key to the crow's nest locker.", "hidden":"event.attestation.value < 15"}
+	{"text":"<p>Blair goes ashore with the key to the crow's nest locker.", "hidden":"event.attestation.value < 15"}
 ]
 ```
 

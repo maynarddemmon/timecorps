@@ -1566,7 +1566,7 @@
             
             getFullDescription: function() {
                 const parts = this.getFullDescriptionAsParts();
-                return parts.map(part => part.value).join('<br><br>');
+                return parts.map(part => part.value).join('<p>');
             },
             
             // Visited by Agent Status

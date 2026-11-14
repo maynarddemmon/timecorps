@@ -65,7 +65,7 @@
 			"onSuccess":{
 				"debrief":[
 					"Yesterday you were an ordinary person with an ordinary life. Tonight you are alone in a stranger’s hideout, sixty years from home, with a dead agent’s mission strapped to your wrist.",
-					"<br><br>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2087, something is about to change the world, and someone wants it to."
+					"<p>You don’t know who the old stranger was, or who the masked figure is, or what the Time Corps wants with you. You know one thing: in Shanghai, in November 2087, something is about to change the world, and someone wants it to."
 				],
 				"nextOperation":"spring_witness",
 				"adj":{
@@ -227,7 +227,7 @@
 			},
 			"description":[
 				"Your alarm goes off at seven, the way it does every day, and the city outside your window is grey and wet and entirely ordinary.",
-				"<br><br>You have an hour before the bus. Nothing about today is going to be any different from any other day.",
+				"<p>You have an hour before the bus. Nothing about today is going to be any different from any other day.",
 				{"text":"Three miles along the river before breakfast, the way you do most mornings.", "shown":"scratch.backstory_run"},
 				{"text":"An hour on the guitar, working at a passage you’ve never quite got.", "shown":"scratch.backstory_guitar"},
 				{"text":"Coffee and the news, every word of it, with opinions.", "shown":"scratch.backstory_news"}
@@ -332,7 +332,7 @@
 			],
 			"description":[
 				"Back in your apartment, you grab your bike. You’re going to have to ride to work in this rain. Then you remember your chain broke. It’s gonna take you a few minutes to fix it.",
-				{"text":"<br><br>You’ve repaired the chain. Better head out so you’re not late to work.", "hidden":"event.values.bike_broken.value"}
+				{"text":"<p>You’ve repaired the chain. Better head out so you’re not late to work.", "hidden":"event.values.bike_broken.value"}
 			]
 		},
 		
@@ -373,7 +373,7 @@
 			],
 			"description":[
 				"You walk your bike to the local bike shop. The mechanic can fix it but there’s a bit of a wait.",
-				{"text":"<br><br>Your bike works great now. Better get going since you’re already late for work.", "hidden":"event.values.bike_broken.value"}
+				{"text":"<p>Your bike works great now. Better get going since you’re already late for work.", "hidden":"event.values.bike_broken.value"}
 			]
 		},
 		
@@ -446,7 +446,7 @@
 			},
 			"description":[
 				"The crosstown bus, crowded and steamed up, crawling through the morning traffic. The same faces as every other morning, more or less.",
-				"<br><br>Where it lets you off depends on where you work."
+				"<p>Where it lets you off depends on where you work."
 			]
 		},
 		
@@ -477,7 +477,7 @@
 			}],
 			"description":[
 				"You’re a nurse on the geriatric ward at St. Brendan’s: quick hands, a strong back and no patience at all for being lied to.",
-				"<br><br>Eight hours of bedpans, medication rounds and small emergencies."
+				"<p>Eight hours of bedpans, medication rounds and small emergencies."
 			]
 		},
 		
@@ -533,10 +533,10 @@
 			}],
 			"description":[
 				"Fifty minutes at the Uptown Café, the same corner table as always, before it’s back to work.",
-				{"text":"<br><br>The pastrami is as good as ever.", "shown":"event.actions.meat.attemptCount > 0"},
-				{"text":"<br><br>The soup is hot and the salad is fresh.", "shown":"event.actions.veg.attemptCount > 0"},
-				{"text":"<br><br>You lose yourself in a chain of articles about things that happened long ago.", "shown":"event.actions.wiki.attemptCount > 0"},
-				{"text":"<br><br>You finish the crossword and most of the logic puzzle.", "shown":"event.actions.puzzles.attemptCount > 0"}
+				{"text":"<p>The pastrami is as good as ever.", "shown":"event.actions.meat.attemptCount > 0"},
+				{"text":"<p>The soup is hot and the salad is fresh.", "shown":"event.actions.veg.attemptCount > 0"},
+				{"text":"<p>You lose yourself in a chain of articles about things that happened long ago.", "shown":"event.actions.wiki.attemptCount > 0"},
+				{"text":"<p>You finish the crossword and most of the logic puzzle.", "shown":"event.actions.puzzles.attemptCount > 0"}
 			]
 		},
 		
@@ -588,8 +588,8 @@
 			},
 			"description":[
 				"The second half of your shift is extra stressful with Mr. Abernathy going missing.",
-				{"text":"<br><br>You found Mr. Abernathy on the roof, another disaster averted.", "shown":"event.values.choice.value === 'track'"},
-				{"text":"<br><br>Your calm demeanor prevents the ward from descending into chaos.", "shown":"event.values.choice.value === 'calm'"}
+				{"text":"<p>You found Mr. Abernathy on the roof, another disaster averted.", "shown":"event.values.choice.value === 'track'"},
+				{"text":"<p>Your calm demeanor prevents the ward from descending into chaos.", "shown":"event.values.choice.value === 'calm'"}
 			]
 		},
 		
@@ -620,7 +620,7 @@
 			}],
 			"description":[
 				"You’re a reporter at the Ledger, one of the last papers in the city still printing on paper: nosy, persistent, and not above a little invention to get someone talking.",
-				"<br><br>The deadline is at five. It is always at five."
+				"<p>The deadline is at five. It is always at five."
 			]
 		},
 		
@@ -672,7 +672,7 @@
 			},
 			"description":[
 				"You spend the second half of your day pursuing a story.",
-				{"text":"<br><br>You followed the councilman’s aide to the parking garage and got the story.", "shown":"event.values.choice.value === 'chase'"},
+				{"text":"<p>You followed the councilman’s aide to the parking garage and got the story.", "shown":"event.values.choice.value === 'chase'"},
 				{"text":"You convince your editor that your story is worth being on the front page.", "shown":"event.values.choice.value === 'pitch'"}
 			]
 		},
@@ -704,7 +704,7 @@
 			}],
 			"description":[
 				"You’re a mechanic at Delgado’s Garage: strong hands, good ears and not much to say to the customers.",
-				"<br><br>The radio is on, the coffee is burnt, and there’s a car on every lift."
+				"<p>The radio is on, the coffee is burnt, and there’s a car on every lift."
 			]
 		},
 		
@@ -756,8 +756,8 @@
 			},
 			"description":[
 				"The second half of your workday is more challenging than usual.",
-				{"text":"<br><br>You fix the Mustang, finding the cracked bolt no one else would have noticed.", "shown":"event.values.choice.value === 'fix'"},
-				{"text":"<br><br>You convince the Mustang’s owner to rebuild the engine.", "shown":"event.values.choice.value === 'haggle'"}
+				{"text":"<p>You fix the Mustang, finding the cracked bolt no one else would have noticed.", "shown":"event.values.choice.value === 'fix'"},
+				{"text":"<p>You convince the Mustang’s owner to rebuild the engine.", "shown":"event.values.choice.value === 'haggle'"}
 			]
 		},
 		
@@ -788,7 +788,7 @@
 			}],
 			"description":[
 				"You work at the Orpheum, an understudy who also does whatever needs doing backstage: a different face for every part, and not much interest in the details of anything else.",
-				"<br><br>Two shows today, and the first is at two."
+				"<p>Two shows today, and the first is at two."
 			]
 		},
 		
@@ -840,8 +840,8 @@
 			},
 			"description":[
 				"The latter half of your day presents a unique opportunity.",
-				{"text":"<br><br>You perform the lead role flawlessly.", "shown":"event.values.choice.value === 'cover'"},
-				{"text":"<br><br>You heroically free the jammed rig saving the pivotal scene of the show.", "shown":"event.values.choice.value === 'rig'"}
+				{"text":"<p>You perform the lead role flawlessly.", "shown":"event.values.choice.value === 'cover'"},
+				{"text":"<p>You heroically free the jammed rig saving the pivotal scene of the show.", "shown":"event.values.choice.value === 'rig'"}
 			]
 		},
 		
@@ -866,7 +866,7 @@
 					"adj":{"agent.skills.deception":{"onBoth":"10"}, "agent.skills.persuasion":{"onBoth":"5"}},
 				}
 			],
-			"description":"Halsey Street, the long way home, under a drizzle that can’t make up its mind. The shops are closing and the streetlights are coming on.<br><br>It’s dark already, and it’s started to rain properly."
+			"description":"Halsey Street, the long way home, under a drizzle that can’t make up its mind. The shops are closing and the streetlights are coming on.<p>It’s dark already, and it’s started to rain properly."
 		},
 		"origin_walkHome_alley":{
 			"name":"The Alley", "chronoLocked":"true", "image":"../location/origin_street_alley.jpg",
@@ -952,8 +952,8 @@
 			},
 			"description":[
 				"There’s a sound like a held breath let go, and a person is standing on the pavement in front of you who was not there a moment ago.",
-				"<br><br>They are old, older than anyone you know, in clothes cut in a way you have never seen. Around their wrist is something that isn’t a watch and isn’t a phone, and above it, for an instant, hangs a diagram made of light: lines, branching and rejoining. Then it’s gone, and you’re not sure you saw it at all.",
-				{"text":"<br><br>The stranger seizes your wrist. Something cold snaps shut around it. “You have to finish it,” they say, and their voice is strangely familiar. “My mission. Everything depends on it. Causality itself.” Then you see the blood soaking through their coat, and they fold up onto the wet pavement at your feet.", "hidden":"event.values.reaction.value === ''"}
+				"<p>They are old, older than anyone you know, in clothes cut in a way you have never seen. Around their wrist is something that isn’t a watch and isn’t a phone, and above it, for an instant, hangs a diagram made of light: lines, branching and rejoining. Then it’s gone, and you’re not sure you saw it at all.",
+				{"text":"<p>The stranger seizes your wrist. Something cold snaps shut around it. “You have to finish it,” they say, and their voice is strangely familiar. “My mission. Everything depends on it. Causality itself.” Then you see the blood soaking through their coat, and they fold up onto the wet pavement at your feet.", "hidden":"event.values.reaction.value === ''"}
 			]
 		},
 		
@@ -1005,8 +1005,8 @@
 			},
 			"description":[
 				"The air tears again. A second figure stands over the body: masked, in a close-fitting black suit that seems to swallow the streetlight. They draw something from their hip that can only be a weapon, though it is no gun you have ever seen.",
-				"<br><br>On your wrist, the device begins to flash and to beep, faster and faster.",
-				{"text":"<br><br>The masked figure raises the weapon. And then there is no street, no rain, no time, no you.", "hidden":"event.values.response.value === ''"}
+				"<p>On your wrist, the device begins to flash and to beep, faster and faster.",
+				{"text":"<p>The masked figure raises the weapon. And then there is no street, no rain, no time, no you.", "hidden":"event.values.response.value === ''"}
 			]
 		},
 		
@@ -1045,7 +1045,7 @@
 			},
 			"description":[
 				"You come back to yourself on your hands and knees on a cold floor, retching. A long corridor, dimly lit, with a wall of frosted glass along one side. The air smells of dust and machine oil.",
-				"<br><br>Beyond the glass is an office, and in it, arguing in low, furious voices, are the two people you just saw on Halsey Street. The old one is not bleeding. Not yet."
+				"<p>Beyond the glass is an office, and in it, arguing in low, furious voices, are the two people you just saw on Halsey Street. The old one is not bleeding. Not yet."
 			]
 		},
 		
@@ -1070,13 +1070,13 @@
 			}],
 			"description":[
 				"The argument turns into a fight, fast and ugly. The masked figure has a blade, thin and dark, and the old one is slower than they used to be.",
-				"<br><br>The blade goes in. The old one gasps, slaps at their wrist,",
+				"<p>The blade goes in. The old one gasps, slaps at their wrist,",
 				{"text":"shoots a quick glance in your direction,","shown":"events.safehouse_arrival.values.concealed.value"},
 				"and is gone, in a flicker and a sound like a held breath let go.",
-				{"text":"<br><br>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.", "shown":"event.attestation.value > 1"},
+				{"text":"<p>The masked figure stands very still. Then they pass their own wrist over the place where the old one stood, slowly, back and forth, as if reading something written on the air.", "shown":"event.attestation.value > 1"},
 				{"text":"They turn to look at you as they activate the device on their wrist.","shown":"!events.safehouse_arrival.values.concealed.value && event.attestation.value > 1"},
 				{"text":"A moment later, they too are gone.", "shown":"event.attestation.value > 1"},
-				{"text":"<br><br>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "shown":"event.attestation.value > 6"}
+				{"text":"<p>You step closer to the door to the office where the fight occurred. As you do so, the device on your wrist hums and the glass door slides open.", "shown":"event.attestation.value > 6"}
 			]
 		},
 		
@@ -1132,9 +1132,9 @@
 			}],
 			"description":[
 				"The office is empty now. A chair is overturned, and there’s blood on the floor where the old one stood, and a faint scorch mark in a circle around it.",
-				{"text":"<br><br>It isn’t an office, exactly. There’s a cot in one corner, tins of food, spare clothes, a go-bag by the door. Someone has been living here, and hiding.", "hidden":"event.attestation.value < 10"},
-				{"text":"<br><br>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
-				{"text":"<br><br>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"}
+				{"text":"<p>It isn’t an office, exactly. There’s a cot in one corner, tins of food, spare clothes, a go-bag by the door. Someone has been living here, and hiding.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>Taped inside a cupboard door is a hand-drawn chart of dates: 1912, 1915, 1588, 1453, and dozens more, each with notes beside it in a cramped hand. The handwriting is very like your own.", "hidden":"event.attestation.value < 25"},
+				{"text":"<p>In a drawer, a sheaf of printouts: personnel files from something called the Corps, its agents scattered across a thousand years. One is stamped DECEASED. Another is stamped COMPROMISED. Several faces have been circled.", "hidden":"event.attestation.value < 40"}
 			]
 		},
 		
@@ -1176,7 +1176,7 @@
 			},
 			"description":[
 				"You linger in the office, unsure how to proceed. A faint sound drifts in from the corridor. You turn toward the door, ready to head back out and follow it, when the device on your wrist grows warm. A few seconds later it chimes once, and a green icon, something like a play button, begins to flash on its surface.",
-				{"text":"<br><br>A figure made of light rises from the device: the old stranger, unhurt, a recording looking straight at you. “If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<br><br>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<br><br>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, at least not yet. The device will take you there. As for who to trust: no one.<br><br>“You can do this. I know you can, better than anyone.”<br><br>The figure flickers, gives you a smile you almost recognize, and is gone.", "shown":"event.values.heard.value"}
+				{"text":"<p>A figure made of light rises from the device: the old stranger, unhurt, a recording looking straight at you. “If you’re seeing this, I didn’t make it, and the device has chosen you. I’m sorry. There isn’t time to explain, and you wouldn’t believe me if I did.<p>“The Corps is compromised. Someone inside is pulling threads, and history is starting to come apart. The thread they’re pulling now runs through Shanghai, on the twelfth of November 2087: the day the world learns it no longer has to grow old.<p>“Go and watch. Find out how it happened, and who made it happen. Don’t touch anything, at least not yet. The device will take you there. As for who to trust: no one.<p>“You can do this. I know you can, better than anyone.”<p>The figure flickers, gives you a smile you almost recognize, and is gone.", "shown":"event.values.heard.value"}
 			]
 		}
 	}

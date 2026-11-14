@@ -32,7 +32,7 @@ test('the event details title opens the event brief, with the full description a
     
     await expect(eventBriefTitle(page)).toHaveText('Deck : Origin');
     await expect.poll(() => briefState(page)).toEqual({
-        event:'origin', photoVisible:true, photoUrl:expect.stringMatching(/\/event\/origin\.jpg$/), fieldNotes:'Everything starts here.<br><br>Something is struck.', report:'Where it all begins.\n',
+        event:'origin', photoVisible:true, photoUrl:expect.stringMatching(/\/event\/origin\.jpg$/), fieldNotes:'Everything starts here.<p>Something is struck.', report:'Where it all begins.\n',
         where:'Deck', attestation:0
     });
     
@@ -61,7 +61,7 @@ test('an open event brief follows its event', async ({page}) => {
     const problems = await startGame(page);
     
     await page.evaluate(() => {tc.app.openEventBrief(tc.model.getEventModel('plan'));});
-    await expect.poll(() => briefState(page)).toMatchObject({event:'plan', fieldNotes:'A plan is made.<br><br>Nothing is prepared.<br><br>Nobody takes notes.', attestation:0});
+    await expect.poll(() => briefState(page)).toMatchObject({event:'plan', fieldNotes:'A plan is made.<p>Nothing is prepared.<p>Nobody takes notes.', attestation:0});
     
     await page.evaluate(() => tc.model.getEventModel('plan').attestation.setValue(20));
     await expect.poll(() => briefState(page)).toMatchObject({fieldNotes:expect.stringContaining('More is known about the plan.'), attestation:20});

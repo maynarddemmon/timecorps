@@ -1,9 +1,18 @@
 (pkg => {
     'use strict';
     
-    const {I18N:{get:i18n}} = myt,
+    const JSClass = JS.Class,
         
-        {WideView, theme:{spacing, fontSizeMedium}} = pkg;
+        M = myt,
+        {I18N:{get:i18n}, PaddedText} = M,
+        
+        {
+            WideView, EventLinkFlow,
+            theme:{
+                padding, spacing, 
+                fontSizeLarge, fontSizeMedium, colorMegaDark, colorMedium, colorLight
+            }
+        } = pkg;
     
     /*  An Event's place, time and stats, laid out the same in Event Details and the Event 
         Brief: a line with the Event's location, which opens its Area Brief, and when the 
@@ -14,7 +23,7 @@
         Attrs:
             barBgColor - The background of the stat bars, for when the default doesn't show
                 against what's behind them. */
-    pkg.EventFacts = new JS.Class('EventFacts', WideView, {
+    pkg.EventFacts = new JSClass('EventFacts', WideView, {
         // Life Cycle //////////////////////////////////////////////////////////
         initNode: function(parent, attrs) {
             const self = this,
@@ -69,6 +78,74 @@
             chronalBar.setVisible(isHQ || (chronalStat.max > 0 && eventModel.isNotChronoLocked()) || chronalStat.value > 0);
             chronalBar.setLabelTemplate(i18n(isHQ ? 'bar-pool-label' : 'bar-event-chronal-label'));
             chronalBar.updateForStat(chronalStat);
+        }
+    });
+    
+    pkg.DescPart = new JSClass('DescPart', M.View, {
+        initNode: function(parent, attrs) {
+            const self = this,
+                hPad = attrs.padding ?? padding,
+                part = self.part = attrs.part,
+                type = part.type,
+                model = part.model,
+                isCausator = type === 'causator',
+                isLegacy = type === 'legacy',
+                causatorCallback = attrs.causatorCallback;
+            delete attrs.part;
+            delete attrs.padding;
+            delete attrs.causatorCallback;
+            
+            attrs.width ??= parent.width;
+            attrs.bgColor ??= colorMegaDark;
+            attrs.textColor ??= isCausator ? colorLight : 'inherit';
+            
+            self.callSuper(parent, attrs);
+            
+            if (isCausator) {
+                self._nameTxt = new PaddedText(self, {
+                    paddingLeft:hPad, paddingRight:hPad,
+                    textColor:colorMedium,
+                    whiteSpace:'normal', fontSize:fontSizeLarge,
+                    text:model.getName()
+                });
+            }
+            
+            self._txt = new PaddedText(self, {
+                width:self.width,
+                paddingLeft:hPad, paddingRight:hPad,
+                fontSize:fontSizeMedium, whiteSpace:'normal',
+                fontStyle:isLegacy ? 'italic' : null,
+                text:part.value
+            });
+            
+            if (isCausator) {
+                // Only show links the player is allowed to know about.
+                const eventModel = model.event,
+                    precursorsFlow = self._precursorFlow = new EventLinkFlow(self, {x:hPad}, [{
+                        doBtnActivated: btn => causatorCallback?.(btn)
+                    }]),
+                    descendantsFlow = self._descendantFlow = new EventLinkFlow(self, {x:hPad}, [{
+                        doBtnActivated: btn => causatorCallback?.(btn)
+                    }]);
+                precursorsFlow.update(
+                    i18n('event-precursors') + '\u00A0',
+                    [...model.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
+                );
+                descendantsFlow.update(
+                    i18n('event-descendants') + '\u00A0',
+                    [...model.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
+                );
+            }
+            
+            new M.SpacedLayout(self, {axis:'y', inset:padding, spacing:padding/2, outset:padding, collapseParent:true});
+        },
+        setWidth: function(v) {
+            const self = this;
+            self.callSuper(v);
+            if (self.inited) {
+                const w = self.width;
+                for (const sv of [self._nameTxt, self._txt, self._precursorFlow, self._descendantFlow]) sv?.setWidth(w);
+            }
         }
     });
 })(tc);

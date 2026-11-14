@@ -4,12 +4,12 @@
     const JSClass = JS.Class,
         
         M = myt,
-        {I18N:{get:i18n}} = M,
+        {I18N:{get:i18n}, SpacedLayout} = M,
         
         {
-            WideView, resolveUrl,
+            WideView, DescPart, resolveUrl,
             cfg:{TL_COL_HEADER_HEIGHT, TL_COL_WIDTH},
-            theme:{padding, fontSizeMedium, fontFamilyMono}
+            theme:{padding, fontSizeMedium}
         } = pkg,
         
         /*  The known Events at a Location, earliest first. */
@@ -50,12 +50,19 @@
                 // Hidden unless the Event has a picture. As wide as the text, at the timeline's
                 // proportions.
                 self._media = new pkg.StandardMediaView(self);
-                self._descriptionTxt = new pkg.TextForFlow(self, {
-                    whiteSpace:'normal', percentOfParentWidth:100,
-                    fontSize:fontSizeMedium, fontFamily:fontFamilyMono
-                }, [M.SizeToParent]);
                 
-                new M.SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
+                const descContainer = self._descContainer = new WideView(self, {}, [{
+                    setWidth: function(v) {
+                        this.callSuper(v);
+                        if (this.inited) {
+                            const width = this.width;
+                            for (const sv of this.getSubviews()) sv.setWidth(width);
+                        }
+                    }
+                }]);
+                new SpacedLayout(descContainer, {axis:'y', spacing:1, collapseParent:true});
+                
+                new SpacedLayout(self, {axis:'y', spacing:padding / 2, collapseParent:true});
             },
             
             update: function(eventModel) {
@@ -74,7 +81,18 @@
                     self._media.setMedia(...mediaURLs);
                 }
                 
-                self._descriptionTxt.setText(eventModel.getFullDescription());
+                const descContainer = self._descContainer;
+                descContainer.destroyAllSubviews();
+                for (const part of eventModel.getFullDescriptionAsParts()) {
+                    new DescPart(descContainer, {part, padding:0, causatorCallback:btn => {
+                        if (M.global.keys.isShiftKeyDown()) {
+                            self.brief.hide();
+                        } else {
+                            pkg.app.openEventBrief(btn.navEventModel, true);
+                            return true;
+                        }
+                    }});
+                }
             }
         });
     

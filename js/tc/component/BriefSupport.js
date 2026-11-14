@@ -145,7 +145,7 @@
                     row.setHeight(Math.max(labelHeight, this.height));
                 }
             }]);
-            new SpacedLayout(content, {axis:'y', inset:padding / 2, spacing:padding, outset:padding / 2, collapseParent:true});
+            new SpacedLayout(content, {axis:'y', inset:padding/2, spacing:padding/2, collapseParent:true});
             return content;
         },
         

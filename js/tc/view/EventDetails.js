@@ -9,19 +9,19 @@
         
         {
             I18N:{get:i18n},
-            View, PaddedText, PaddedPlainText,
+            View, PaddedPlainText,
             Layout, SpacedLayout, ResizeLayout, SizeHeightToDom,
             debounce
         } = myt,
         
         {
-            UnderlineBtn, EventNavHover, AgentBtn, EventLinkFlow, 
+            UnderlineBtn, EventNavHover, AgentBtn, DescPart, 
             InlineSeparator, InlinePlainText, InlineText, InlineUnderlineBtn,
             SquareBtn, WideView, StatusAgentMarkerMedium, ContainerRow, wrapInStyledSpan,
             theme:{
                 spacing, padding, btnHeight,
-                colorUltraLight, colorLight, colorMedium, colorMegaDark, colorAction,
-                fontSizeMedium, fontSizeLarge
+                colorUltraLight, colorLight, colorMegaDark, colorAction,
+                fontSizeLarge
             },
             ICON_SEPARATOR
         } = pkg,
@@ -236,66 +236,6 @@
                 
                 self.updateHeight();
             }
-        }),
-        
-        DescPart = new JSClass('DescPart', View, {
-            initNode: function(parent, attrs) {
-                const self = this,
-                    part = self.part = attrs.part,
-                    type = part.type,
-                    model = part.model,
-                    isCausator = type === 'causator',
-                    isLegacy = type === 'legacy';
-                delete attrs.part;
-                
-                attrs.width ??= parent.width;
-                attrs.bgColor ??= colorMegaDark;
-                attrs.textColor ??= isCausator ? colorLight : 'inherit';
-                
-                self.callSuper(parent, attrs);
-                
-                if (isCausator) {
-                    self._nameTxt = new PaddedText(self, {
-                        paddingLeft:padding, paddingRight:padding,
-                        textColor:colorMedium,
-                        whiteSpace:'normal', fontSize:fontSizeLarge,
-                        text:model.getName()
-                    });
-                }
-                
-                self._txt = new PaddedText(self, {
-                    width:self.width,
-                    paddingLeft:padding, paddingRight:padding,
-                    fontSize:fontSizeMedium, whiteSpace:'normal',
-                    fontStyle:isLegacy ? 'italic' : null,
-                    text:part.value
-                });
-                
-                if (isCausator) {
-                    // Only show links the player is allowed to know about.
-                    const eventModel = model.event,
-                        precursorsFlow = self._precursorFlow = new EventLinkFlow(self),
-                        descendantsFlow = self._descendantFlow = new EventLinkFlow(self);
-                    precursorsFlow.update(
-                        i18n('event-precursors') + '\u00A0',
-                        [...model.getPrecursors()].filter(precursor => precursor.isNotHidden() && !eventModel.isAffectedByHidden(precursor))
-                    );
-                    descendantsFlow.update(
-                        i18n('event-descendants') + '\u00A0',
-                        [...model.getDescendants()].filter(descendant => descendant.isNotHidden() && !descendant.isAffectedByHidden(eventModel))
-                    );
-                }
-                
-                new SpacedLayout(self, {axis:'y', inset:padding, spacing:padding/2, outset:padding, collapseParent:true});
-            },
-            setWidth: function(v) {
-                const self = this;
-                self.callSuper(v);
-                if (self.inited) {
-                    const w = self.width;
-                    for (const sv of [self._nameTxt, self._txt, self._precursorFlow, self._descendantFlow]) sv?.setWidth(w);
-                }
-            }
         });
     
     pkg.EventDetails = new JSClass('EventDetails', pkg.Panel, {
@@ -363,7 +303,7 @@
             // Description
             row = new ContainerRow(detailsContainer, {label:i18n('event-historical-account'), layoutHint:3});
             self.descriptionMedia = new pkg.StandardMediaView(row, {roundedCorners:0});
-            const descContainer = self._descriptionContainer = new WideView(row, {}, [{
+            const descContainer = self._descContainer = new WideView(row, {}, [{
                 setWidth: function(v) {
                     this.callSuper(v);
                     if (this.inited) {
@@ -453,9 +393,9 @@
                 
                 // Description
                 self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
-                const descContainer = self._descriptionContainer;
+                const descContainer = self._descContainer;
                 descContainer.destroyAllSubviews();
-                for (const part of eventModel.getFullDescriptionAsParts()) new DescPart(descContainer, {part})
+                for (const part of eventModel.getFullDescriptionAsParts()) new DescPart(descContainer, {part});
                 
                 Layout.decrementGlobalLock();
             }

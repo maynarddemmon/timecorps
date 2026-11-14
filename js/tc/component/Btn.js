@@ -4,6 +4,7 @@
     const JSClass = JS.Class,
         
         M = myt,
+        {NOOP} = M,
         
         {theme:{padding, btnHeight, colorBtnLight}} = pkg,
         
@@ -113,7 +114,7 @@
             new M.SpacedLayout(self, {spacing:2 - connectorLine, collapseParent:true, reverse:true});
         },
         
-        doActivated: M.NOOP,
+        doActivated: NOOP,
         
         setDisabled: function(v) {if (this.inited) this.btn.setDisabled(v);},
         setText: function(v) {if (this.inited) this.btn.setText(v);},
@@ -170,7 +171,11 @@
             this.callSuper(parent, attrs);
         },
         
-        doActivated: function() {pkg.app.selectEventBox(this.getNavEventModel());}
+        doActivated: function() {
+            const eventModel = this.getNavEventModel(), // Get the reference now since doBtnActivated may destroy this button.
+                shouldNotSelect = this.parent.doBtnActivated(this);
+            if (!shouldNotSelect) pkg.app.selectEventBox(eventModel);
+        }
     });
     
     pkg.EventLinkFlow = new JSClass('EventLinkFlow', pkg.WideView, {
@@ -200,6 +205,8 @@
             }
             self.setVisible(hasModels);
             self.sizeViewToDom();
-        }
+        },
+        
+        doBtnActivated: NOOP // btn => {}
     });
 })(tc);

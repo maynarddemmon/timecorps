@@ -683,9 +683,9 @@
                 if (pkg.settings.get(pkg.SETTING_SAVE_ON_OPERATION_COMPLETION) && persistenceMgr.hasBaseline()) {
                     if (saveGame()) {
                         updateLastSaved();
-                        saveNote = '<br><br><i>' + i18n('dlg-mission-complete-saved') + '</i>';
+                        saveNote = '<p><i>' + i18n('dlg-mission-complete-saved') + '</i>';
                     } else {
-                        saveNote = '<br><br><i>' + i18n('dlg-mission-complete-not-saved') + '</i>';
+                        saveNote = '<p><i>' + i18n('dlg-mission-complete-not-saved') + '</i>';
                     }
                 }
                 

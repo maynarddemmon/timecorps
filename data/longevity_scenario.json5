@@ -7,9 +7,9 @@
 			"title":"Beniko’s Offer",
 			"description":[
 				"The air beside you folds, and Beniko Asano steps out of it, brushing nothing off her coat.",
-				"<br><br>“Not bad, for a civilian,” she says. “You found the thread, and you pulled it back where it belongs. Most of my people couldn’t have done it with a map.”",
-				"<br><br>She looks at the Chronofex on your wrist, then at you. “Whoever wore that before you was one of ours. Whoever was in that hall in the dark suit isn’t. They’ll come for you now, and you’d be safer with us. The Corps could use someone they haven’t got to yet.”",
-				"<br><br>“Well? Will you join us?”"
+				"<p>“Not bad, for a civilian,” she says. “You found the thread, and you pulled it back where it belongs. Most of my people couldn’t have done it with a map.”",
+				"<p>She looks at the Chronofex on your wrist, then at you. “Whoever wore that before you was one of ours. Whoever was in that hall in the dark suit isn’t. They’ll come for you now, and you’d be safer with us. The Corps could use someone they haven’t got to yet.”",
+				"<p>“Well? Will you join us?”"
 			],
 			"buttons":{
 				"confirm":{
@@ -36,9 +36,9 @@
 				{"text":"The man in the dark suit looks you over, from your shoes to the device on your wrist, and seems to approve of about half of it. “You followed a cold trace with a borrowed device and no training,” he says. “The Corps spends years teaching people to do what you just did by accident.”", "shown":"player.event === 'lgv_watcher'"},
 				// Anywhere else, e.g. at the closed session, having turned Beniko down.
 				{"text":"The man in the dark suit is waiting at the back of the room, applauding something no one else in it will remember. “You turned Beniko down,” he says. “Good. She’d have had you filing reports by Tuesday.”", "hidden":"player.event === 'lgv_watcher'"},
-				"<br><br>He offers a hand. “Ambrose Fenwick. I was Corps, once, until I noticed who the Corps works for. We don’t answer to Command, and we don’t pretend the thread was ever straight. We pull it where it pays, or where it ought to go, and we keep what we find.”",
-				"<br><br>He nods at the device on your wrist. “That was one of ours before the Corps got hold of it. Whatever they’ve told you. It chose you, and I’m inclined to take its word.”",
-				"<br><br>“Well?” He smiles, a little too pleased with the line. “Embrace your destiny?”"
+				"<p>He offers a hand. “Ambrose Fenwick. I was Corps, once, until I noticed who the Corps works for. We don’t answer to Command, and we don’t pretend the thread was ever straight. We pull it where it pays, or where it ought to go, and we keep what we find.”",
+				"<p>He nods at the device on your wrist. “That was one of ours before the Corps got hold of it. Whatever they’ve told you. It chose you, and I’m inclined to take its word.”",
+				"<p>“Well?” He smiles, a little too pleased with the line. “Embrace your destiny?”"
 			],
 			"buttons":{
 				"confirm":{
@@ -90,9 +90,9 @@
 			"onSuccess":{
 				"debrief":[
 					"A trial that worked. A dying billionaire who paid for it, and owns it. Eleven officials who voted, seven to four, to tell the world.",
-					"<br><br>Within a decade the treatment will be everywhere the rich are, and nowhere else. The old will stop making room for the young, and money will stop changing hands at funerals.",
-					{"text":"<br><br>And someone else was in that hall, watching, with a device on their wrist like yours.", "hidden":"!events.lgv_announcement.values.watcher.value"},
-					"<br><br>The device on your wrist pulses, and shows you the Commission’s vote, glowing red. Four votes to keep it secret. It would only take two more."
+					"<p>Within a decade the treatment will be everywhere the rich are, and nowhere else. The old will stop making room for the young, and money will stop changing hands at funerals.",
+					{"text":"<p>And someone else was in that hall, watching, with a device on their wrist like yours.", "hidden":"!events.lgv_announcement.values.watcher.value"},
+					"<p>The device on your wrist pulses, and shows you the Commission’s vote, glowing red. Four votes to keep it secret. It would only take two more."
 				],
 				"adj":{"timeline.score":"2000"},
 				"set":{"agents.BA.event":"'lgv_announcement'"},
@@ -135,8 +135,8 @@
 					{"text":"Six votes to five, the Commission votes to keep the full results of the trial a state secret.", "hidden":"events.lgv_commission.values.releaseVotes.value !== 5"},
 					{"text":"Seven votes to four, the Commission votes to keep the full results of the trial a state secret.", "hidden":"events.lgv_commission.values.releaseVotes.value !== 4"},
 					"In November, Dr. Shen will show the world a treatment for some of the diseases of ageing, and nothing more.",
-					"<br><br>The reversal will reach the people who can pay for it, quietly, and no one else. That is how it went the first time, Beniko says. It isn’t yours to like. It’s yours to put back.",
-					"<br><br>Somewhere in Beijing, someone in a dark suit has just found out what you did."
+					"<p>The reversal will reach the people who can pay for it, quietly, and no one else. That is how it went the first time, Beniko says. It isn’t yours to like. It’s yours to put back.",
+					"<p>Somewhere in Beijing, someone in a dark suit has just found out what you did."
 				],
 				"adj":{
 					"timeline.score":"3000",
@@ -242,7 +242,7 @@
 			},
 			"description":[
 				"The state money has run out, and the Institute’s board has been told to shut the trial down. On the sixty-first floor of Lanfang Tower, a man who has never met Dr. Shen offers to pay for all of it.",
-				{"text":"<br><br>His name is Gao Ruifeng. He is eighty-three years old, and he has been told he has a year to live.", "hidden":"event.attestation.value < 15"}
+				{"text":"<p>His name is Gao Ruifeng. He is eighty-three years old, and he has been told he has a year to live.", "hidden":"event.attestation.value < 15"}
 			],
 			"exits":[
 				{
@@ -284,7 +284,7 @@
 			},
 			"description":[
 				"In a windowless room at the Institute, Dr. Shen’s team unblinds the Phase III data.",
-				{"text":"<br><br>The statistician, Ma Jun, runs the analysis three times before he will show it to anyone.", "hidden":"event.attestation.value < 15"}
+				{"text":"<p>The statistician, Ma Jun, runs the analysis three times before he will show it to anyone.", "hidden":"event.attestation.value < 15"}
 			],
 			"exits":[
 				{
@@ -340,9 +340,9 @@
 			},
 			"description":[
 				"Commissioner Lu Meilan sits by her mother’s bed every Wednesday afternoon. Her mother no longer knows who she is.",
-				{"text":"<br><br>A doctor from Zhangjiang came to see her here last week, Lu Meilan tells the nurse. Once the treatment is announced, he said, nothing could keep it from her mother.", "hidden":"event.attestation.value < 10"},
-				{"text":"<br><br>No one from Zhangjiang has been here. The nurses remember a visitor in a dark suit, and a wrist that caught the light.", "hidden":"event.attestation.value < 20"},
-				{"text":"<br><br>The visitor’s signature in the hospice register is a single character, written twice: 春春.", "hidden":"event.attestation.value < 30"}
+				{"text":"<p>A doctor from Zhangjiang came to see her here last week, Lu Meilan tells the nurse. Once the treatment is announced, he said, nothing could keep it from her mother.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>No one from Zhangjiang has been here. The nurses remember a visitor in a dark suit, and a wrist that caught the light.", "hidden":"event.attestation.value < 20"},
+				{"text":"<p>The visitor’s signature in the hospice register is a single character, written twice: 春春.", "hidden":"event.attestation.value < 30"}
 			],
 			"exits":[
 				{"mode":"walk", "to":"lgv_banquet"},
@@ -384,9 +384,9 @@
 			},
 			"description":[
 				"A state dinner for a trade delegation, with eleven courses and twice as many toasts. Vice Minister Zhou Kang, who sits on the Commission, has barely touched his food.",
-				{"text":"<br><br>Between courses, a foreign trade attaché showed him a report: an American laboratory will announce the same treatment by Christmas. Whoever announces first will own it.", "hidden":"event.attestation.value < 10"},
-				{"text":"<br><br>The attaché’s embassy has never heard of them. The waiters remember a dark suit, and a device on their wrist like yours.", "hidden":"event.attestation.value < 20"},
-				{"text":"<br><br>The report is signed by a laboratory that will not exist for another eleven years.", "hidden":"event.attestation.value < 30"}
+				{"text":"<p>Between courses, a foreign trade attaché showed him a report: an American laboratory will announce the same treatment by Christmas. Whoever announces first will own it.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>The attaché’s embassy has never heard of them. The waiters remember a dark suit, and a device on their wrist like yours.", "hidden":"event.attestation.value < 20"},
+				{"text":"<p>The report is signed by a laboratory that will not exist for another eleven years.", "hidden":"event.attestation.value < 30"}
 			],
 			"exits":[
 				{"mode":"walk", "to":"lgv_model"},
@@ -427,9 +427,9 @@
 			},
 			"description":[
 				"Professor Huang Yi, the Commission’s economist, works late in a corner office of the School of Economics, with her door open and her tea gone cold.",
-				{"text":"<br><br>On her desk is an anonymous projection: announced and licensed, the treatment pays for itself in a decade, in pensions no one has to draw. She has read it four times.", "hidden":"event.attestation.value < 10"},
-				{"text":"<br><br>The building’s cameras show the projection being left at three in the morning, by someone in a dark suit who looks straight up into the lens, and smiles.", "hidden":"event.attestation.value < 20"},
-				{"text":"<br><br>The projection’s numbers are right. They just stop at the people who can afford the treatment.", "hidden":"event.attestation.value < 30"}
+				{"text":"<p>On her desk is an anonymous projection: announced and licensed, the treatment pays for itself in a decade, in pensions no one has to draw. She has read it four times.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>The building’s cameras show the projection being left at three in the morning, by someone in a dark suit who looks straight up into the lens, and smiles.", "hidden":"event.attestation.value < 20"},
+				{"text":"<p>The projection’s numbers are right. They just stop at the people who can afford the treatment.", "hidden":"event.attestation.value < 30"}
 			],
 			"exits":[
 				{"mode":"walk", "to":"lgv_commission"}
@@ -498,10 +498,10 @@
 			},
 			"description":[
 				"In Beijing, behind closed doors, eleven officials decide what to do with the end of old age.",
-				{"text":"<br><br>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15 || !event.values.approvedRelease.value"},
-				{"text":"<br><br>The warnings carry the room. A world where the rich stop dying, the majority agrees, is not one it wants to announce.", "hidden":"event.attestation.value < 15 || event.values.approvedRelease.value"},
-				{"text":"<br><br>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
-				{"text":"<br><br>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
+				{"text":"<p>The four who vote to keep it secret warn of what happens to a world where the rich stop dying. They are outvoted by those who fear someone else will announce it first.", "hidden":"event.attestation.value < 15 || !event.values.approvedRelease.value"},
+				{"text":"<p>The warnings carry the room. A world where the rich stop dying, the majority agrees, is not one it wants to announce.", "hidden":"event.attestation.value < 15 || event.values.approvedRelease.value"},
+				{"text":"<p>Three of the seven who vote to release sound as if they are reading from the same page. In a sense they are: in the weeks before this session, someone reached each of them.", "hidden":"event.attestation.value < 25"},
+				{"text":"<p>Among the clerks along the wall, one in a dark suit isn’t taking notes. When the vote is called, they are already gone.", "hidden":"event.attestation.value < 30"}
 			],
 			"exits":[{
 				"mode":"survive", "to":"lgv_announcement", 
@@ -601,19 +601,19 @@
 					"shown":"event.values.watcher.value",
 					"description":[
 						{"text":"In the third row, someone in a dark suit isn’t applauding. Light catches something on their wrist. When you look back, the seat is empty, and no one beside it seems to have noticed it was ever taken.", "shown":"event.values.watcher.value"},
-						{"text":"<br><br>This time you wait for the hall to empty, then make your way to the seat in the third row. You hold the device on your wrist over it, not sure what you expect it to do. It grows warm. Something is still fading from the air there, a signal or the memory of one, and the device catches it and flashes: “Chrono Lock Obtained. Activate to initiate jump.” A countdown begins. If you’re going to follow, it has to be now.", "shown":"event.values.watcher.value && event.paradox.value > 0"}
+						{"text":"<p>This time you wait for the hall to empty, then make your way to the seat in the third row. You hold the device on your wrist over it, not sure what you expect it to do. It grows warm. Something is still fading from the air there, a signal or the memory of one, and the device catches it and flashes: “Chrono Lock Obtained. Activate to initiate jump.” A countdown begins. If you’re going to follow, it has to be now.", "shown":"event.values.watcher.value && event.paradox.value > 0"}
 					]
 				}
 			},
 			"description":[
 				"The hall is packed, and the feeds are carrying it live to half the world. On the stage, under a banner that reads 还春 · SPRING RETURNS, Dr. Shen Yiran of the Zhangjiang Longevity Institute waits for the noise to die down.",
-				{"text":"<br><br>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10 || !event.values.goingPublic.value"},
-				{"text":"<br><br>“Today,” she says, carefully, “we can show you the first results of a treatment for some of the diseases of ageing.”", "hidden":"event.attestation.value < 10 || event.values.goingPublic.value"},
-				{"text":"<br><br>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20 || !event.values.goingPublic.value"},
-				{"text":"<br><br>The dataset on the screen is mixed but real: stronger hearts, clearer lungs, sharper memories in volunteers in their seventies. Revolutionary, the commentators will say. No one on the stage says anything about anyone growing younger.", "hidden":"event.attestation.value < 20 || event.values.goingPublic.value"},
-				{"text":"<br><br>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
-				{"text":"<br><br>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
-				{"text":"<br><br>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
+				{"text":"<p>“Ageing,” she says, “is a disease. As of today, it is a treatable one.”", "hidden":"event.attestation.value < 10 || !event.values.goingPublic.value"},
+				{"text":"<p>“Today,” she says, carefully, “we can show you the first results of a treatment for some of the diseases of ageing.”", "hidden":"event.attestation.value < 10 || event.values.goingPublic.value"},
+				{"text":"<p>The treatment is a course of twelve injections over a year. It doesn’t stop ageing; it winds it back. The volunteers on the screen behind her are in their seventies. They look fifty.", "hidden":"event.attestation.value < 20 || !event.values.goingPublic.value"},
+				{"text":"<p>The dataset on the screen is mixed but real: stronger hearts, clearer lungs, sharper memories in volunteers in their seventies. Revolutionary, the commentators will say. No one on the stage says anything about anyone growing younger.", "hidden":"event.attestation.value < 20 || event.values.goingPublic.value"},
+				{"text":"<p>The questions afterward are about the price. Dr. Shen doesn’t answer them. A man from Lanfang Capital does, smoothly, and says nothing at all.", "hidden":"event.attestation.value < 30 || !event.values.goingPublic.value"},
+				{"text":"<p>The press packet’s early-phase results point at the wrong pathway entirely. They are not quite the results the Institute got. Anyone who tries to reproduce them will spend years looking in the wrong place.", "hidden":"event.attestation.value < 30 || event.values.goingPublic.value"},
+				{"text":"<p>The device on your wrist has been quiet since you arrived. Now and then it pulses, faintly, as if it recognises something here.", "hidden":"event.attestation.value < 40"}
 			],
 			"exits":[{
 				"mode":"jump", "toHidden":true, "to":"lgv_watcher",
@@ -645,10 +645,10 @@
 			},
 			"description":[
 				"The trace drops you somewhere that isn’t anywhere. A corridor of frosted glass, lit from no direction at all, runs away from you both ways, and the device on your wrist can’t decide what year it is. It settles, eventually, on the night you left: 12 November 2087, a few minutes after four in the morning.",
-				"<br><br>Beyond the glass, things move that might be streets, or rooms, or the same room at different times. None of them quite hold still when you look.",
-				{"text":"<br><br>At the end of the corridor, someone in a dark suit is waiting, one hand in a pocket, as if you were late. He is younger than you expected, and very well dressed, in the cut of a century that hasn’t happened yet.", "shown":"event.actions.talk.doneCount === 0"},
-				{"text":"<br><br>Ambrose Fenwick straightens a cuff that doesn’t need it. “Welcome aboard,” he says. “Mind the step. The warehouse is a little way back from here, and the Corps has never found it. Try not to be the one who shows them.”", "shown":"event.actions.talk.doneCount > 0 && player.faction === 'syndicate'"},
-				{"text":"<br><br>Ambrose shrugs, as if he expected nothing else. “The offer stands,” he says. “It usually does, right up until it doesn’t.” He walks off down the corridor, and the glass swallows him a few steps before it should.", "shown":"event.actions.talk.doneCount > 0 && player.faction !== 'syndicate'"}
+				"<p>Beyond the glass, things move that might be streets, or rooms, or the same room at different times. None of them quite hold still when you look.",
+				{"text":"<p>At the end of the corridor, someone in a dark suit is waiting, one hand in a pocket, as if you were late. He is younger than you expected, and very well dressed, in the cut of a century that hasn’t happened yet.", "shown":"event.actions.talk.doneCount === 0"},
+				{"text":"<p>Ambrose Fenwick straightens a cuff that doesn’t need it. “Welcome aboard,” he says. “Mind the step. The warehouse is a little way back from here, and the Corps has never found it. Try not to be the one who shows them.”", "shown":"event.actions.talk.doneCount > 0 && player.faction === 'syndicate'"},
+				{"text":"<p>Ambrose shrugs, as if he expected nothing else. “The offer stands,” he says. “It usually does, right up until it doesn’t.” He walks off down the corridor, and the glass swallows him a few steps before it should.", "shown":"event.actions.talk.doneCount > 0 && player.faction !== 'syndicate'"}
 			],
 			"exits":[{
 				"mode":"pulled", "to":"lgv_hospice", "toHidden":true,
