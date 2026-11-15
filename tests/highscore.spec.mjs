@@ -113,6 +113,26 @@ test('a game that beats the high score shows it as new, against the one it beat,
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('a score that has fallen shows its peak in the End Game Brief, which is what the high score keeps', async ({page}) => {
+    const problems = await startGame(page);
+    await setScore(page, 600);
+    await setScore(page, 450);
+    
+    const metrics = await readEndGameMetrics(page);
+    expect(metrics).toMatchObject({'Score':'450', 'Peak Score':'600', 'High Score':'600 · New'});
+    expect(Object.keys(metrics).slice(0, 3)).toEqual(['Score', 'Peak Score', 'High Score']);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('a score at its peak shows no Peak Score', async ({page}) => {
+    const problems = await startGame(page);
+    await setScore(page, 300);
+    expect(await readEndGameMetrics(page)).not.toHaveProperty('Peak Score');
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('with no high score yet, the End Game Brief says so', async ({page}) => {
     const problems = await startGame(page);
     const metrics = await readEndGameMetrics(page);

@@ -92,6 +92,7 @@ myt.I18N.setDictionary({
 "end-game-time-jumps":"Time Jumps",
 "end-game-of":"$0 of $1",
 "end-game-percent":"$0%",
+"end-game-peak-score":"Peak Score",
 "end-game-high-score":"High Score",
 "end-game-high-score-new":"$0 · New",
 "end-game-high-score-none":"None",
