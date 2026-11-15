@@ -102,6 +102,7 @@ JS.Packages(file => {
         'tc.ModalDialog','tc.BriefSupport','tc.EventFacts'
     );
     file(VIEW_ROOT + 'MissionBrief.js').provides('tc.MissionBrief').requires('tc.ModalDialog','tc.BriefSupport','tc.OperationDetails');
+    file(VIEW_ROOT + 'EndGameBrief.js').provides('tc.EndGameBrief').requires('tc.ModalDialog','tc.WideView','tc.UnderlineBtn','tc.Spacer');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
     // Include Everything
@@ -109,7 +110,7 @@ JS.Packages(file => {
         'JSON5','tc.Model','tc.legacy','tc.PersistenceManager','tc.Agents','tc.Events','tc.Missions',
         'tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
-        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief',
+        'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief','tc.EndGameBrief',
         'tc.SettingsDialog','tc.FloatingText'
     );
 });

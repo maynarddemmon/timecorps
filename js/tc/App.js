@@ -31,6 +31,7 @@
         
         agentDossier,
         areaBrief,
+        endGameBrief,
         eventBrief,
         eventBriefShowCount = 0, // How many times an Event Brief has been shown.
         factionBrief,
@@ -80,15 +81,18 @@
             }
         },
         
+        /*  The game has effectively ended. Offers a restart, or a reload of the last save 
+            if there is one, which forgets anything lost since. */
         openEndGameDialog = (title, msg) => {
-            openAckMsgDialog(
-                title,
-                msg,
-                () => {
-                    // FIXME: do other housekeeping?
-                    appView.doRestartCampaign();
-                }
-            );
+            openWhenClear(() => {
+                endGameBrief ??= new pkg.EndGameBrief(appView);
+                endGameBrief.show(
+                    title, msg,
+                    appView.doRestartCampaign,
+                    persistenceMgr.hasSave() ? appView.doReload : null
+                );
+                return endGameBrief;
+            });
         },
         
         openAgentDossier = agentModel => {
