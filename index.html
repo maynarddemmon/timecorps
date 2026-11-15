@@ -113,6 +113,14 @@
 	}
 	.entangled {animation: strobeEntangled 0.5s ease-in-out infinite;}
 	
+	/* Top bar: the score as it sets a new high score. Restarted on each rise (see App.js). */
+	@keyframes highScorePulse {
+		0% {transform:scale(1); text-shadow:none;}
+		30% {transform:scale(1.15); text-shadow:0 0 8px #fff;}
+		100% {transform:scale(1); text-shadow:none;}
+	}
+	.highScorePulse {animation: highScorePulse 0.8s ease-out;}
+	
 	/* Buttons */
 	.tc-Btn.disabled {opacity:0.35;}
 	

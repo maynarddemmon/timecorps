@@ -43,10 +43,27 @@
                 diedCount = agents.filter(agentModel => !agentModel.isDevoured() && agentModel.isDead()).length,
                 timeJumpCount = sumOf(agents, agentModel => agentModel.getVisitHistory().filter(visit => visit.isTimeTravel).length),
                 
-                timelineParadox = model[STAT_ID_PARADOX];
+                timelineParadox = model[STAT_ID_PARADOX],
+                
+                // The high score now, and as it stood when this game began.
+                score = model.score ?? 0,
+                legacy = pkg.legacy,
+                highScore = legacy.getHighScore(),
+                highScoreBefore = legacy.getHighScoreBefore(),
+                isNewHighScore = highScore !== null && highScore !== highScoreBefore,
+                
+                metrics = [
+                    [i18n('end-game-score'), String(score)],
+                    [
+                        i18n('end-game-high-score'), 
+                        highScore === null ? i18n('end-game-high-score-none') : 
+                            isNewHighScore ? i18n('end-game-high-score-new', highScore) : String(highScore)
+                    ]
+                ];
+            if (highScoreBefore > 0) metrics.push([i18n('end-game-of-high-score'), toPercent(score / highScoreBefore)]);
             
             return [
-                [i18n('end-game-score'), String(model.score ?? 0)],
+                ...metrics,
                 [i18n('end-game-credits'), String(model.credits ?? 0)],
                 [i18n('end-game-missions'), i18n('end-game-of', completedCount, missions.length)],
                 [i18n('end-game-events'), String(shownCount)],

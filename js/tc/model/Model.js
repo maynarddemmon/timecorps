@@ -491,6 +491,8 @@
         setScore: function(v) {
             this.set(STAT_ID_SCORE, v, true);
             
+            if (pkg.legacy.noteScore(v)) this.fireEvent('highScore', v);
+            
             const peakScore = this.peakScore;
             if (v > peakScore) {
                 this.set('peakScore', v, true);

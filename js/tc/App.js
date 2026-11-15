@@ -68,6 +68,9 @@
         GITHUB_URL = 'https://github.com/maynarddemmon/timecorps',
         GITHUB_MARK_URL = './img/github-mark.svg',
         
+        // Pulses the score in the top bar, as it sets a new high score. See index.html.
+        DOM_CLASS_HIGH_SCORE_PULSE = 'highScorePulse',
+        
         // The value of eventBriefShowCount when each Event's brief was last shown, by Event ID.
         eventBriefShownAt = new Map(),
         
@@ -126,8 +129,10 @@
         /*  Shows what past games' losses have accrued, and offers to clear it. */
         openLegacyDialog = () => {
             const {devoured, died, restarted, hauntedCount, glitchedCount, pocketCount, agentModel, bonuses, credits} = legacy.getSummary(),
-                title = i18n('dlg-legacy-title');
-            if (devoured + died + restarted === 0) {
+                title = i18n('dlg-legacy-title'),
+                highScore = legacy.getHighScore(),
+                highScoreTxt = highScore === null ? '' : i18n('dlg-legacy-high-score', highScore.toLocaleString());
+            if (devoured + died + restarted === 0 && highScore === null) {
                 openAckMsgDialog(title, i18n('dlg-legacy-none-msg', agentModel?.getName() ?? ''));
             } else {
                 const bonusesTxt = bonuses.map(([skillId, amount]) => i18n('skill-gain', pkg.cleanToFixed(amount), pkg.getSkillConfig(skillId)?.name ?? skillId)).join(', '),
@@ -145,7 +150,8 @@
                         hauntedCount, 
                         glitchedCount, 
                         pocketCount, 
-                        resetWord
+                        resetWord,
+                        highScoreTxt
                     ),
                     resetWord,
                     () => {
@@ -346,9 +352,23 @@
             
             new pkg.Spacer(topView);
             
-            (new pkg.LabeledValue(topView, {label:pkg.I18N_SCORE, textColor:colorUltraDark, valueTextColor:colorUltraLight}, [{
-                update: function(_event) {this.callSuper(model.score.toLocaleString());}
-            }])).attachTo(model, 'update', pkg.STAT_ID_SCORE);
+            /*  Reads "High Score" while this game holds it, and pulses each time it's raised. */
+            const scoreView = new pkg.LabeledValue(topView, {label:pkg.I18N_SCORE, textColor:colorUltraDark, valueTextColor:colorUltraLight}, [{
+                update: function(_event) {
+                    const score = model.score;
+                    this.setLabel(score > 0 && score === legacy.getHighScore() && score > (legacy.getHighScoreBefore() ?? 0) ? i18n('high-score') : pkg.I18N_SCORE);
+                    this.callSuper(score.toLocaleString());
+                },
+                pulse: function(_event) {
+                    this.update();
+                    const classList = this.getIDE().classList;
+                    classList.remove(DOM_CLASS_HIGH_SCORE_PULSE);
+                    void this.getIDE().offsetWidth; // Restarts the animation.
+                    classList.add(DOM_CLASS_HIGH_SCORE_PULSE);
+                }
+            }]);
+            scoreView.attachTo(model, 'update', pkg.STAT_ID_SCORE);
+            scoreView.attachTo(model, 'pulse', 'highScore');
             
             (new pkg.LabeledValue(topView, {label:pkg.I18N_CREDITS, textColor:colorUltraDark, valueTextColor:colorUltraLight, paddingRight:padding}, [{
                 update: function(_event) {this.callSuper(model.credits.toLocaleString());}

@@ -13,10 +13,16 @@
     
     const {min:mathMin, max:mathMax, ceil:mathCeil} = Math,
         
+        {parse:JSONParse, stringify:JSONStringify} = JSON,
+        
         {isPlainObject, hashToRange} = pkg,
         
         // Kept apart from the save, so it outlasts every game.
         STORAGE_KEY = 'tc.legacy',
+        
+        // The high score, kept apart from the legacy record, so it's there whether or not the
+        // data turns the legacy on, and importing a save doesn't take it back.
+        HIGH_SCORE_KEY = 'tc.highScore',
         
         DATA_KEY = 'legacy',
         
@@ -127,7 +133,7 @@
         readStoredRecord = () => {
             let record;
             try {
-                record = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                record = JSONParse(localStorage.getItem(STORAGE_KEY));
             } catch {
                 // Treated as nothing accrued.
             }
@@ -155,10 +161,31 @@
         
         writeRecord = record => {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+                localStorage.setItem(STORAGE_KEY, JSONStringify(record));
             } catch {
                 // Lost. It's only an advantage.
             }
+        },
+        
+        /*  The stored high score as {score, previous, campaignStart}: the game that set it,
+            by its campaign start (see pkg.getCampaignStart), and the high score before that
+            game, or null. Null if there's none, or storage can't be read. */
+        readHighScore = () => {
+            try {
+                const record = JSONParse(localStorage.getItem(HIGH_SCORE_KEY));
+                if (Number.isFinite(record?.score)) return record;
+            } catch {
+                // Treated as none.
+            }
+            return null;
+        },
+        
+        /*  The high score as it stood when the game in progress began, or null if there was
+            none. A game that has set it since keeps the one it beat. */
+        getHighScoreBefore = () => {
+            const record = readHighScore();
+            if (!record) return null;
+            return record.campaignStart === pkg.getCampaignStart() ? record.previous : record.score;
         },
         
         /*  A phrase from phrases for an Event, the same each time for the same Event and 
@@ -346,12 +373,36 @@
             writeRecord(toRecord(record));
         },
         
-        /*  Forgets everything accrued, pending too. The game in progress keeps what it 
-            started with. */
+        /*  Stores the score as the high score if it beats it, at once rather than pending:
+            a score gives no advantage, so reloading back past it doesn't take it back. Only
+            while a game is being played, not as one's set up or restored. Returns whether 
+            it's a new high score. */
+        noteScore: score => {
+            if (!pkg.isAppReady?.() || !(score > 0)) return false;
+            const record = readHighScore();
+            if (score <= (record?.score ?? 0)) return false;
+            try {
+                localStorage.setItem(HIGH_SCORE_KEY, JSONStringify({
+                    score, previous:getHighScoreBefore(), campaignStart:pkg.getCampaignStart()
+                }));
+            } catch {
+                // Lost. It's only a record.
+            }
+            return true;
+        },
+        
+        /*  The high score of any game, this one included, or null if there's none. */
+        getHighScore: () => readHighScore()?.score ?? null,
+        
+        getHighScoreBefore,
+        
+        /*  Forgets everything accrued, pending too, and the high score. The game in 
+            progress keeps what it started with. */
         clear: () => {
             pending = null;
             try {
                 localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(HIGH_SCORE_KEY);
             } catch {
                 // Nothing to clear then.
             }
