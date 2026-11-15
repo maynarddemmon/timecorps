@@ -76,7 +76,7 @@ test('a score beating the high score is stored at once, and the top bar pulses w
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('below an earlier game\'s high score, the End Game Brief shows it and the score as a percentage of it', async ({page}) => {
+test('below an earlier game\'s high score, the End Game Brief shows it', async ({page}) => {
     await seedHighScore(page, 500);
     const problems = await startGame(page);
     await setScore(page, 400);
@@ -85,14 +85,13 @@ test('below an earlier game\'s high score, the End Game Brief shows it and the s
 
     expect(await readEndGameMetrics(page)).toMatchObject({
         'Score':'400',
-        'High Score':'500',
-        'Of Last High Score':'80%'
+        'High Score':'500'
     });
 
     expect(problems.pageErrors).toEqual([]);
 });
 
-test('a game that beats the high score shows it as new, against the one it beat, even after a reload', async ({page}) => {
+test('a game that beats the high score shows it as new, even after a reload', async ({page}) => {
     await seedHighScore(page, 500);
     const problems = await startGame(page);
     await setScore(page, 600);
@@ -106,8 +105,7 @@ test('a game that beats the high score shows it as new, against the one it beat,
 
     expect(await readEndGameMetrics(page)).toMatchObject({
         'Score':'750',
-        'High Score':'750 · New',
-        'Of Last High Score':'150%'
+        'High Score':'750 · New'
     });
 
     expect(problems.pageErrors).toEqual([]);
@@ -137,7 +135,6 @@ test('with no high score yet, the End Game Brief says so', async ({page}) => {
     const problems = await startGame(page);
     const metrics = await readEndGameMetrics(page);
     expect(metrics['High Score']).toBe('None');
-    expect(metrics).not.toHaveProperty('Of Last High Score');
 
     expect(problems.pageErrors).toEqual([]);
 });

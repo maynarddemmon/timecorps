@@ -28,15 +28,15 @@
 					"On the plain of Marathon the Athenians charged, as history requires, and the Persians broke and ran for their ships.",
 					{
 						"text":"<p>Callimachus cast the deciding vote for battle, and did not live to see the victory he made possible.",
-						"hidden":"!events.marathon_council.values.forBattle.value"
+						"shown":"events.marathon_council.values.forBattle.value"
 					},
 					"<p>Athens will remember the men who fought here for as long as there is an Athens, and the democracy they defended will go on to Salamis, to the Parthenon, and to everything that comes after.",
 					{
 						"text":"The timeline shows no trace of the Corps’ interference.",
-						"hidden":"timeline.paradox.value > 0"
+						"shown":"timeline.paradox.value === 0"
 					},{
 						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
-						"hidden":"timeline.paradox.value === 0"
+						"shown":"timeline.paradox.value > 0"
 					}
 				],
 				"adj":{
@@ -57,10 +57,10 @@
 			"description":[
 				{
 					"text":"Persian ships line the shore of the bay, and the Athenian camp watches them from the hills.",
-					"shown":"events.marathon.values.outcome.value === 'athens_wins' && events.marathon.attestation.value >= 30"
+					"shown":"events.marathon.values.outcome.value === 'persia_wins' && events.marathon.attestation.value >= 30"
 				},{
 					"text":"A great mound rises over the Athenian dead. The Persian ships are gone.",
-					"shown":"events.marathon.values.outcome.value === 'persia_wins' && events.marathon.attestation.value >= 30"
+					"shown":"events.marathon.values.outcome.value === 'athens_wins' && events.marathon.attestation.value >= 30"
 				}
 			]
 		}
@@ -79,8 +79,8 @@
 			],
 			"description":[
 				"The Persian fleet runs up onto the beach at Marathon, and the army of Datis and Artaphernes comes ashore with its horses.",
-				{"text":"Hippias, the old tyrant of Athens, chose this bay for them: good ground for cavalry, and a day’s march from the city he means to rule again.", "hidden":"event.attestation.value < 10"},
-				{"text":"<p>From Athens, the runner Pheidippides is already on the road to Sparta to ask for help. The Spartans will answer that they can’t march until the moon is full.", "hidden":"event.attestation.value < 20"}
+				{"text":"Hippias, the old tyrant of Athens, chose this bay for them: good ground for cavalry, and a day’s march from the city he means to rule again.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>From Athens, the runner Pheidippides is already on the road to Sparta to ask for help. The Spartans will answer that they can’t march until the moon is full.", "shown":"event.attestation.value >= 20"}
 			]
 		},
 
@@ -95,13 +95,13 @@
 					"label":"Urge Callimachus to Vote for Battle",
 					"skillCheck":{"actionType":"social"},
 					"set":{"forBattle":"true"},
-					"hidden":"event.attestation.value < 15 || event.values.forBattle.value"
+					"shown":"event.attestation.value >= 15 && !event.values.forBattle.value"
 				},
 				"urgeWaiting":{
 					"label":"Urge Callimachus to Wait for Sparta",
 					"skillCheck":{"actionType":"social"},
 					"set":{"forBattle":"false"},
-					"hidden":"event.attestation.value < 15 || !event.values.forBattle.value"
+					"shown":"event.attestation.value >= 15 && event.values.forBattle.value"
 				}
 			},
 			"exits":[
@@ -113,15 +113,15 @@
 					"name":"Battle Chosen",
 					"value":"false",
 					"description":[
-						{"text":"Callimachus votes with Miltiades: Athens will fight.", "hidden":"!event.values.forBattle.value"},
-						{"text":"Callimachus votes to wait for the Spartans.", "hidden":"event.values.forBattle.value"}
+						{"text":"Callimachus votes with Miltiades: Athens will fight.", "shown":"event.values.forBattle.value"},
+						{"text":"Callimachus votes to wait for the Spartans.", "shown":"!event.values.forBattle.value"}
 					]
 				}
 			},
 			"description":[
 				"The ten Athenian generals are split, five for attacking and five for waiting behind their lines for the Spartans.",
-				{"text":"The deciding vote belongs to the polemarch, Callimachus. Miltiades, who knows the Persians from years in their service, takes him aside.", "hidden":"event.attestation.value < 10"},
-				{"text":"<p>Miltiades argues that every day of waiting gives the traitors in Athens time to open the gates, and that if they fight now, before the city divides, they can win.", "hidden":"event.attestation.value < 20"}
+				{"text":"The deciding vote belongs to the polemarch, Callimachus. Miltiades, who knows the Persians from years in their service, takes him aside.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Miltiades argues that every day of waiting gives the traitors in Athens time to open the gates, and that if they fight now, before the city divides, they can win.", "shown":"event.attestation.value >= 20"}
 			]
 		},
 
@@ -136,13 +136,13 @@
 					"label":"Delay the Horse Transports",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"cavalryAway":"false"},
-					"hidden":"event.attestation.value < 15 || !event.values.cavalryAway.value"
+					"shown":"event.attestation.value >= 15 && event.values.cavalryAway.value"
 				},
 				"hurryTransports":{
 					"label":"Hurry the Horse Transports",
 					"skillCheck":{"actionType":"sneak"},
 					"set":{"cavalryAway":"true"},
-					"hidden":"event.attestation.value < 15 || event.values.cavalryAway.value"
+					"shown":"event.attestation.value >= 15 && !event.values.cavalryAway.value"
 				}
 			},
 			"exits":[
