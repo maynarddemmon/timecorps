@@ -581,7 +581,7 @@
         },
         
         updateEventBox = eventBox => {
-            const {timeline, model, _label, _historicityBar, _attestationBar, _paradoxBar, _chronalBar} = eventBox,
+            const {model, _label, _historicityBar, _attestationBar, _paradoxBar, _chronalBar} = eventBox,
                 notHidden = model.isNotHidden();
             eventBox.eventId = model.id;
             
@@ -597,32 +597,55 @@
             eventBox.updateEntangled();
             eventBox.updateFlooded();
             
-            // Update connections between boxes
-            if (notHidden) {
-                const endId = model.id,
-                    flowLayer = timeline.flowLayer;
-                for (const eventModel of model.getPrecursors()) {
-                    const startId = eventModel.id,
-                        startBox = timeline.boxesByEventId[startId];
-                    if (startBox) {
-                        const startEventModel = startBox.model,
-                            hideAffectedBy = model.isAffectedByHidden(startEventModel);
-                        if (!hideAffectedBy && startEventModel.isNotHidden()) {
-                            const splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId,
-                                existingConnection = flowLayer.getSpline(splineId);
-                            if (!existingConnection) {
-                                flowLayer.connect({
-                                    splineId,
-                                    start:{view:startBox, side:'bottom', position:hashToRange(startId, 15,65) + '%'},
-                                    end:  {view:eventBox, side:'top',    position:hashToRange(endId, 15,65) + '%'}
-                                });
-                            }
-                        }
-                    }
+            updateAffectConnections(eventBox);
+            refreshConnectionsForSelection(eventBox);
+        },
+        
+        /*  Whether the precursor/descendant spline from startBox to endBox should be drawn: both
+            shown, the start still a precursor of the end, and not hidden from the end's view. */
+        isAffectConnectionWanted = (startBox, endBox) => {
+            const startModel = startBox.model,
+                endModel = endBox.model;
+            return startModel.isNotHidden() && endModel.isNotHidden() && 
+                !endModel.isAffectedByHidden(startModel) && endModel.getPrecursors().has(startModel);
+        },
+        
+        /*  Brings the precursor/descendant splines that touch an Event's box up to date, both 
+            ways: drawn to each shown precursor and descendant, and removed when either end is 
+            hidden or they no longer affect each other. A box being shown again has to draw its
+            descendants' splines too, since their own updates won't run. */
+        updateAffectConnections = eventBox => {
+            const {timeline, model} = eventBox,
+                {flowLayer, boxesByEventId} = timeline;
+            
+            for (const connection of getAffectiveConnectionsForEventBox(eventBox)) {
+                if (!isAffectConnectionWanted(connection.startView, connection.endView)) {
+                    // No longer adjacent through this spline to a selected box.
+                    const otherBox = connection.startView === eventBox ? connection.endView : connection.startView;
+                    if (eventBox.selected) otherBox.setAdjacentIsSelected(false);
+                    if (otherBox.selected) eventBox.setAdjacentIsSelected(false);
+                    flowLayer.disconnect(connection.splineId);
                 }
             }
             
-            refreshConnectionsForSelection(eventBox);
+            if (model.isNotHidden()) {
+                const connect = (startBox, endBox) => {
+                    if (startBox && endBox && isAffectConnectionWanted(startBox, endBox)) {
+                        const startId = startBox.model.id,
+                            endId = endBox.model.id,
+                            splineId = SPLINE_ID_PREFIX_AFFECT + startId + '-' + endId;
+                        if (!flowLayer.getSpline(splineId)) {
+                            flowLayer.connect({
+                                splineId,
+                                start:{view:startBox, side:'bottom', position:hashToRange(startId, 15,65) + '%'},
+                                end:  {view:endBox,   side:'top',    position:hashToRange(endId, 15,65) + '%'}
+                            });
+                        }
+                    }
+                };
+                for (const precursor of model.getPrecursors()) connect(boxesByEventId[precursor.id], eventBox);
+                for (const descendant of model.getDescendants()) connect(eventBox, boxesByEventId[descendant.id]);
+            }
         },
         
         /*  Shows the exit splines that touch the selected Event: its own exits and the exits from 

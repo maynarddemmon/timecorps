@@ -465,3 +465,30 @@ test('clicking the timeline scrolls to the nearest Event in the Location clicked
     expect(problems.warnings).toEqual([]);
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('precursor splines follow an Event being hidden and shown again, at either end', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // Lever affects Origin. Revealing Lever draws the spline between them.
+    const readAffectSplines = () => page.evaluate(() => tc.app.getTimelineView().flowLayer.getSplines()
+        .map(spline => spline.splineId).filter(id => id.startsWith('affect-')).sort());
+    const setHidden = (eventId, hidden) => page.evaluate(([eventId, hidden]) => tc.model.getEventModel(eventId).setHidden(hidden), [eventId, hidden]);
+    
+    await page.evaluate(() => tc.model.getEventModel('lever').attestation.setValue(50));
+    await expect.poll(readAffectSplines).toContain('affect-lever-origin');
+    const before = await readAffectSplines();
+    
+    // The precursor hidden and shown again.
+    await setHidden('lever', true);
+    await expect.poll(readAffectSplines).not.toContain('affect-lever-origin');
+    await setHidden('lever', false);
+    await expect.poll(readAffectSplines).toEqual(before);
+    
+    // The descendant hidden and shown again.
+    await setHidden('origin', true);
+    await expect.poll(async () => (await readAffectSplines()).some(id => id.endsWith('-origin') || id.startsWith('affect-origin-'))).toBe(false);
+    await setHidden('origin', false);
+    await expect.poll(readAffectSplines).toEqual(before);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
