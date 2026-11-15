@@ -65,7 +65,7 @@
                 try {
                     parseTree = ExpressionParser.parse(constraintTxt);
                 } catch(err) {
-                    console.error(err);
+                    console.error(constraintTxt, err);
                     return false;
                 }
                 

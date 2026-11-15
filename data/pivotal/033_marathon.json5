@@ -3,7 +3,7 @@
 		"marathon_fight":{
 			"name":"Marathon - Athens Must Fight",
 			"job":"true",
-			"description":"The generals’ vote at Marathon is going the wrong way. If Athens waits for Sparta, Persia wins.",
+			"description":"The generals’ vote at Marathon is going the wrong way, and no one has gone for the Spartans. If Athens falls, there will be no golden age.",
 			"onSetup":{
 				"initialEventSelection":"marathon_landing",
 				"set":{
@@ -21,6 +21,11 @@
 					"name":"Athens Wins",
 					"description":"The Persians must be driven back to their ships.",
 					"success":"events.marathon.values.outcome.value === 'athens_wins'"
+				},
+				"stands":{
+					"name":"Athens Stands",
+					"description":"The Persian fleet must find Athens defended, and sail home.",
+					"success":"!events.marathon_sack.values.sacked.value"
 				}
 			},
 			"onSuccess":{
@@ -30,7 +35,8 @@
 						"text":"<p>Callimachus cast the deciding vote for battle, and did not live to see the victory he made possible.",
 						"shown":"events.marathon_council.values.forBattle.value"
 					},
-					"<p>Athens will remember the men who fought here for as long as there is an Athens, and the democracy they defended will go on to Salamis, to the Parthenon, and to everything that comes after.",
+					"<p>When the Persian fleet came around the cape to Phaleron, the army was back from Marathon to meet it, and the Spartans were on the road. Datis turned for home.",
+					"<p>Athens will remember the men who fought at Marathon for as long as there is an Athens, and the democracy they defended will go on to Salamis, to the Parthenon, and to everything that comes after.",
 					{
 						"text":"The timeline shows no trace of the Corps’ interference.",
 						"shown":"timeline.paradox.value === 0"
@@ -63,16 +69,28 @@
 					"shown":"events.marathon.values.outcome.value === 'athens_wins' && events.marathon.attestation.value >= 30"
 				}
 			]
+		},
+		"marathon_athens":{
+			"name":"Athens",
+			"color":"#66a6",
+			"order":1
+		},
+		"marathon_sparta":{
+			"name":"Sparta",
+			"color":"#a666",
+			"order":2
 		}
 	},
 
 	"events":{
+		// Preparation for the battle.
 		"marathon_landing":{
 			"name":"The Persians Land",
 			"image":"../location/marathon_plain.jpg",
-			"start":"-000489-09-04T06:00:00", "duration":{"d":1},
+			"start":"-000489-09-04T06:00:00", "duration":{"h":12},
 			"location":"marathon_plain",
 			"exits":[
+				{"mode":"walk", "to":"marathon_runner"},
 				{"mode":"waitFor", "to":"marathon_council"},
 				{"mode":"waitFor", "to":"marathon_cavalry"},
 				{"mode":"waitFor", "to":"marathon"}
@@ -80,7 +98,49 @@
 			"description":[
 				"The Persian fleet runs up onto the beach at Marathon, and the army of Datis and Artaphernes comes ashore with its horses.",
 				{"text":"Hippias, the old tyrant of Athens, chose this bay for them: good ground for cavalry, and a day’s march from the city he means to rule again.", "shown":"event.attestation.value >= 10"},
-				{"text":"<p>From Athens, the runner Pheidippides is already on the road to Sparta to ask for help. The Spartans will answer that they can’t march until the moon is full.", "shown":"event.attestation.value >= 20"}
+				{"text":"<p>In Athens, the generals are choosing a runner to send to Sparta for help, before the army marches out to meet the landing.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// Pheidippides leaves (or not).
+		"marathon_runner":{
+			"name":"Pheidippides Runs for Sparta",
+			"image":"../location/marathon_athens.jpg",
+			"start":"-000489-09-05T05:00:00", "duration":{"h":3},
+			"location":"marathon_athens",
+			"shown":"events.marathon_landing.attestation.value > 25 || events.marathon_sack.attestation.value > 15",
+			"actions":{
+				"sendRunner":{
+					"label":"Urge the Generals to Send for Sparta",
+					"skillCheck":{"actionType":"social"},
+					"set":{"runnerSent":"true"},
+					"shown":"event.attestation.value >= 10 && !event.values.runnerSent.value"
+				},
+				"holdRunner":{
+					"label":"Delay the Runner",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"runnerSent":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.runnerSent.value"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"marathon_council"},
+				{"mode":"walk", "to":"marathon_march"}
+			],
+			"values":{
+				"runnerSent":{
+					"name":"Runner Sent",
+					"value":"false",
+					"description":[
+						{"text":"Pheidippides is on the road south at first light. He will be in Sparta tomorrow, a run of some 150 miles.", "shown":"event.values.runnerSent.value"},
+						{"text":"The generals argue over who should go, and no one leaves for Sparta.", "shown":"!event.values.runnerSent.value"}
+					]
+				}
+			},
+			"description":[
+				"Before the army marches out, the generals send to Sparta for help. The man they choose is Pheidippides, a trained long-distance runner.",
+				{"text":"Herodotus says he reached Sparta the day after he left Athens. On the way back, he would tell of meeting the god Pan on the mountain road.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The famous run from Marathon to Athens with news of the victory comes from much later writers. Herodotus tells only of this one, to Sparta.", "shown":"event.attestation.value >= 20"}
 			]
 		},
 
@@ -89,7 +149,7 @@
 			"image":"../location/marathon_plain.jpg",
 			"start":"-000489-09-09T18:00:00", "duration":{"h":3},
 			"location":"marathon_plain",
-			"shown":"events.marathon_landing.attestation.value > 35 || events.marathon.attestation.value > 15",
+			"shown":"events.marathon_landing.attestation.value > 30 || events.marathon.attestation.value > 15",
 			"actions":{
 				"urgeBattle":{
 					"label":"Urge Callimachus to Vote for Battle",
@@ -102,6 +162,18 @@
 					"skillCheck":{"actionType":"social"},
 					"set":{"forBattle":"false"},
 					"shown":"event.attestation.value >= 15 && event.values.forBattle.value"
+				},
+				"urgeWings":{
+					"label":"Convince Miltiades to adopt a pincer strategy",
+					"skillCheck":{"actionType":"social"},
+					"set":{"pincer":"true"},
+					"shown":"event.attestation.value >= 20 && !event.values.pincer.value"
+				},
+				"urgeCenter":{
+					"label":"Convince Miltiades strengthen the center",
+					"skillCheck":{"actionType":"social"},
+					"set":{"pincer":"false"},
+					"shown":"event.attestation.value >= 20 && event.values.pincer.value"
 				}
 			},
 			"exits":[
@@ -116,6 +188,14 @@
 						{"text":"Callimachus votes with Miltiades: Athens will fight.", "shown":"event.values.forBattle.value"},
 						{"text":"Callimachus votes to wait for the Spartans.", "shown":"!event.values.forBattle.value"}
 					]
+				},
+				"pincer":{
+					"name":"Pincer Strategry",
+					"value":"false",
+					"description":[
+						{"text":"The Greek commander Miltiades, anticipating the strength of the Persian center, plans to thin out the center of his hoplite line and significantly reinforce both of his wings.", "shown":"event.values.pincer.value"},
+						{"text":"The Greek commander Miltiades, anticipating the strength of the Persian center, plans to reinforce the center of his hoplite line to meet the Persian forces head on.", "shown":"!event.values.pincer.value"}
+					]
 				}
 			},
 			"description":[
@@ -125,12 +205,40 @@
 			]
 		},
 
+		// Sparta arrives (or not). The Spartans set out at the full moon.
+		"marathon_march":{
+			"name":"The Spartans March",
+			"image":"../location/marathon_sparta.jpg",
+			"start":"-000489-09-10T06:00:00", "duration":{"d":2, "h":8},
+			"location":"marathon_sparta",
+			"shown":"events.marathon_runner.values.runnerSent.value",
+			"exits":[
+				{"mode":"walk", "to":"marathon_sack"}
+			],
+			"values":{
+				// Only the runner's message brings them.
+				"marching":{
+					"name":"Spartans Marching",
+					"value":"events.marathon_runner.values.runnerSent.value",
+					"description":[
+						{"text":"Two thousand Spartans march north, fast enough to reach Attica on the third day.", "shown":"event.values.marching.value"},
+						{"text":"No call for help has come. The Spartans keep their festival and stay home.", "shown":"!event.values.marching.value"}
+					]
+				}
+			},
+			"description":[
+				"The moon is full at last. The law that kept the Spartans from marching before it no longer holds them.",
+				{"text":"Herodotus gives no reason for the law. Later writers say it was the Carneia, a festival during which Spartans could not go to war.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>They will come too late for the battle, but they will see the Persian dead on the plain, and praise the Athenians for what they did there.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
 		"marathon_cavalry":{
 			"name":"The Cavalry Embarks",
 			"image":"../location/marathon_plain.jpg",
 			"start":"-000489-09-11T22:00:00", "duration":{"h":7},
 			"location":"marathon_plain",
-			"shown":"events.marathon_landing.attestation.value > 15 || events.marathon.attestation.value > 35",
+			"shown":"events.marathon_landing.attestation.value > 15 || events.marathon.attestation.value > 30",
 			"actions":{
 				"delayTransports":{
 					"label":"Delay the Horse Transports",
@@ -165,16 +273,20 @@
 			]
 		},
 
+		// Battle happens.
 		"marathon":{
 			"name":"Battle of Marathon",
 			"image":"../location/marathon_plain.jpg",
 			"start":"-000489-09-12T06:00:00", "duration":{"h":3},
 			"location":"marathon_plain",
+			"exits":[
+				{"mode":"walk", "to":"marathon_sack"}
+			],
 			"values":{
-				// The hinge: Athens wins only if it fights while the cavalry is away.
+				// Athens wins only if it fights while the cavalry is away.
 				"outcome":{
 					"name":"Outcome",
-					"value":"events.marathon_council.values.forBattle.value && events.marathon_cavalry.values.cavalryAway.value ? 'athens_wins' : 'persia_wins'",
+					"value":"(events.marathon_council.values.forBattle.value && (events.marathon_cavalry.values.cavalryAway.value !== events.marathon_council.values.pincer.value)) ? 'athens_wins' : 'persia_wins'",
 					"description":[
 						{"text":"The Athenians win. The Persians lose some 6,400 men; the Athenians, 192.", "shown":"event.values.outcome.value === 'athens_wins'"},
 						{"text":"Athens loses. The Persians march on a city that is ready to betray itself.", "shown":"event.values.outcome.value === 'persia_wins'"}
@@ -185,6 +297,71 @@
 				"Some ten thousand Athenians and Plataeans face the Persian army across the plain, their line stretched to match its length, thin in the center and deep on the wings.",
 				{"text":"At the signal they charge at a run across nearly a mile of open ground, something no Greek army has done before.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>The Persian center breaks through, but both Greek wings rout the enemy before them, then turn inward and close on the center. The Persians run for their ships, and the Athenians take seven of them.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// Athens sacked (or not). Only on the timeline while it happens.
+		"marathon_sack":{
+			"name":"Athens Sacked by Persia",
+			"image":"../location/marathon_athens.jpg",
+			"start":"-000489-09-12T18:00:00", "duration":{"h":12},
+			"location":"marathon_athens",
+			"shown":"events.marathon.historicity.value > 0",
+			"values":{
+				// Lost at Marathon, or the fleet with the cavalry reaches a city no Spartans are
+				// coming to help.
+				"sacked":{
+					"name":"Athens Falls",
+					"value":"events.marathon.values.outcome.value === 'persia_wins' || (events.marathon_cavalry.values.cavalryAway.value && !events.marathon_march.values.marching.value)",
+					"description":[
+						{"text":"The friends of Hippias open the gates, and the Persians burn the temples on the Acropolis.", "shown":"event.values.sacked.value"},
+						{"text":"Datis finds the city defended, and the fleet turns for home.", "shown":"!event.values.sacked.value"}
+					]
+				}
+			},
+			"description":[
+				"The Persian fleet rounds Cape Sounion and anchors off Phaleron, the harbor of Athens, with the cavalry aboard.",
+				{"text":"Someone in the city has signaled the fleet with a flashing shield. The Persians expect the gates to be opened for them.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The army is still at Marathon, a day’s march away, and no help is coming from Sparta.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// Golden ages. One or the other, depending on whether Athens falls. 480 to 404 BCE.
+		"marathon_golden_athens":{
+			"name":"Golden Age of Athens",
+			"image":"../location/marathon_athens.jpg",
+			"start":"-000479-01-01T00:00:00", "duration":{"d":27759},
+			"location":"marathon_athens",
+			"shown":"events.marathon.historicity.value > 10",
+			"values":{
+				"flourishes":{
+					"name":"Athens Flourishes",
+					"value":"!events.marathon_sack.values.sacked.value"
+				}
+			},
+			"description":[
+				"Ten years after Marathon, Athens’ new fleet wins at Salamis, and the city leads the Greeks for half a century.",
+				{"text":"Under Pericles the Parthenon rises on the Acropolis. Aeschylus, who fought at Marathon, and Sophocles and Euripides write the first great tragedies.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Socrates questions everyone in the marketplace, Herodotus and Thucydides invent history, and the democracy lasts until Sparta defeats Athens in 404 BCE.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"marathon_golden_sparta":{
+			"name":"Golden Age of Sparta",
+			"image":"../location/marathon_sparta.jpg",
+			"start":"-000479-01-01T00:00:00", "duration":{"d":27759},
+			"location":"marathon_sparta",
+			"shown":"events.marathon.historicity.value > 10",
+			"values":{
+				"leads":{
+					"name":"Sparta Leads Greece",
+					"value":"events.marathon_sack.values.sacked.value"
+				}
+			},
+			"description":[
+				"With Athens a Persian province under Hippias, Sparta is the only power left to lead the Greeks who still resist.",
+				{"text":"There is no Athenian fleet at Salamis, no Parthenon, and no Athenian theater. Sparta’s rule is iron, and it lasts.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Democracy is remembered, if at all, as a brief experiment in one city, ended by its own traitors.", "shown":"event.attestation.value >= 20"}
 			]
 		}
 	}
