@@ -1,6 +1,6 @@
 {
 	// The scenario files loaded after this one, in order.
-	"scenarios":["origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario"],
+	"scenarios":["origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario", "pivotal/033_marathon"],
 	
 	"initialOperation":"origin_story",
 	// The player's own agent. Agents of other factions aren't the player's to direct, even
@@ -372,6 +372,16 @@
 					"hidden":"operations.titanic_noCollision.shown",
 					"costs":{"agent.action":null},
 					"set":{"operations.titanic_noCollision.hidden":"false"}
+				},
+				
+				// Once the first job is taken, a Pivotal 250 one.
+				"jobBoard_marathon":{
+					"label":"Check the Job Board",
+					"group":"jobs",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"!operations.titanic_noCollision.shown || operations.marathon_fight.shown",
+					"costs":{"agent.action":null},
+					"set":{"operations.marathon_fight.hidden":"false"}
 				}
 			},
 			"exits":[
@@ -465,6 +475,16 @@
 					"hidden":"operations.titanic_noCollision.shown",
 					"costs":{"agent.action":null},
 					"set":{"operations.titanic_noCollision.hidden":"false"}
+				},
+				
+				// Once the first job is taken, a Pivotal 250 one.
+				"jobBoard_marathon":{
+					"label":"Check the Job Board",
+					"group":"jobs",
+					"skillCheck":{"difficulty":"no-roll"},
+					"hidden":"!operations.titanic_noCollision.shown || operations.marathon_fight.shown",
+					"costs":{"agent.action":null},
+					"set":{"operations.marathon_fight.hidden":"false"}
 				}
 			},
 			"exits":[

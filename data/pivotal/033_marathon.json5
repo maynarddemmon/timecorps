@@ -1,0 +1,191 @@
+{
+	"operations":{
+		"marathon_fight":{
+			"name":"Marathon - Athens Must Fight",
+			// Offered from either faction's HQ job board, which reveals it.
+			"description":"The generals’ vote at Marathon is going the wrong way. If Athens waits for Sparta, Persia wins.",
+			"onSetup":{
+				"initialEventSelection":"marathon_landing",
+				"set":{
+					"events.marathon_landing.historicity":"60",
+					"events.marathon.historicity":"75"
+				}
+			},
+			"objectives":{
+				"fight":{
+					"name":"Athens Fights",
+					"description":"The generals must vote to meet the Persians on the plain.",
+					"success":"events.marathon_council.values.forBattle.value"
+				},
+				"victory":{
+					"name":"Athens Wins",
+					"description":"The Persians must be driven back to their ships.",
+					"success":"events.marathon.values.outcome.value === 'athens_wins'"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"On the plain of Marathon the Athenians charged, as history requires, and the Persians broke and ran for their ships.",
+					{
+						"text":"<p>Callimachus cast the deciding vote for battle, and did not live to see the victory he made possible.",
+						"hidden":"!events.marathon_council.values.forBattle.value"
+					},
+					"<p>Athens will remember the men who fought here for as long as there is an Athens, and the democracy they defended will go on to Salamis, to the Parthenon, and to everything that comes after.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"hidden":"timeline.paradox.value > 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"hidden":"timeline.paradox.value === 0"
+					}
+				],
+				"adj":{
+					"player.hq.chronal":"10",
+					"timeline.score":"3000"
+				}
+			}
+		}
+	},
+
+	// Pivotal 250 scenarios sit after the hand-built ones, in list order: 1000 + their number.
+	"locationsBaseOrder":1033,
+	"locations":{
+		"marathon_plain":{
+			"name":"Plain of Marathon",
+			"color":"#a636",
+			"order":0,
+			"description":[
+				{
+					"text":"Persian ships line the shore of the bay, and the Athenian camp watches them from the hills.",
+					"shown":"events.marathon.values.outcome.value === 'athens_wins' && events.marathon.attestation.value >= 30"
+				},{
+					"text":"A great mound rises over the Athenian dead. The Persian ships are gone.",
+					"shown":"events.marathon.values.outcome.value === 'persia_wins' && events.marathon.attestation.value >= 30"
+				}
+			]
+		}
+	},
+
+	"events":{
+		"marathon_landing":{
+			"name":"The Persians Land",
+			"image":"../location/marathon_plain.jpg",
+			"start":"-000489-09-04T06:00:00", "duration":{"d":1},
+			"location":"marathon_plain",
+			"exits":[
+				{"mode":"waitFor", "to":"marathon_council"},
+				{"mode":"waitFor", "to":"marathon_cavalry"},
+				{"mode":"waitFor", "to":"marathon"}
+			],
+			"description":[
+				"The Persian fleet runs up onto the beach at Marathon, and the army of Datis and Artaphernes comes ashore with its horses.",
+				{"text":"Hippias, the old tyrant of Athens, chose this bay for them: good ground for cavalry, and a day’s march from the city he means to rule again.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>From Athens, the runner Pheidippides is already on the road to Sparta to ask for help. The Spartans will answer that they can’t march until the moon is full.", "hidden":"event.attestation.value < 20"}
+			]
+		},
+
+		"marathon_council":{
+			"name":"The Generals’ Vote",
+			"image":"../location/marathon_plain.jpg",
+			"start":"-000489-09-09T18:00:00", "duration":{"h":3},
+			"location":"marathon_plain",
+			"shown":"events.marathon_landing.attestation.value > 35 || events.marathon.attestation.value > 15",
+			"actions":{
+				"urgeBattle":{
+					"label":"Urge Callimachus to Vote for Battle",
+					"skillCheck":{"actionType":"social"},
+					"set":{"forBattle":"true"},
+					"hidden":"event.attestation.value < 15 || event.values.forBattle.value"
+				},
+				"urgeWaiting":{
+					"label":"Urge Callimachus to Wait for Sparta",
+					"skillCheck":{"actionType":"social"},
+					"set":{"forBattle":"false"},
+					"hidden":"event.attestation.value < 15 || !event.values.forBattle.value"
+				}
+			},
+			"exits":[
+				{"mode":"waitFor", "to":"marathon_cavalry"},
+				{"mode":"waitFor", "to":"marathon"}
+			],
+			"values":{
+				"forBattle":{
+					"name":"Battle Chosen",
+					"value":"false",
+					"description":[
+						{"text":"Callimachus votes with Miltiades: Athens will fight.", "hidden":"!event.values.forBattle.value"},
+						{"text":"Callimachus votes to wait for the Spartans.", "hidden":"event.values.forBattle.value"}
+					]
+				}
+			},
+			"description":[
+				"The ten Athenian generals are split, five for attacking and five for waiting behind their lines for the Spartans.",
+				{"text":"The deciding vote belongs to the polemarch, Callimachus. Miltiades, who knows the Persians from years in their service, takes him aside.", "hidden":"event.attestation.value < 10"},
+				{"text":"<p>Miltiades argues that every day of waiting gives the traitors in Athens time to open the gates, and that if they fight now, before the city divides, they can win.", "hidden":"event.attestation.value < 20"}
+			]
+		},
+
+		"marathon_cavalry":{
+			"name":"The Cavalry Embarks",
+			"image":"../location/marathon_plain.jpg",
+			"start":"-000489-09-11T22:00:00", "duration":{"h":7},
+			"location":"marathon_plain",
+			"shown":"events.marathon_landing.attestation.value > 15 || events.marathon.attestation.value > 35",
+			"actions":{
+				"delayTransports":{
+					"label":"Delay the Horse Transports",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"cavalryAway":"false"},
+					"hidden":"event.attestation.value < 15 || !event.values.cavalryAway.value"
+				},
+				"hurryTransports":{
+					"label":"Hurry the Horse Transports",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"cavalryAway":"true"},
+					"hidden":"event.attestation.value < 15 || event.values.cavalryAway.value"
+				}
+			},
+			"exits":[
+				{"mode":"waitFor", "to":"marathon"}
+			],
+			"values":{
+				"cavalryAway":{
+					"name":"Cavalry Away",
+					"value":"false",
+					"description":[
+						{"text":"By dawn the horses are aboard, and the transports are standing out to sea.", "shown":"event.values.cavalryAway.value"},
+						{"text":"The loading falls behind, and at dawn the Persian horsemen are still on the beach.", "shown":"!event.values.cavalryAway.value"}
+					]
+				}
+			},
+			"description":[
+				"In the dark, the Persians begin loading their horses onto the transports, to sail around the cape for Athens itself.",
+				{"text":"Later writers tell of Ionian Greeks in the Persian camp slipping across to the Athenian lines with a message: the cavalry are away.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Without its horsemen, the Persian army on the plain is only infantry, and the Athenian hoplites are heavier.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"marathon":{
+			"name":"Battle of Marathon",
+			"image":"../location/marathon_plain.jpg",
+			"start":"-000489-09-12T06:00:00", "duration":{"h":3},
+			"location":"marathon_plain",
+			"values":{
+				// The hinge: Athens wins only if it fights while the cavalry is away.
+				"outcome":{
+					"name":"Outcome",
+					"value":"events.marathon_council.values.forBattle.value && events.marathon_cavalry.values.cavalryAway.value ? 'athens_wins' : 'persia_wins'",
+					"description":[
+						{"text":"The Athenians win. The Persians lose some 6,400 men; the Athenians, 192.", "shown":"event.values.outcome.value === 'athens_wins'"},
+						{"text":"Athens loses. The Persians march on a city that is ready to betray itself.", "shown":"event.values.outcome.value === 'persia_wins'"}
+					]
+				}
+			},
+			"description":[
+				"Some ten thousand Athenians and Plataeans face the Persian army across the plain, their line stretched to match its length, thin in the center and deep on the wings.",
+				{"text":"At the signal they charge at a run across nearly a mile of open ground, something no Greek army has done before.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The Persian center breaks through, but both Greek wings rout the enemy before them, then turn inward and close on the center. The Persians run for their ships, and the Athenians take seven of them.", "shown":"event.attestation.value >= 20"}
+			]
+		}
+	}
+}
