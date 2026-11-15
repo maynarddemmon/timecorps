@@ -82,7 +82,7 @@
         overrides = readOverrides();
     
     /*  Player settings that persist across campaigns. Kept apart from the campaign save so
-        Restart Campaign and importing a save leave them alone. A change is passed on to 
+        Restarting the campaign and importing a save leave them alone. A change is passed on to 
         pkg.app.notifySettingChanged, so what it affects can update at once. */
     pkg.settings = {
         getDefinitions: () => DEFINITIONS,

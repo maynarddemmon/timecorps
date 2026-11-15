@@ -85,14 +85,15 @@
         },
         
         /*  The game has effectively ended. Offers a restart, or a reload of the last save 
-            if there is one, which forgets anything lost since. */
-        openEndGameDialog = (title, msg) => {
+            if there is one and reloading is allowed, which forgets anything lost since. A
+            resignation doesn't allow it. */
+        openEndGameDialog = (title, msg, allowReload=true) => {
             openWhenClear(() => {
                 endGameBrief ??= new pkg.EndGameBrief(appView);
                 endGameBrief.show(
                     title, msg,
                     appView.doRestartCampaign,
-                    persistenceMgr.hasSave() ? appView.doReload : null
+                    allowReload && persistenceMgr.hasSave() ? appView.doReload : null
                 );
                 return endGameBrief;
             });
@@ -400,12 +401,12 @@
                     );
                 }
             }]);
-            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:i18n('dlg-restart-title')}, [{
+            new SquareBtn(topView, {buttonType:'underline', text:pkg.ICON_RESTART, fontSize:fontSizeMedium, tooltip:i18n('dlg-resign-title')}, [{
                 doActivated: () => {
                     openConfirmMsgDialog(
-                        i18n('dlg-restart-title'),
-                        i18n('dlg-restart-msg'),
-                        appView.doRestartCampaign
+                        i18n('dlg-resign-title'),
+                        i18n('dlg-resign-msg'),
+                        () => openEndGameDialog(i18n('dlg-resigned-title'), i18n('dlg-resigned-msg'), false)
                     );
                 }
             }]);

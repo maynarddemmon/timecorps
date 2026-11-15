@@ -2,7 +2,7 @@ import {test, expect} from '@playwright/test';
 import {startGame} from './helpers.mjs';
 
 const visibleButton = (page, name) => page.getByRole('button', {name}).filter({visible:true}),
-    restartTitle = page => page.getByText('Restart Campaign', {exact:true}).filter({visible:true});
+    restartTitle = page => page.getByText('Resign', {exact:true}).filter({visible:true});
 
 /*  myt buttons stop keydown from bubbling, so these cover the keys reaching the dialog 
     when one of its buttons has focus. */

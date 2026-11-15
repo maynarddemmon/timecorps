@@ -138,3 +138,33 @@ test('a destabilized timeline ends the game the same way', async ({page}) => {
 
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('resigning, after confirming, ends the game with only a restart, even with a save', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.getPersistenceManager().save());
+    
+    const resignBtn = page.getByRole('button', {name:'⌫', exact:true}).filter({visible:true});
+    expect(await resignBtn.getAttribute('title')).toBe('Resign');
+    
+    // Cancelled, the game goes on.
+    await resignBtn.click();
+    await expect(dialogTitle(page, 'Resign')).toBeVisible();
+    await page.getByRole('button', {name:/Cancel/}).filter({visible:true}).click();
+    await expect(endGameBrief(page)).toHaveCount(0);
+    
+    await resignBtn.click();
+    await page.getByRole('button', {name:/Confirm/}).filter({visible:true}).click();
+    await expect(dialogTitle(page, 'Campaign Resigned')).toBeVisible();
+    await expect(endGameBrief(page)).toContainText('You have resigned this campaign.');
+    await expect(reloadBtn(page)).toBeHidden();
+    await expect(restartBtn(page)).toBeVisible();
+    
+    // There's no way back: Escape doesn't close it, and Enter restarts.
+    await page.keyboard.press('Escape');
+    await expect(endGameBrief(page)).toBeVisible();
+    await Promise.all([page.waitForEvent('load'), page.keyboard.press('Enter')]);
+    await page.waitForFunction(() => window.tc?.isAppReady?.() === true);
+    expect(await page.evaluate(() => tc.getPersistenceManager().hasSave())).toBe(false);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

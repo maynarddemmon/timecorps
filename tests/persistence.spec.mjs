@@ -120,7 +120,7 @@ test('a completed mission is not granted again after a reload', async ({page}) =
     expect(problems.warnings).toEqual([]);
 });
 
-test('restart campaign erases the save', async ({page}) => {
+test('resigning, then restarting the campaign, erases the save', async ({page}) => {
     const problems = await startGame(page);
 
     await setCausatorCfg(page, 'plan', 'noted', 'true');
@@ -128,7 +128,8 @@ test('restart campaign erases the save', async ({page}) => {
     expect(await readSave(page)).not.toBeNull();
 
     await visibleButton(page, '⌫').click();
-    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
+    await visibleButton(page, /Confirm/).click();
+    await clickAndReload(page, visibleButton(page, 'Restart Campaign'), {briefExpected:true});
 
     expect(await readSave(page)).toBeNull();
     await expectFreshCampaign(page);
@@ -179,7 +180,8 @@ test('an exported file imports back to the same campaign', async ({page}) => {
     
     // Start over, which also proves the import doesn't depend on the old save.
     await visibleButton(page, '⌫').click();
-    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
+    await visibleButton(page, /Confirm/).click();
+    await clickAndReload(page, visibleButton(page, 'Restart Campaign'), {briefExpected:true});
     await expectFreshCampaign(page);
     
     expect(await importFile(page, exported)).toBe('Import Succeeded');

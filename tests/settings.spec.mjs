@@ -69,12 +69,13 @@ test('turning the setting off stops the save and is remembered', async ({page}) 
     expect(problems.warnings).toEqual([]);
 });
 
-test('restarting the campaign keeps settings', async ({page}) => {
+test('resigning and restarting the campaign keeps settings', async ({page}) => {
     const problems = await startGame(page);
     
     await turnSettingOff(page);
     await visibleButton(page, '⌫').click();
-    await clickAndReload(page, visibleButton(page, /Confirm/), {briefExpected:true});
+    await visibleButton(page, /Confirm/).click();
+    await clickAndReload(page, visibleButton(page, 'Restart Campaign'), {briefExpected:true});
     expect(await getSetting(page)).toBe(false);
     
     expect(problems.pageErrors).toEqual([]);
