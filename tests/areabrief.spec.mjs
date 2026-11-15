@@ -72,6 +72,36 @@ test('an Event\'s name opens its brief, and with shift selects it and closes the
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('a causator link in an Event\'s description opens the linked Event\'s brief, and with shift selects it and closes the Area Brief', async ({page}) => {
+    const problems = await startGame(page);
+    await page.evaluate(() => {tc.model.getEventModel('lever').attestation.setValue(50);});
+    await openDeckBrief(page);
+    
+    // Origin, second after Lever, has Struck, which is affected by Lever.
+    const originEntry = areaBrief(page).locator('.myt-ChronologyEntry').nth(1),
+        leverLink = originEntry.locator('.myt-DescPart').getByText(/^Lever /);
+    await expect(leverLink).toBeVisible();
+    
+    // Opens Lever's brief over the Area Brief.
+    await leverLink.click();
+    const eventBrief = page.locator('.myt-EventBrief');
+    await expect(eventBrief).toBeVisible();
+    await expect(eventBrief).toContainText('Lever');
+    await page.keyboard.press('Escape');
+    await expect(eventBrief).toBeHidden();
+    await expect(areaBrief(page)).toBeVisible();
+    
+    // With shift, selects it and closes.
+    await page.keyboard.down('Shift');
+    await leverLink.click();
+    await page.keyboard.up('Shift');
+    await expect(areaBrief(page)).toBeHidden();
+    await expect.poll(() => page.evaluate(() => tc.app.getTimelineView().getSelectedEventId())).toBe('lever');
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('a location with no known Events has no chronology', async ({page}) => {
     const problems = await startGame(page);
     await page.evaluate(() => {tc.app.openAreaBrief(tc.model.getEventModel('finale').getLocationModel());});

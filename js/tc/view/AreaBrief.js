@@ -84,14 +84,9 @@
                 const descContainer = self._descContainer;
                 descContainer.destroyAllSubviews();
                 for (const part of eventModel.getFullDescriptionAsParts()) {
-                    new DescPart(descContainer, {part, padding:0, causatorCallback:btn => {
-                        if (M.global.keys.isShiftKeyDown()) {
-                            self.brief.hide();
-                        } else {
-                            pkg.app.openEventBrief(btn.navEventModel, true);
-                            return true;
-                        }
-                    }});
+                    new DescPart(descContainer, {
+                        part, padding:0, causatorCallback:btn => self.brief._doCausatorLinkActivated(btn)
+                    });
                 }
             }
         });
