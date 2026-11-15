@@ -416,7 +416,31 @@
                 this.revealed = true;
                 this.setHidden(false);
                 this.notifyCollectionOfUpdate();
+                
+                // Off any job board it's on, which hides the board until the next pick.
+                if (pkg.isAppReady()) {
+                    const rootModel = pkg.model;
+                    for (const factionModel of rootModel.getFactionModelsAsList()) {
+                        const jobBoard = factionModel.getJobBoard();
+                        if (jobBoard && rootModel.scratch[jobBoard] === this.id) rootModel.setScratch(jobBoard, '');
+                    }
+                }
             }
+        },
+        
+        /*  A check expression on the agent arriving at their Faction's HQ, e.g. 
+            "agent.faction === 'syndicate' && timeline.score > 5000": while true, and the 
+            Operation isn't yet revealed, it can be picked for that Faction's job board. 
+            Without one, it's never offered there. See FactionModel.pickJob. */
+        setJob: function(job) {
+            if (job != null && typeof job !== 'string') {
+                console.warn('Operation', this.id, 'job must be a check expression string (ignoring it):', job);
+                job = undefined;
+            }
+            this.set('job', job, true);
+        },
+        isJobFor: function(agentModel) {
+            return this.job != null && pkg.checks.isTrue(this.job, {agent:agentModel, event:agentModel.getEventModel()});
         },
         
         /*  A "hidden" expression revealing the Operation offers it to the player with its

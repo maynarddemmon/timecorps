@@ -368,8 +368,9 @@
         validateFactionHQs: () => {
             const factions = model[SCOPE_FACTIONS].getAll();
             for (const id in factions) {
-                const hq = factions[id].hq;
+                const {hq, jobBoard} = factions[id];
                 if (hq != null && !model.getEventModel(hq)) console.warn('Faction', id, 'hq names no Event:', hq);
+                if (jobBoard != null && model[SCOPE_SCRATCH][jobBoard] === undefined) console.warn('Faction', id, 'jobBoard names no scratch entry:', jobBoard);
             }
         },
         getFactionModelsAsList: filterFunc => model[SCOPE_FACTIONS].getAsList(filterFunc),

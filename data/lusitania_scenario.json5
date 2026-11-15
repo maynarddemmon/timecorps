@@ -2,10 +2,9 @@
 	"operations":{
 		"lusitania_nosink":{
 			"name":"Lusitania - Doesn't Sink",
+			"job":"true",
 			"image":true,
-			"description":[
-				"Prevent the sinking of the Lusitania."
-			],
+			"description":"Prevent the sinking of the Lusitania.",
 			"onSetup":{
 				"set":{
 					"events.torpedo_strike.historicity":"75",
@@ -16,9 +15,7 @@
 			"objectives":{
 				"afloat":{
 					"name":"Still Afloat",
-					"description":[
-						"The Lusitania must not be sunk."
-					],
+					"description":"The Lusitania must not be sunk.",
 					"success":"!events.lusitania_sinks.values.sinks.value"
 				}
 			},

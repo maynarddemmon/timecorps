@@ -605,6 +605,10 @@
                 pkg.app.notifyAgentLocOrVisChange(this, false);
                 
                 this.tryToOpenEventBrief();
+                
+                // A player-controlled agent arriving at their Faction's HQ, in play rather 
+                // than as a game is set up or restored, refreshes its job board.
+                if (pkg.isAppReady() && this.isPlayerControlled() && this.isAtHQ()) this.getFactionModel().pickJob(this);
             }
         },
         

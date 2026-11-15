@@ -277,6 +277,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         for (const [factionId, faction] of Object.entries(factions)) {
             if (typeof faction.label !== 'string' || faction.label.trim() === '') problems.push('faction ' + factionId + ' has no label');
             if (faction.hq !== undefined && !events[faction.hq]) problems.push('faction ' + factionId + ' hq is not an Event: ' + faction.hq);
+            if (faction.jobBoard !== undefined && (typeof scratch[faction.jobBoard] !== 'string')) problems.push('faction ' + factionId + ' jobBoard is not a scratch entry that starts as a string: ' + faction.jobBoard);
         }
         for (const [agentId, agent] of Object.entries(agents)) {
             if (agent.faction !== undefined && !factions[agent.faction]) problems.push('agent ' + agentId + ' is in unknown faction ' + agent.faction);
@@ -432,6 +433,13 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
             // Event, or null for an Operation, which has no agent or Event of its own.
             checkChangeKey = (key, event, isSet=false) => {
                 if (key.startsWith('player.') && !playerAgentId) return 'names the player agent, but there\'s no playerAgent';
+                // The Operation a scratch entry names when it's set, e.g. a job board's.
+                const byScratch = key.match(/^operations\[scratch\.([A-Za-z_][A-Za-z0-9_]*)\]\.([A-Za-z_][A-Za-z0-9_]*)$/);
+                if (byScratch) {
+                    if (!Object.hasOwn(scratch, byScratch[1])) return 'names an Operation by a scratch entry that is not declared';
+                    if (!['hidden', 'shown'].includes(byScratch[2])) return 'is not hidden or shown, all a set can change of an Operation';
+                    return isSet ? null : 'is whether an Operation is hidden, which can only be set';
+                }
                 const [scope, statId, ...rest] = expandPlayerKey(key).split('.');
                 if (event === null && (statId === undefined || scope === 'agent' || scope === 'event')) return 'names the agent or the Event, and an Operation or prompt has neither';
                 if ((scope === 'agent' && statId === 'event' && rest.length === 0) || (scope === 'agents' && rest.length === 1 && rest[0] === 'event')) {
@@ -690,6 +698,24 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
         expect(problems).toEqual([]);
     });
 
+    test('every operation\'s job, if it has one, is a check expression that compiles', () => {
+        const problems = [];
+        for (const [operationId, operation] of Object.entries(operations)) {
+            const job = operation.job;
+            if (job === undefined) continue;
+            if (typeof job !== 'string' || job.trim() === '') {
+                problems.push(operationId + ' job is not a check expression: ' + job);
+                continue;
+            }
+            try {
+                new Function('agent', 'agents', 'event', 'events', 'timeline', 'scratch', 'factions', 'operations', 'player', '"use strict";return (' + job + ');');
+            } catch (err) {
+                problems.push(operationId + ' job does not compile: ' + err.message);
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
     test('every operation has a mission briefing, and an image if it says it has one', () => {
         const missing = [];
         for (const [operationId, operation] of Object.entries(operations)) {

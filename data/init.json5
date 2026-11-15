@@ -22,12 +22,14 @@
 		"timecorps":{
 			"label":"Time Corps",
 			"hq":"time_corps_hq",
+			"jobBoard":"job_timecorps",
 			"defaultAgentRole":"Agent",
 			"description":"The Nexus-based service that watches the causal thread and repairs it. Its agents travel under Corps protocols, draw chronal from the HQ pool and answer to Command."
 		},
 		"syndicate":{
 			"label":"The Syndicate",
 			"hq":"syndicate_hq",
+			"jobBoard":"job_syndicate",
 			"defaultAgentRole":"Operative",
 			"description":"Time travellers who answer to no Command and keep no protocols. They change history for whoever pays them, or for reasons of their own, and the Corps has never found out who leads them."
 		},
@@ -270,7 +272,9 @@
 		"transfer":0, // Used when an amount needs to be calculated before it is used in multiple set/adj.
 		"syndicate_hq_hidden":"true",
 		"time_corps_hq_hidden":"true",
-		"the_void_hidden":"true"
+		"the_void_hidden":"true",
+		"job_timecorps":"",
+		"job_syndicate":""
 	},
 	
 	"events":{
@@ -365,23 +369,15 @@
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},
 				
-				"jobBoard_1":{
+				// The job on offer, picked when a player-controlled member arrives. Taking it
+				// reveals the mission and takes it off the board until the next arrival.
+				"jobBoard":{
 					"label":"Check the Job Board",
 					"group":"jobs",
 					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"operations.titanic_noCollision.shown",
+					"shown":"scratch.job_syndicate !== ''",
 					"costs":{"agent.action":null},
-					"set":{"operations.titanic_noCollision.hidden":"false"}
-				},
-				
-				// Once the first job is taken, a Pivotal 250 one.
-				"jobBoard_marathon":{
-					"label":"Check the Job Board",
-					"group":"jobs",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"!operations.titanic_noCollision.shown || operations.marathon_fight.shown",
-					"costs":{"agent.action":null},
-					"set":{"operations.marathon_fight.hidden":"false"}
+					"set":{"operations[scratch.job_syndicate].hidden":"false"}
 				}
 			},
 			"exits":[
@@ -468,23 +464,15 @@
 					"adj":{"agent.paradox":{"onSuccess":"-1"}}
 				},
 				
-				"jobBoard_1":{
+				// The job on offer, picked when a player-controlled member arrives. Taking it
+				// reveals the mission and takes it off the board until the next arrival.
+				"jobBoard":{
 					"label":"Check the Job Board",
 					"group":"jobs",
 					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"operations.titanic_noCollision.shown",
+					"shown":"scratch.job_timecorps !== ''",
 					"costs":{"agent.action":null},
-					"set":{"operations.titanic_noCollision.hidden":"false"}
-				},
-				
-				// Once the first job is taken, a Pivotal 250 one.
-				"jobBoard_marathon":{
-					"label":"Check the Job Board",
-					"group":"jobs",
-					"skillCheck":{"difficulty":"no-roll"},
-					"hidden":"!operations.titanic_noCollision.shown || operations.marathon_fight.shown",
-					"costs":{"agent.action":null},
-					"set":{"operations.marathon_fight.hidden":"false"}
+					"set":{"operations[scratch.job_timecorps].hidden":"false"}
 				}
 			},
 			"exits":[

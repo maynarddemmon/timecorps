@@ -169,6 +169,9 @@
         // What set can change about an Operation, e.g. "operations.titanic_noCollision.hidden".
         SETTABLE_OPERATION_ATTR_NAMES = ['hidden', 'shown'],
         
+        // "operations[scratch.<name>].<attr>": the Operation a scratch entry names.
+        OPERATION_BY_SCRATCH_KEY = /^operations\[scratch\.([A-Za-z_][A-Za-z0-9_]*)\]\.([A-Za-z_][A-Za-z0-9_]*)$/,
+        
         /*  Whether set can change an attribute of an agent or Event, e.g. "hidden": anything
             with a setter, other than what has a key of its own. */
         isSettableAttr = (isAgent, attrName) => {
@@ -337,11 +340,25 @@
                     e.g. "agents.AF.hidden" or "event.chronoLocked". Set only.
                 {kind:'attr', scopeName:'operations', operationId, statId:attrName, attrName} -
                     whether an Operation is hidden, e.g. "operations.titanic_noCollision.hidden"
-                    or its "shown". Set only.
+                    or its "shown". Set only. With operationScratch in place of operationId,
+                    the Operation is the one a scratch entry names when it's set, e.g. 
+                    "operations[scratch.job_timecorps].hidden" for a job board.
                 {error} - a phrase for a warning. */
             let parsedKey;
-            const [scopeName, statId, ...rest] = String(key).split('.');
-            if (statId === undefined) {
+            const [scopeName, statId, ...rest] = String(key).split('.'),
+                operationByScratch = String(key).match(OPERATION_BY_SCRATCH_KEY);
+            if (operationByScratch) {
+                const [, operationScratch, attrName] = operationByScratch;
+                if (!SETTABLE_OPERATION_ATTR_NAMES.includes(attrName)) {
+                    warn('names nothing of an Operation that can be set, only hidden or shown (ignoring it)');
+                    return null;
+                }
+                if (!isSet) {
+                    warn('can only be set, not adjusted (ignoring it)');
+                    return null;
+                }
+                parsedKey = {kind:'attr', scopeName:SCOPE_OPERATIONS, operationScratch, statId:attrName, attrName};
+            } else if (statId === undefined) {
                 parsedKey = {kind:'value', statId:'values.' + scopeName, valueId:scopeName};
             } else if (scopeName === SCOPE_SCRATCH && rest.length === 0) {
                 parsedKey = {kind:'scratch', statId:key, name:statId};
@@ -537,12 +554,18 @@
                         break;
                     }
                     case 'attr': {
-                        const {attrName, agentId, eventId, operationId, scopeName} = parsedKey,
+                        const {attrName, agentId, eventId, operationScratch, scopeName} = parsedKey,
                             rootModel = pkg.model,
-                            target = agentId !== undefined ? rootModel.getAgentModel(agentId) : 
-                                eventId !== undefined ? rootModel.getEventModel(eventId) :
-                                operationId !== undefined ? rootModel.getOperationModel(operationId) :
-                                scopeName === SCOPE_AGENT ? agentModel : eventModel;
+                            // Named by a scratch entry, as it is now. Empty names none.
+                            operationId = operationScratch === undefined ? parsedKey.operationId : (rootModel.scratch[operationScratch] || undefined);
+                        if (operationScratch !== undefined && operationId === undefined) {
+                            console.warn('scratch.' + operationScratch, 'names no Operation to set', key, 'of');
+                            break;
+                        }
+                        const target = agentId !== undefined ? rootModel.getAgentModel(agentId) : 
+                            eventId !== undefined ? rootModel.getEventModel(eventId) :
+                            operationId !== undefined ? rootModel.getOperationModel(operationId) :
+                            scopeName === SCOPE_AGENT ? agentModel : eventModel;
                         if (!target) {
                             console.warn('No agent, Event or Operation to set', key, 'of');
                         } else if (operationId !== undefined && target.revealed) {

@@ -2,11 +2,11 @@
 	"operations":{
 		"titanic_noCollision":{
 			"name":"Titanic - Avoid the Iceberg",
+			"job":"true",
 			"image":true,
-			// Offered from either faction's HQ job board, which reveals it.
 			"description":[{
 				"text":"Too few lifeboats means a massive loss of life is imminent.",
-				"hidden":"events.casualties.attestation.value < 20 || !events.casualties.values.massLossOfLife.value"
+				"shown":"events.casualties.attestation.value >= 20 && events.casualties.values.massLossOfLife.value"
 			},{
 				"text":"You carry with you a key given to you by a handler at HQ before you left.",
 				"shown":"operations.titanic_noCollision.objectives.plant.shown"
@@ -17,16 +17,12 @@
 					"events.collision.historicity":"75",
 					"events.casualties.historicity":"65"
 				},
-				"adj":{
-					"player.skills.chronogation":"player.faction === 'timecorps' ? 100 : 0"
-				}
+				"adj":{"player.skills.chronogation":"player.faction === 'timecorps' ? 100 : 0"}
 			},
 			"objectives":{
 				"avoid":{
 					"name":"No Collision",
-					"description":[
-						"The Titanic must not hit the iceberg."
-					],
+					"description":"The Titanic must not hit the iceberg.",
 					"success":"!events.collision.values.struck.value"
 				},
 				"picked":{
@@ -95,9 +91,7 @@
 			"image":true,
 			"description":"It is essential that the Titanic sinks, but the massive loss of life must be prevented.",
 			"onSetup":{
-				"set":{
-					"events.lifeboat_capacity.historicity":"25"
-				}
+				"set":{"events.lifeboat_capacity.historicity":"25"}
 			},
 			"objectives":{
 				"collision":{
@@ -124,7 +118,6 @@
 						"hidden":"timeline.paradox.value === 0"
 					}
 				],
-				"nextOperation":"lusitania_nosink",
 				"adj":{
 					"player.hq.chronal":"25",
 					"timeline.score":"8000"
@@ -213,10 +206,10 @@
 			"description":[
 				{
 					"text":"The engineers will answer the telegraph as it rings. If the bridge calls for astern, the engines go astern.",
-					"hidden":"events.engine_order.values.countermandAstern.value"
+					"shown":"!events.engine_order.values.countermandAstern.value"
 				},{
 					"text":"The engineers have been told to keep her driving ahead through any emergency turn, so the rudder keeps its grip.",
-					"hidden":"!events.engine_order.values.countermandAstern.value"
+					"shown":"events.engine_order.values.countermandAstern.value"
 				}
 			]
 		},
@@ -227,10 +220,10 @@
 			"description":[
 				{
 					"text":"The Mesaba’s warning of ice directly across the ship’s track has not reached the chart room.",
-					"hidden":"events.ice_warnings.values.relayToBridge.value"
+					"shown":"!events.ice_warnings.values.relayToBridge.value"
 				},{
 					"text":"The Mesaba’s warning is on the chart-room table: heavy pack ice and large icebergs directly across the ship’s track.",
-					"hidden":"!events.ice_warnings.values.relayToBridge.value"
+					"shown":"events.ice_warnings.values.relayToBridge.value"
 				}
 			]
 		},
@@ -241,16 +234,16 @@
 			"description":[
 				{
 					"text":"Passengers’ telegrams are still piling up beside the key.",
-					"hidden":"events.wireless_priority.values.clearBacklogEarlier.value"
+					"shown":"!events.wireless_priority.values.clearBacklogEarlier.value"
 				},{
 					"text":"The passengers’ traffic is cleared, and the operator has time to listen to other ships.",
-					"hidden":"!events.wireless_priority.values.clearBacklogEarlier.value"
+					"shown":"events.wireless_priority.values.clearBacklogEarlier.value"
 				},{
 					"text":"The Mesaba’s ice warning lies beside the operator’s elbow.",
-					"hidden":"events.ice_warnings.values.relayToBridge.value"
+					"shown":"!events.ice_warnings.values.relayToBridge.value"
 				},{
 					"text":"The Mesaba’s ice warning has been taken to the bridge.",
-					"hidden":"!events.ice_warnings.values.relayToBridge.value"
+					"shown":"events.ice_warnings.values.relayToBridge.value"
 				}
 			]
 		},
@@ -262,10 +255,10 @@
 			"description":[
 				{
 					"text":"Sixteen wooden boats and four collapsibles, with long stretches of empty davits between them: seats for 1,178 people.",
-					"hidden":"events.lifeboat_capacity.values.fullDavits.value"
+					"shown":"!events.lifeboat_capacity.values.fullDavits.value"
 				},{
 					"text":"A boat under every davit, end to end along both sides of the deck: a seat for everyone aboard.",
-					"hidden":"!events.lifeboat_capacity.values.fullDavits.value"
+					"shown":"events.lifeboat_capacity.values.fullDavits.value"
 				}
 			]
 		},
@@ -276,10 +269,10 @@
 			"description":[
 				{
 					"text":"Her wireless operator is asleep, and the set is silent.",
-					"hidden":"events.californian_nearby.values.rescueResponds.value"
+					"shown":"!events.californian_nearby.values.rescueResponds.value"
 				},{
 					"text":"Her wireless operator is still at his set, listening.",
-					"hidden":"!events.californian_nearby.values.rescueResponds.value"
+					"shown":"events.californian_nearby.values.rescueResponds.value"
 				}
 			]
 		}
@@ -307,8 +300,8 @@
 				}
 			},
 			"exits":[
-				{"mode":"walk", "to":"roster_reshuffle", "hidden":"event.attestation.value < 10"},
-				{"mode":"walk", "to":"titanic_departs", "hidden":"event.attestation.value < 5"}
+				{"mode":"walk", "to":"roster_reshuffle", "shown":"event.attestation.value >= 10"},
+				{"mode":"walk", "to":"titanic_departs", "shown":"event.attestation.value >= 5"}
 			],
 			"values":{
 				"fullDavits":{
@@ -317,10 +310,10 @@
 					"description":[
 						{
 							"text":"Twenty boats: seats for barely half of those who will sail.",
-							"hidden":"event.values.fullDavits.value"
+							"shown":"!event.values.fullDavits.value"
 						},{
 							"text":"A boat on every davit: seats for everyone aboard.",
-							"hidden":"!event.values.fullDavits.value"
+							"shown":"event.values.fullDavits.value"
 						}
 					]
 				}
@@ -505,7 +498,7 @@
 							"onFailure":"event.actions.recover.attemptCount >= 1 ? 1 : 0"
 						}
 					},
-					"hidden":"event.values.spareRecovered.value"
+					"shown":"!event.values.spareRecovered.value"
 				},
 				"removeSpare":{
 					"label":"Spare Removed",
@@ -517,7 +510,7 @@
 							"onFailure":"event.actions.removeSpare.doneCount >= 1 ? 1 : 0"
 						}
 					},
-					"hidden":"!event.values.spareRecovered.value"
+					"shown":"event.values.spareRecovered.value"
 				}
 			},
 			"exits":[
@@ -560,7 +553,7 @@
 						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
 						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
-					"hidden":"event.values.clearBacklogEarlier.value"
+					"shown":"!event.values.clearBacklogEarlier.value"
 				},
 				"noClear":{
 					"label":"Delay Clearing Backlog",
@@ -573,7 +566,7 @@
 						"agent.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"},
 						"event.paradox":{"onSuccess":"scratch.wireless_clearBacklogEarlier_flipCount >= 1 ? 1 : 0"}
 					},
-					"hidden":"!event.values.clearBacklogEarlier.value"
+					"shown":"event.values.clearBacklogEarlier.value"
 				}
 			},
 			"exits":[
@@ -788,9 +781,7 @@
 				"_investigate":{
 					"skillCheck":{"difficulty":"no-roll"},
 					"adj":{
-						"event.attestation":{
-							"onSuccess":"d(Math.min(15, event.attestation.max - event.attestation.value))"
-						}
+						"event.attestation":{"onSuccess":"d(Math.min(15, event.attestation.max - event.attestation.value))"}
 					}
 				}
 			},
@@ -819,11 +810,6 @@
 						{"text":"Almost everyone aboard survives the night.", "hidden":"event.values.massLossOfLife.value"},
 						{"text":"More than 1,500 lives are lost.", "hidden":"!event.values.massLossOfLife.value"}
 					]
-				},
-				"TEST_PARADOX":{
-					"name":"Timeline Paradox",
-					"value":"timeline.paradox.value > 0 ? 'Fractured' : 'Clean'",
-					"hidden":"event.attestation.value === 0"
 				}
 			},
 			"hideAffectedBy":{
@@ -847,9 +833,9 @@
 					"name":"Ship Arriving",
 					"value":"!events.collision.values.struck.value ? 'Titanic' : events.californian_nearby.values.rescueResponds.value ? 'Californian' : 'Carpathia'",
 					"description":[
-						{"text":"Titanic comes in at the end of her maiden voyage.", "hidden":"event.values.arrivingShip.value !== 'Titanic'"},
-						{"text":"The Californian brings Titanic’s survivors to New York.", "hidden":"event.values.arrivingShip.value !== 'Californian'"},
-						{"text":"The Carpathia brings Titanic’s survivors to New York.", "hidden":"event.values.arrivingShip.value !== 'Carpathia'"}
+						{"text":"Titanic comes in at the end of her maiden voyage.", "shown":"event.values.arrivingShip.value === 'Titanic'"},
+						{"text":"The Californian brings Titanic’s survivors to New York.", "shown":"event.values.arrivingShip.value === 'Californian'"},
+						{"text":"The Carpathia brings Titanic’s survivors to New York.", "shown":"event.values.arrivingShip.value === 'Carpathia'"}
 					]
 				},
 				"peopleLanded":{
@@ -858,7 +844,7 @@
 					"description":[
 						{"text":"Everyone who sailed in her comes ashore.", "hidden":"events.collision.values.struck.value"},
 						{"text":"Almost everyone who sailed in her comes ashore.", "hidden":"!events.collision.values.struck.value || events.casualties.values.massLossOfLife.value"},
-						{"text":"Fewer than a third of those who sailed in her come ashore.", "hidden":"!events.casualties.values.massLossOfLife.value"}
+						{"text":"Fewer than a third of those who sailed in her come ashore.", "shown":"events.casualties.values.massLossOfLife.value"}
 					]
 				}
 			},

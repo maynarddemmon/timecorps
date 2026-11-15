@@ -2,7 +2,7 @@
 	"operations":{
 		"marathon_fight":{
 			"name":"Marathon - Athens Must Fight",
-			// Offered from either faction's HQ job board, which reveals it.
+			"job":"true",
 			"description":"The generals’ vote at Marathon is going the wrong way. If Athens waits for Sparta, Persia wins.",
 			"onSetup":{
 				"initialEventSelection":"marathon_landing",
