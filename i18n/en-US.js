@@ -96,7 +96,6 @@ myt.I18N.setDictionary({
 "end-game-high-score":"High Score",
 "end-game-high-score-new":"$0 · New",
 "end-game-high-score-none":"None",
-"end-game-of-high-score":"Of Last High Score",
 "dlg-timeline-destabilized-msg":"Paradox in this timeline has exceeded the “Otomo” threshold and the causal thread has unravelled. You, the Time Corps and all its endeavors have come undone. You must begin again in a new timeline.",
 "dlg-mission-complete-title":"Mission Complete : $0",
 "dlg-mission-complete-msg":"All mission objectives have been achieved.",

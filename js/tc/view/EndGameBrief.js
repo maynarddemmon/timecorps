@@ -63,7 +63,6 @@
             // The highest this game's score reached, when it's since fallen, e.g. to paradox.
             const peakScore = model.getPeakScore();
             if (peakScore > score) metrics.splice(1, 0, [i18n('end-game-peak-score'), String(peakScore)]);
-            if (highScoreBefore > 0) metrics.push([i18n('end-game-of-high-score'), toPercent(score / highScoreBefore)]);
             
             return [
                 ...metrics,
