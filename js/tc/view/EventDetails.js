@@ -11,7 +11,7 @@
             I18N:{get:i18n},
             View, PaddedPlainText,
             Layout, SpacedLayout, ResizeLayout, SizeHeightToDom,
-            debounceMicrotask
+            debounce, debounceMicrotask
         } = myt,
         
         {
@@ -425,7 +425,7 @@
             histNextBtn.setTooltip(nextBtnTooltip);
         },
         
-        _updateForEventModel: debounceMicrotask(function() {
+        _updateForEventModel: debounce(function() {
             const self = this,
                 eventModel = self.eventModel,
                 hasModel = eventModel != null;
@@ -463,7 +463,7 @@
             
             self.updateTitle();
             self.updateForSelectedAgent();
-        }),
+        }, 5),
         
         updateForSelectedAgent: debounceMicrotask(function() {
             const self = this,
