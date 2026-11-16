@@ -678,10 +678,14 @@
                     
                     // A box can be missing while the timeline is being rebuilt, e.g. during a 
                     // restore. The route is drawn by a later refresh once both boxes exist.
+                    // An exit with an "at" starts on the box's right edge, as far down it as the
+                    // exit is through the Event, rather than at a hashed point on the bottom.
                     if (fromBox && toBox && !newExitSplinesById[splineId]) {
                         newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
                             splineId,
-                            start:{view:fromBox, side:'bottom', position:hashToRange(fromModelId, 25,75) + '%'},
+                            start:exitModel.hasAt() ? 
+                                {view:fromBox, side:'right', position:(100 * exitModel.getLeaveFraction()) + '%'} :
+                                {view:fromBox, side:'bottom', position:hashToRange(fromModelId, 25,75) + '%'},
                             end:  {view:toBox,   side:'top',    position:hashToRange(toModelId, 25,75) + '%'},
                             style:EXIT_STYLE
                         });

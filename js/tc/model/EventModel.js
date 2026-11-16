@@ -35,10 +35,10 @@
             (the moment the campaign started), plus an optional offset in the units a duration
             takes, e.g. {"endOf":"collision", "m":5} or {"now":"date", "h":7}. An Event it 
             names must already be loaded. A problem is warned about and the start is 0, as 
-            for a date string that can't be read. */
-        readRelativeStart = (eventId, spec) => {
-            const where = 'Event ' + eventId + ' start',
-                {now} = spec,
+            for a date string that can't be read. An exit's "at" is read the same way, as a 
+            time named by where, and may name the exit's own Event (allowOwn). */
+        readRelativeStart = (eventId, spec, where='Event ' + eventId + ' start', allowOwn=false) => {
+            const {now} = spec,
                 keys = RELATIVE_START_KEYS.filter(key => spec[key] !== undefined),
                 offset = {...spec};
             for (const key of RELATIVE_START_KEYS) delete offset[key];
@@ -65,9 +65,9 @@
             } else {
                 const key = keys[0],
                     refId = spec[key],
-                    refEventModel = typeof refId === 'string' && refId !== eventId ? pkg.model.getEventModel(refId) : null;
+                    refEventModel = typeof refId === 'string' && (allowOwn || refId !== eventId) ? pkg.model.getEventModel(refId) : null;
                 if (!refEventModel) {
-                    console.warn(where, key, 'must name an Event loaded before this one (using 0):', refId);
+                    console.warn(where, key, allowOwn ? 'must name an Event (using 0):' : 'must name an Event loaded before this one (using 0):', refId);
                     return 0;
                 }
                 base = key === 'startOf' ? refEventModel.getStart() : refEventModel.getEnd();
@@ -1346,7 +1346,55 @@
             getTravelTime: function() {
                 if (this.isTimeTravel() || this.isLoopback()) return 0;
                 const toEvent = this.getToEventModel();
-                return toEvent ? toEvent.getStart() - this.event.getEnd() : 0;
+                return toEvent ? toEvent.getStart() - this.getLeaveTime() : 0;
+            },
+            
+            /*  When the exit leaves its Event, if not at the end: a number of millis, a date 
+                string, or an offset from an Event, as an Event's start is, e.g. 
+                {"startOf":"origin_alarm", "m":-3} or {"startOf":"<its own Event>", "d":7300}.
+                Worked out when it's first needed, once everything has loaded, so it can name
+                any Event, its own included. */
+            setAt: function(at) {
+                this.at = at ?? undefined;
+                this._leaveTime = undefined;
+            },
+            hasAt: function() {return this.at !== undefined;},
+            
+            /*  When the exit leaves its Event, as millis: its "at", or the Event's end. An "at"
+                outside the Event is moved to its nearer end, with a warning. */
+            getLeaveTime: function() {
+                const event = this.event;
+                if (!this.hasAt()) return event.getEnd();
+                if (this._leaveTime === undefined) {
+                    const at = this.at,
+                        where = this.getSkillCheckOwner() + ' at';
+                    let time = at !== null && typeof at === 'object' ? readRelativeStart(event.id, at, where, true) : 
+                        typeof at === 'number' ? at : stringToMillis(at);
+                    const start = event.getStart(),
+                        end = event.getEnd();
+                    if (!Number.isFinite(time) || time < start || time > end) {
+                        console.warn(where, 'must be within the Event, from its start to its end (using the nearer end):', at);
+                        time = Number.isFinite(time) && time < start ? start : end;
+                    }
+                    this._leaveTime = time;
+                }
+                return this._leaveTime;
+            },
+            
+            /*  How long after its Event starts the exit leaves it. */
+            getLeaveOffset: function() {return this.getLeaveTime() - this.event.getStart();},
+            
+            /*  Where the exit leaves its Event, as a fraction of it, from 0 at the start to 1 
+                at the end. */
+            getLeaveFraction: function() {
+                const duration = this.event.getDuration();
+                return duration > 0 ? this.getLeaveOffset() / duration : 1;
+            },
+            
+            /*  Whether an agent at the exit's Event has already lived past the time it leaves,
+                so it's gone. Only an exit with an "at" can be. */
+            isPassedFor: function(agentModel) {
+                return this.hasAt() && agentModel.timeLivedAtEvent > this.getLeaveOffset();
             },
             
             setTo: function(to) {

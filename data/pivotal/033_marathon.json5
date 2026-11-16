@@ -375,6 +375,7 @@
 			"image":"../location/marathon_athens.jpg",
 			"start":"-000478-09-01T00:00:00", "duration":{"d":27240},
 			"location":"marathon_athens",
+			"actionLimit":30,
 			"shown":"!events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
 			"values":{
 				"flourishes":{
@@ -386,7 +387,13 @@
 				"After Salamis and Plataea, Athens leads the Greeks of the Aegean for half a century.",
 				{"text":"Under Pericles the Parthenon rises on the Acropolis. Aeschylus, who fought at Marathon, and Sophocles and Euripides write the first great tragedies.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Socrates questions everyone in the marketplace, Herodotus and Thucydides invent history, and the democracy lasts until Sparta defeats Athens in 404 BCE.", "shown":"event.attestation.value >= 20"}
-			]
+			],
+			"exits":[
+				{"mode":"sail", "to":"salamis_league", "at":{"startOf":"salamis_league", "d":-2}},
+				{"mode":"walk", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-5}},
+				{"mode":"sail", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-2}},
+				{"mode":"horseback", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-2}}
+			],
 		},
 
 		"marathon_golden_sparta":{

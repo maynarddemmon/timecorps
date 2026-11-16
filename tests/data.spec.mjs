@@ -602,6 +602,25 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                 if (exit.allowLoopback !== undefined && typeof exit.allowLoopback !== 'boolean') problems.push(where + ' allowLoopback is not true or false');
                 else if (exit.to === eventId && exit.allowLoopback !== true) problems.push(where + ' leads back into its own event without allowLoopback');
                 else if (exit.to !== eventId && exit.allowLoopback) problems.push(where + ' has allowLoopback, but leads to another event');
+                // When it leaves its Event, if not at the end: a date, or an offset from an Event,
+                // its own included, as a start is. Whether it falls within the Event is warned 
+                // about as the game runs.
+                if (exit.at !== undefined) {
+                    const at = exit.at;
+                    if (typeof at === 'string') {
+                        if (Number.isNaN(Date.parse(at))) problems.push(where + ' at is not a date: ' + at);
+                    } else if (isPlainObject(at)) {
+                        const {startOf, endOf, ...offset} = at,
+                            refId = startOf ?? endOf;
+                        if ((startOf === undefined) === (endOf === undefined)) problems.push(where + ' at must have one of startOf or endOf');
+                        else if (!events[refId]) problems.push(where + ' at names ' + refId + ', which isn\'t an event');
+                        for (const [key, value] of Object.entries(offset)) {
+                            if (!['w', 'd', 'h', 'm', 's', 'ms'].includes(key) || !Number.isFinite(value)) problems.push(where + ' at offset ' + key + ' is not a duration unit with a number');
+                        }
+                    } else {
+                        problems.push(where + ' at is not a date or an offset from an event');
+                    }
+                }
                 if ('effects' in exit) problems.push(where + ' has effects, which is renamed adj');
                 if (exit.costs !== undefined) problems.push(...checkCosts(where, exit.costs));
                 if ('injurySkillCheck' in exit) problems.push(where + ' has an injurySkillCheck, which adj replaced');

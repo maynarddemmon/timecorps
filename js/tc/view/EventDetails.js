@@ -280,7 +280,8 @@
                         exitModels = [...eventModel.getExitModels()].sort(EXIT_MODELS_SORT_FUNC);
                     let addedCount = 0;
                     for (const exitModel of exitModels) {
-                        if (exitModel.isNotHidden() && exitModel.isDestinationOffered()) {
+                        // An exit the agent has lived past is gone for them.
+                        if (exitModel.isNotHidden() && exitModel.isDestinationOffered() && !exitModel.isPassedFor(agentModel)) {
                             const toEventModel = exitModel.getToEventModel();
                             if (addedCount > 0) new InlineSeparator(linesView);
                             // An unknown destination isn't shown on hover.

@@ -1070,7 +1070,7 @@
                 const currentEventModel = this.getEventModel();
                 if (destinationEventModel !== currentEventModel) {
                     return currentEventModel.getExitModels().find(
-                        exitModel => exitModel.isNotHidden() && exitModel.getToEventModel() === destinationEventModel
+                        exitModel => exitModel.isNotHidden() && !exitModel.isPassedFor(this) && exitModel.getToEventModel() === destinationEventModel
                     );
                 }
             }
@@ -1122,6 +1122,8 @@
                     isLoopback = exitModel.isLoopback();
                 if (isLoopback && !exitModel.isLoopbackAllowed()) {
                     console.warn('Exit from', exitModel.event.id, 'leads back into it without allowLoopback');
+                } else if (exitModel.isPassedFor(self)) {
+                    console.warn('Exit from', exitModel.event.id, 'to', exitModel.to, 'is already past for', self.id);
                 } else if (toEvent) {
                     // Taking the exit always succeeds, but its adjustments may change things on 
                     // the way, e.g. hurt. The result is shown before the adjustments apply since 
@@ -1151,11 +1153,10 @@
                         exitModel.applySets(self, true, 0);
                         
                         exitModel.openPrompt(() => {
-                            // Leaving by an exit lives through the rest of the Event. This is true
-                            // even if the exit mode is time travel since those are still assumed
-                            // to occur at the end of the Event.
-                            const fromEvent = exitModel.event;
-                            self.ageBy(fromEvent.getDuration() - self.timeLivedAtEvent);
+                            // Leaving by an exit lives through the rest of the Event, up to the 
+                            // time the exit leaves it: its end, or its "at". This is true even if 
+                            // the exit mode is time travel, since that still happens then.
+                            self.ageBy(mathMax(0, exitModel.getLeaveOffset() - self.timeLivedAtEvent));
                             
                             // The time between leaving one Event and arriving at the next is
                             // lived through on the way, unless the exit is itself a form of time
