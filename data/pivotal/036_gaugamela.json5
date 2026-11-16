@@ -1,0 +1,321 @@
+// Pivotal 250 #36: Battle of Gaugamela, 331 BCE. Alexander breaks Persia and carries Greek
+// culture to the Indus.
+// Reads the Peloponnesian War (#254) through peloponnesian_war_hegemony: a Greece worn out
+// by Sparta's wars, which Macedon has taken. Read by the Maurya (#37) through
+// gaugamela_turnback: Alexander's army in the Punjab, and its leaving.
+{
+	"operations":{
+		"gaugamela_win":{
+			"name":"Gaugamela - Alexander Must Win",
+			// Once the Peloponnesian War has run its course, so Macedon can rise.
+			"job":"operations.peloponnesian_war_lose.successGranted",
+			"description":"Alexander is about to lose the battle that should give him Asia. If Darius wins, the Persian Empire stands, and the Greek world stays small.",
+			"onSetup":{
+				"initialEventSelection":"gaugamela_crossing",
+				"set":{
+					"events.gaugamela_crossing.historicity":"60",
+					"events.gaugamela.historicity":"75"
+				}
+			},
+			"objectives":{
+				"plan":{
+					"name":"Alexander Waits for Day",
+					"description":"Alexander must refuse to attack in the dark.",
+					"success":"events.gaugamela_council.values.noNightAttack.value"
+				},
+				"victory":{
+					"name":"Alexander Wins",
+					"description":"Darius must flee the field.",
+					"success":"events.gaugamela.values.outcome.value === 'alexander_wins'"
+				},
+				"babylon":{
+					"name":"Babylon Falls",
+					"description":"Babylon must open its gates to Alexander.",
+					"success":"events.gaugamela_gates.values.babylonFalls.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"At Gaugamela, Alexander led his Companion cavalry into the gap that opened in the Persian line, straight at Darius, and the Great King fled the field for the second time.",
+					{
+						"text":"<p>The eclipse was read as an omen for Macedon, and the Persians, fearing the night attack Alexander refused to make, stood to arms until dawn.",
+						"shown":"events.gaugamela_eclipse.values.omenRead.value && events.gaugamela_council.values.noNightAttack.value"
+					},
+					"<p>Babylon opened its gates, Persepolis burned, and Alexander marched on to India. When he died at Babylon eight years later, his generals divided an empire that stretched from Greece to the Indus, and Greek became the common language of the east.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"shown":"timeline.paradox.value === 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"shown":"timeline.paradox.value > 0"
+					}
+				],
+				"adj":{
+					"player.hq.chronal":"10",
+					"timeline.score":"3000"
+				}
+			}
+		}
+	},
+
+	// Pivotal 250 scenarios sit after the hand-built ones, in list order: 1000 + their number.
+	"locationsBaseOrder":1036,
+	"locations":{
+		"gaugamela_mesopotamia":{
+			"name":"Upper Mesopotamia",
+			"color":"#a866",
+			"order":0
+		},
+		"gaugamela_babylon":{
+			"name":"Babylon",
+			"color":"#86a6",
+			"order":1
+		},
+		"gaugamela_punjab":{
+			"name":"The Punjab",
+			"color":"#6a86",
+			"order":2
+		}
+	},
+
+	"events":{
+		// The run-up.
+		"gaugamela_crossing":{
+			"name":"Alexander Crosses the Tigris",
+			"image":"../location/gaugamela_mesopotamia.jpg",
+			"start":"-000330-09-18T06:00:00", "duration":{"d":1},
+			"location":"gaugamela_mesopotamia",
+			"exits":[
+				{"mode":"waitFor", "to":"gaugamela_eclipse"},
+				{"mode":"march", "to":"gaugamela_council"},
+				{"mode":"march", "to":"gaugamela"}
+			],
+			"values":{
+				// Macedon has the Greeks behind it only because they have worn each other out.
+				"invasion":{
+					"name":"Macedon Invades",
+					"value":"events.peloponnesian_war_hegemony.values.leads.value",
+					"description":[
+						{"text":"Some forty-seven thousand Macedonians and Greeks wade the river, unopposed.", "shown":"event.values.invasion.value"},
+						{"text":"There is no Macedonian army here. Greece is still too strong for Macedon to lead it anywhere.", "shown":"!event.values.invasion.value"}
+					]
+				}
+			},
+			"description":[
+				"Three years after crossing into Asia, Alexander leads his army over the Tigris, north of the old Assyrian capital of Nineveh.",
+				{"text":"Darius has refused Alexander’s terms and gathered a new army from every corner of the empire, larger than the one that lost at Issus.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>He waits on open ground near a village called Gaugamela, which he has had leveled for his scythed chariots.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The turning points. The eclipse is recorded in Babylonian astronomical diaries.
+		"gaugamela_eclipse":{
+			"name":"The Moon Goes Dark",
+			"image":"../location/gaugamela_mesopotamia.jpg",
+			"start":"-000330-09-20T19:00:00", "duration":{"h":6},
+			"location":"gaugamela_mesopotamia",
+			"shown":"events.gaugamela_crossing.attestation.value > 15 || events.gaugamela.attestation.value > 30",
+			"actions":{
+				"guideAristander":{
+					"label":"Help Aristander Read the Omen",
+					"skillCheck":{"actionType":"social"},
+					"set":{"omenRead":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.omenRead.value"
+				},
+				"spreadFear":{
+					"label":"Spread Fear Through the Camp",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"omenRead":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.omenRead.value"
+				}
+			},
+			"exits":[
+				{"mode":"march", "to":"gaugamela_council"}
+			],
+			"values":{
+				"omenRead":{
+					"name":"Omen Favors Macedon",
+					"value":"false",
+					"description":[
+						{"text":"Aristander declares that the moon is Persia’s, and that before the month is out the Persians will be beaten. The army takes heart.", "shown":"event.values.omenRead.value"},
+						{"text":"No one can say what the omen means, and the soldiers whisper that the gods have turned against them.", "shown":"!event.values.omenRead.value"}
+					]
+				}
+			},
+			"description":[
+				"Two nights after the crossing, the full moon goes dark in an eclipse.",
+				{"text":"Alexander sacrifices to the Moon, the Sun and the Earth, and asks his seer Aristander what it means.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>In Babylon, the astronomers who watch the sky every night write the eclipse down. Their record still exists.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"gaugamela_council":{
+			"name":"Parmenion’s Advice",
+			"image":"../location/gaugamela_mesopotamia.jpg",
+			"start":"-000330-09-30T18:00:00", "duration":{"h":4},
+			"location":"gaugamela_mesopotamia",
+			"shown":"events.gaugamela_crossing.attestation.value > 30 || events.gaugamela.attestation.value > 15",
+			"actions":{
+				"refuseNight":{
+					"label":"Back Alexander’s Refusal",
+					"skillCheck":{"actionType":"social"},
+					"set":{"noNightAttack":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.noNightAttack.value"
+				},
+				"backParmenion":{
+					"label":"Back Parmenion’s Night Attack",
+					"skillCheck":{"actionType":"social"},
+					"set":{"noNightAttack":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.noNightAttack.value"
+				},
+				"proposeOblique":{
+					"label":"Suggest an Advance to the Right",
+					"skillCheck":{"actionType":"investigate"},
+					"set":{"obliqueAdvance":"true"},
+					"shown":"event.attestation.value >= 20 && !event.values.obliqueAdvance.value"
+				},
+				"proposeFrontal":{
+					"label":"Suggest a Frontal Assault",
+					"skillCheck":{"actionType":"investigate"},
+					"set":{"obliqueAdvance":"false"},
+					"shown":"event.attestation.value >= 20 && event.values.obliqueAdvance.value"
+				}
+			},
+			"exits":[
+				{"mode":"waitFor", "to":"gaugamela"}
+			],
+			"values":{
+				"noNightAttack":{
+					"name":"No Night Attack",
+					"value":"false",
+					"description":[
+						{"text":"Alexander will not steal his victory, he says, and goes to bed. The Persians, fearing a night attack, stand to arms until dawn.", "shown":"event.values.noNightAttack.value"},
+						{"text":"Alexander takes Parmenion’s advice, and the army stumbles into the Persian lines in the dark.", "shown":"!event.values.noNightAttack.value"}
+					]
+				},
+				"obliqueAdvance":{
+					"name":"Advance to the Right",
+					"value":"false",
+					"description":[
+						{"text":"Alexander will lead his Companions off to the right, drawing the Persian cavalry after him until their line stretches and breaks.", "shown":"event.values.obliqueAdvance.value"},
+						{"text":"Alexander will meet the Persian line head on, where its numbers count for most.", "shown":"!event.values.obliqueAdvance.value"}
+					]
+				}
+			},
+			"description":[
+				"From the hills, the Macedonian commanders can see the Persian army, twice their number at the least, drawn up on the plain.",
+				{"text":"Parmenion, the old general who served Alexander’s father, advises attacking at night, before the Persians can use their numbers.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Alexander rides out to study the ground, and plans how to make the Persian line open.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The pivotal Event. Dated by a Babylonian astronomical diary.
+		"gaugamela":{
+			"name":"Battle of Gaugamela",
+			"image":"../location/gaugamela_mesopotamia.jpg",
+			"start":"-000330-10-01T07:00:00", "duration":{"h":8},
+			"location":"gaugamela_mesopotamia",
+			"exits":[
+				{"mode":"march", "to":"gaugamela_gates"}
+			],
+			"values":{
+				"outcome":{
+					"name":"Outcome",
+					"value":"events.gaugamela_crossing.values.invasion.value && events.gaugamela_eclipse.values.omenRead.value && events.gaugamela_council.values.noNightAttack.value && events.gaugamela_council.values.obliqueAdvance.value ? 'alexander_wins' : 'darius_wins'",
+					"description":[
+						{"text":"Alexander wins. Darius flees east, to be murdered by his own satrap within a year.", "shown":"event.values.outcome.value === 'alexander_wins'"},
+						{"text":"Darius wins, and the Persian Empire stands.", "shown":"event.values.outcome.value === 'darius_wins'"}
+					]
+				}
+			},
+			"description":[
+				"Darius’ scythed chariots charge across the leveled ground, and the Macedonian light troops open their ranks to let them through and cut down the drivers.",
+				{"text":"As Alexander edges to the right, the Persian left follows him, and a gap opens in the center of the Persian line.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Alexander turns his Companion cavalry into the gap in a wedge, straight for Darius, and the Great King flees.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The deciding consequence.
+		"gaugamela_gates":{
+			"name":"Babylon Opens Its Gates",
+			"image":"../location/gaugamela_babylon.jpg",
+			"start":"-000330-10-21T10:00:00", "duration":{"d":1},
+			"location":"gaugamela_babylon",
+			"shown":"events.gaugamela.historicity.value > 0",
+			"values":{
+				"babylonFalls":{
+					"name":"Babylon Falls",
+					"value":"events.gaugamela.values.outcome.value === 'alexander_wins'",
+					"description":[
+						{"text":"Mazaeus, who led Darius’ right wing at Gaugamela, surrenders the city, and the people strew Alexander’s road with flowers.", "shown":"event.values.babylonFalls.value"},
+						{"text":"Babylon stays Persian, and Mazaeus sends to Darius for orders.", "shown":"!event.values.babylonFalls.value"}
+					]
+				}
+			},
+			"description":[
+				"The greatest city of the east, with its walls, its temples and the ziggurat of Marduk, lies open to whoever won at Gaugamela.",
+				{"text":"Alexander orders the temples rebuilt, and sacrifices to Marduk as the Babylonian priests advise.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Beyond Babylon lie Susa and Persepolis, and the treasure of the Persian kings.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// Handover to the Maurya scenario: Alexander's army in India, and its turning back.
+		"gaugamela_turnback":{
+			"name":"The Army Turns Back",
+			"image":"../location/gaugamela_punjab.jpg",
+			"start":"-000325-07-01T00:00:00", "duration":{"d":3},
+			"location":"gaugamela_punjab",
+			"shown":"events.gaugamela_gates.values.babylonFalls.value && events.gaugamela.historicity.value > 10",
+			"values":{
+				"inIndia":{
+					"name":"Alexander in India",
+					"value":"events.gaugamela_gates.values.babylonFalls.value"
+				}
+			},
+			"description":[
+				"At the Hyphasis River, the last of the five rivers of the Punjab, Alexander’s army refuses to go any farther.",
+				{"text":"They have marched for eight years. Coenus speaks for them: they want to see their homes and families again. Alexander sulks in his tent for three days, then gives way.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>He leaves Greek garrisons and governors behind in the Punjab, and among the people who watched the Greeks come and go is a young man named Chandragupta.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The long consequences, one or the other, until Actium, 31 BCE.
+		"gaugamela_hellenistic":{
+			"name":"The Hellenistic Age",
+			"image":"../location/gaugamela_babylon.jpg",
+			"start":"-000322-06-11T00:00:00", "duration":{"d":106730},
+			"location":"gaugamela_babylon",
+			"shown":"events.gaugamela_gates.values.babylonFalls.value && events.gaugamela.historicity.value > 10",
+			"values":{
+				"spreads":{
+					"name":"Greek Culture Spreads",
+					"value":"events.gaugamela_gates.values.babylonFalls.value"
+				}
+			},
+			"description":[
+				"Alexander dies at Babylon in 323 BCE, and his generals divide his empire into kingdoms ruled by Macedonian dynasties: the Ptolemies in Egypt, the Seleucids in Asia, the Antigonids in Macedon.",
+				{"text":"Greek becomes the common language from Sicily to Afghanistan. Alexandria has its Library, and Greek kings rule in Bactria and India.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The age ends when Rome swallows the last of the kingdoms, Cleopatra’s Egypt, after Actium in 31 BCE.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"gaugamela_persia":{
+			"name":"Persia Endures",
+			"image":"../location/gaugamela_mesopotamia.jpg",
+			"start":"-000330-10-23T00:00:00", "duration":{"d":109560},
+			"location":"gaugamela_mesopotamia",
+			"shown":"!events.gaugamela_gates.values.babylonFalls.value && events.gaugamela.historicity.value > 10",
+			"values":{
+				"endures":{
+					"name":"The Persian Empire Endures",
+					"value":"!events.gaugamela_gates.values.babylonFalls.value"
+				}
+			},
+			"description":[
+				"The Achaemenid kings go on ruling from the Aegean to the Indus, as they have for two centuries.",
+				{"text":"Macedon, beaten, is a Persian client like the rest of Greece. There is no Alexandria, and no Greek kingdom in Asia.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The Punjab stays a Persian province, and no army comes from the west to leave it in confusion.", "shown":"event.attestation.value >= 20"}
+			]
+		}
+	}
+}

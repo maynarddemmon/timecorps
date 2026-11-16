@@ -1,0 +1,313 @@
+// Pivotal 250, on the bench (#254): the Peloponnesian War, 431 to 404 BCE. Athens and
+// Sparta exhaust each other, and Thucydides writes it down. The true history is a defeat
+// for Athens, so the Corps protects it.
+// Reads Salamis (#34) through salamis_league: Athens' empire, the war's real cause.
+// Read by Gaugamela (#36) through peloponnesian_war_hegemony: a Greece worn out by Sparta's
+// wars, which Macedon will take.
+{
+	"operations":{
+		"peloponnesian_war_lose":{
+			"name":"The Peloponnesian War - Athens Must Lose",
+			// Once Salamis is safe, so Athens has its empire.
+			"job":"operations.salamis_fight.successGranted",
+			"description":"Athens is winning a war it lost. If it wins, Greece stays strong, and the world that comes after Alexander never happens.",
+			"onSetup":{
+				"initialEventSelection":"peloponnesian_war_vote",
+				"set":{
+					"events.peloponnesian_war_vote.historicity":"60",
+					"events.peloponnesian_war.historicity":"75"
+				}
+			},
+			"objectives":{
+				"sicily":{
+					"name":"The Expedition Sails",
+					"description":"Athens must send its great armada to Sicily.",
+					"success":"events.peloponnesian_war_sicily.values.sicilySails.value"
+				},
+				"victory":{
+					"name":"Sparta Wins",
+					"description":"Athens must surrender.",
+					"success":"events.peloponnesian_war.values.outcome.value === 'sparta_wins'"
+				},
+				"walls":{
+					"name":"The Walls Come Down",
+					"description":"Athens’ Long Walls must be pulled down.",
+					"success":"events.peloponnesian_war_walls.values.wallsDown.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"After twenty-seven years of war, Athens surrendered, starving, to Lysander, and the Long Walls came down to the music of flute girls.",
+					{
+						"text":"<p>The armada that sailed for Sicily never came home, Persian gold paid for Sparta’s fleet, and at Aegospotami the Athenian generals ignored the warning that might have saved them.",
+						"shown":"events.peloponnesian_war_sicily.values.sicilySails.value && events.peloponnesian_war_gold.values.persianGold.value && events.peloponnesian_war_warning.values.warningIgnored.value"
+					},
+					"<p>It was a disaster the Corps had to protect. Sparta’s victory left Greece divided and exhausted, and in a generation the kings of Macedon would be its masters.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"shown":"timeline.paradox.value === 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"shown":"timeline.paradox.value > 0"
+					}
+				],
+				"adj":{
+					"player.hq.chronal":"10",
+					"timeline.score":"3000"
+				}
+			}
+		}
+	},
+
+	// Pivotal 250 scenarios sit after the hand-built ones, in list order: 1000 + their number.
+	"locationsBaseOrder":1254,
+	"locations":{
+		"peloponnesian_war_sparta":{
+			"name":"Sparta",
+			"color":"#a666",
+			"order":0
+		},
+		"peloponnesian_war_athens":{
+			"name":"Athens",
+			"color":"#66a6",
+			"order":1
+		},
+		"peloponnesian_war_asia":{
+			"name":"The Hellespont and Ionia",
+			"color":"#6a66",
+			"order":2
+		}
+	},
+
+	"events":{
+		// The run-up. The turning points are years apart, so there are no exits between them:
+		// agents time travel.
+		"peloponnesian_war_vote":{
+			"name":"Sparta Votes for War",
+			"image":"../location/peloponnesian_war_sparta.jpg",
+			"start":"-000431-08-01T09:00:00", "duration":{"h":6},
+			"location":"peloponnesian_war_sparta",
+			"values":{
+				// Thucydides' truest cause: the growth of Athenian power, and the fear it caused.
+				"warVoted":{
+					"name":"War Declared",
+					"value":"events.salamis_league.values.leads.value",
+					"description":[
+						{"text":"The assembly shouts for war: Athens has broken the peace.", "shown":"event.values.warVoted.value"},
+						{"text":"There is no Athenian empire to fear, and nothing to vote on.", "shown":"!event.values.warVoted.value"}
+					]
+				}
+			},
+			"description":[
+				"Corinth and Megara come to the Spartan assembly to complain of Athens. The old king Archidamus urges patience: Athens is rich, and rules the sea.",
+				{"text":"The ephor Sthenelaidas answers in a few words, and calls for a vote by division, not by shouting, so every Spartan must be seen to choose.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Thucydides, who will fight in this war and write its history, says the real cause was the growth of Athenian power, and the fear it caused in Sparta.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The turning points.
+		"peloponnesian_war_sicily":{
+			"name":"The Sicilian Debate",
+			"image":"../location/peloponnesian_war_athens.jpg",
+			"start":"-000414-03-01T08:00:00", "duration":{"h":8},
+			"location":"peloponnesian_war_athens",
+			"shown":"events.peloponnesian_war_vote.attestation.value > 30 || events.peloponnesian_war.attestation.value > 15",
+			"actions":{
+				"backAlcibiades":{
+					"label":"Speak for the Expedition",
+					"skillCheck":{"actionType":"social"},
+					"set":{"sicilySails":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.sicilySails.value"
+				},
+				"backNicias":{
+					"label":"Speak Against the Expedition",
+					"skillCheck":{"actionType":"social"},
+					"set":{"sicilySails":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.sicilySails.value"
+				}
+			},
+			"values":{
+				"sicilySails":{
+					"name":"Expedition Sails",
+					"value":"false",
+					"description":[
+						{"text":"The assembly votes for the expedition, and more than a hundred triremes sail for Sicily. Two years later, almost none of them come back.", "shown":"event.values.sicilySails.value"},
+						{"text":"Nicias carries the day, and Athens keeps its ships and men at home.", "shown":"!event.values.sicilySails.value"}
+					]
+				}
+			},
+			"description":[
+				"The assembly debates sending a great fleet to Sicily, to help Athens’ allies there and perhaps to conquer the island.",
+				{"text":"Nicias, cautious and rich, argues against it. Alcibiades, young, brilliant and in debt, argues for it, and the crowd is with him.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Nicias tries to scare them off by asking for a far larger force. The assembly gives him everything he asks for.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"peloponnesian_war_gold":{
+			"name":"Cyrus Pays Sparta’s Fleet",
+			"image":"../location/peloponnesian_war_asia.jpg",
+			"start":"-000406-06-01T10:00:00", "duration":{"d":1},
+			"location":"peloponnesian_war_asia",
+			"shown":"events.peloponnesian_war_sicily.attestation.value > 20 || events.peloponnesian_war.attestation.value > 30",
+			"actions":{
+				"winCyrus":{
+					"label":"Win Cyrus Over to Lysander",
+					"skillCheck":{"actionType":"social"},
+					"set":{"persianGold":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.persianGold.value"
+				},
+				"warnCyrus":{
+					"label":"Warn Cyrus Against Sparta",
+					"skillCheck":{"actionType":"social"},
+					"set":{"persianGold":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.persianGold.value"
+				}
+			},
+			"values":{
+				"persianGold":{
+					"name":"Persian Gold",
+					"value":"false",
+					"description":[
+						{"text":"Cyrus raises the pay of Sparta’s rowers from three obols a day to four, and Athens’ rowers begin to desert to the better-paid side.", "shown":"event.values.persianGold.value"},
+						{"text":"Cyrus keeps his gold, and Sparta’s fleet can’t pay its rowers.", "shown":"!event.values.persianGold.value"}
+					]
+				}
+			},
+			"description":[
+				"At Sardis, the Spartan admiral Lysander meets Cyrus, the young son of the Persian king, sent west to govern the coast.",
+				{"text":"Sparta has fought for Greek freedom from Persia. Now it is asking Persia to pay for its war against Greeks.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Lysander is charming and ambitious, and the prince likes him. Cyrus means to be king one day, and wants friends who can fight.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"peloponnesian_war_warning":{
+			"name":"Alcibiades Rides to the Fleet",
+			"image":"../location/peloponnesian_war_asia.jpg",
+			"start":"-000404-08-25T09:00:00", "duration":{"h":6},
+			"location":"peloponnesian_war_asia",
+			"shown":"events.peloponnesian_war_gold.attestation.value > 15 || events.peloponnesian_war.attestation.value > 25",
+			"actions":{
+				"dismissWarning":{
+					"label":"Turn the Generals Against Alcibiades",
+					"skillCheck":{"actionType":"social"},
+					"set":{"warningIgnored":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.warningIgnored.value"
+				},
+				"heedWarning":{
+					"label":"Back Alcibiades’ Warning",
+					"skillCheck":{"actionType":"social"},
+					"set":{"warningIgnored":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.warningIgnored.value"
+				}
+			},
+			"exits":[
+				{"mode":"sail", "to":"peloponnesian_war"}
+			],
+			"values":{
+				"warningIgnored":{
+					"name":"Warning Ignored",
+					"value":"false",
+					"description":[
+						{"text":"The generals send Alcibiades away. Days later, Lysander catches the fleet on the beach with its crews ashore and takes about 170 ships. Conon escapes with nine.", "shown":"event.values.warningIgnored.value"},
+						{"text":"The generals listen and move the fleet to the harbor at Sestos, out of Lysander’s reach.", "shown":"!event.values.warningIgnored.value"}
+					]
+				}
+			},
+			"description":[
+				"The Athenian fleet is beached at Aegospotami, on an open shore across the strait from Lysander’s fleet at Lampsacus. Every day the crews scatter to find food.",
+				{"text":"Alcibiades, exiled from Athens, lives in a castle nearby. He rides down to warn the generals that the place is dangerous, and that they should move to Sestos.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The generals tell him that they are in command now, not he.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The pivotal Event. Commonly put in April 404 BCE.
+		"peloponnesian_war":{
+			"name":"Athens Surrenders",
+			"image":"../location/peloponnesian_war_athens.jpg",
+			"start":"-000403-04-25T09:00:00", "duration":{"h":6},
+			"location":"peloponnesian_war_athens",
+			"exits":[
+				{"mode":"waitFor", "to":"peloponnesian_war_walls"}
+			],
+			"values":{
+				"outcome":{
+					"name":"Outcome",
+					"value":"!events.peloponnesian_war_vote.values.warVoted.value ? 'no_war' : events.peloponnesian_war_sicily.values.sicilySails.value && events.peloponnesian_war_gold.values.persianGold.value && events.peloponnesian_war_warning.values.warningIgnored.value ? 'sparta_wins' : 'athens_wins'",
+					"description":[
+						{"text":"Starving and blockaded by land and sea, Athens surrenders to Lysander.", "shown":"event.values.outcome.value === 'sparta_wins'"},
+						{"text":"Sparta makes peace, and Athens keeps its fleet, its walls and its empire.", "shown":"event.values.outcome.value === 'athens_wins'"},
+						{"text":"There has been no war.", "shown":"event.values.outcome.value === 'no_war'"}
+					]
+				}
+			},
+			"description":[
+				"Since Aegospotami, Lysander’s fleet has closed the Piraeus and King Agis’ army holds the countryside. No grain reaches Athens.",
+				{"text":"Corinth and Thebes want Athens destroyed and its people sold as slaves. Sparta refuses: the city that saved Greece at Salamis will not be wiped out.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The terms: the Long Walls and the walls of the Piraeus to come down, all but twelve ships to be surrendered, the exiles to come home, and Athens to follow Sparta.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The deciding consequence.
+		"peloponnesian_war_walls":{
+			"name":"The Long Walls Come Down",
+			"image":"../location/peloponnesian_war_athens.jpg",
+			"start":"-000403-05-01T09:00:00", "duration":{"d":2},
+			"location":"peloponnesian_war_athens",
+			"shown":"events.peloponnesian_war.historicity.value > 0",
+			"values":{
+				"wallsDown":{
+					"name":"Walls Down",
+					"value":"events.peloponnesian_war.values.outcome.value === 'sparta_wins'",
+					"description":[
+						{"text":"The Spartans and their allies pull down the walls to the music of flute girls, thinking that day the beginning of freedom for Greece.", "shown":"event.values.wallsDown.value"},
+						{"text":"The Long Walls still run the four miles from Athens to the sea.", "shown":"!event.values.wallsDown.value"}
+					]
+				}
+			},
+			"description":[
+				"The Long Walls joined Athens to its harbor, so that no army could starve a city fed by the sea.",
+				{"text":"Pericles built his war strategy on them: abandon the countryside, hold the walls, and win at sea.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Within months, a council of thirty oligarchs backed by a Spartan garrison rules Athens by terror.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The long consequences, one or the other, until Leuctra, 371 BCE.
+		"peloponnesian_war_hegemony":{
+			"name":"Spartan Supremacy",
+			"image":"../location/peloponnesian_war_sparta.jpg",
+			"start":"-000403-06-01T00:00:00", "duration":{"d":12090},
+			"location":"peloponnesian_war_sparta",
+			"shown":"events.peloponnesian_war_walls.values.wallsDown.value && events.peloponnesian_war.historicity.value > 10",
+			"values":{
+				"leads":{
+					"name":"Sparta Leads Greece",
+					"value":"events.peloponnesian_war_walls.values.wallsDown.value"
+				}
+			},
+			"description":[
+				"Sparta rules Greece, with garrisons and governors in the cities that were Athens’ allies, and soon makes as many enemies as Athens ever had.",
+				{"text":"It hands the Greeks of Asia back to Persia in return for Persian help, and fights Thebes, Corinth, Argos and a rebuilt Athens.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>At Leuctra in 371 BCE the Thebans under Epaminondas break the Spartan army. Greece is left without a master, and Macedon is watching.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"peloponnesian_war_empire":{
+			"name":"The Athenian Empire Endures",
+			"image":"../location/peloponnesian_war_athens.jpg",
+			"start":"-000403-06-01T00:00:00", "duration":{"d":12090},
+			"location":"peloponnesian_war_athens",
+			"shown":"events.peloponnesian_war.values.outcome.value === 'athens_wins' && events.peloponnesian_war.historicity.value > 10",
+			"values":{
+				"rules":{
+					"name":"Athens Rules the Aegean",
+					"value":"events.peloponnesian_war.values.outcome.value === 'athens_wins'"
+				}
+			},
+			"description":[
+				"Athens keeps its empire, its fleet and its democracy, and the tribute keeps coming.",
+				{"text":"Socrates is never tried, and Plato never turns against the democracy that killed his teacher.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>No Greek power is weak enough for Macedon to swallow.", "shown":"event.attestation.value >= 20"}
+			]
+		}
+	}
+}

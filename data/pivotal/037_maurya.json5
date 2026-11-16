@@ -1,0 +1,266 @@
+// Pivotal 250 #37: Chandragupta Founds the Maurya, c. 322 BCE. The first empire to unite
+// most of India. The dates of his rise are uncertain, and much of the story of Chanakya
+// comes from legends written down centuries later.
+// Reads Gaugamela (#36) through gaugamela_turnback: Alexander's army in the Punjab, and its
+// leaving. For Ashoka (#38), which falls inside the empire's long era, maurya_seleucus is
+// the Event to read.
+{
+	"operations":{
+		"maurya_rise":{
+			"name":"Magadha - Chandragupta Must Rise",
+			// Once Gaugamela is safe, so Alexander has come and gone in the Punjab.
+			"job":"operations.gaugamela_win.successGranted",
+			"description":"The young Chandragupta never finds the teacher who will make him a king. If the Nanda go on ruling, India is never united.",
+			"onSetup":{
+				"initialEventSelection":"maurya_withdrawal",
+				"set":{
+					"events.maurya_withdrawal.historicity":"60",
+					"events.maurya.historicity":"75"
+				}
+			},
+			"objectives":{
+				"teacher":{
+					"name":"Chanakya Finds His King",
+					"description":"Chanakya must choose Chandragupta.",
+					"success":"events.maurya_chanakya.values.chooses.value"
+				},
+				"victory":{
+					"name":"Chandragupta Rises",
+					"description":"The Nanda king must fall, and Chandragupta take his throne.",
+					"success":"events.maurya.values.outcome.value === 'maurya_rises'"
+				},
+				"peace":{
+					"name":"Seleucus Makes Peace",
+					"description":"Alexander’s successor in the east must give up India.",
+					"success":"events.maurya_seleucus.values.treaty.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"Chandragupta took Pataliputra and the Nanda throne, and in a few years the Punjab and the Indus as well.",
+					{
+						"text":"<p>Chanakya, the Brahmin the Nanda king insulted, found his king in a village boy, and taught him to take an empire from its edges inward.",
+						"shown":"events.maurya_chanakya.values.chooses.value && events.maurya_porridge.values.edgesFirst.value"
+					},
+					"<p>When Seleucus came east to take back Alexander’s Indian provinces, he made peace instead, and went home with five hundred war elephants. Chandragupta’s grandson Ashoka would rule nearly all of India.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"shown":"timeline.paradox.value === 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"shown":"timeline.paradox.value > 0"
+					}
+				],
+				"adj":{
+					"player.hq.chronal":"10",
+					"timeline.score":"3000"
+				}
+			}
+		}
+	},
+
+	// Pivotal 250 scenarios sit after the hand-built ones, in list order: 1000 + their number.
+	"locationsBaseOrder":1037,
+	"locations":{
+		"maurya_magadha":{
+			"name":"Pataliputra",
+			"color":"#a866",
+			"order":0
+		},
+		"maurya_punjab":{
+			"name":"Taxila and the Indus",
+			"color":"#6a86",
+			"order":1
+		}
+	},
+
+	"events":{
+		// The run-up.
+		"maurya_withdrawal":{
+			"name":"The Greeks Leave the Punjab",
+			"image":"../location/maurya_punjab.jpg",
+			"start":"-000324-09-01T00:00:00", "duration":{"d":1},
+			"location":"maurya_punjab",
+			"values":{
+				// The gap Alexander's coming and going leaves in the northwest.
+				"vacuum":{
+					"name":"Power Vacuum",
+					"value":"events.gaugamela_turnback.values.inIndia.value",
+					"description":[
+						{"text":"The Greek garrisons are few and far from home, and the kings Alexander left to rule for him answer to no one.", "shown":"event.values.vacuum.value"},
+						{"text":"No Greek army ever came. The Punjab is quiet under its own kings and the Persians.", "shown":"!event.values.vacuum.value"}
+					]
+				}
+			},
+			"description":[
+				"Alexander has sailed down the Indus and marched west, leaving governors, garrisons and allied Indian kings to hold what he took.",
+				{"text":"Within a year, the governor he left in the upper Punjab is murdered by his own mercenaries.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>A young man who saw Alexander, Plutarch says, later claimed that Alexander could easily have taken all of India, because its king was so hated.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The turning points, both from legends written down long after.
+		"maurya_chanakya":{
+			"name":"Chanakya’s Vow",
+			"image":"../location/maurya_magadha.jpg",
+			"start":"-000323-03-01T10:00:00", "duration":{"d":1},
+			"location":"maurya_magadha",
+			"shown":"events.maurya_withdrawal.attestation.value > 30 || events.maurya.attestation.value > 15",
+			"actions":{
+				"guideChanakya":{
+					"label":"Lead Chanakya to the Boy",
+					"skillCheck":{"actionType":"investigate"},
+					"set":{"chooses":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.chooses.value"
+				},
+				"misleadChanakya":{
+					"label":"Lead Chanakya Astray",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"chooses":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.chooses.value"
+				}
+			},
+			"values":{
+				"chooses":{
+					"name":"Pupil Chosen",
+					"value":"false",
+					"description":[
+						{"text":"In a village, Chanakya watches a boy playing at being king and judging his friends’ quarrels, and buys him from his guardians.", "shown":"event.values.chooses.value"},
+						{"text":"Chanakya leaves Pataliputra alone, and finds no one worth teaching.", "shown":"!event.values.chooses.value"}
+					]
+				}
+			},
+			"description":[
+				"At the court of the Nanda king Dhana Nanda, a Brahmin scholar named Chanakya is thrown out of his seat at a feast for being ugly and poor.",
+				{"text":"He unties his topknot, and vows not to tie it again until the Nanda are destroyed.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Chanakya, also called Kautilya, is remembered as the author of the Arthashastra, a ruthless handbook of statecraft.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"maurya_porridge":{
+			"name":"The Lesson of the Porridge",
+			"image":"../location/maurya_magadha.jpg",
+			"start":"-000322-06-01T18:00:00", "duration":{"h":2},
+			"location":"maurya_magadha",
+			"shown":"events.maurya_withdrawal.attestation.value > 15 || events.maurya.attestation.value > 30",
+			"actions":{
+				"overhear":{
+					"label":"Make Sure He Overhears",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"edgesFirst":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.edgesFirst.value"
+				},
+				"distract":{
+					"label":"Distract Him",
+					"skillCheck":{"actionType":"social"},
+					"set":{"edgesFirst":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.edgesFirst.value"
+				}
+			},
+			"exits":[
+				{"mode":"walk", "to":"maurya"}
+			],
+			"values":{
+				"edgesFirst":{
+					"name":"Edges First",
+					"value":"false",
+					"description":[
+						{"text":"Chandragupta understands. He will take the frontier provinces first, and close in on the capital last.", "shown":"event.values.edgesFirst.value"},
+						{"text":"Chandragupta goes on attacking the heart of the kingdom, and goes on being beaten.", "shown":"!event.values.edgesFirst.value"}
+					]
+				}
+			},
+			"description":[
+				"Beaten in a first attack on the Nanda heartland, Chandragupta hides in a village, in disguise.",
+				{"text":"A woman scolds her child, who has burned his fingers by putting them into the middle of a bowl of hot porridge: he should eat from the edges, where it has cooled.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>“You are like Chandragupta,” she says, “who attacks the center first.”", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The pivotal Event.
+		"maurya":{
+			"name":"Chandragupta Takes Pataliputra",
+			"image":"../location/maurya_magadha.jpg",
+			"start":"-000321-03-01T06:00:00", "duration":{"d":1},
+			"location":"maurya_magadha",
+			"values":{
+				"outcome":{
+					"name":"Outcome",
+					"value":"events.maurya_withdrawal.values.vacuum.value && events.maurya_chanakya.values.chooses.value && events.maurya_porridge.values.edgesFirst.value ? 'maurya_rises' : 'nanda_rule'",
+					"description":[
+						{"text":"Dhana Nanda falls, and Chandragupta takes his throne.", "shown":"event.values.outcome.value === 'maurya_rises'"},
+						{"text":"The Nanda hold Pataliputra, and the revolt is put down.", "shown":"event.values.outcome.value === 'nanda_rule'"}
+					]
+				}
+			},
+			"description":[
+				"Pataliputra, the Nanda capital where the Son and the Ganges meet, is a great city of timber walls, nine miles long.",
+				{"text":"The Nanda are rich, with a vast army, and hated for their taxes and for their low birth.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Chandragupta comes with an army raised in the northwest, where the Greeks left no one strong enough to stop him.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The deciding consequence: Alexander's successor gives India up.
+		"maurya_seleucus":{
+			"name":"Seleucus Makes Peace",
+			"image":"../location/maurya_punjab.jpg",
+			"start":"-000302-06-01T00:00:00", "duration":{"d":3},
+			"location":"maurya_punjab",
+			"shown":"events.maurya.historicity.value > 0",
+			"values":{
+				"treaty":{
+					"name":"Peace with Seleucus",
+					"value":"events.maurya.values.outcome.value === 'maurya_rises'",
+					"description":[
+						{"text":"Seleucus gives up the lands west of the Indus, and takes five hundred war elephants in return. There is a marriage alliance, and a Greek ambassador, Megasthenes, at Chandragupta’s court.", "shown":"event.values.treaty.value"},
+						{"text":"No Indian king is strong enough to stop him, and Seleucus takes back Alexander’s provinces up to the Indus and beyond.", "shown":"!event.values.treaty.value"}
+					]
+				}
+			},
+			"description":[
+				"Seleucus, the Macedonian general who now rules Alexander’s empire from Syria to Bactria, crosses the Indus to win back the Indian provinces.",
+				{"text":"He finds Chandragupta waiting with an army no Greek has seen the like of.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Two years later, Seleucus’ Indian elephants win him the battle of Ipsus, and his share of Alexander’s empire.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The long consequences, one or the other, from the peace with Seleucus until 185 BCE.
+		"maurya_empire":{
+			"name":"The Maurya Empire",
+			"image":"../location/maurya_magadha.jpg",
+			"start":"-000302-06-05T00:00:00", "duration":{"d":43110},
+			"location":"maurya_magadha",
+			"shown":"events.maurya_seleucus.values.treaty.value && events.maurya.historicity.value > 10",
+			"values":{
+				"rules":{
+					"name":"The Maurya Rule India",
+					"value":"events.maurya_seleucus.values.treaty.value"
+				}
+			},
+			"description":[
+				"With the west at peace, Chandragupta’s empire stretches from the Bay of Bengal to Afghanistan, run by a great bureaucracy and spies of every kind.",
+				{"text":"His son Bindusara pushes south, and his grandson Ashoka conquers Kalinga, then turns in horror to Buddhism and sends its teachers abroad.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The last Maurya emperor is murdered by his own general in 185 BCE.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"maurya_seleucid_india":{
+			"name":"Seleucid India",
+			"image":"../location/maurya_punjab.jpg",
+			"start":"-000302-06-05T00:00:00", "duration":{"d":43110},
+			"location":"maurya_punjab",
+			"shown":"!events.maurya_seleucus.values.treaty.value && events.maurya.historicity.value > 10",
+			"values":{
+				"holds":{
+					"name":"Seleucus Holds the Indus",
+					"value":"!events.maurya_seleucus.values.treaty.value"
+				}
+			},
+			"description":[
+				"The northwest of India is governed by Macedonians, as the easternmost provinces of the Seleucid Empire.",
+				{"text":"East of them, the Nanda and the kingdoms of the Ganges go on as they were, rich and divided.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>There is no Ashoka, and Buddhism stays a local teaching of the Ganges plain.", "shown":"event.attestation.value >= 20"}
+			]
+		}
+	}
+}

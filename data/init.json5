@@ -1,6 +1,10 @@
 {
 	// The scenario files loaded after this one, in order.
-	"scenarios":["origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario", "pivotal/033_marathon"],
+	"scenarios":[
+		"origin_scenario", "longevity_scenario", "titanic_scenario", "lusitania_scenario",
+		"pivotal/033_marathon", "pivotal/034_salamis", "pivotal/036_gaugamela", "pivotal/037_maurya",
+		"pivotal/254_peloponnesian_war"
+	],
 	
 	"initialOperation":"origin_story",
 	// The player's own agent. Agents of other factions aren't the player's to direct, even
@@ -165,6 +169,8 @@
 		"enter":"Enter",
 		"board":"Board",
 		"walk":"Walk to",
+		"march":"March to",
+		"sail":"Sail to",
 		"take":"Take",
 		"swim":"Swim to",
 		"bike":"Bike to",

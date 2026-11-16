@@ -1,3 +1,5 @@
+// Pivotal 250 #33: Battle of Marathon, 490 BCE. Read by Salamis (#34), through 
+// marathon_fleet: whether Athens builds the fleet that will fight there.
 {
 	"operations":{
 		"marathon_fight":{
@@ -190,7 +192,7 @@
 					]
 				},
 				"pincer":{
-					"name":"Pincer Strategry",
+					"name":"Pincer Strategy",
 					"value":"false",
 					"description":[
 						{"text":"The Greek commander Miltiades, anticipating the strength of the Persian center, plans to thin out the center of his hoplite line and significantly reinforce both of his wings.", "shown":"event.values.pincer.value"},
@@ -283,10 +285,10 @@
 				{"mode":"walk", "to":"marathon_sack"}
 			],
 			"values":{
-				// Athens wins only if it fights while the cavalry is away.
+				// Athens wins only if it fights, and either the cavalry is away or the line is built for a pincer.
 				"outcome":{
 					"name":"Outcome",
-					"value":"(events.marathon_council.values.forBattle.value && (events.marathon_cavalry.values.cavalryAway.value !== events.marathon_council.values.pincer.value)) ? 'athens_wins' : 'persia_wins'",
+					"value":"(events.marathon_council.values.forBattle.value && (events.marathon_cavalry.values.cavalryAway.value || events.marathon_council.values.pincer.value)) ? 'athens_wins' : 'persia_wins'",
 					"description":[
 						{"text":"The Athenians win. The Persians lose some 6,400 men; the Athenians, 192.", "shown":"event.values.outcome.value === 'athens_wins'"},
 						{"text":"Athens loses. The Persians march on a city that is ready to betray itself.", "shown":"event.values.outcome.value === 'persia_wins'"}
@@ -326,11 +328,52 @@
 			]
 		},
 
-		// Golden ages. One or the other, depending on whether Athens falls. 480 to 404 BCE.
+		// Handover Events, one or the other, depending on whether Athens falls: short, so the
+		// scenarios inside the golden ages can read them. Salamis reads these.
+		"marathon_fleet":{
+			"name":"Athens Builds a Fleet",
+			"image":"../location/marathon_athens.jpg",
+			// A rich new vein of silver is found at Laurion in 483 BCE.
+			"start":"-000482-06-01T00:00:00", "duration":{"d":700},
+			"location":"marathon_athens",
+			"shown":"!events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
+			"values":{
+				"fleetBuilt":{
+					"name":"Fleet Built",
+					"value":"!events.marathon_sack.values.sacked.value"
+				}
+			},
+			"description":[
+				"Miners at Laurion strike a rich new vein of silver, and Themistocles persuades the assembly not to share it out among the citizens, but to build warships with it.",
+				{"text":"By 480 BCE Athens has some two hundred triremes, the largest fleet in Greece, rowed by its poorest citizens.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Themistocles says the fleet is for the war with Aegina. He is thinking of Persia.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"marathon_sparta_alone":{
+			"name":"Sparta Stands Alone",
+			"image":"../location/marathon_sparta.jpg",
+			"start":"-000482-06-01T00:00:00", "duration":{"d":700},
+			"location":"marathon_sparta",
+			"shown":"events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
+			"values":{
+				"standsAlone":{
+					"name":"Sparta Alone",
+					"value":"events.marathon_sack.values.sacked.value"
+				}
+			},
+			"description":[
+				"With Athens a Persian province under Hippias, Sparta gathers what allies it can in the Peloponnese against the next invasion.",
+				{"text":"There is no Athenian fleet. Whoever holds the sea holds Greece, and Persia holds it.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Sparta fortifies the Isthmus and waits.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// Golden ages: the long consequences, one or the other. 479 to 404 BCE.
 		"marathon_golden_athens":{
 			"name":"Golden Age of Athens",
 			"image":"../location/marathon_athens.jpg",
-			"start":"-000479-01-01T00:00:00", "duration":{"d":27759},
+			"start":"-000478-09-01T00:00:00", "duration":{"d":27240},
 			"location":"marathon_athens",
 			"shown":"!events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
 			"values":{
@@ -340,7 +383,7 @@
 				}
 			},
 			"description":[
-				"Ten years after Marathon, Athens’ new fleet wins at Salamis, and the city leads the Greeks for half a century.",
+				"After Salamis and Plataea, Athens leads the Greeks of the Aegean for half a century.",
 				{"text":"Under Pericles the Parthenon rises on the Acropolis. Aeschylus, who fought at Marathon, and Sophocles and Euripides write the first great tragedies.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Socrates questions everyone in the marketplace, Herodotus and Thucydides invent history, and the democracy lasts until Sparta defeats Athens in 404 BCE.", "shown":"event.attestation.value >= 20"}
 			]
@@ -349,7 +392,7 @@
 		"marathon_golden_sparta":{
 			"name":"Golden Age of Sparta",
 			"image":"../location/marathon_sparta.jpg",
-			"start":"-000479-01-01T00:00:00", "duration":{"d":27759},
+			"start":"-000478-09-01T00:00:00", "duration":{"d":27240},
 			"location":"marathon_sparta",
 			"shown":"events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
 			"values":{

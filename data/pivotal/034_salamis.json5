@@ -1,0 +1,281 @@
+// Pivotal 250 #34: Battle of Salamis, 480 BCE. The Greek fleet breaks Xerxes' invasion.
+// Reads Marathon (#33) through marathon_fleet: the fleet Athens built with Laurion's silver.
+// Read by the Peloponnesian War (#254) through salamis_league: whether Athens leads an
+// Aegean alliance that grows into an empire.
+{
+	"operations":{
+		"salamis_fight":{
+			"name":"Salamis - The Fleet Must Fight in the Straits",
+			// Once Marathon is safe, so Athens has its fleet.
+			"job":"operations.marathon_fight.successGranted",
+			"description":"The Greek admirals are about to abandon Salamis, and Xerxes has no reason to fight in the narrows. If the fleet scatters, Greece falls.",
+			"onSetup":{
+				"initialEventSelection":"salamis_fleet",
+				"set":{
+					"events.salamis_fleet.historicity":"60",
+					"events.salamis.historicity":"75"
+				}
+			},
+			"objectives":{
+				"stays":{
+					"name":"The Fleet Stays",
+					"description":"The admirals must agree to fight at Salamis.",
+					"success":"events.salamis_council.values.fleetStays.value"
+				},
+				"victory":{
+					"name":"The Greeks Win",
+					"description":"The Persian fleet must be broken in the straits.",
+					"success":"events.salamis.values.outcome.value === 'greeks_win'"
+				},
+				"retreat":{
+					"name":"Xerxes Goes Home",
+					"description":"The Great King must give up on taking Greece himself.",
+					"success":"events.salamis_retreat.values.retreats.value"
+				}
+			},
+			"onSuccess":{
+				"debrief":[
+					"In the narrows between Salamis and the mainland, the Greek triremes rammed the crowded Persian ships as they came in, and by evening the Persian fleet was broken.",
+					{
+						"text":"<p>Themistocles’ threat to sail away to Italy kept the Spartan admiral at Salamis, and his message to Xerxes brought the Persians into the straits.",
+						"shown":"events.salamis_council.values.fleetStays.value && events.salamis_message.values.messageSent.value"
+					},
+					"<p>Xerxes went home, leaving an army that was destroyed at Plataea the next summer. The Aegean Greeks looked to Athens to keep Persia away, and the alliance they made at Delos became, in time, an Athenian empire.",
+					{
+						"text":"The timeline shows no trace of the Corps’ interference.",
+						"shown":"timeline.paradox.value === 0"
+					},{
+						"text":"Faint scars of paradox mark the places where agents crossed their own paths.",
+						"shown":"timeline.paradox.value > 0"
+					}
+				],
+				"adj":{
+					"player.hq.chronal":"10",
+					"timeline.score":"3000"
+				}
+			}
+		}
+	},
+
+	// Pivotal 250 scenarios sit after the hand-built ones, in list order: 1000 + their number.
+	"locationsBaseOrder":1034,
+	"locations":{
+		"salamis_strait":{
+			"name":"Straits of Salamis",
+			"color":"#4686",
+			"order":0
+		},
+		"salamis_sardis":{
+			"name":"Sardis",
+			"color":"#a646",
+			"order":1
+		},
+		"salamis_delos":{
+			"name":"Delos",
+			"color":"#68a6",
+			"order":2
+		}
+	},
+
+	"events":{
+		// The run-up. The exact days are uncertain; the battle is commonly put in late September.
+		"salamis_fleet":{
+			"name":"The Greek Fleet Gathers",
+			"image":"../location/salamis_strait.jpg",
+			"start":"-000479-09-20T08:00:00", "duration":{"d":2},
+			"location":"salamis_strait",
+			"exits":[
+				{"mode":"waitFor", "to":"salamis_council"},
+				{"mode":"waitFor", "to":"salamis_message"},
+				{"mode":"waitFor", "to":"salamis"}
+			],
+			"values":{
+				// The fleet Athens built after Marathon, or none.
+				"fleetReady":{
+					"name":"Athenian Fleet",
+					"value":"events.marathon_fleet.values.fleetBuilt.value",
+					"description":[
+						{"text":"Two hundred Athenian triremes make up more than half the fleet.", "shown":"event.values.fleetReady.value"},
+						{"text":"Without an Athenian fleet, a few dozen ships from the Peloponnese and the islands are all Greece has at sea.", "shown":"!event.values.fleetReady.value"}
+					]
+				}
+			},
+			"description":[
+				"After the stand at Thermopylae and the drawn fight at Artemisium, the Greek fleet falls back to the island of Salamis, just off the coast of Attica.",
+				{"text":"Athens has been emptied. Its people have crossed to Salamis, Aegina and Troezen, and the Persians burn the temples on the Acropolis while the fleet watches.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Xerxes’ fleet, still far larger than the Greek one, gathers in the bay of Phaleron, a few miles away.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"salamis_council":{
+			"name":"The Admirals’ Council",
+			"image":"../location/salamis_strait.jpg",
+			"start":"-000479-09-26T18:00:00", "duration":{"h":4},
+			"location":"salamis_strait",
+			"shown":"events.salamis_fleet.attestation.value > 30 || events.salamis.attestation.value > 15",
+			"actions":{
+				"backThemistocles":{
+					"label":"Back Themistocles’ Threat",
+					"skillCheck":{"actionType":"social"},
+					"set":{"fleetStays":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.fleetStays.value"
+				},
+				"urgeIsthmus":{
+					"label":"Urge a Retreat to the Isthmus",
+					"skillCheck":{"actionType":"social"},
+					"set":{"fleetStays":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.fleetStays.value"
+				}
+			},
+			"exits":[
+				{"mode":"waitFor", "to":"salamis_message"},
+				{"mode":"waitFor", "to":"salamis"}
+			],
+			"values":{
+				"fleetStays":{
+					"name":"Fleet Stays",
+					"value":"false",
+					"description":[
+						{"text":"Eurybiades gives way. The fleet will fight at Salamis.", "shown":"event.values.fleetStays.value"},
+						{"text":"The council votes to sail for the Isthmus at dawn, where each city’s ships can slip away home.", "shown":"!event.values.fleetStays.value"}
+					]
+				}
+			},
+			"description":[
+				"The Peloponnesian admirals want to fall back to the Isthmus of Corinth, where their army is building a wall. The Spartan Eurybiades has the command.",
+				{"text":"Themistocles argues that only in the narrows can the smaller Greek fleet fight the Persians on equal terms.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>When that fails, he threatens to take the Athenian ships and families to Siris in Italy, and leave the rest of Greece without them.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"salamis_message":{
+			"name":"Sicinnus Crosses to the Persians",
+			"image":"../location/salamis_strait.jpg",
+			"start":"-000479-09-27T20:00:00", "duration":{"h":8},
+			"location":"salamis_strait",
+			"shown":"events.salamis_fleet.attestation.value > 15 || events.salamis.attestation.value > 30",
+			"actions":{
+				"sendSicinnus":{
+					"label":"See Sicinnus Safely Across",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"messageSent":"true"},
+					"shown":"event.attestation.value >= 15 && !event.values.messageSent.value"
+				},
+				"stopSicinnus":{
+					"label":"Stop Sicinnus’ Boat",
+					"skillCheck":{"actionType":"sneak"},
+					"set":{"messageSent":"false"},
+					"shown":"event.attestation.value >= 15 && event.values.messageSent.value"
+				}
+			},
+			"exits":[
+				{"mode":"waitFor", "to":"salamis"}
+			],
+			"values":{
+				"messageSent":{
+					"name":"Message Delivered",
+					"value":"false",
+					"description":[
+						{"text":"Xerxes believes the message. In the night his ships close both ends of the straits, and his crews row until dawn.", "shown":"event.values.messageSent.value"},
+						{"text":"No message reaches the Persians. Xerxes waits for the Greek fleet to break up on its own.", "shown":"!event.values.messageSent.value"}
+					]
+				}
+			},
+			"description":[
+				"Themistocles sends his slave Sicinnus, the tutor of his children, by boat to the Persian commanders.",
+				{"text":"The message: the Greeks are quarreling and mean to flee in the night, and Themistocles, secretly a friend of the King, wants him to know it.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>If Xerxes believes it, he will try to trap the Greek fleet where it lies, and fight in the narrows, where his numbers count for least.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The pivotal Event.
+		"salamis":{
+			"name":"Battle of Salamis",
+			"image":"../location/salamis_strait.jpg",
+			"start":"-000479-09-28T07:00:00", "duration":{"h":10},
+			"location":"salamis_strait",
+			"exits":[
+				{"mode":"sail", "to":"salamis_retreat"}
+			],
+			"values":{
+				// The Greeks win only with Athens' fleet, fighting together, in the narrows.
+				"outcome":{
+					"name":"Outcome",
+					"value":"events.salamis_fleet.values.fleetReady.value && events.salamis_council.values.fleetStays.value && events.salamis_message.values.messageSent.value ? 'greeks_win' : 'persia_wins'",
+					"description":[
+						{"text":"The Greeks win. Some two hundred Persian ships are sunk or taken; the Greeks lose about forty.", "shown":"event.values.outcome.value === 'greeks_win'"},
+						{"text":"The Greek fleet is beaten or scatters, and the Persian fleet can land an army anywhere in Greece.", "shown":"event.values.outcome.value === 'persia_wins'"}
+					]
+				}
+			},
+			"description":[
+				"At dawn the Persian fleet rows into the narrow channel between Salamis and the mainland, too many ships for the space, to find the Greeks waiting.",
+				{"text":"Xerxes watches from a throne on the slopes of Mount Aegaleos, with scribes to record which of his captains fight well.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>The heavier Greek triremes ram the crowded Persian ships as they come in. Among them is Artemisia, queen of Halicarnassus, who escapes by ramming a ship on her own side.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The deciding consequence.
+		"salamis_retreat":{
+			"name":"Xerxes Turns for Home",
+			"image":"../location/salamis_sardis.jpg",
+			"start":"-000479-12-01T12:00:00", "duration":{"d":1},
+			"location":"salamis_sardis",
+			"shown":"events.salamis.historicity.value > 0",
+			"values":{
+				"retreats":{
+					"name":"Xerxes Goes Home",
+					"value":"events.salamis.values.outcome.value === 'greeks_win'",
+					"description":[
+						{"text":"Xerxes winters in Sardis, back in Asia. He leaves Mardonius in Greece with part of the army, which the Greeks will destroy at Plataea next summer.", "shown":"event.values.retreats.value"},
+						{"text":"Xerxes winters in Athens instead, and in spring his army marches on the Isthmus with the fleet beside it.", "shown":"!event.values.retreats.value"}
+					]
+				}
+			},
+			"description":[
+				"With winter coming and his fleet broken, the Great King must decide whether to stay in Greece or go home.",
+				{"text":"He fears the Greeks will sail to the Hellespont and break his bridge of boats behind him.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Sardis, the old capital of Lydia, is the seat of Persian power in the west, and the end of the Royal Road from Susa.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		// The long consequences, one or the other, until the eve of the Peloponnesian War.
+		"salamis_league":{
+			"name":"The Delian League",
+			"image":"../location/salamis_delos.jpg",
+			"start":"-000477-01-01T00:00:00", "duration":{"d":16250},
+			"location":"salamis_delos",
+			"shown":"events.salamis_retreat.values.retreats.value && events.salamis.historicity.value > 10",
+			"values":{
+				"leads":{
+					"name":"Athens Leads the League",
+					"value":"events.salamis_retreat.values.retreats.value"
+				}
+			},
+			"description":[
+				"The cities of the Aegean swear an alliance on the sacred island of Delos to keep Persia out, with Athens in command and a treasury kept in the temple of Apollo.",
+				{"text":"Aristides, called the Just, sets each city’s contribution in ships or silver. Most choose silver, and Athens builds the ships.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>In 454 BCE the treasury moves to Athens, and the alliance becomes an empire. Some of the silver builds the Parthenon.", "shown":"event.attestation.value >= 20"}
+			]
+		},
+
+		"salamis_persian_greece":{
+			"name":"Greece Under Persia",
+			"image":"../location/salamis_sardis.jpg",
+			"start":"-000478-01-01T00:00:00", "duration":{"d":16600},
+			"location":"salamis_sardis",
+			"shown":"!events.salamis_retreat.values.retreats.value && events.salamis.historicity.value > 10",
+			"values":{
+				"rules":{
+					"name":"Persia Rules Greece",
+					"value":"!events.salamis_retreat.values.retreats.value"
+				}
+			},
+			"description":[
+				"Greece becomes the westernmost province of the Persian Empire, governed from Sardis, with tyrants friendly to the King in each city.",
+				{"text":"Sparta, the last to hold out, keeps its own kings in return for tribute and soldiers.", "shown":"event.attestation.value >= 10"},
+				{"text":"<p>Greek doctors, sculptors and mercenaries serve the King. There is no Parthenon, and no Athenian democracy to argue over.", "shown":"event.attestation.value >= 20"}
+			]
+		}
+	}
+}
