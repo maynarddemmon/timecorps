@@ -735,6 +735,7 @@ A video (`"video":true`) is always `<id>.webm` and plays instead of the picture 
   - JSON5 beyond comments and trailing commas.
   
   Run just it with `npx playwright test data`.
+- **Before each commit**, once you've run `npm run setup-hooks` in your clone, a hook runs lint and `tests/data.spec.mjs` (a few seconds) and stops the commit if either fails. `git commit --no-verify` skips it. Run the whole suite, `npm test`, before pushing.
 - **The other tests don't use these files.** They play with their own data in `tests/data/`, so changing a scenario never breaks them.
 - **In the browser console, `tc.GODMODE`** lets you look at and change a game while you play it, using the same expressions and keys as the data:
   - `tc.GODMODE.dump(expr)` evaluates an expression and returns plain data, e.g. `dump('agents.ME')`, `dump('events.marathon.values')`, `dump('scratch')`.

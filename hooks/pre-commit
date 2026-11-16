@@ -1,0 +1,18 @@
+#!/bin/sh
+# Stops a commit that fails lint or the data checks: a few seconds' work. The rest of the
+# suite is too slow for every commit, so run "npm test" before pushing.
+#
+# Turn it on once per clone with "npm run setup-hooks". Skip it for one commit with 
+# "git commit --no-verify".
+
+echo "pre-commit: lint"
+if ! npm run --silent lint; then
+    echo "pre-commit: lint failed, so the commit was stopped. (git commit --no-verify skips this.)"
+    exit 1
+fi
+
+echo "pre-commit: data checks"
+if ! npx playwright test tests/data.spec.mjs --reporter=dot; then
+    echo "pre-commit: the data checks failed, so the commit was stopped. (git commit --no-verify skips this.)"
+    exit 1
+fi
