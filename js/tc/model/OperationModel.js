@@ -5,11 +5,10 @@
         
         JSClass = JS.Class,
         
-        {debounce, BaseModel} = myt,
+        {debounceMicrotask, BaseModel} = myt,
         
         {
             ConstrainableAttrSupport, Describable, DescribableHideable, setConstrainedValue,
-            cfg:{STANDARD_DEBOUNCE_MILLIS},
             readPromptIds, openPrompts,
             SCOPE_OPERATION
         } = pkg,
@@ -175,11 +174,11 @@
             // Set here so expressions can observe them, e.g. "operations.first.successGranted".
             self.setupApplied = self.successGranted = false;
             
-            // We need to give the Objectives a chance to settle since events must propogate
-            // to update success/failure.
-            self.determineSuccessfulCompletion = debounce(() => {
+            // The Objectives settle once the changes that set this off have all propagated, 
+            // which happens synchronously, so it's worked out at the end of that burst.
+            self.determineSuccessfulCompletion = debounceMicrotask(() => {
                 if (self.isActive() && self.getProgress().completed) self.doOnSuccess();
-            }, STANDARD_DEBOUNCE_MILLIS);
+            });
             
             // Applied after the other attrs so warnings about their set and adj can name the
             // Operation by its id.

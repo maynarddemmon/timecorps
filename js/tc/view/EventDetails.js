@@ -11,7 +11,7 @@
             I18N:{get:i18n},
             View, PaddedPlainText,
             Layout, SpacedLayout, ResizeLayout, SizeHeightToDom,
-            debounce
+            debounceMicrotask
         } = myt,
         
         {
@@ -420,7 +420,7 @@
             histNextBtn.setTooltip(nextBtnTooltip);
         },
         
-        _updateForEventModel: debounce(function() {
+        _updateForEventModel: debounceMicrotask(function() {
             const self = this,
                 eventModel = self.eventModel,
                 hasModel = eventModel != null;
@@ -458,9 +458,9 @@
             
             self.updateTitle();
             self.updateForSelectedAgent();
-        }, 5),
+        }),
         
-        updateForSelectedAgent: debounce(function() {
+        updateForSelectedAgent: debounceMicrotask(function() {
             const self = this,
                 eventModel = self.eventModel;
             if (eventModel != null) {
@@ -487,7 +487,7 @@
                 hqBtn.setDisabled(eventModel === hqEventModel);
                 hqBtn.setVisible(hqEventModel?.isNotHidden() ?? false);
             }
-        }, 25),
+        }),
         
         updateTitle: function() {
             const eventName = this.eventModel?.name ?? i18n('txt-none');
