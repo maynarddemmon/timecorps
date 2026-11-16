@@ -103,6 +103,8 @@ myt.I18N.setDictionary({
 "dlg-mission-complete-not-saved":"Your progress could not be saved automatically.",
 "dlg-agent-devoured-title":"Agent Devoured : $0",
 "dlg-agent-devoured-msg":"The agent was devoured by chronovores.",
+"dlg-agent-displaced-title":"Agent Displaced : $0",
+"dlg-agent-displaced-msg":"$1 has been written out of history. $0 was there, and has been thrown forward to $2, gaining {{plural:$3|$3 point|$3 points}} of paradox.",
 "dlg-agent-death-title":"Agent Death : $0",
 "dlg-agent-death-msg":"At the Nexus, $0’s telemetry goes flat between one pulse and the next. The array keeps listening for a recall signal that does not come, and the duty officer marks the time twice: once in the Corps’ own year, and once in a year $0 would not be born for centuries. Somewhere in the past there is now a body that history has no record of, and a grave that will never be dug. The Corps files the loss as it files every loss, provisionally, because a timeline that can be changed is a timeline in which $0 might still come home.",
 "txt-retrieving":"Retrieving…",

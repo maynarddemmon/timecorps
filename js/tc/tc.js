@@ -233,6 +233,12 @@
                 AGENT_DEFAULT_PARADOX:0,
                 AGENT_PARADOX_LIMIT:10,
                 
+                // The minimum paradox gained when an Agent is displaced as an Event is written 
+                // out of history.
+                DISPLACEMENT_MIN_PARADOX:1,
+                // Every 100 points +/- effects the paradox lost/gained by 1 from a displacement.
+                DISPLACEMENT_CAUSAL_STABILITY_DIVISOR:100,
+                
                 // The starting maximum paradox an Event can have.
                 EVENT_PARADOX_LIMIT:15,
                 

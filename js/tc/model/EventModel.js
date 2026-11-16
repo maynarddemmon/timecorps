@@ -1562,6 +1562,17 @@
                 
                 // An agent already here when it's revealed counts as its first visit.
                 if (!hidden) pkg.model.getAgentModelsForEvent(this.id)[0]?.tryToOpenEventBrief();
+                
+                // Written out of history in play, rather than as a game is set up or restored, 
+                // so the agents here are displaced, hidden ones too. Once whatever hid it, e.g. 
+                // an action, has finished, and only if it's still hidden.
+                if (hidden && pkg.isAppReady()) {
+                    queueMicrotask(() => {
+                        if (this.isHidden()) {
+                            for (const agentModel of pkg.model.getAgentModelsAsList(agentModel => agentModel.getEvent() === this.id)) agentModel.displace();
+                        }
+                    });
+                }
             },
             
             // Description

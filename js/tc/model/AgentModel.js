@@ -17,7 +17,8 @@
                 AGENT_DEFAULT_PARADOX, AGENT_PARADOX_LIMIT, 
                 AGENT_DEFAULT_HEALTH, AGENT_HEALTH_LIMIT,
                 AGENT_DEFAULT_AGE, AGE_MIN_EFFECTIVE,
-                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE, DIE_SIZE
+                PARADOX_SCORE_MULTIPLIER, MAX_SKILL_VALUE, DIE_SIZE,
+                DISPLACEMENT_MIN_PARADOX, DISPLACEMENT_CAUSAL_STABILITY_DIVISOR
             },
             timeUtil:{MILLIS_PER_YEAR},
             theme:{colorSuccess, colorMegaDark, colorParadox},
@@ -64,6 +65,7 @@
         LOG_TYPE_EXIT = 'exit',
         LOG_TYPE_ACTION = 'action',
         LOG_TYPE_DEVOURED = 'devoured',
+        LOG_TYPE_DISPLACED = 'displaced',
         
         /*  The flooded Event, if any, that keeps the Agent from time traveling to eventModel:
             the one they'd leave, or the one they'd arrive at. null if neither is flooded. */
@@ -179,9 +181,53 @@
             switch (entry.type) {
                 case LOG_TYPE_EXIT: return {event:entry.exit.getToEventModel(), isTimeTravel:entry.exit.isTimeTravel()};
                 case LOG_TYPE_DEPLOY:
-                case LOG_TYPE_RECALL: return {event:entry.event, isTimeTravel:true};
+                case LOG_TYPE_RECALL:
+                case LOG_TYPE_DISPLACED: return {event:entry.event, isTimeTravel:true};
                 case LOG_TYPE_ORIGIN: return {event:entry.event, isTimeTravel:false};
             }
+        },
+        
+        /*  Where an agent goes when the Event they're in is hidden, written out of history: 
+            the nearest Event they could be sent to, or null for none, in which case it's The
+            Void. First, the earliest one after it at the same location. Then the earliest one
+            starting no earlier than it at the locations beside it on the timeline, one column
+            either side, then two, and so on, the left column winning a tie. An Event they can
+            be sent to is shown and one time travel could reach: not a hub, chrono locked or 
+            flooded. */
+        findDisplacementEventModel = fromEventModel => {
+            const rootModel = pkg.model,
+                start = fromEventModel.getStart(),
+                fromLocationId = fromEventModel.getLocation(),
+                candidates = rootModel.getEventModelsAsList(eventModel => 
+                    eventModel !== fromEventModel && eventModel.getStart() >= start &&
+                    eventModel.isNotHidden() && eventModel.isNotHub() && 
+                    eventModel.isNotChronoLocked() && !eventModel.isFlooded()
+                ),
+                earliestAt = locationId => {
+                    let earliest = null;
+                    for (const eventModel of candidates) {
+                        if (eventModel.getLocation() === locationId && (!earliest || eventModel.getStart() < earliest.getStart())) earliest = eventModel;
+                    }
+                    return earliest;
+                };
+            
+            // First: The same location.
+            const sameLocation = earliestAt(fromLocationId);
+            if (sameLocation) return sameLocation;
+            
+            // Next: The locations beside it, in the timeline's column order.
+            const locationIds = Object.values(rootModel.getLocations()).sort((a, b) => a.order - b.order).map(locationModel => locationModel.id),
+                fromIdx = locationIds.indexOf(fromLocationId);
+            if (fromIdx >= 0) {
+                for (let distance = 1; distance < locationIds.length; distance++) {
+                    const left = earliestAt(locationIds[fromIdx - distance]),
+                        right = earliestAt(locationIds[fromIdx + distance]);
+                    if (left || right) return !right || (left && left.getStart() <= right.getStart()) ? left : right;
+                }
+            }
+            
+            // Finally: Nowhere.
+            return null;
         },
         
         /*  The Event a log entry put the agent in, or undefined for one that didn't. */
@@ -1212,6 +1258,34 @@
         isDevoured: function() {return this.devoured;},
         isNotDevoured: function() {return !this.isDevoured();},
         
+        /*  The Event the Agent is in has been hidden, written out of history, so they're sent 
+            to the nearest Event they can be (see findDisplacementEventModel) at no cost, and 
+            gain as much paradox as jumping there would cost in chronal. That can devour them.
+            With nowhere to go, they're devoured. The dead stay where they are. */
+        displace: function() {
+            const fromEventModel = this.getEventModel();
+            if (!fromEventModel || this.isDead() || this.isDevoured()) return;
+            
+            const toEventModel = findDisplacementEventModel(fromEventModel);
+            if (!toEventModel) {
+                this.setDevoured(true);
+                return;
+            }
+            
+            // Worked out from where they are now, as a jump would be.
+            const statParadox = this[STAT_ID_PARADOX],
+                paradox = statParadox.getAllowedAdj(
+                    mathMax(
+                        DISPLACEMENT_MIN_PARADOX, 
+                        pkg.getChronalToDeploy(this, toEventModel) - statParadox.value - mathRound(this.getSkill('causalStability') / DISPLACEMENT_CAUSAL_STABILITY_DIVISOR)
+                    )
+                ).adj;
+            statParadox.adjValue(paradox);
+            if (this.isDevoured()) return;
+            
+            this.setEvent_Hard(toEventModel.id, {type:LOG_TYPE_DISPLACED, event:toEventModel, from:fromEventModel.id, paradox});
+            pkg.app.notifyAgentDisplaced(this, fromEventModel, toEventModel, paradox);
+        },
         
         // Costs //
         /*  Works out what taking an action would cost the agent now. Returns an Array of

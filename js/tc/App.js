@@ -744,14 +744,24 @@
         
         notifyAgentDevouredChange: function(agentModel) {
             if (readyToHandleEvents && agentModel.isDevoured()) {
-                const name = agentModel.getName();
                 openAckMsgDialog(
-                    i18n('dlg-agent-devoured-title', wrapInStyledSpan(name, colorUltraLight)),
+                    i18n('dlg-agent-devoured-title', wrapInStyledSpan(agentModel.getName(), colorUltraLight)),
                     i18n('dlg-agent-devoured-msg'),
                     () => {
                         openAgentDossier(agentModel);
                         checkForActiveRoster();
                     }
+                );
+            }
+        },
+        
+        /*  A player-controlled agent was in an Event that was hidden, and has been sent 
+            elsewhere. See AgentModel.displace. */
+        notifyAgentDisplaced: function(agentModel, fromEventModel, toEventModel, paradox) {
+            if (readyToHandleEvents && agentModel.isPlayerControlled()) {
+                openAckMsgDialog(
+                    i18n('dlg-agent-displaced-title', wrapInStyledSpan(agentModel.getName(), colorUltraLight)),
+                    i18n('dlg-agent-displaced-msg', agentModel.getName(), fromEventModel.name, toEventModel.name, paradox)
                 );
             }
         },
