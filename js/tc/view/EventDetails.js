@@ -18,6 +18,7 @@
             UnderlineBtn, EventNavHover, AgentBtn, DescPart, 
             InlineSeparator, InlinePlainText, InlineText, InlineUnderlineBtn,
             SquareBtn, WideView, StatusAgentMarkerMedium, ContainerRow, wrapInStyledSpan,
+            timeUtil:{format:formatTime},
             theme:{
                 spacing, padding, btnHeight,
                 colorUltraLight, colorLight, colorMegaDark, colorAction,
@@ -30,11 +31,10 @@
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
         ORDER_SORT_FUNC = (a, b) => a.order - b.order,
-        EXIT_MODELS_SORT_FUNC = (a, b) => {
-            const aTravelTime = a.getTravelTime(),
-                bTravelTime = b.getTravelTime();
-            return aTravelTime === bTravelTime ? a.to.localeCompare(b.to) : aTravelTime - bTravelTime;
-        },
+        /*  By when the exit leaves its Event, its "at" or the Event's end, then by travel 
+            time, then by destination. */
+        EXIT_MODELS_SORT_FUNC = (a, b) => 
+            (a.getLeaveTime() - b.getLeaveTime()) || (a.getTravelTime() - b.getTravelTime()) || a.to.localeCompare(b.to),
         
         getActionBtnInfo = (agentModel, actionModel) => {
             const easePhrase = agentModel.getSkillEasePhrase(
@@ -271,11 +271,15 @@
                         recallBtn.setVisible(false);
                     }
                     
+                    // When the agent is now, as they live through the Event.
+                    new InlineText(linesView, {text:i18n('agent-time', formatTime(eventModel.getStart() + agentModel.timeLivedAtEvent))});
+                    new View(linesView, {tagName:'br'}, [pkg.InlineMixin]);
+                    
                     addActionLines(linesView, agentModel, eventModel, false);
                     
                     // Update Exits
                     const exitLabelView = new InlinePlainText(linesView, {text:i18n('event-exits') + '\u00A0', visible:false}),
-                        // Sorted by travel time, then destination. A copy, since the agent log saves
+                        // Sorted by when they leave (see EXIT_MODELS_SORT_FUNC). A copy, since the agent log saves
                         // exits by their index in the Event's own list.
                         exitModels = [...eventModel.getExitModels()].sort(EXIT_MODELS_SORT_FUNC);
                     let addedCount = 0;

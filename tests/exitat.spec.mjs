@@ -87,7 +87,7 @@ test('on the timeline, its route starts on the right edge, as far down as it is 
         const spline = tc.app.getTimelineView().flowLayer.getSpline('exit-origin-aftermath');
         return spline ? {side:spline.startSide, position:spline.startPosition} : null;
     });
-    await expect.poll(readSpline).toEqual({side:'right', position:'50%'});
+    await expect.poll(readSpline).toEqual({side:'right', position:'50.00%'});
 
     expect(problems.pageErrors).toEqual([]);
 });
@@ -101,5 +101,62 @@ test('an "at" outside its Event is moved to the nearer end, with a warning', asy
         expect.stringContaining('Event origin exit to aftermath at must be within the Event')
     ]));
 
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('in Event Details, the agent\'s time is shown, and exits are sorted by when they leave', async ({page}) => {
+    // The exit to Finale leaves 30 seconds in, so it comes before the one to Aftermath, though
+    // Aftermath is sooner.
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.finale.shown = 'true';
+        json.events.origin.exits = [{mode:'walk', to:'aftermath'}, {mode:'walk', to:'finale', at:{startOf:'origin', s:30}}];
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.app.selectEventBox('origin'));
+    
+    const readLines = () => page.getByText(/^(Walk to|Time:)/).filter({visible:true}).allTextContents();
+    await expect.poll(readLines).toEqual([expect.stringMatching(/^Time: .*16:40:00$/), expect.stringMatching(/^Walk to Finale/), expect.stringMatching(/^Walk to Aftermath/)]);
+    
+    // It moves on as the agent lives through the Event, and the exit to Finale is soon gone.
+    await investigate(page);
+    await expect.poll(readLines).toEqual([expect.stringMatching(/^Time: .*16:40:20$/), expect.stringMatching(/^Walk to Finale/), expect.stringMatching(/^Walk to Aftermath/)]);
+    await investigate(page);
+    await expect.poll(readLines).toEqual([expect.stringMatching(/^Time: .*16:40:40$/), expect.stringMatching(/^Walk to Aftermath/)]);
+    
+    expect(problems.pageErrors).toEqual([]);
+});
+
+test('for an Event spanning Ticks, its route starts as far down as the time is through the Tick it falls in', async ({page}) => {
+    // Long runs 16:40 to 22:40, alongside Origin, then Aftermath from 19:00. Its exit leaves at
+    // 18:20, 100 of the 140 minutes through the first Tick, which is less than a third of the way
+    // through Long, but most of the way down to Aftermath's Tick.
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5');
+        json.events.long = {
+            name:'Long', image:'../location/deck.jpg', start:'1900-01-01T16:40:00', duration:{h:6}, location:'port', shown:'true',
+            exits:[{mode:'walk', to:'aftermath', at:{startOf:'long', m:100}}]
+        };
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    await page.evaluate(() => tc.app.selectEventBox('long'));
+    
+    const readY = () => page.evaluate(() => {
+        const timeline = tc.app.getTimelineView(),
+            spline = timeline.flowLayer.getSpline('exit-long-aftermath'),
+            box = id => timeline.getEventBox(tc.model.getEventModel(id)),
+            long = box('long');
+        return spline?.startSide === 'right' ? 
+            {y:long.y + parseFloat(spline.startPosition) / 100 * long.height, longY:long.y, aftermathY:box('aftermath').y} : null;
+    });
+    await expect.poll(readY).not.toBeNull();
+    // A box hangs the same way below each Tick's top, so Long's y is that gap, and the first 
+    // Tick's part of it runs from there to the top of Aftermath's Tick.
+    const {y, longY, aftermathY} = await readY(),
+        aftermathTickTop = aftermathY - longY;
+    expect(y).toBeCloseTo(longY + 100 / 140 * (aftermathTickTop - longY), 0);
+    
     expect(problems.pageErrors).toEqual([]);
 });

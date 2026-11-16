@@ -375,7 +375,7 @@
 			"image":"../location/marathon_athens.jpg",
 			"start":"-000478-09-01T00:00:00", "duration":{"d":27240},
 			"location":"marathon_athens",
-			"actionLimit":30,
+			"actionLimit":25,
 			"shown":"!events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",
 			"values":{
 				"flourishes":{

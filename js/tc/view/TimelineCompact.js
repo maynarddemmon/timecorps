@@ -319,7 +319,8 @@
                 {boxesByEventId, ticksByTime} = timeline,
                 nextTicksByTime = {}, // The Ticks still wanted. The rest are destroyed below.
                 eventTargetXById = {},
-                eventTargetYById = {};
+                eventTargetYById = {},
+                boxTargetsById = {}; // Where each box is going, for placing mid-Event exits.
             for (const eventModel of orderedEvents) {
                 const startTime = eventModel.getStart(),
                     eventId = eventModel.id,
@@ -346,6 +347,7 @@
                 
                 const targetY = eventTargetYById[eventId] = (timelineOrdering >= 0 ? tierYs[timelineOrdering] : -EVENT_TIER_HEIGHT) + BOX_TOP_OFFSET,
                     eventBox = boxesByEventId[eventId];
+                boxTargetsById[eventId] = {y:targetY, height:targetHeight, ordering:timelineOrdering, spannedTiers};
                 if (eventBox) {
                     if (eventBox.isSelected()) {
                         selectedBoxAnimatingToBounds = {x:targetX, y:targetY, width:eventBox.width, height:targetHeight};
@@ -401,6 +403,10 @@
                 if (!nextGapRowsByTime[time]) gapRowsByTime[time].destroy();
             }
             timeline.gapRowsByTime = nextGapRowsByTime;
+            
+            // Mid-Event exits are placed by time, so they move with the layout.
+            timeline._exitLayout = {boxTargetsById, tierStarts, tierYs, tierActiveDurations};
+            refreshExitSplines(timeline);
             
             
             // Agents //
@@ -657,6 +663,29 @@
             }
         },
         
+        /*  How far down its Event's box an exit with an "at" leaves, as a percent of the box. 
+            A box within one tier is in proportion to the Event. One spanning tiers is laid out 
+            tier by tier, each tier's height standing for that tier's time whatever its length 
+            (see updateTimeLineLayoutDebounced), so the time is placed the same way: in 
+            proportion within the tier it falls in. */
+        getExitAtPercent = (timeline, exitModel) => {
+            const layout = timeline._exitLayout,
+                box = layout?.boxTargetsById[exitModel.event.id];
+            if (!box || box.spannedTiers === 0 || box.height <= 0) return 100 * exitModel.getLeaveFraction();
+            
+            const {tierStarts, tierYs, tierActiveDurations} = layout,
+                time = exitModel.getLeaveTime(),
+                firstTier = box.ordering;
+            let tier = firstTier;
+            while (tier < firstTier + box.spannedTiers && tierStarts[tier + 1] <= time) tier++;
+            const span = tierActiveDurations[tier],
+                fraction = span > 0 ? mathMin(1, mathMax(0, (time - tierStarts[tier]) / span)) : 1,
+                // The first tier's part of the box starts below its tick line.
+                tierTop = tierYs[tier] + (tier === firstTier ? BOX_TOP_OFFSET : 0),
+                y = tierTop + fraction * (tierYs[tier] + EVENT_TIER_HEIGHT - tierTop);
+            return 100 * mathMin(1, mathMax(0, (y - box.y) / box.height));
+        },
+        
         /*  Shows the exit splines that touch the selected Event: its own exits and the exits from 
             other Events that lead to it. Each route has a single spline id, exit-<from>-<to>, so a 
             route is drawn once no matter which end is selected. Reconciles against what is 
@@ -681,11 +710,18 @@
                     // An exit with an "at" starts on the box's right edge, as far down it as the
                     // exit is through the Event, rather than at a hashed point on the bottom.
                     if (fromBox && toBox && !newExitSplinesById[splineId]) {
+                        const start = exitModel.hasAt() ? 
+                                {view:fromBox, side:'right', position:getExitAtPercent(timeline, exitModel).toFixed(2) + '%'} :
+                                {view:fromBox, side:'bottom', position:hashToRange(fromModelId, 25,75) + '%'},
+                            current = existing[splineId];
+                        // One placed by time is drawn again when the layout moves it.
+                        if (current && (current.startSide !== start.side || current.startPosition !== start.position)) {
+                            flowLayer.disconnect(splineId);
+                            delete existing[splineId];
+                        }
                         newExitSplinesById[splineId] = existing[splineId] ?? flowLayer.connect({
                             splineId,
-                            start:exitModel.hasAt() ? 
-                                {view:fromBox, side:'right', position:(100 * exitModel.getLeaveFraction()) + '%'} :
-                                {view:fromBox, side:'bottom', position:hashToRange(fromModelId, 25,75) + '%'},
+                            start,
                             end:  {view:toBox,   side:'top',    position:hashToRange(toModelId, 25,75) + '%'},
                             style:EXIT_STYLE
                         });

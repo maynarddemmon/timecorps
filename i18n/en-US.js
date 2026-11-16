@@ -142,6 +142,7 @@ myt.I18N.setDictionary({
 "problem-credits":"Not enough credits",
 
 // Agents
+"agent-time":"Time: $0",
 "agent-actions":"Actions: $0",
 
 // Time Travel

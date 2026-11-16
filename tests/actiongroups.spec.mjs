@@ -46,6 +46,8 @@ test('grouped actions go on lines of their own, led by their labels, in order ar
     const problems = await startGame(page);
     
     await expect.poll(() => readLines(page)).toEqual([
+        // The agent's time comes first, before every line of actions.
+        expect.stringMatching(/^Time: /),
         'Early · Warm Up',
         expect.stringMatching(/^Actions: \d+ · Investigate/),
         'Late · Tidy · Sweep',
@@ -90,6 +92,7 @@ test('problems with action groups are warned about, and an action naming no grou
     // A group with order 0 comes right after the ungrouped line, and the stray and odd actions 
     // are on it.
     await expect.poll(() => readLines(page)).toEqual([
+        expect.stringMatching(/^Time: /),
         expect.stringMatching(/^Actions: \d+ · Investigate · Stray · Odd$/),
         'Zero · Flat',
         expect.stringMatching(/^Exits:/)
