@@ -12,7 +12,7 @@
         
         {
             NotifyingNumericStatModel, setStatFromData, setConstrainedValue, getConstrainedValueCfg,
-            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration},
+            timeUtil:{durationToMillis, stringToMillis, format:formatDate, formatCompactRange, formatDuration, DURATION_UNITS},
             STAT_ID_PARADOX, STAT_ID_HISTORICITY, STAT_ID_ATTESTATION, STAT_ID_HEALTH, STAT_ID_CHRONAL, 
             STAT_ID_EFFECTIVE_AGE, STAT_ID_SCORE, STAT_ID_CREDITS,
             cfg:{
@@ -25,8 +25,6 @@
         
         // An agent's Faction's HQ, for changing its stats, e.g. "agents.ME.hq.chronal".
         SCOPE_HQ = 'hq',
-        
-        RELATIVE_START_OFFSET_KEYS = ['w', 'd', 'h', 'm', 's', 'ms'],
         
         RELATIVE_START_KEYS = ['startOf', 'endOf', 'now'],
         
@@ -74,13 +72,14 @@
             }
             
             for (const offsetKey in offset) {
-                if (!RELATIVE_START_OFFSET_KEYS.includes(offsetKey) || !Number.isFinite(offset[offsetKey])) {
-                    console.warn(where, 'offset', offsetKey, 'must be one of', RELATIVE_START_OFFSET_KEYS.join(', '), 'with a number (ignoring it):', offset[offsetKey]);
+                if (!DURATION_UNITS.includes(offsetKey) || !Number.isFinite(offset[offsetKey])) {
+                    console.warn(where, 'offset', offsetKey, 'must be one of', DURATION_UNITS.join(', '), 'with a number (ignoring it):', offset[offsetKey]);
                     delete offset[offsetKey];
                 }
             }
             
-            return base + durationToMillis(offset);
+            // Whole years are calendar years from the base.
+            return base + durationToMillis(offset, base);
         },
         
         ACTION_TYPE_SINGULAR = '', // Empty so data will be stored under the raw prefixes.
@@ -1351,7 +1350,7 @@
             
             /*  When the exit leaves its Event, if not at the end: a number of millis, a date 
                 string, or an offset from an Event, as an Event's start is, e.g. 
-                {"startOf":"origin_alarm", "m":-3} or {"startOf":"<its own Event>", "d":7300}.
+                {"startOf":"origin_alarm", "m":-3} or {"startOf":"<its own Event>", "y":20}.
                 Worked out when it's first needed, once everything has loaded, so it can name
                 any Event, its own included. */
             setAt: function(at) {
@@ -1588,11 +1587,24 @@
                     this.set('start', start, true);
                     updateEndAttr(this);
                 }
+                // A duration in years waits for the start, since they're counted from it.
+                if (this._durationSpec) this.setDuration(this._durationSpec);
             },
             getStart: function(formatted) {return formatted ? formatDate(this.start) : this.start;},
             getEnd: function(formatted) {return formatted ? formatDate(this.end) : this.end;},
+            /*  A number of millis, or an object of units, e.g. {"h":2, "m":30}, or {"y":75}, 
+                whose whole years are calendar years from the start (see durationToMillis). 
+                It's worked out to millis at once, or as soon as the start is set, so 
+                changing the start later doesn't change it. */
             setDuration: function(duration) {
-                if (typeof duration !== 'number') duration = durationToMillis(duration);
+                this._durationSpec = undefined;
+                if (typeof duration !== 'number') {
+                    if (duration?.y && this.start == null) {
+                        this._durationSpec = duration;
+                        return;
+                    }
+                    duration = durationToMillis(duration, this.start);
+                }
                 if (this.duration !== duration) {
                     this.set('duration', duration, true);
                     updateEndAttr(this);

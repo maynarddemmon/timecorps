@@ -373,7 +373,7 @@
 		"marathon_golden_athens":{
 			"name":"Golden Age of Athens",
 			"image":"../location/marathon_athens.jpg",
-			"start":"-000478-09-01T00:00:00", "duration":{"d":27240},
+			"start":"-000478-09-01T00:00:00", "duration":{"y":75},
 			"location":"marathon_athens",
 			"actionLimit":25,
 			"shown":"!events.marathon_sack.values.sacked.value && events.marathon.historicity.value > 10",

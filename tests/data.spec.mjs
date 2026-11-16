@@ -7,6 +7,9 @@ import {readJson, fileExists, getScenarioFiles, TEST_DATA_DIR, ROOT} from './hel
 
 /*  The keys of tc.cfg, which expressions read as "timeline.cfg.<KEY>", taken from the cfg 
     block in js/tc/tc.js. */
+// The units a duration, or an offset in one, may have, as timeUtil's DURATION_UNITS.
+const DURATION_UNITS = ['y', 'w', 'd', 'h', 'm', 's', 'ms'];
+
 const CFG_KEYS = (() => {
     const src = fs.readFileSync(path.join(ROOT, 'js/tc/tc.js'), 'utf8').replace(/\r/g, ''),
         start = src.indexOf('\n            cfg: {\n'),
@@ -615,7 +618,7 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                         if ((startOf === undefined) === (endOf === undefined)) problems.push(where + ' at must have one of startOf or endOf');
                         else if (!events[refId]) problems.push(where + ' at names ' + refId + ', which isn\'t an event');
                         for (const [key, value] of Object.entries(offset)) {
-                            if (!['w', 'd', 'h', 'm', 's', 'ms'].includes(key) || !Number.isFinite(value)) problems.push(where + ' at offset ' + key + ' is not a duration unit with a number');
+                            if (!DURATION_UNITS.includes(key) || !Number.isFinite(value)) problems.push(where + ' at offset ' + key + ' is not a duration unit with a number');
                         }
                     } else {
                         problems.push(where + ' at is not a date or an offset from an event');
@@ -836,10 +839,27 @@ for (const DATA_DIR of ['data', TEST_DATA_DIR]) test.describe(DATA_DIR, () => {
                         problems.push(eventId + ' start names ' + refId + ', which isn\'t loaded before it');
                     }
                     for (const [key, value] of Object.entries(offset)) {
-                        if (!['w', 'd', 'h', 'm', 's', 'ms'].includes(key) || !Number.isFinite(value)) problems.push(eventId + ' start offset ' + key + ' is not a duration unit with a number');
+                        if (!DURATION_UNITS.includes(key) || !Number.isFinite(value)) problems.push(eventId + ' start offset ' + key + ' is not a duration unit with a number');
                     }
                 }
                 loaded.add(eventId);
+            }
+        }
+        expect(problems).toEqual([]);
+    });
+    
+    test('every duration is a number, or has only duration units, with numbers', () => {
+        const problems = [];
+        for (const scenario of scenarios) {
+            for (const [eventId, event] of Object.entries(scenario.events ?? {})) {
+                const duration = event.duration;
+                if (isPlainObject(duration)) {
+                    for (const [key, value] of Object.entries(duration)) {
+                        if (!DURATION_UNITS.includes(key) || !Number.isFinite(value)) problems.push(eventId + ' duration ' + key + ' is not a duration unit with a number');
+                    }
+                } else if (duration !== undefined && !Number.isFinite(duration)) {
+                    problems.push(eventId + ' duration is not a number or an object of duration units');
+                }
             }
         }
         expect(problems).toEqual([]);

@@ -243,8 +243,9 @@
 		"salamis_league":{
 			"name":"The Delian League",
 			"image":"../location/salamis_delos.jpg",
-			"start":"-000477-01-01T00:00:00", "duration":{"d":16250},
+			"start":"-000477-01-01T00:00:00", "duration":{"y":45},
 			"location":"salamis_delos",
+			"actionLimit":15,
 			"shown":"events.salamis_retreat.values.retreats.value && events.salamis.historicity.value > 10",
 			"values":{
 				"leads":{

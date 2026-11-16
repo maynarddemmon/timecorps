@@ -36,12 +36,40 @@ test('a start can be an offset from the start or end of an earlier event, worked
     expect(problems.pageErrors).toEqual([]);
 });
 
+test('years are calendar years from where they start, in a start\'s offset and in a duration', async ({page}) => {
+    // Finale starts 5 years after Aftermath ends, across 1904's leap day, and lasts a year and a 
+    // half. Its duration comes before its start, so it waits for the start to count from.
+    await page.route('**/tests/data/test_scenario.json5', route => {
+        const json = readTestData('test_scenario.json5'),
+            {start:_start, duration:_duration, ...finale} = json.events.finale;
+        json.events.finale = {duration:{y:1.5}, ...finale, start:{endOf:'aftermath', y:5}};
+        return route.fulfill({json});
+    });
+    const problems = await startGame(page);
+    
+    const halfMeanYear = 0.5 * 365.2425 * 24 * 60 * 60 * 1000;
+    expect(await page.evaluate(() => {
+        const finale = tc.model.getEventModel('finale');
+        return [finale.getStart(), finale.getEnd()];
+    })).toEqual([Date.UTC(1905, 0, 1, 20), Date.UTC(1906, 0, 1, 20) + halfMeanYear]);
+    
+    // Without a date to count from, a year is the calendar's average. Before the Common Era too.
+    expect(await page.evaluate(() => {
+        const {durationToMillis} = tc.timeUtil,
+            from = Date.UTC(-478, 8, 1);
+        return [new Date(from + durationToMillis({y:75}, from)).toISOString(), durationToMillis({y:2, d:1})];
+    })).toEqual(['-000403-09-01T00:00:00.000Z', 2 * (24 * 60 * 60 * 1000 * 365.2425) + 24 * 60 * 60 * 1000]);
+    
+    expect(problems.warnings).toEqual([]);
+    expect(problems.pageErrors).toEqual([]);
+});
+
 test('a start naming an event that isn\'t loaded yet, or given badly, is warned about', async ({page}) => {
     await routeStarts(page, {
         lever:{endOf:'aftermath'},
         signal:{startOf:'relay', endOf:'relay'},
         boats:{startOf:'boats'},
-        backlog:{startOf:'plan', y:1},
+        backlog:{startOf:'plan', mo:1},
         origin:{now:'tomorrow'},
         finale:{now:'date', startOf:'plan'}
     });
@@ -52,7 +80,7 @@ test('a start naming an event that isn\'t loaded yet, or given badly, is warned 
         'Event lever start endOf must name an Event loaded before this one (using 0): aftermath',
         'Event signal start must have one of "startOf", "endOf" or "now" (using 0): {startOf: relay, endOf: relay}',
         'Event boats start startOf must name an Event loaded before this one (using 0): boats',
-        'Event backlog start offset y must be one of w, d, h, m, s, ms with a number (ignoring it): 1',
+        'Event backlog start offset mo must be one of y, w, d, h, m, s, ms with a number (ignoring it): 1',
         'Event origin start now must be "date" or "datetime" (using 0): tomorrow',
         'Event finale start must have one of "startOf", "endOf" or "now" (using 0): {now: date, startOf: plan}'
     ]));

@@ -38,6 +38,7 @@
         MILLIS_PER_WEEK = 7 * MILLIS_PER_DAY,
         MILLIS_PER_MONTH = MILLIS_PER_DAY * 30.41, // Approximate
         MILLIS_PER_YEAR = MILLIS_PER_DAY * 365, // Approximate (no leap years, leap seconds, etc.)
+        MILLIS_PER_MEAN_YEAR = MILLIS_PER_DAY * 365.2425, // The Gregorian calendar's average year.
         MILLIS_PER_DECADE = 10 * MILLIS_PER_YEAR,
         MILLIS_PER_CENTURY = 10 * MILLIS_PER_DECADE,
         MILLIS_PER_MILLENIUM = 10 * MILLIS_PER_CENTURY,
@@ -108,7 +109,11 @@
             MILLIS_PER_WEEK,
             MILLIS_PER_MONTH,
             MILLIS_PER_YEAR,
+            MILLIS_PER_MEAN_YEAR,
             MILLIS_PER_DECADE,
+            
+            /*  The units a duration, or an offset in one, may have. See durationToMillis. */
+            DURATION_UNITS: ['y', 'w', 'd', 'h', 'm', 's', 'ms'],
             MILLIS_PER_CENTURY,
             MILLIS_PER_MILLENIUM,
             
@@ -133,14 +138,26 @@
                      h: hours
                      d: days
                      w: weeks
+                     y: years
                 
-                Note there is deliberately no y or mo: years and months are not
-                fixed lengths, and a duration that means "until this date" should
-                be authored as an end instant instead. */
-            durationToMillis: spec => {
+                Years aren't a fixed length, so given from, the time the duration starts at,
+                whole years are calendar years from it: 1 Sep 479 BCE plus {"y":75} is 1 Sep 
+                404 BCE. Without from, and for any fraction of a year, a year is the 
+                calendar's average. There is deliberately no mo, since months vary too much 
+                to mean anything without a date. */
+            durationToMillis: (spec, from) => {
                 if (spec == null) return 0;
                 if (typeof spec === 'number') return spec;
-                return (spec.w || 0) * MILLIS_PER_WEEK
+                const years = spec.y || 0;
+                let yearMillis = years * MILLIS_PER_MEAN_YEAR;
+                if (years && from != null) {
+                    const wholeYears = mathTrunc(years),
+                        date = new Date(from);
+                    date.setUTCFullYear(date.getUTCFullYear() + wholeYears);
+                    yearMillis = date.getTime() - from + (years - wholeYears) * MILLIS_PER_MEAN_YEAR;
+                }
+                return yearMillis
+                     + (spec.w || 0) * MILLIS_PER_WEEK
                      + (spec.d || 0) * MILLIS_PER_DAY
                      + (spec.h || 0) * MILLIS_PER_HOUR
                      + (spec.m || 0) * MILLIS_PER_MINUTE
@@ -250,7 +267,7 @@
                 }
                 if (abs < 30 * MILLIS_PER_DAY)  return i18n('time-duration-days', mathRound(millis / MILLIS_PER_DAY));
                 if (abs < 365 * MILLIS_PER_DAY) return i18n('time-duration-months', mathRound(millis / (30 * MILLIS_PER_DAY)));
-                return i18n('time-duration-years', +(millis / (365.2425 * MILLIS_PER_DAY)).toFixed(1));
+                return i18n('time-duration-years', +(millis / MILLIS_PER_MEAN_YEAR).toFixed(1));
             },
             
             /*  A rough, single-unit duration for display: "2 min", "5 hours", "3 weeks", "846 years".
