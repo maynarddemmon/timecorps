@@ -105,12 +105,15 @@ JS.Packages(file => {
     file(VIEW_ROOT + 'EndGameBrief.js').provides('tc.EndGameBrief').requires('tc.ModalDialog','tc.WideView','tc.UnderlineBtn','tc.Spacer','tc.legacy');
     file(VIEW_ROOT + 'SettingsDialog.js').provides('tc.SettingsDialog').requires('tc.ModalDialog','tc.settings');
     
+    // Console testing aids, as tc.GODMODE.
+    file(TC_ROOT + 'GodMode.js').provides('tc.GODMODE').requires('tc.Model','tc.EventModel','tc.AgentModel','tc.OperationModel','tc.NumericStatModel','tc.checks');
+    
     // Include Everything
     file(TC_ROOT + 'App.js').provides('tc.App').requires(
         'JSON5','tc.Model','tc.legacy','tc.PersistenceManager','tc.Agents','tc.Events','tc.Missions',
         'tc.Spacer','tc.WideView','tc.Panel',
         'tc.dialogUtil','tc.TimelineCompact','tc.EventDetails','tc.OperationDetails',
         'tc.AgentDossier','tc.AreaBrief','tc.EventBrief','tc.FactionBrief','tc.MissionBrief','tc.EndGameBrief',
-        'tc.SettingsDialog','tc.FloatingText'
+        'tc.SettingsDialog','tc.FloatingText','tc.GODMODE'
     );
 });

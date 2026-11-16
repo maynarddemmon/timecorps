@@ -736,6 +736,13 @@ A video (`"video":true`) is always `<id>.webm` and plays instead of the picture 
   
   Run just it with `npx playwright test data`.
 - **The other tests don't use these files.** They play with their own data in `tests/data/`, so changing a scenario never breaks them.
+- **In the browser console, `tc.GODMODE`** lets you look at and change a game while you play it, using the same expressions and keys as the data:
+  - `tc.GODMODE.dump(expr)` evaluates an expression and returns plain data, e.g. `dump('agents.ME')`, `dump('events.marathon.values')`, `dump('scratch')`.
+  - `tc.GODMODE.set(key, value)` sets what a `set` key names to a number, boolean or string, e.g. `set('events.marathon_council.values.forBattle', true)`, `set('agents.ME.event', 'marathon_landing')`, `set('operations.salamis_fight.hidden', false)`.
+  - `tc.GODMODE.setExpr(key, expr)` sets it to what an expression works out to, once, e.g. `setExpr('player.health', 'player.health.max')`.
+  - `tc.GODMODE.adj(key, amount)` adds an amount or expression to what an `adj` key names, e.g. `adj('player.chronal', 10)`, `adj('timeline.credits', 100)`.
+  - `agent` and `event` are the selected agent and event, unless a last argument names them, e.g. `dump('event.values', {event:'origin'})`. `tc.GODMODE.help()` lists all this.
+  - Changes follow the game's rules, as an action's do: stats stay within their limits, and reaching one has its usual effect. set and adj return what they changed, as dump shows it.
 
 ## Recipes
 
