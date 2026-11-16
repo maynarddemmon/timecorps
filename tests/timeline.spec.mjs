@@ -492,3 +492,24 @@ test('precursor splines follow an Event being hidden and shown again, at either 
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('a Tick goes away when the only Event starting there is hidden again, rather than sitting on another row', async ({page}) => {
+    const problems = await startGame(page);
+    
+    // The Ticks, as [time, y], top to bottom.
+    const readTicks = () => page.evaluate(() => Object.values(tc.app.getTimelineView().ticksByTime)
+        .map(tick => [tick.time, Math.round(tick.y)]).sort((a, b) => a[1] - b[1]));
+    const before = await readTicks();
+    
+    // Lever starts earlier than anything shown, so revealing it adds a row at the top.
+    await page.evaluate(() => tc.model.getEventModel('lever').attestation.setValue(50));
+    await expect.poll(async () => (await readTicks()).length).toBe(before.length + 1);
+    
+    // Hidden again: back to the rows there were, and no two Ticks in one place.
+    await page.evaluate(() => tc.model.getEventModel('lever').setHidden(true));
+    await expect.poll(readTicks).toEqual(before);
+    const ys = (await readTicks()).map(([, y]) => y);
+    expect(new Set(ys).size).toBe(ys.length);
+    
+    expect(problems.pageErrors).toEqual([]);
+});

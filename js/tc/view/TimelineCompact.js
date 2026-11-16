@@ -317,6 +317,7 @@
             
             const rowHeaderWidth = rowHeaders.width,
                 {boxesByEventId, ticksByTime} = timeline,
+                nextTicksByTime = {}, // The Ticks still wanted. The rest are destroyed below.
                 eventTargetXById = {},
                 eventTargetYById = {};
             for (const eventModel of orderedEvents) {
@@ -361,8 +362,9 @@
                     tick = ticksByTime[startTime];
                 if (tick) {
                     animateAttrs(tick, {y:tickTargetY});
+                    nextTicksByTime[startTime] = tick;
                 } else {
-                    ticksByTime[startTime] = new Tick(rowHeaders, {
+                    nextTicksByTime[startTime] = ticksByTime[startTime] = new Tick(rowHeaders, {
                         timeline, time:startTime,
                         y:tickTargetY, 
                         width:rowHeaderWidth, height:TL_TICK_LINE_HEIGHT
@@ -370,9 +372,16 @@
                 }
             }
             
+            // A Tick no shown Event starts at any more, e.g. once its only Event is hidden again,
+            // would otherwise stay where it was, on top of a row that has moved up under it.
+            for (const time in ticksByTime) {
+                if (!nextTicksByTime[time]) ticksByTime[time].destroy();
+            }
+            timeline.ticksByTime = nextTicksByTime;
+            
             // Each tick shows how long something is in progress from its start.
             for (let i = 0; i < tierCount; i++) {
-                ticksByTime[tierStarts[i]]?.setGap(tierActiveDurations[i]);
+                nextTicksByTime[tierStarts[i]]?.setGap(tierActiveDurations[i]);
             }
             
             // Gap Rows: create or move the ones still wanted, destroy the rest.
