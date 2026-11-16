@@ -285,6 +285,8 @@ myt.I18N.setDictionary({
 "event-historical-account":"Historical Account",
 "event-no-description":"The historical record is silent.",
 "event-no-agents":"No agents at this event.",
+"event-preview-intro":"If $0 were here, they could possibly:",
+"event-preview-actions":"Actions:",
 "event-exits":"Exits:",
 "event-precursors":"Affected By:",
 "event-descendants":"Affects:",

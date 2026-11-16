@@ -223,3 +223,42 @@ test('an agent\'s exits are listed by travel time without reordering the Event\'
     
     expect(problems.pageErrors).toEqual([]);
 });
+
+test('with no agents at an Event, it previews the selected agent\'s actions there, all disabled', async ({page}) => {
+    const problems = await startGame(page);
+    const preview = page.locator('.myt-NoAgentsPreview').filter({visible:true}),
+        readPreview = () => preview.evaluate(elem => ({
+            text:elem.textContent,
+            actions:[...elem.querySelectorAll('.action')].map(btn => ({label:btn.textContent, disabled:btn.classList.contains('disabled')}))
+        }));
+    
+    // Alpha is selected, at origin. Aftermath has no one at it.
+    await page.evaluate(() => {
+        tc.model.getAgentModel('AL').selectRow();
+        tc.app.selectEventBox('aftermath');
+    });
+    await expect(preview).toContainText('No agents at this event. If Alpha were here, they could possibly:');
+    const shown = await readPreview();
+    expect(shown.actions.length).toBeGreaterThan(0);
+    expect(shown.actions.every(action => action.disabled)).toBe(true);
+    expect(shown.actions.map(action => action.label)).toEqual(expect.arrayContaining([expect.stringMatching(/^Investigate/)]));
+    
+    // Clicking one does nothing.
+    const attemptsBefore = await page.evaluate(() => tc.model.getAgentModel('AL').getLog().length);
+    await preview.locator('.action').first().click({force:true});
+    expect(await page.evaluate(() => tc.model.getAgentModel('AL').getLog().length)).toBe(attemptsBefore);
+    
+    // An action hidden for Alpha isn't previewed.
+    await page.evaluate(() => {
+        const action = tc.model.getEventModel('aftermath').getActionModels()._investigate;
+        action.setHiddenFor('agent.name === \'Alpha\'');
+        tc.app.getEventDetailsView().notifyEventModelChanged(tc.model.getEventModel('aftermath'));
+    });
+    await expect.poll(async () => (await readPreview()).actions.some(action => /^Investigate/.test(action.label))).toBe(false);
+    
+    // With no agent selected, it just says there are none.
+    await page.evaluate(() => tc.app.getEventDetailsView().notifyAgentSelectedChanged(null));
+    await expect.poll(() => preview.textContent()).toBe('No agents at this event.');
+    
+    expect(problems.pageErrors).toEqual([]);
+});

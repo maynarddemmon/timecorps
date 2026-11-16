@@ -62,6 +62,15 @@
             };
         },
         
+        /*  An action previewed for an agent who isn't at its Event: just its label and the 
+            skill it checks, since its ease, costs and risks are worked out for the Event the 
+            agent is at. Always disabled. */
+        getPreviewActionBtnInfo = actionModel => {
+            const label = actionModel.label,
+                name = actionModel.getActionSkillName();
+            return {text:label, tooltip:label + (name ? ICON_SEPARATOR + name : ''), disabled:true};
+        },
+        
         AgentExitBtn = new JS.Module('AgentExitBtn', {
             configure: function(agentModel, exitModel, showTargetName) {
                 this.agentModel = agentModel;
@@ -100,6 +109,105 @@
         
         UnderlineExitBtn = new JSClass('UnderlineExitBtn', InlineUnderlineBtn, {
             include: [AgentExitBtn, EventNavHover]
+        }),
+        
+        /*  Adds the lines of an agent's actions at an Event to linesView: a line led by the 
+            actions the agent has left, with the ungrouped actions, and a line for each action
+            group with visible actions, led by its label. The lines go in order, the ungrouped 
+            one's being 0, so a group with a negative order comes before it and one with a 
+            positive order after. As a preview, of what the agent could do if they were there,
+            every action is disabled and shows only its label (see getPreviewActionBtnInfo), 
+            and the ungrouped line, with no actions left to count, is only shown with actions 
+            in it. Returns how many actions were added. */
+        addActionLines = (linesView, agentModel, eventModel, isPreview) => {
+            const actionModels = Object.values(eventModel.getActionModels());
+            if (actionModels.length === 0) return 0;
+            
+            const ungroupedLine = {
+                    order:0, 
+                    label:isPreview ? i18n('event-preview-actions') : i18n('agent-actions', wrapInStyledSpan(agentModel.getActionsRemaining(), colorAction)), 
+                    actionModels:[]
+                },
+                lines = [ungroupedLine],
+                linesByGroupId = {};
+            for (const actionModel of actionModels) {
+                const actionGroup = rootModel.getActionGroup(actionModel.getGroup());
+                let line;
+                if (actionGroup) {
+                    line = linesByGroupId[actionGroup.id];
+                    if (!line) {
+                        lines.push(line = linesByGroupId[actionGroup.id] = {
+                            order:actionGroup.order,
+                            label:actionGroup.label,
+                            actionModels:[]
+                        });
+                    }
+                } else {
+                    line = ungroupedLine;
+                }
+                if (!actionModel.isHiddenFor(agentModel)) line.actionModels.push(actionModel);
+            }
+            
+            // The sort is stable, so a group with an order of 0 comes after the ungrouped line.
+            lines.sort(ORDER_SORT_FUNC);
+            let addedCount = 0;
+            for (const line of lines) {
+                if ((line === ungroupedLine && !isPreview) || line.actionModels.length > 0) {
+                    new InlineText(linesView, {text:line.label});
+                    for (const actionModel of line.actionModels) {
+                        new InlineSeparator(linesView);
+                        new UnderlineActionBtn(linesView, isPreview ? getPreviewActionBtnInfo(actionModel) : getActionBtnInfo(agentModel, actionModel), [{
+                            doActivated: function() {
+                                agentModel.selectRow();
+                                agentModel.doAction(actionModel, this);
+                            }
+                        }]);
+                        addedCount++;
+                    }
+                    new View(linesView, {tagName:'br'}, [pkg.InlineMixin]);
+                }
+            }
+            return addedCount;
+        },
+        
+        /*  Shown when no agents are at an Event: says so, and lists the actions the selected 
+            agent could take if they were there, all disabled, so a player can see what an 
+            Event offers after leaving it. Just the message when there's no agent to ask about,
+            or nothing they could do. */
+        NoAgentsPreview = new JSClass('NoAgentsPreview', WideView, {
+            initNode: function(parent, attrs) {
+                const self = this,
+                    {agentModel, eventModel} = attrs;
+                delete attrs.agentModel;
+                delete attrs.eventModel;
+                
+                self.callSuper(parent, attrs);
+                
+                const linesView = self.linesView = new WideView(self, {
+                        x:padding, y:padding, percentOfParentWidthOffset:-2*padding
+                    }, [SizeHeightToDom]),
+                    msgTxt = new InlinePlainText(linesView, {fontStyle:'italic', text:i18n('event-no-agents')});
+                
+                if (agentModel?.isPlayerControlled() && !agentModel.isDead()) {
+                    msgTxt.setText(i18n('event-no-agents') + ' ' + i18n('event-preview-intro', agentModel.name));
+                    new View(linesView, {tagName:'br'}, [pkg.InlineMixin]);
+                    if (addActionLines(linesView, agentModel, eventModel, true) === 0) {
+                        // Nothing to show after all.
+                        linesView.destroyAllSubviews();
+                        new InlinePlainText(linesView, {fontStyle:'italic', text:i18n('event-no-agents')});
+                    }
+                }
+                self.updateHeight();
+            },
+            setWidth: function(v) {
+                this.callSuper(v);
+                if (this.inited) this.updateHeight();
+            },
+            updateHeight: function() {
+                const linesView = this.linesView;
+                linesView.sizeViewToDom();
+                this.setHeight(linesView.y + linesView.height + padding);
+            }
         }),
         
         AgentRow = new JSClass('AgentRow', WideView, {
@@ -163,57 +271,7 @@
                         recallBtn.setVisible(false);
                     }
                     
-                    // Update Actions: a line led by the actions the agent has left, with the 
-                    // ungrouped actions, and a line for each action group with visible actions, 
-                    // led by its label. The lines go in order, the ungrouped one's being 0, so a 
-                    // group with a negative order comes before it and one with a positive order 
-                    // after.
-                    const actionModels = Object.values(eventModel.getActionModels());
-                    if (actionModels.length > 0) {
-                        const ungroupedLine = {
-                                order:0, 
-                                label:i18n('agent-actions', wrapInStyledSpan(agentModel.getActionsRemaining(), colorAction)), 
-                                actionModels:[]
-                            },
-                            lines = [ungroupedLine],
-                            linesByGroupId = {};
-                        for (const actionModel of actionModels) {
-                            const actionGroup = rootModel.getActionGroup(actionModel.getGroup());
-                            let line;
-                            if (actionGroup) {
-                                line = linesByGroupId[actionGroup.id];
-                                if (!line) {
-                                    lines.push(line = linesByGroupId[actionGroup.id] = {
-                                        order:actionGroup.order,
-                                        label:actionGroup.label,
-                                        actionModels:[]
-                                    });
-                                }
-                            } else {
-                                line = ungroupedLine;
-                            }
-                            if (!actionModel.isHiddenFor(agentModel)) line.actionModels.push(actionModel);
-                        }
-                        
-                        // The sort is stable, so a group with an order of 0 comes after the 
-                        // ungrouped line.
-                        lines.sort(ORDER_SORT_FUNC);
-                        for (const line of lines) {
-                            if (line === ungroupedLine || line.actionModels.length > 0) {
-                                new InlineText(linesView, {text:line.label});
-                                for (const actionModel of line.actionModels) {
-                                    new InlineSeparator(linesView);
-                                    new UnderlineActionBtn(linesView, getActionBtnInfo(agentModel, actionModel), [{
-                                        doActivated: function() {
-                                            agentModel.selectRow();
-                                            agentModel.doAction(actionModel, this);
-                                        }
-                                    }]);
-                                }
-                                new View(linesView, {tagName:'br'}, [pkg.InlineMixin]);
-                            }
-                        }
-                    }
+                    addActionLines(linesView, agentModel, eventModel, false);
                     
                     // Update Exits
                     const exitLabelView = new InlinePlainText(linesView, {text:i18n('event-exits') + '\u00A0', visible:false}),
@@ -349,7 +407,9 @@
         
         notifyAgentSelectedChanged: function(agentModel) {
             this.selectedAgentModel = agentModel;
-            this.updateForSelectedAgent();
+            // Redraws the agents too, since with none at the Event they preview what the 
+            // selected agent could do. That also updates for the selected agent.
+            this._updateForEventModel();
         },
         
         updateHistoryBtns: function(prevDisabled, prevBtnTooltip, nextDisabled, nextBtnTooltip) {
@@ -385,11 +445,7 @@
                     new AgentRow(agentsRow, {agentModel, eventModel});
                     addedCount++;
                 }
-                if (addedCount === 0) {
-                    new PaddedPlainText(agentsRow, {
-                        padding, whiteSpace:'normal', fontStyle:'italic', text:i18n('event-no-agents')
-                    });
-                }
+                if (addedCount === 0) new NoAgentsPreview(agentsRow, {agentModel:self.selectedAgentModel, eventModel});
                 
                 // Description
                 self.descriptionMedia.setMedia(...eventModel.getMediaUrls());
