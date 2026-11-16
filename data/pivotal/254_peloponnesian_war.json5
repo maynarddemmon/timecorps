@@ -224,7 +224,7 @@
 		"peloponnesian_war":{
 			"name":"Athens Surrenders",
 			"image":"../location/peloponnesian_war_athens.jpg",
-			"start":"-000403-04-25T09:00:00", "duration":{"h":6},
+			"start":{"endOf":"marathon_golden_athens", "h":9}, "duration":{"h":6},
 			"location":"peloponnesian_war_athens",
 			"exits":[
 				{"mode":"waitFor", "to":"peloponnesian_war_walls"}
