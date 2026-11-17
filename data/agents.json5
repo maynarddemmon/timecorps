@@ -311,10 +311,13 @@
 				"persuasion":-25
 			}
 		},
+		// Ex-Corps, now Unaligned. Found posing as a reporter at Spring Returns, where he offers
+		// You a way into the Castle.
 		"AI":{
 			"name":"Aldous Ingram",
 			"born":"2128-06-13", "age":44,
-			"faction":"timecorps",
+			"role":"Reporter",
+			"event":"lgv_announcement",
 			"skillsByTrack":{"high":["chronogation", "disguise", "deception"], "low":["str", "cha", "persuasion"]},
 			"skills":{
 				"chronogation":-25,

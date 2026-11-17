@@ -20,7 +20,36 @@
 							"scratch.time_corps_hq_hidden":"false",
 							"scratch.the_void_hidden":"false"
 						},
-						"adj":{"player.chronal":"8 + d(6)"}
+						"adj":{"player.chronal":"8 + d(4,2)"}
+					}
+				},
+				"cancel":{
+					"label":"Not Yet"
+				}
+			}
+		},
+		// The reporter at Spring Returns, once You get him talking. Joining reveals the Castle,
+		// the Unaligned HQ. You are probably Unaligned already, which is fine.
+		"unaligned_offer":{
+			"type":"confirm",
+			"title":"The Reporter’s Offer",
+			"description":[
+				"The reporter folds his notebook away. He is older than his press pass, and his gloves are a century out of date. “You’re not with the Institute,” he says, “and you’re not with the press. You’re here for the same reason I am.” He glances at the device on your wrist. “I wore one of those for eleven years.”",
+				"<p>“Aldous Ingram. I was Corps, once, until a mission went right for all the wrong reasons. I don’t work for them now, or for the people in dark suits. There are a few of us like that. We keep a place at the top of a dead building, with a roof full of solar panels and a jump rig held together with tape. We call it the Castle.”",
+				{"text":"<p>“You’re on your own, as far as I can tell. You needn’t be.”", "shown":"player.faction === 'unaligned'"},
+				{"text":"<p>“You’re spoken for, I know. But the door is open, if they ever stop deserving you.”", "hidden":"player.faction === 'unaligned'"},
+				"<p>He writes an address on a page of the notebook, tears it out, and holds it out to you. “Well?”"
+			],
+			"buttons":{
+				"confirm":{
+					"label":"Join the Unaligned",
+					"onClick":{
+						"set":{
+							"player.faction":"'unaligned'",
+							"scratch.unaligned_hq_hidden":"false",
+							"scratch.the_void_hidden":"false"
+						},
+						"adj":{"player.chronal":"12 + d(4)"}
 					}
 				},
 				"cancel":{
@@ -545,11 +574,15 @@
 					"costs":{"agent.action":null},
 					"adj":{"event.attestation":"10"}
 				},
+				// The reporter is Aldous Ingram, ex-Corps, who offers You the Castle.
 				"reporter":{
 					"label":"Talk to a Reporter",
 					"skillCheck":{"actionType":"social"},
+					"available":"agent.id === 'ME'",
 					"hidden":"event.actions.reporter.doneCount > 0",
-					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}}
+					"set":{"agents.AI.hidden":{"onSuccess":"false"}},
+					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}},
+					"prompt":"unaligned_offer"
 				},
 				"crowd":{
 					"label":"Watch the Crowd",
@@ -561,6 +594,7 @@
 				"talk":{
 					"label":"Talk to Beniko",
 					"skillCheck":{"difficulty":"no-roll"},
+					"available":"agent.id === 'ME'",
 					"shown":"agents.BA.shown && agents.BA.event === 'lgv_announcement' && player.faction !== 'timecorps' && events.lgv_model.shown",
 					"costs":{"agent.action":null},
 					"prompt":"corps_offer"
@@ -638,6 +672,7 @@
 				"talk":{
 					"label":"Talk to the Man in the Dark Suit",
 					"skillCheck":{"difficulty":"no-roll"},
+					"available":"agent.id === 'ME'",
 					"hidden":"event.actions.talk.doneCount > 0",
 					"costs":{"agent.action":null},
 					"prompt":"syndicate_offer"
