@@ -68,6 +68,13 @@
         Z_IDX_EVENT = 1,
         Z_IDX_FLOW = 2,
         Z_IDX_AGENT = 3,
+        Z_IDX_AGENT_SHRINKING = 4,
+        Z_IDX_AGENT_GROWING = 5,
+        
+        // An AgentToken grows to this many times its size on mouseover, from its center.
+        AGENT_TOKEN_HOVER_SCALE = 4,
+        AGENT_TOKEN_GROW_MILLIS = 400,
+        AGENT_TOKEN_SHRINK_MILLIS = 200,
         
         DEFAULT_STYLE = [{
             color:colorUltraLight, cap:null, thickness:1, startAngle:'vertical', endAngle:'vertical', 
@@ -917,7 +924,7 @@
         
         
         // Agent ///////////////////////////////////////////////////////////////
-        AgentToken = new JSClass('AgentToken', pkg.StatusAgentMarker, {
+        AgentToken = pkg.AgentToken = new JSClass('AgentToken', pkg.StatusAgentMarker, {
             include: [M.TransformSupport],
             
             initNode: function(parent, attrs) {
@@ -929,10 +936,54 @@
                 delete attrs.timeline;
                 
                 attrs.zIndex = Z_IDX_AGENT;
+                self.hoverGrowth = 0;
                 self.callSuper(parent, attrs);
                 
                 // Setup debounced revalidateForAgent so it is unique per instance.
                 self.revalidateForAgent = debounce(self._revalidateForAgent, STANDARD_DEBOUNCE_MILLIS);
+            },
+            
+            /*  Grows on mouseover, in front of the other tokens, and shrinks back after. */
+            doSmoothMouseOver: function(isOver) {
+                const self = this;
+                
+                self.callSuper(isOver);
+                
+                self.setZIndex(isOver ? Z_IDX_AGENT_GROWING : Z_IDX_AGENT_SHRINKING);
+                self.stopActiveAnimators('hoverGrowth');
+                self._fullnameTxt?.setVisible(false);
+                self.animate({
+                    attribute:'hoverGrowth', to:isOver ? 1 : 0, 
+                    duration:isOver ? AGENT_TOKEN_GROW_MILLIS : AGENT_TOKEN_SHRINK_MILLIS, 
+                    easingFunction:isOver ? 'outQuad' : 'inQuad'
+                }).next(() => {
+                    // Show full name below.
+                    if (self.mouseOver) {
+                        self._fullnameTxt ??= new PaddedPlainText(self, {
+                            paddingTop:spacing, paddingBottom:spacing,
+                            paddingLeft:2*spacing, paddingRight:2*spacing,
+                            align:'center', y:self.size + spacing,
+                            textColor:colorUltraLight,
+                            bgColor:colorMegaDark,
+                            roundedCorners:cornerRadius
+                        });
+                        self._fullnameTxt.setText(self.model.getName());
+                        self._fullnameTxt.setVisible(true);
+                    }
+                });
+            },
+            
+            /*  How far grown it is, from 0, its size, to 1, AGENT_TOKEN_HOVER_SCALE times it. 
+                It grows from its center by a negative margin, rather than by moving it, so it 
+                doesn't fight the layout's moves of x and y. */
+            setHoverGrowth: function(v) {
+                this.hoverGrowth = v;
+                const size = this._baseSize * (1 + (AGENT_TOKEN_HOVER_SCALE - 1) * v),
+                    ods = this.getODS(),
+                    margin = (this._baseSize - size) / 2 + 'px';
+                this.setSize(size);
+                ods.marginLeft = ods.marginTop = margin;
+                if (v === 0) this.setZIndex(Z_IDX_AGENT);
             },
             
             setModel: function(model) {
