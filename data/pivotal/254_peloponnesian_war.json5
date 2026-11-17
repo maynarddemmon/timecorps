@@ -102,6 +102,9 @@
 				"Corinth and Megara come to the Spartan assembly to complain of Athens. The old king Archidamus urges patience: Athens is rich, and rules the sea.",
 				{"text":"The ephor Sthenelaidas answers in a few words, and calls for a vote by division, not by shouting, so every Spartan must be seen to choose.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Thucydides, who will fight in this war and write its history, says the real cause was the growth of Athenian power, and the fear it caused in Sparta.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"peloponnesian_war_hegemony"}
 			]
 		},
 
@@ -140,6 +143,9 @@
 				"The assembly debates sending a great fleet to Sicily, to help Athens’ allies there and perhaps to conquer the island.",
 				{"text":"Nicias, cautious and rich, argues against it. Alcibiades, young, brilliant and in debt, argues for it, and the crowd is with him.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Nicias tries to scare them off by asking for a far larger force. The assembly gives him everything he asks for.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"peloponnesian_war"}
 			]
 		},
 
@@ -177,6 +183,9 @@
 				"At Sardis, the Spartan admiral Lysander meets Cyrus, the young son of the Persian king, sent west to govern the coast.",
 				{"text":"Sparta has fought for Greek freedom from Persia. Now it is asking Persia to pay for its war against Greeks.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Lysander is charming and ambitious, and the prince likes him. Cyrus means to be king one day, and wants friends who can fight.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"waitFor", "to":"peloponnesian_war_warning"}
 			]
 		},
 
@@ -268,6 +277,9 @@
 				"The Long Walls joined Athens to its harbor, so that no army could starve a city fed by the sea.",
 				{"text":"Pericles built his war strategy on them: abandon the countryside, hold the walls, and win at sea.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Within months, a council of thirty oligarchs backed by a Spartan garrison rules Athens by terror.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"peloponnesian_war_empire"}
 			]
 		},
 

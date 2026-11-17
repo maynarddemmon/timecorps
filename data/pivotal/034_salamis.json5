@@ -236,6 +236,9 @@
 				"With winter coming and his fleet broken, the Great King must decide whether to stay in Greece or go home.",
 				{"text":"He fears the Greeks will sail to the Hellespont and break his bridge of boats behind him.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Sardis, the old capital of Lydia, is the seat of Persian power in the west, and the end of the Royal Road from Susa.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"salamis_persian_greece"}
 			]
 		},
 

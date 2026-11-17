@@ -216,7 +216,8 @@
 			"start":"-000330-10-01T07:00:00", "duration":{"h":8},
 			"location":"gaugamela_mesopotamia",
 			"exits":[
-				{"mode":"march", "to":"gaugamela_gates"}
+				{"mode":"march", "to":"gaugamela_gates"},
+				{"mode":"waitFor", "to":"gaugamela_persia"}
 			],
 			"values":{
 				"outcome":{
@@ -256,6 +257,9 @@
 				"The greatest city of the east, with its walls, its temples and the ziggurat of Marduk, lies open to whoever won at Gaugamela.",
 				{"text":"Alexander orders the temples rebuilt, and sacrifices to Marduk as the Babylonian priests advise.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Beyond Babylon lie Susa and Persepolis, and the treasure of the Persian kings.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"gaugamela_hellenistic"}
 			]
 		},
 

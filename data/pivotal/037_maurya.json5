@@ -96,6 +96,9 @@
 				"Alexander has sailed down the Indus and marched west, leaving governors, garrisons and allied Indian kings to hold what he took.",
 				{"text":"Within a year, the governor he left in the upper Punjab is murdered by his own mercenaries.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>A young man who saw Alexander, Plutarch says, later claimed that Alexander could easily have taken all of India, because its king was so hated.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"maurya_seleucus"}
 			]
 		},
 
@@ -134,6 +137,9 @@
 				"At the court of the Nanda king Dhana Nanda, a Brahmin scholar named Chanakya is thrown out of his seat at a feast for being ugly and poor.",
 				{"text":"He unties his topknot, and vows not to tie it again until the Nanda are destroyed.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Chanakya, also called Kautilya, is remembered as the author of the Arthashastra, a ruthless handbook of statecraft.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"waitFor", "to":"maurya_porridge"}
 			]
 		},
 
@@ -197,6 +203,9 @@
 				"Pataliputra, the Nanda capital where the Son and the Ganges meet, is a great city of timber walls, nine miles long.",
 				{"text":"The Nanda are rich, with a vast army, and hated for their taxes and for their low birth.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Chandragupta comes with an army raised in the northwest, where the Greeks left no one strong enough to stop him.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"maurya_empire"}
 			]
 		},
 
@@ -221,6 +230,9 @@
 				"Seleucus, the Macedonian general who now rules Alexander’s empire from Syria to Bactria, crosses the Indus to win back the Indian provinces.",
 				{"text":"He finds Chandragupta waiting with an army no Greek has seen the like of.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Two years later, Seleucus’ Indian elephants win him the battle of Ipsus, and his share of Alexander’s empire.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"waitFor", "to":"maurya_seleucid_india"}
 			]
 		},
 

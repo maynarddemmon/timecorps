@@ -250,7 +250,8 @@
 			},
 			"exits":[
 				{"mode":"walk", "to":"munitions_manifest"},
-				{"mode":"walk", "to":"new_york_departure", "hidden":"event.attestation.value < 15"}
+				{"mode":"walk", "to":"new_york_departure", "hidden":"event.attestation.value < 15"},
+				{"mode":"wait", "to":"mersey_inquiry"}
 			],
 			"values":{
 				"crewDrilled":{
@@ -289,7 +290,8 @@
 				}
 			},
 			"exits":[
-				{"mode":"wait", "to":"new_york_departure"}
+				{"mode":"wait", "to":"new_york_departure"},
+				{"mode":"wait", "to":"embassy_warning"}
 			],
 			"values":{
 				"cargoOffloaded":{

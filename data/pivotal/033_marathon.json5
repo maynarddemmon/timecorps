@@ -127,7 +127,8 @@
 			},
 			"exits":[
 				{"mode":"walk", "to":"marathon_council"},
-				{"mode":"walk", "to":"marathon_march"}
+				{"mode":"walk", "to":"marathon_march"},
+				{"mode":"waitFor", "to":"marathon_sack"}
 			],
 			"values":{
 				"runnerSent":{
@@ -215,7 +216,8 @@
 			"location":"marathon_sparta",
 			"shown":"events.marathon_runner.values.runnerSent.value",
 			"exits":[
-				{"mode":"walk", "to":"marathon_sack"}
+				{"mode":"walk", "to":"marathon_sack"},
+				{"mode":"survive", "to":"marathon_sparta_alone"}
 			],
 			"values":{
 				// Only the runner's message brings them.
@@ -325,6 +327,9 @@
 				"The Persian fleet rounds Cape Sounion and anchors off Phaleron, the harbor of Athens, with the cavalry aboard.",
 				{"text":"Someone in the city has signaled the fleet with a flashing shield. The Persians expect the gates to be opened for them.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>The army is still at Marathon, a day’s march away, and no help is coming from Sparta.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"marathon_fleet"}
 			]
 		},
 
@@ -347,6 +352,9 @@
 				"Miners at Laurion strike a rich new vein of silver, and Themistocles persuades the assembly not to share it out among the citizens, but to build warships with it.",
 				{"text":"By 480 BCE Athens has some two hundred triremes, the largest fleet in Greece, rowed by its poorest citizens.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Themistocles says the fleet is for the war with Aegina. He is thinking of Persia.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"marathon_golden_athens"}
 			]
 		},
 
@@ -366,6 +374,9 @@
 				"With Athens a Persian province under Hippias, Sparta gathers what allies it can in the Peloponnese against the next invasion.",
 				{"text":"There is no Athenian fleet. Whoever holds the sea holds Greece, and Persia holds it.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>Sparta fortifies the Isthmus and waits.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"survive", "to":"marathon_golden_sparta"}
 			]
 		},
 
