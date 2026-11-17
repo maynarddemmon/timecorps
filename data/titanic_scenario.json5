@@ -457,6 +457,7 @@
 				}
 			},
 			"exits":[
+				{"mode":"walk", "to":"purser_spare", "at":{"startOf":"purser_spare", "m":-5}},
 				{"mode":"wait", "to":"wireless_priority"},
 				{"mode":"walk", "to":"lookout_sights_berg"},
 				{"mode":"walk", "to":"engine_order"},

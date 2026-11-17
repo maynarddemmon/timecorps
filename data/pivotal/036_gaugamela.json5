@@ -296,6 +296,9 @@
 				"Alexander dies at Babylon in 323 BCE, and his generals divide his empire into kingdoms ruled by Macedonian dynasties: the Ptolemies in Egypt, the Seleucids in Asia, the Antigonids in Macedon.",
 				{"text":"Greek becomes the common language from Sicily to Afghanistan. Alexandria has its Library, and Greek kings rule in Bactria and India.", "shown":"event.attestation.value >= 10"},
 				{"text":"<p>The age ends when Rome swallows the last of the kingdoms, Cleopatra’s Egypt, after Actium in 31 BCE.", "shown":"event.attestation.value >= 20"}
+			],
+			"exits":[
+				{"mode":"march", "to":"maurya_seleucus", "at":{"startOf":"maurya_seleucus", "d":-90}}
 			]
 		},
 

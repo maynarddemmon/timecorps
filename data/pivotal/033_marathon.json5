@@ -392,7 +392,10 @@
 				{"mode":"sail", "to":"salamis_league", "at":{"startOf":"salamis_league", "d":-2}},
 				{"mode":"walk", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-5}},
 				{"mode":"sail", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-2}},
-				{"mode":"horseback", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-2}}
+				{"mode":"horseback", "to":"peloponnesian_war_vote", "at":{"startOf":"peloponnesian_war_vote", "d":-2}},
+				{"mode":"walk", "to":"peloponnesian_war_sicily", "at":{"startOf":"peloponnesian_war_sicily", "h":-1}},
+				{"mode":"sail", "to":"peloponnesian_war_warning", "at":{"startOf":"peloponnesian_war_warning", "d":-7}},
+				{"mode":"walk", "to":"peloponnesian_war"}
 			],
 		},
 
