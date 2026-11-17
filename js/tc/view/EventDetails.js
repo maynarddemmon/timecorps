@@ -31,6 +31,11 @@
         MARKER_EXTENT = 2*btnHeight + spacing + padding,
         
         ORDER_SORT_FUNC = (a, b) => a.order - b.order,
+        
+        /*  Agents by how far they are through the Event and subsort with most recent arrival 
+            first. */
+        AGENT_MODELS_SORT_FUNC = (a, b) => 
+            (a.timeLivedAtEvent - b.timeLivedAtEvent) || (b.getArrivalOrder() - a.getArrivalOrder()),
         /*  By when the exit leaves its Event, its "at" or the Event's end, then by travel 
             time, then by destination. */
         EXIT_MODELS_SORT_FUNC = (a, b) => 
@@ -446,7 +451,7 @@
                 // Agents
                 agentsRow.getContentView().destroyAllSubviews();
                 let addedCount = 0;
-                for (const agentModel of eventModel.getAgentModels()) {
+                for (const agentModel of [...eventModel.getAgentModels()].sort(AGENT_MODELS_SORT_FUNC)) {
                     new AgentRow(agentsRow, {agentModel, eventModel});
                     addedCount++;
                 }
