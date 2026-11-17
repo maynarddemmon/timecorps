@@ -37,10 +37,16 @@
 			"defaultAgentRole":"Operative",
 			"description":"Time travellers who answer to no Command and keep no protocols. They change history for whoever pays them, or for reasons of their own, and the Corps has never found out who leads them."
 		},
+		// Ex-Corps and others who answer to neither the Corps nor the Syndicate, at the Castle.
+		"knights_of_ash":{
+			"label":"The Knights of Ash",
+			"hq":"knights_of_ash_hq",
+			"jobBoard":"job_knights_of_ash",
+			"defaultAgentRole":"Knight",
+			"description":"A handful of time travellers, most of them ex-Corps, who left because of what they were asked to do. They keep a dead hab block called the Castle, take no money and no orders, and the name started as a joke."
+		},
 		"unaligned":{
 			"label":"Unaligned",
-			"hq":"unaligned_hq",
-			"jobBoard":"job_unaligned",
 			"defaultAgentRole":"Civilian",
 			"description":"Answers to no one. Whatever they know of time travel, they learned on their own, and no one is coming to get them out."
 		}
@@ -281,11 +287,11 @@
 		"transfer":0, // Used when an amount needs to be calculated before it is used in multiple set/adj.
 		"syndicate_hq_hidden":"true",
 		"time_corps_hq_hidden":"true",
-		"unaligned_hq_hidden":"true",
+		"knights_of_ash_hq_hidden":"true",
 		"the_void_hidden":"true",
 		"job_timecorps":"",
 		"job_syndicate":"",
-		"job_unaligned":"",
+		"job_knights_of_ash":"",
 	},
 	
 	"events":{
@@ -395,18 +401,15 @@
 				{"mode":"loopback", "to":"syndicate_hq", "allowLoopback":true}
 			]
 		},
-		// The Unaligned have no Command and no budget. The Castle is a pool off every grid, 
+		// The Knights of Ash have no Command and no budget. The Castle is a pool off every grid, 
 		// charged by the sun: restocking it costs time, not credits, and there's no clinic.
-		"unaligned_hq":{
+		"knights_of_ash_hq":{
 			"name":"❉ The Castle", "hub":true,
-			"hidden":"scratch.unaligned_hq_hidden",
-			// You are Unaligned from the start, so the recall here would be offered before the
-			// Castle is found. Chrono locked until then, no one can time travel to it.
-			"chronoLocked":"scratch.unaligned_hq_hidden",
+			"hidden":"scratch.knights_of_ash_hq_hidden",
 			"start":"2166-03-02T00:00:00", "duration":{"d":30}, "location":"_nexus",
 			"chronal":{"value":10, "max":50},
 			"description":[
-				"The top six floors of Ashgrove Stack, a mega-tall hab block on the edge of the Nexus years, 2166, abandoned since the Retreat. The lifts stopped decades ago, and the city cut its power, water and data when the last tenants left. From the street it is dark all the way up.",
+				"The top six floors of Ashcroft Stack, a mega-tall hab block south of London, abandoned since the Retreat. Somewhere in its long dark years it seeped loose of its own time and into the Nexus, and it stands there now in 2166, at the edge of the years. The lifts stopped decades ago, and the power, water and data went with the last tenants. From below it is dark all the way up.",
 				"<p>The Castle, as the people who live in it call it, runs on an array of solar panels spread across the roof, scavenged, patched and rewired, feeding a bank of batteries and a jump rig that no one in the Corps would certify. The stairwells are barricaded below the ninetieth floor. Whoever is here is here because they answer to no one, and no one asks them who they used to work for."
 			],
 			"actionLimit":30,
@@ -449,13 +452,13 @@
 					"label":"Check the Feed",
 					"group":"jobs",
 					"skillCheck":{"difficulty":"no-roll"},
-					"shown":"scratch.job_unaligned !== ''",
+					"shown":"scratch.job_knights_of_ash !== ''",
 					"costs":{"agent.action":null},
-					"set":{"operations[scratch.job_unaligned].hidden":"false"}
+					"set":{"operations[scratch.job_knights_of_ash].hidden":"false"}
 				}
 			},
 			"exits":[
-				{"mode":"loopback", "to":"unaligned_hq", "allowLoopback":true}
+				{"mode":"loopback", "to":"knights_of_ash_hq", "allowLoopback":true}
 			]
 		},
 		"time_corps_hq":{

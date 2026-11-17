@@ -311,11 +311,12 @@
 				"persuasion":-25
 			}
 		},
-		// Ex-Corps, now Unaligned. Found posing as a reporter at Spring Returns, where he offers
-		// You a way into the Castle.
+		// Ex-Corps, now a Knight of Ash. Found posing as a reporter at Spring Returns, where he 
+		// offers You a place at the Castle.
 		"AI":{
 			"name":"Aldous Ingram",
 			"born":"2128-06-13", "age":44,
+			"faction":"knights_of_ash",
 			"role":"Reporter",
 			"event":"lgv_announcement",
 			"skillsByTrack":{"high":["chronogation", "disguise", "deception"], "low":["str", "cha", "persuasion"]},

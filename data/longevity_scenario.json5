@@ -28,25 +28,26 @@
 				}
 			}
 		},
-		// The reporter at Spring Returns, once You get him talking. Joining reveals the Castle,
-		// the Unaligned HQ. You are probably Unaligned already, which is fine.
-		"unaligned_offer":{
+		// The reporter at Spring Returns, once You get him talking. Joining puts You in the 
+		// Knights of Ash and reveals the Castle, their HQ. A Knight can still finish Spring 
+		// Returns, and take Beniko's or the Syndicate's offer after.
+		"knights_offer":{
 			"type":"confirm",
 			"title":"The Reporter’s Offer",
 			"description":[
 				"The reporter folds his notebook away. He is older than his press pass, and his gloves are a century out of date. “You’re not with the Institute,” he says, “and you’re not with the press. You’re here for the same reason I am.” He glances at the device on your wrist. “I wore one of those for eleven years.”",
-				"<p>“Aldous Ingram. I was Corps, once, until a mission went right for all the wrong reasons. I don’t work for them now, or for the people in dark suits. There are a few of us like that. We keep a place at the top of a dead building, with a roof full of solar panels and a jump rig held together with tape. We call it the Castle.”",
+				"<p>“Aldous Ingram. I was Corps, once, until a mission went right for all the wrong reasons. I don’t work for them now, or for the people in dark suits. There are a few of us like that. We keep a place at the top of a dead building, with a roof full of solar panels and a jump rig held together with tape. We call it the Castle, and ourselves the Knights of Ash. That started as a joke.”",
 				{"text":"<p>“You’re on your own, as far as I can tell. You needn’t be.”", "shown":"player.faction === 'unaligned'"},
 				{"text":"<p>“You’re spoken for, I know. But the door is open, if they ever stop deserving you.”", "hidden":"player.faction === 'unaligned'"},
 				"<p>He writes an address on a page of the notebook, tears it out, and holds it out to you. “Well?”"
 			],
 			"buttons":{
 				"confirm":{
-					"label":"Join the Unaligned",
+					"label":"Join the Knights of Ash",
 					"onClick":{
 						"set":{
-							"player.faction":"'unaligned'",
-							"scratch.unaligned_hq_hidden":"false",
+							"player.faction":"'knights_of_ash'",
+							"scratch.knights_of_ash_hq_hidden":"false",
 							"scratch.the_void_hidden":"false"
 						},
 						"adj":{"player.chronal":"12 + d(4)"}
@@ -153,10 +154,11 @@
 					"description":"The Commission must vote to keep the treatment a state secret.",
 					"success":"!events.lgv_commission.values.approvedRelease.value"
 				},
+				// The Knights of Ash take no side here, so a Knight still counts.
 				"unaligned":{
 					"name":"Unaligned",
-					"description":"You must not have joined a faction yet.",
-					"success":"player.faction === 'unaligned'"
+					"description":"You must not have joined the Corps or the Syndicate yet.",
+					"success":"player.faction === 'unaligned' || player.faction === 'knights_of_ash'"
 				}
 			},
 			"onSuccess":{
@@ -574,7 +576,7 @@
 					"costs":{"agent.action":null},
 					"adj":{"event.attestation":"10"}
 				},
-				// The reporter is Aldous Ingram, ex-Corps, who offers You the Castle.
+				// The reporter is Aldous Ingram, a Knight of Ash, who offers You a place at the Castle.
 				"reporter":{
 					"label":"Talk to a Reporter",
 					"skillCheck":{"actionType":"social"},
@@ -582,7 +584,7 @@
 					"hidden":"event.actions.reporter.doneCount > 0",
 					"set":{"agents.AI.hidden":{"onSuccess":"false"}},
 					"adj":{"event.attestation":{"onSuccess":"5 + d(10)", "onFailure":"5"}},
-					"prompt":"unaligned_offer"
+					"prompt":"knights_offer"
 				},
 				"crowd":{
 					"label":"Watch the Crowd",
@@ -687,7 +689,7 @@
 			],
 			"exits":[{
 				"mode":"pulled", "to":"lgv_hospice", "toHidden":true,
-				"shown":"event.actions.talk.doneCount > 0 && player.faction === 'unaligned'",
+				"shown":"event.actions.talk.doneCount > 0 && (player.faction === 'unaligned' || player.faction === 'knights_of_ash')",
 				"set":{"events.lgv_hospice.hidden":"false"},
 				"adj":{"agent.health":"-d(4,5)"}
 			}]
